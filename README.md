@@ -40,10 +40,10 @@ src/
 │
 └── utils/                          # Helper functions
 
-
+```
 
 ```markdown
-## Workflow
+### Workflow
 
 1. **Pull the latest changes**
    - Pull the latest code from the `Frontend` branch before starting work.
@@ -59,4 +59,28 @@ src/
    - All frontend development is restricted to the `Frontend` branch during the current development phase.
 
 5. **Code review**
-   - Once the PR workflow is enabled, raise PRs for review by **Nainesh and Durgesh**.
+   - Once the PR workflow is enabled, raise PRs for review by cybersecurity team
+   
+```
+
+## Current Git Workflow
+
+> **Current phase:** Until the first deployment, all frontend work is pushed directly to the `Frontend` branch.
+
+- Pull the latest changes before starting work.
+- Work only within your assigned module.
+- Push changes only to the `Frontend` branch.
+- Do not modify or push to any other branch.
+- Use shared components wherever applicable.
+
+### Post-Deployment Workflow
+
+After the first deployment:
+
+1. Create a separate feature branch.
+2. Implement your assigned task.
+3. Push your feature branch.
+4. Raise a PR to the `Frontend` branch.
+5. Get the PR reviewed by **Nainesh and Durgesh**.
+6. Merge only after approval.
+
