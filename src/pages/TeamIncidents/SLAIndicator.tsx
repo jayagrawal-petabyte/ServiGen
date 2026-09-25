@@ -1,5 +1,9 @@
-function SLAIndicator({ time }) {
-  const getClassName = () => {
+interface SLAIndicatorProps {
+  time: string;
+}
+
+function SLAIndicator({ time }: SLAIndicatorProps) {
+  const getClassName = (): string => {
     if (time.includes("00h")) {
       return "sla-critical";
     }

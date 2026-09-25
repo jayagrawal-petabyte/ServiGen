@@ -3,7 +3,27 @@ import TeamIncidentFilters from "./TeamIncidentFilters";
 import SLAIndicator from "./SLAIndicator";
 import PriorityIndicator from "./PriorityIndicator";
 
-const incidents = [
+type Priority = "Critical" | "High" | "Medium" | "Low";
+
+type Status = "Open" | "In Progress" | "Pending";
+
+interface Incident {
+  id: string;
+  sla: string;
+  summary: string;
+  category: string;
+  priority: Priority;
+  status: Status;
+  type: string;
+  agent: string;
+}
+
+interface TeamIncidentTableProps {
+  team: string;
+  mode: string;
+}
+
+const incidents: Incident[] = [
   {
     id: "INC001",
     sla: "01h 42m",
@@ -56,10 +76,13 @@ const incidents = [
   },
 ];
 
-function TeamIncidentTable({ team, mode }) {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("All");
-  const [priority, setPriority] = useState("All");
+function TeamIncidentTable({
+  team,
+  mode,
+}: TeamIncidentTableProps) {
+  const [search, setSearch] = useState<string>("");
+  const [status, setStatus] = useState<string>("All");
+  const [priority, setPriority] = useState<string>("All");
 
   const filteredIncidents = incidents.filter((incident) => {
     const matchesSearch =
@@ -155,7 +178,7 @@ function TeamIncidentTable({ team, mode }) {
               ))
             ) : (
               <tr>
-                <td colSpan="9" className="empty-state">
+                <td colSpan={9} className="empty-state">
                   No incidents found.
                 </td>
               </tr>

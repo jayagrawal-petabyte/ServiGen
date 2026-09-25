@@ -1,3 +1,12 @@
+interface TeamIncidentFiltersProps {
+  search: string;
+  setSearch: (value: string) => void;
+  status: string;
+  setStatus: (value: string) => void;
+  priority: string;
+  setPriority: (value: string) => void;
+}
+
 function TeamIncidentFilters({
   search,
   setSearch,
@@ -5,7 +14,7 @@ function TeamIncidentFilters({
   setStatus,
   priority,
   setPriority,
-}) {
+}: TeamIncidentFiltersProps) {
   return (
     <div className="team-incident-filters">
       <input
