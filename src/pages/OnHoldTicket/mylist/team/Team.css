@@ -1,0 +1,27 @@
+.team-view-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  margin: 12px 12px 12px 0;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+}
+.coming-soon-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+}
+.coming-soon-box h2 {
+  margin: 16px 0 8px 0;
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 600;
+}
+.coming-soon-box p {
+  margin: 0;
+  font-size: 14px;
+}
