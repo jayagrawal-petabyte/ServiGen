@@ -6,7 +6,7 @@ export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 // Shape of a single lifecycle stage in the pipeline (Started → Escalated → Diagnosed → Mitigated)
 export interface LifecycleStage {
   label: string;
-  timestamp: string;
+  timestamp?: string;
   isActive: boolean;
   isCompleted: boolean;
 }
