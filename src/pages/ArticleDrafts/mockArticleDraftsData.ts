@@ -1,8 +1,37 @@
-export const INITIAL_ARTICLE_DRAFTS = [
+export type ArticleDraftStatus =
+  | 'Draft'
+  | 'Awaiting Approval'
+  | 'Published'
+  | 'Rejected';
+
+export type ArticleDraftSlaStatus =
+  | 'safe'
+  | 'warning'
+  | 'overdue';
+
+export interface ArticleDraft {
+  id: string;
+  slaTimeLeft: string;
+  slaStatus: ArticleDraftSlaStatus;
+  summaryTitle: string;
+  summarySubtitle: string;
+  category: string;
+  priority: 'Low' | 'Medium' | 'High' | 'Critical' | string;
+  priorityColor?: string;
+  status: ArticleDraftStatus | string;
+  type: string;
+  date: string;
+  author: string;
+  team: string;
+  agent: string;
+  body: string;
+}
+
+export const INITIAL_ARTICLE_DRAFTS: ArticleDraft[] = [
   {
     id: '0003995',
     slaTimeLeft: '1d 8h left',
-    slaStatus: 'warning', // 'safe' | 'warning' | 'overdue'
+    slaStatus: 'warning',
     summaryTitle: 'Emails not Sending',
     summarySubtitle: 'Outbox queue stuck during Exchange migration',
     category: 'Email & Messaging',
@@ -14,7 +43,13 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Demo User',
     team: 'Tier 2 Messaging Ops',
     agent: 'Demo User',
-    body: '## Symptoms\nUsers report that outbound messages remain indefinitely in the Outlook Outbox queue following hybrid Exchange mailbox move requests.\n\n## Workaround\n1. Restart Microsoft Exchange Mail Submission Service on CAS servers.\n2. Clear corrupt spool queues using PowerShell cmdlet `Get-Queue | Retry-Queue`.\n3. Validate TLS 1.2 send connector bindings.'
+    body: `## Symptoms
+Users report that outbound messages remain indefinitely in the Outlook Outbox queue following hybrid Exchange mailbox move requests.
+
+## Workaround
+1. Restart Microsoft Exchange Mail Submission Service on CAS servers.
+2. Clear corrupt spool queues using PowerShell cmdlet \`Get-Queue | Retry-Queue\`.
+3. Validate TLS 1.2 send connector bindings.`,
   },
   {
     id: '0003027',
@@ -31,7 +66,14 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Sarah Jenkins',
     team: 'HR Operations',
     agent: 'Sarah Jenkins',
-    body: '## Overview\nThis guide explains how employees can submit annual leave and personal day requests through the self-service HR portal.\n\n### Step-by-Step Instructions\n1. Navigate to HR Portal > Time Off.\n2. Select your date range from the interactive calendar.\n3. Choose your leave category (Vacation, Sick, Parental).\n4. Submit for manager approval.'
+    body: `## Overview
+This guide explains how employees can submit annual leave and personal day requests through the self-service HR portal.
+
+### Step-by-Step Instructions
+1. Navigate to HR Portal > Time Off.
+2. Select your date range from the interactive calendar.
+3. Choose your leave category (Vacation, Sick, Parental).
+4. Submit for manager approval.`,
   },
   {
     id: '0003026',
@@ -48,7 +90,11 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'General User',
     team: 'HR Systems Support',
     agent: 'Demo User',
-    body: '## Problem Description\nManagers encountering error code 403 Forbidden when approving pending time-off requests submitted via mobile web view.\n\n## Solution\nClear delegated authority tokens in the permissions matrix and ensure the approval routing rule is set to synchronous fallback.'
+    body: `## Problem Description
+Managers encountering error code 403 Forbidden when approving pending time-off requests submitted via mobile web view.
+
+## Solution
+Clear delegated authority tokens in the permissions matrix and ensure the approval routing rule is set to synchronous fallback.`,
   },
   {
     id: '0003025',
@@ -65,7 +111,11 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Aditya Kumar Singh',
     team: 'Frontend Core',
     agent: 'Aditya Kumar Singh',
-    body: '## Issue Summary\nUK locale users experiencing dd/MM/yyyy date parsing failure during timesheet submission in payroll integration.\n\n## Resolution\nAdopt standard ISO-8601 formatting prior to submitting API payload.'
+    body: `## Issue Summary
+UK locale users experiencing dd/MM/yyyy date parsing failure during timesheet submission in payroll integration.
+
+## Resolution
+Adopt standard ISO-8601 formatting prior to submitting API payload.`,
   },
   {
     id: '0003024',
@@ -82,7 +132,11 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Demo User',
     team: 'Floor Ops',
     agent: 'Demo User',
-    body: '## Description\nInstructions for desk technicians on handling stuck spool jobs without power cycling the floor printer.\n\n## Review Feedback\nRejected: Needs updated screenshots reflecting the new PaperCut web client.'
+    body: `## Description
+Instructions for desk technicians on handling stuck spool jobs without power cycling the floor printer.
+
+## Review Feedback
+Rejected: Needs updated screenshots reflecting the new PaperCut web client.`,
   },
   {
     id: '0003019',
@@ -99,7 +153,8 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Mark Daniels',
     team: 'Network Engineering',
     agent: 'Mark Daniels',
-    body: '## Guide\nTroubleshooting step-by-step instructions for remote staff unable to establish gateway handshakes through Palo Alto GlobalProtect.'
+    body: `## Guide
+Troubleshooting step-by-step instructions for remote staff unable to establish gateway handshakes through Palo Alto GlobalProtect.`,
   },
   {
     id: '0003018',
@@ -116,7 +171,8 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Inesh Agarwal',
     team: 'Security Ops',
     agent: 'Inesh Agarwal',
-    body: '## Hardware Security Key Setup\nDetailed steps for enrolling WebAuthn FIDO2 keys into corporate single sign-on.'
+    body: `## Hardware Security Key Setup
+Detailed steps for enrolling WebAuthn FIDO2 keys into corporate single sign-on.`,
   },
   {
     id: '0003015',
@@ -133,7 +189,8 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Keerthana M',
     team: 'Desktop Support',
     agent: 'Keerthana M',
-    body: '## Symptoms & Fixes\nInstall DisplayLink Manager v1.10 and enable screen recording permissions to unlock 60Hz 4K dual display profiles.'
+    body: `## Symptoms & Fixes
+Install DisplayLink Manager v1.10 and enable screen recording permissions to unlock 60Hz 4K dual display profiles.`,
   },
   {
     id: '0003010',
@@ -150,6 +207,7 @@ export const INITIAL_ARTICLE_DRAFTS = [
     author: 'Monalisa Panda',
     team: 'Enterprise Tools',
     agent: 'Monalisa Panda',
-    body: '## Guidelines\nOutlines when to archive inactive Slack channels and how to export audit trails for legal discovery.'
-  }
+    body: `## Guidelines
+Outlines when to archive inactive Slack channels and how to export audit trails for legal discovery.`,
+  },
 ];
