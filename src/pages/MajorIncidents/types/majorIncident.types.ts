@@ -20,6 +20,8 @@ export interface MajorIncident {
   resolutionTarget: string;
   responseTarget: string;
   lifecycleStages: LifecycleStage[];
+  /** Assigned agent name */
+  assignee: string;
 }
 
 // Feed entry event types — only these strings are valid values
@@ -43,4 +45,21 @@ export interface ActivityFeedEntry {
   message?: string;
   timeAgo: string;
   type: FeedEntryType;
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+
+/** A single item in a sidebar group */
+export interface SidebarListItem {
+  id: string;
+  label: string;
+  count?: number;
+  isSelected?: boolean;
+  iconKey?: string;
+}
+
+/** A labelled group of sidebar items (e.g. "ACTIVE", "ACTIONED", "VIEWS") */
+export interface SidebarGroup {
+  groupLabel: string;
+  items: SidebarListItem[];
 }
