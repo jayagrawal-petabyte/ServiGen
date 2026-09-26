@@ -94,6 +94,18 @@ const OnHoldTicketScreen: React.FC = () => {
   const [serviceCollapsed, setServiceCollapsed] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeView, setActiveView] = useState<string>("My Lists");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    // Simulate initial data fetching
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      // setHasError(true); // Uncomment to test error state
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredIncident = INCIDENT_TICKETS.filter(t => 
     t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -209,38 +221,95 @@ const OnHoldTicketScreen: React.FC = () => {
             </div>
 
             <div className="table-scroll-wrap">
-              <table className="main-table">
-                <thead>
-                  <tr>
-                    <th className="col-type">Type</th>
-                    <th className="col-check"><input type="checkbox" onChange={toggleAll} checked={selectedItems.length === allIds.length && allIds.length > 0}/></th>
-                    <th className="col-viewing">Viewing</th>
-                    <th className="col-id">ID</th>
-                    <th className="col-sla">SLA Time Left</th>
-                    <th className="col-priority">Priority</th>
-                    <th className="col-org">Organisation/Site/User</th>
-                    <th className="col-summary">Summary</th>
-                    <th className="col-status">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="group-header-row" onClick={() => setIncidentCollapsed(!incidentCollapsed)}>
-                    <td colSpan={9}>
-                      <span className="group-toggle">{incidentCollapsed ? "▶" : "▼"}</span>
-                      <span className="group-title"> Incident ({filteredIncident.length})</span>
-                    </td>
-                  </tr>
-                  {!incidentCollapsed && filteredIncident.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
-
-                  <tr className="group-header-row" onClick={() => setServiceCollapsed(!serviceCollapsed)}>
-                    <td colSpan={9}>
-                      <span className="group-toggle">{serviceCollapsed ? "▶" : "▼"}</span>
-                      <span className="group-title"> Service Request ({filteredService.length})</span>
-                    </td>
-                  </tr>
-                  {!serviceCollapsed && filteredService.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
-                </tbody>
-              </table>
+              {isLoading ? (
+                <div className="skeleton-container">
+                  <table className="main-table skeleton-table">
+                    <thead>
+                      <tr>
+                        <th className="col-type">Type</th>
+                        <th className="col-check"></th>
+                        <th className="col-viewing">Viewing</th>
+                        <th className="col-id">ID</th>
+                        <th className="col-sla">SLA Time Left</th>
+                        <th className="col-priority">Priority</th>
+                        <th className="col-org">Organisation/Site/User</th>
+                        <th className="col-summary">Summary</th>
+                        <th className="col-status">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <tr key={i} className="ticket-row skeleton-row">
+                          <td className="col-type"><div className="skeleton-box type-skel"></div></td>
+                          <td className="col-check"><div className="skeleton-box check-skel"></div></td>
+                          <td className="col-viewing"><div className="skeleton-box view-skel"></div></td>
+                          <td className="col-id"><div className="skeleton-box id-skel"></div></td>
+                          <td className="col-sla"><div className="skeleton-box sla-skel"></div></td>
+                          <td className="col-priority"><div className="skeleton-box pri-skel"></div></td>
+                          <td className="col-org"><div className="skeleton-box org-skel"></div></td>
+                          <td className="col-summary"><div className="skeleton-box sum-skel"></div></td>
+                          <td className="col-status"><div className="skeleton-box stat-skel"></div></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : hasError ? (
+                <div className="error-state">
+                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="error-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  <h3>Failed to load tickets</h3>
+                  <p>There was a problem connecting to the server. Please try again.</p>
+                  <button className="btn-retry" onClick={() => { setIsLoading(true); setHasError(false); setTimeout(() => setIsLoading(false), 1200); }}>Retry</button>
+                </div>
+              ) : filteredIncident.length === 0 && filteredService.length === 0 ? (
+                <div className="empty-state">
+                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="empty-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <h3>No tickets found</h3>
+                  <p>We couldn't find any on-hold tickets matching your criteria.</p>
+                  {searchQuery && (
+                    <button className="btn-clear-search" onClick={() => setSearchQuery("")}>
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <table className="main-table">
+                  <thead>
+                    <tr>
+                      <th className="col-type">Type</th>
+                      <th className="col-check"><input type="checkbox" onChange={toggleAll} checked={selectedItems.length === allIds.length && allIds.length > 0}/></th>
+                      <th className="col-viewing">Viewing</th>
+                      <th className="col-id">ID</th>
+                      <th className="col-sla">SLA Time Left</th>
+                      <th className="col-priority">Priority</th>
+                      <th className="col-org">Organisation/Site/User</th>
+                      <th className="col-summary">Summary</th>
+                      <th className="col-status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredIncident.length > 0 && (
+                      <tr className="group-header-row" onClick={() => setIncidentCollapsed(!incidentCollapsed)}>
+                        <td colSpan={9}>
+                          <span className="group-toggle">{incidentCollapsed ? "▶" : "▼"}</span>
+                          <span className="group-title"> Incident ({filteredIncident.length})</span>
+                        </td>
+                      </tr>
+                    )}
+                    {!incidentCollapsed && filteredIncident.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
+  
+                    {filteredService.length > 0 && (
+                      <tr className="group-header-row" onClick={() => setServiceCollapsed(!serviceCollapsed)}>
+                        <td colSpan={9}>
+                          <span className="group-toggle">{serviceCollapsed ? "▶" : "▼"}</span>
+                          <span className="group-title"> Service Request ({filteredService.length})</span>
+                        </td>
+                      </tr>
+                    )}
+                    {!serviceCollapsed && filteredService.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
           )}
