@@ -1,0 +1,251 @@
+/* SCR-001 Login Screen - Pixel-Perfect Figma Accuracy */
+
+.figma-login-page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #EFA087;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Central Organic Background SVG */
+.figma-svg-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Background Dots & Decorative Shapes */
+.figma-decor-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Top-left dark terracotta dot */
+.decor-dot-1 {
+  position: absolute;
+  top: 5.5%;
+  left: 4.2%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #A8543D;
+}
+
+/* Left edge white semi-circle */
+.decor-dot-2 {
+  position: absolute;
+  top: 25.5%;
+  left: -20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+}
+
+/* Bottom-left small light pink dot */
+.decor-dot-3 {
+  position: absolute;
+  bottom: 26%;
+  left: 4.2%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #FBE2D8;
+}
+
+/* Bottom-center-left light pink dot */
+.decor-dot-4 {
+  position: absolute;
+  bottom: -15px;
+  left: 19%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #FBE2D8;
+}
+
+/* Top-right light grey dot */
+.decor-dot-5 {
+  position: absolute;
+  top: 10.5%;
+  right: 9.5%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #D7DEE5;
+}
+
+/* Middle-right terracotta capsule shape */
+.decor-capsule-6 {
+  position: absolute;
+  top: 33.5%;
+  right: -12px;
+  width: 64px;
+  height: 34px;
+  border-radius: 20px;
+  background-color: #C2674D;
+}
+
+/* Bottom-right light pink dot (upper) */
+.decor-dot-7 {
+  position: absolute;
+  bottom: 21.5%;
+  right: 5%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #FBE2D8;
+}
+
+/* Bottom-right light pink dot (lower) */
+.decor-dot-8 {
+  position: absolute;
+  bottom: 8.5%;
+  right: 9%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #FBE2D8;
+}
+
+/* Center Content Container */
+.figma-login-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 370px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header Text "Login" */
+.figma-login-header {
+  font-size: 28px;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin: 0 0 18px 0;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+/* Card Box */
+.figma-card-box {
+  width: 100%;
+  background-color: #FFFBF8;
+  border: 1.5px solid #C4674E;
+  border-radius: 20px;
+  padding: 28px 32px 24px 32px;
+  box-sizing: border-box;
+}
+
+/* Field Container */
+.figma-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.figma-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #222222;
+  margin-bottom: 6px;
+}
+
+/* Input Fields */
+.figma-input-field {
+  width: 100%;
+  height: 42px;
+  background-color: #EAD1C6;
+  border: none;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #1A1A1A;
+  outline: none;
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease;
+}
+
+.figma-input-field:focus {
+  box-shadow: 0 0 0 2px #C4674E;
+}
+
+/* Button Row */
+.figma-btn-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+  margin-bottom: 4px;
+}
+
+.figma-submit-btn {
+  height: 38px;
+  min-width: 136px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #C4674E;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #222222;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.figma-submit-btn:hover {
+  background-color: #FFFBF8;
+  transform: translateY(-1px);
+}
+
+.figma-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Forget Password Link directly under the right edge of the card */
+.figma-forget-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.figma-forget-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1A1A1A;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.figma-forget-text:hover {
+  text-decoration: underline;
+}
+
+/* Error message styling */
+.figma-error-msg {
+  color: #D32F2F;
+  font-size: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
