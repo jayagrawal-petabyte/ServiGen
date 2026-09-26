@@ -49,78 +49,78 @@ const services: Service[] = [
   {
     name: "Administrator Rights",
     description:
-      "Request administrator rights for your device or application.",
-    icon: "🔐",
+      "Click here if you require administrator rights.",
+    icon: "⚙️",
     category: "End-User Catalogue",
   },
   {
     name: "Air Con",
     description:
-      "Report an air conditioning issue or request assistance.",
+      "Click here to raise an issue with the air conditioning.",
     icon: "❄️",
     category: "Services",
   },
   {
     name: "Benefit Change",
     description:
-      "Submit a request to make changes to your benefits.",
+      "Click here to raise a benefit change request.",
     icon: "🎁",
     category: "End-User Catalogue",
   },
   {
     name: "Building Fabric",
     description:
-      "Request support for building fabric related issues.",
+      "Click here to raise an issue with the building fabric.",
     icon: "🏢",
     category: "Services",
   },
   {
     name: "CRM",
     description:
-      "Request access or support for CRM applications.",
+      "Manage customer and sales relationships and pipelines.",
     icon: "👥",
     category: "Business Applications",
   },
   {
     name: "Data Integration",
     description:
-      "Request data integration services and support.",
-    icon: "🔗",
+      "Coordinate and integrate data, applications, and workflows.",
+    icon: "🧩",
     category: "Business Applications",
   },
   {
     name: "Database Administration",
     description:
-      "Request database administration and support.",
+      "Provides secure and reliable database storage and management.",
     icon: "🗄️",
     category: "Business Applications",
   },
   {
     name: "Desk Booking",
     description:
-      "Book or request a desk at your workplace.",
+      "Click here to reserve a desk.",
     icon: "🪑",
     category: "End-User Catalogue",
   },
   {
     name: "Desktop",
     description:
-      "Request desktop support or related services.",
+      "Click here to request a new desktop.",
     icon: "🖥️",
     category: "End-User Catalogue",
   },
   {
     name: "Dynamics CRM",
     description:
-      "Request Microsoft Dynamics CRM support.",
+      "Manages sales, marketing, and customer service processes.",
     icon: "📊",
     category: "Business Applications",
   },
   {
     name: "Electrical",
     description:
-      "Report an electrical issue or request assistance.",
-    icon: "⚡",
+      "Click here to raise an issue with electrical services.",
+    icon: "🔌",
     category: "Services",
   },
 ];
@@ -270,7 +270,7 @@ export default function ServiceCatalogue() {
 
         {/* HEADER */}
         <header className="services-header">
-          <div>
+          <div className="services-heading">
             <h1>Services</h1>
 
             <p>
@@ -278,83 +278,84 @@ export default function ServiceCatalogue() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="new-button"
-            onClick={clearFilters}
-          >
-            <span>+</span>
-            New
-          </button>
+          <div className="header-actions">
+            <div className="service-count">
+              <strong>67</strong>
+              <span>services</span>
+            </div>
+
+            <button
+              type="button"
+              className="new-button"
+            >
+              <span>+</span>
+              New
+            </button>
+          </div>
         </header>
-
-        {/* SEARCH */}
-        <div className="services-toolbar">
-          <div className="service-count">
-            <strong>{filteredServices.length}</strong>
-            <span>services</span>
-          </div>
-
-          <div className="search-box">
-            <span className="search-icon">⌕</span>
-
-            <input
-              type="text"
-              value={searchText}
-              onChange={handleSearch}
-              placeholder="Search services..."
-              aria-label="Search services"
-            />
-
-            {searchText && (
-              <button
-                type="button"
-                className="clear-search"
-                onClick={() => setSearchText("")}
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* SECTION TITLE */}
-        <div className="section-title">
-          <h2>Services by Category</h2>
-
-          <span>
-            {filteredServices.length} available
-          </span>
-        </div>
 
         {/* CATALOGUE */}
         <div className="catalogue-layout">
 
-          {/* CATEGORIES */}
+          {/* CATEGORY SIDEBAR */}
           <aside className="category-sidebar">
-            {categories.map((category) => (
-              <button
-                type="button"
-                key={category}
-                className={`category-button ${
-                  selectedCategory === category
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleCategoryChange(category)
-                }
-              >
-                <span className="category-dot">
-                  {selectedCategory === category
-                    ? "●"
-                    : "○"}
-                </span>
 
-                {category}
-              </button>
-            ))}
+            {/* SEARCH */}
+            <div className="sidebar-search">
+              <span className="sidebar-search-icon">
+                ⌕
+              </span>
+
+              <input
+                type="text"
+                value={searchText}
+                onChange={handleSearch}
+                placeholder="Search services..."
+                aria-label="Search services"
+              />
+
+              {searchText && (
+                <button
+                  type="button"
+                  className="sidebar-clear-search"
+                  onClick={() => setSearchText("")}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* CATEGORY TITLE */}
+            <h2 className="sidebar-title">
+              Services by Category
+            </h2>
+
+            {/* CATEGORY LIST */}
+            <div className="category-list">
+              {categories.map((category) => (
+                <button
+                  type="button"
+                  key={category}
+                  className={`category-button ${
+                    selectedCategory === category
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handleCategoryChange(category)
+                  }
+                >
+                  <span className="category-dot">
+                    {selectedCategory === category
+                      ? "●"
+                      : "○"}
+                  </span>
+
+                  <span>{category}</span>
+                </button>
+              ))}
+            </div>
           </aside>
 
           {/* SERVICE GRID */}
@@ -409,12 +410,13 @@ export default function ServiceCatalogue() {
             }
             role="dialog"
             aria-modal="true"
+            aria-labelledby="service-details-title"
           >
             <button
               type="button"
               className="modal-close"
               onClick={closeDetails}
-              aria-label="Close"
+              aria-label="Close service details"
             >
               ×
             </button>
@@ -431,7 +433,9 @@ export default function ServiceCatalogue() {
               {selectedService.category}
             </span>
 
-            <h2>{selectedService.name}</h2>
+            <h2 id="service-details-title">
+              {selectedService.name}
+            </h2>
 
             <p className="modal-description">
               {selectedService.description}
@@ -495,12 +499,13 @@ export default function ServiceCatalogue() {
             }
             role="dialog"
             aria-modal="true"
+            aria-labelledby="request-title"
           >
             <button
               type="button"
               className="modal-close"
               onClick={closeRequest}
-              aria-label="Close"
+              aria-label="Close request"
             >
               ×
             </button>
@@ -543,7 +548,7 @@ export default function ServiceCatalogue() {
                   <div>
                     <span>Service request</span>
 
-                    <h2>
+                    <h2 id="request-title">
                       {requestService.name}
                     </h2>
                   </div>
