@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 
 type TicketStatus = "Active" | "Pending" | "Actioned";
@@ -115,10 +115,16 @@ function StatusPill({ status }: StatusPillProps) {
 
 export default function MyWork() {
   const [query, setQuery] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [priorityFilter, setPriorityFilter] = useState<string>("All");
   const [activeTab, setActiveTab] = useState<TicketStatus>("Active");
+useEffect(() => {
+  const timer = window.setTimeout(() => {
+    setIsLoading(false);
+  }, 500);
 
+  return () => window.clearTimeout(timer);
+}, []);
   const filtered = useMemo(() => {
     return MOCK_TICKETS.filter((ticket: Ticket) => {
       const matchesStatus = ticket.status === activeTab;
