@@ -115,6 +115,7 @@ function StatusPill({ status }: StatusPillProps) {
 
 export default function MyWork() {
   const [query, setQuery] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [priorityFilter, setPriorityFilter] = useState<string>("All");
   const [activeTab, setActiveTab] = useState<TicketStatus>("Active");
 
@@ -233,7 +234,12 @@ export default function MyWork() {
             ))}
           </select>
         </div>
-
+{/* Loading State */}
+{isLoading && (
+  <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+    Loading tickets...
+  </div>
+)}
         {/* Ticket Table */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
