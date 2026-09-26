@@ -2,20 +2,16 @@ import { useState } from "react";
 import TeamIncidentFilters from "./TeamIncidentFilters";
 import SLAIndicator from "./SLAIndicator";
 import PriorityIndicator from "./PriorityIndicator";
-
-type Priority = "Critical" | "High" | "Medium" | "Low";
-
-type Status = "Open" | "In Progress" | "Pending";
+import "./TeamIncidents.css";
 
 interface Incident {
   id: string;
   sla: string;
   summary: string;
   category: string;
-  priority: Priority;
-  status: Status;
+  priority: string;
+  status: string;
   type: string;
-  agent: string;
 }
 
 interface TeamIncidentTableProps {
@@ -25,54 +21,40 @@ interface TeamIncidentTableProps {
 
 const incidents: Incident[] = [
   {
-    id: "INC001",
-    sla: "01h 42m",
-    summary: "Network connection issue",
-    category: "Network",
-    priority: "High",
-    status: "Open",
-    type: "Incident",
-    agent: "John",
-  },
-  {
-    id: "INC002",
-    sla: "03h 15m",
-    summary: "Application login problem",
-    category: "Application",
+    id: "0003910",
+    sla: "-18:53",
+    summary: "Screen share button does not work",
+    category: "Office Applications",
     priority: "Medium",
     status: "In Progress",
     type: "Incident",
-    agent: "Sarah",
   },
   {
-    id: "INC003",
-    sla: "00h 28m",
-    summary: "Database connection failure",
-    category: "Database",
-    priority: "Critical",
-    status: "Open",
-    type: "Incident",
-    agent: "David",
-  },
-  {
-    id: "INC004",
-    sla: "05h 10m",
-    summary: "Email service issue",
-    category: "Service",
+    id: "0003576",
+    sla: "-42:54",
+    summary: "Audio echo looping when two people join",
+    category: "Collaboration Tools",
     priority: "Low",
-    status: "Pending",
+    status: "In Progress",
     type: "Incident",
-    agent: "Emily",
   },
   {
-    id: "INC005",
-    sla: "01h 05m",
-    summary: "Printer connectivity issue",
-    category: "Hardware",
-    priority: "High",
-    status: "Open",
+    id: "0003357",
+    sla: "05:05",
+    summary: "Account locked while working from home",
+    category: "Security",
+    priority: "Medium",
+    status: "In Progress",
     type: "Incident",
-    agent: "Michael",
+  },
+  {
+    id: "0003269",
+    sla: "05:05",
+    summary: "VPN worked yesterday, now says unavailable",
+    category: "Network",
+    priority: "Medium",
+    status: "In Progress",
+    type: "Incident",
   },
 ];
 
@@ -80,15 +62,17 @@ function TeamIncidentTable({
   team,
   mode,
 }: TeamIncidentTableProps) {
-  const [search, setSearch] = useState<string>("");
-  const [status, setStatus] = useState<string>("All");
-  const [priority, setPriority] = useState<string>("All");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [priority, setPriority] = useState("All");
 
   const filteredIncidents = incidents.filter((incident) => {
+    const searchValue = search.toLowerCase();
+
     const matchesSearch =
-      incident.id.toLowerCase().includes(search.toLowerCase()) ||
-      incident.summary.toLowerCase().includes(search.toLowerCase()) ||
-      incident.category.toLowerCase().includes(search.toLowerCase());
+      incident.id.toLowerCase().includes(searchValue) ||
+      incident.summary.toLowerCase().includes(searchValue) ||
+      incident.category.toLowerCase().includes(searchValue);
 
     const matchesStatus =
       status === "All" || incident.status === status;
@@ -96,21 +80,22 @@ function TeamIncidentTable({
     const matchesPriority =
       priority === "All" || incident.priority === priority;
 
-    return matchesSearch && matchesStatus && matchesPriority;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesPriority
+    );
   });
 
   return (
     <div className="team-incidents-page">
+
       <div className="team-incidents-header">
         <div>
-          <h1>{team}</h1>
+          <h1>Incidents by Team</h1>
           <p>
-            {mode} view of incidents assigned to {team}.
+            {team} - {mode}
           </p>
-        </div>
-
-        <div className="view-label">
-          {mode}
         </div>
       </div>
 
@@ -124,9 +109,69 @@ function TeamIncidentTable({
       />
 
       <div className="incident-table-container">
+
+        <div className="incident-table-toolbar">
+
+          <div className="incident-toolbar-left">
+            <span className="incident-title">
+              Open Incidents
+            </span>
+
+            <button
+              type="button"
+              className="toolbar-icon-button"
+              aria-label="Add"
+            >
+              +
+            </button>
+          </div>
+
+          <div className="incident-toolbar-right">
+
+            <span className="incident-count">
+              {filteredIncidents.length > 0
+                ? `1-${filteredIncidents.length} of ${filteredIncidents.length}`
+                : "0 of 0"}
+            </span>
+
+            <button
+              type="button"
+              className="toolbar-icon-button"
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+
+            <button
+              type="button"
+              className="toolbar-icon-button"
+              aria-label="Next"
+            >
+              ›
+            </button>
+
+            <button
+              type="button"
+              className="new-incident-button"
+            >
+              + New
+            </button>
+
+          </div>
+        </div>
+
         <table className="incident-table">
+
           <thead>
             <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  aria-label="Select all incidents"
+                />
+              </th>
+
+              <th>Viewing</th>
               <th>ID</th>
               <th>SLA Time Left</th>
               <th>Summary</th>
@@ -134,19 +179,37 @@ function TeamIncidentTable({
               <th>Priority</th>
               <th>Status</th>
               <th>Type</th>
-              <th>Agent</th>
-              <th>Team</th>
             </tr>
           </thead>
 
           <tbody>
+
             {filteredIncidents.length > 0 ? (
               filteredIncidents.map((incident) => (
                 <tr key={incident.id}>
+
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${incident.id}`}
+                    />
+                  </td>
+
+                  <td>
+                    <span
+                      className="viewing-indicator"
+                      aria-label="Currently viewing"
+                    >
+                      ●
+                    </span>
+                  </td>
+
                   <td>{incident.id}</td>
 
                   <td>
-                    <SLAIndicator time={incident.sla} />
+                    <SLAIndicator
+                      time={incident.sla}
+                    />
                   </td>
 
                   <td>{incident.summary}</td>
@@ -163,7 +226,7 @@ function TeamIncidentTable({
                     <span
                       className={`status status-${incident.status
                         .toLowerCase()
-                        .replace(" ", "-")}`}
+                        .replace(/\s+/g, "-")}`}
                     >
                       {incident.status}
                     </span>
@@ -171,20 +234,23 @@ function TeamIncidentTable({
 
                   <td>{incident.type}</td>
 
-                  <td>{incident.agent}</td>
-
-                  <td>{team}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="empty-state">
+                <td
+                  colSpan={9}
+                  className="empty-state"
+                >
                   No incidents found.
                 </td>
               </tr>
             )}
+
           </tbody>
+
         </table>
+
       </div>
     </div>
   );

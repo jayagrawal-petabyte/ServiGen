@@ -9,6 +9,7 @@ function PriorityIndicator({
     <span
       className={`priority-indicator priority-${priority.toLowerCase()}`}
     >
+      <span className="priority-dot"></span>
       {priority}
     </span>
   );

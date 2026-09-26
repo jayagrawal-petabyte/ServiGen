@@ -19,7 +19,7 @@ function TeamIncidentFilters({
     <div className="team-incident-filters">
       <input
         type="text"
-        placeholder="Search incidents..."
+        placeholder="Search for..."
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
@@ -29,7 +29,7 @@ function TeamIncidentFilters({
         onChange={(event) => setStatus(event.target.value)}
       >
         <option value="All">All Status</option>
-        <option value="Open">Open</option>
+        <option value="New">New</option>
         <option value="In Progress">In Progress</option>
         <option value="Pending">Pending</option>
       </select>

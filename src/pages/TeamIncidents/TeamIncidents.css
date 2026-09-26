@@ -1,0 +1,314 @@
+/* ================================
+   TEAM INCIDENTS PAGE
+================================ */
+
+.team-incidents-page {
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+/* ================================
+   PAGE HEADER
+================================ */
+
+.team-incidents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.team-incidents-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.team-incidents-header p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ================================
+   FILTERS
+================================ */
+
+.team-incident-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.team-incident-filters input,
+.team-incident-filters select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  outline: none;
+}
+
+.team-incident-filters input {
+  width: 240px;
+}
+
+.team-incident-filters input:focus,
+.team-incident-filters select:focus {
+  border-color: #2563eb;
+}
+
+/* ================================
+   TABLE CONTAINER
+================================ */
+
+.incident-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+/* ================================
+   TOOLBAR
+================================ */
+
+.incident-table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.incident-toolbar-left,
+.incident-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.incident-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.incident-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.toolbar-icon-button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.toolbar-icon-button:hover {
+  background: #f3f4f6;
+}
+
+.new-incident-button {
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 4px;
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.new-incident-button:hover {
+  background: #1d4ed8;
+}
+
+/* ================================
+   TABLE
+================================ */
+
+.incident-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.incident-table th {
+  height: 42px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.incident-table td {
+  min-height: 48px;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.incident-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.incident-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.incident-table input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ================================
+   VIEWING INDICATOR
+================================ */
+
+.viewing-indicator {
+  color: #2563eb;
+  font-size: 12px;
+}
+
+/* ================================
+   SLA INDICATOR
+================================ */
+
+.sla-indicator {
+  display: inline-block;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sla-normal {
+  color: #16a34a;
+}
+
+.sla-warning {
+  color: #f59e0b;
+}
+
+.sla-critical {
+  color: #dc2626;
+}
+
+/* ================================
+   PRIORITY
+================================ */
+
+.priority-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.priority-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.priority-critical .priority-dot {
+  background: #dc2626;
+}
+
+.priority-high .priority-dot {
+  background: #f97316;
+}
+
+.priority-medium .priority-dot {
+  background: #f59e0b;
+}
+
+.priority-low .priority-dot {
+  background: #16a34a;
+}
+
+/* ================================
+   STATUS
+================================ */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-in-progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-new {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* ================================
+   EMPTY STATE
+================================ */
+
+.empty-state {
+  padding: 40px !important;
+  text-align: center;
+  color: #6b7280 !important;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 900px) {
+  .team-incident-filters {
+    flex-wrap: wrap;
+  }
+
+  .team-incident-filters input {
+    width: 100%;
+  }
+
+  .incident-table-container {
+    overflow-x: auto;
+  }
+
+  .incident-table {
+    min-width: 1000px;
+  }
+}

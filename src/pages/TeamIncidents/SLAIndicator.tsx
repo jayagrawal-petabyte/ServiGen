@@ -4,11 +4,11 @@ interface SLAIndicatorProps {
 
 function SLAIndicator({ time }: SLAIndicatorProps) {
   const getClassName = (): string => {
-    if (time.includes("00h")) {
+    if (time.startsWith("-")) {
       return "sla-critical";
     }
 
-    if (time.includes("01h")) {
+    if (time === "05:05") {
       return "sla-warning";
     }
 
