@@ -63,9 +63,9 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
       <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-3xl">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Create New Change Request</h2>
+            <h2 className="text-1xl font-bold text-slate-900">Create New Change Request</h2>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">
-              Owner: Vooka Sai Siddharth — File a new change ticket under CMDB & Change Requests
+              File a new change request ticket with risk assessment and target CI linkage
             </p>
           </div>
           <button
