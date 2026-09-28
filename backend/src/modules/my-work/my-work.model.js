@@ -122,8 +122,10 @@ const getTickets = async (filters = {}) => {
       !filters.priority || ticket.priority.toLowerCase() === filters.priority.toLowerCase();
     const matchesType =
       !filters.ticketType || ticket.ticketType.toLowerCase() === filters.ticketType.toLowerCase();
+    const matchesOrganisation =
+      !filters.organisation || ticket.organisation.toLowerCase().includes(filters.organisation.toLowerCase());
 
-    return matchesAgent && matchesStatus && matchesPriority && matchesType;
+    return matchesAgent && matchesStatus && matchesPriority && matchesType && matchesOrganisation;
   });
 };
 
