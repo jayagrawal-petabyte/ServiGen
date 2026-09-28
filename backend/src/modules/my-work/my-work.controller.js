@@ -2,6 +2,7 @@ const {
   getAgentTickets,
   getActiveTickets,
   getPendingTickets,
+  getActionedTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,
@@ -74,6 +75,22 @@ const listPendingTickets = async (req, res) => {
 };
 
 /**
+ * GET /my-work/actioned - List tickets in the Actioned queue for the acting agent (SCR-004)
+ */
+const listActionedTickets = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const tickets = await getActionedTickets(agentId, req.query);
+    return res.status(200).json({
+      success: true,
+      data: tickets,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch actioned tickets');
+  }
+};
+
+/**
  * GET /my-work/on-hold - List tickets currently placed on hold (SCR-008, SCR-016)
  */
 const listOnHoldTickets = async (req, res) => {
@@ -139,6 +156,7 @@ module.exports = {
   listMyWorkTickets,
   listActiveTickets,
   listPendingTickets,
+  listActionedTickets,
   listOnHoldTickets,
   getTicketDetails,
   updateTicketStatusHandler,
