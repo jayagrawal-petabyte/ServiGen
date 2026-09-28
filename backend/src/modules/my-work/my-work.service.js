@@ -70,6 +70,13 @@ const getOnHoldTickets = async (agentId = 'agent-001', query = {}) => {
 };
 
 /**
+ * Retrieve Active tickets for the agent's current working queue (SCR-004)
+ */
+const getActiveTickets = async (agentId = 'agent-001', query = {}) => {
+  return getAgentTickets(agentId, { ...query, status: 'Active' });
+};
+
+/**
  * Retrieve a specific ticket by ID
  */
 const getTicket = async (ticketId) => {
@@ -161,6 +168,7 @@ module.exports = {
   VALID_PRIORITIES,
   formatSla,
   getAgentTickets,
+  getActiveTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,

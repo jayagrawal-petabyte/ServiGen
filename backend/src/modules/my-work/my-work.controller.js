@@ -1,5 +1,6 @@
 const {
   getAgentTickets,
+  getActiveTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,
@@ -36,6 +37,22 @@ const listMyWorkTickets = async (req, res) => {
     });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch personal tickets');
+  }
+};
+
+/**
+ * GET /my-work/active - List tickets in the Active queue for the acting agent (SCR-004)
+ */
+const listActiveTickets = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const tickets = await getActiveTickets(agentId, req.query);
+    return res.status(200).json({
+      success: true,
+      data: tickets,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch active tickets');
   }
 };
 
@@ -103,6 +120,7 @@ const logTimeHandler = async (req, res) => {
 
 module.exports = {
   listMyWorkTickets,
+  listActiveTickets,
   listOnHoldTickets,
   getTicketDetails,
   updateTicketStatusHandler,
