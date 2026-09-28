@@ -33,7 +33,6 @@ export default function ApprovalsPage() {
   const [toast, setToast] = useState<Toast | null>(null);
 
 // Filter approvals based on the selected status tab and search query.
-const filteredApprovals = useMemo(() => {
   const filteredApprovals = useMemo(() => {
     return approvals.filter((item) => {
       if (currentTab !== 'all' && item.status !== currentTab) {

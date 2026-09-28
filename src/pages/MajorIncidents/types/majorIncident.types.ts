@@ -1,9 +1,5 @@
-// Import from here in components, mock data, and screens.
-
-// Priority levels — only these 4 strings are valid values
 export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 
-// Shape of a single lifecycle stage in the pipeline (Started → Escalated → Diagnosed → Mitigated)
 export interface LifecycleStage {
   label: string;
   timestamp?: string;
@@ -11,7 +7,6 @@ export interface LifecycleStage {
   isCompleted: boolean;
 }
 
-// Shape of a single incident card (maps to the API response when integrated)
 export interface MajorIncident {
   id: string;
   title: string;
@@ -20,11 +15,9 @@ export interface MajorIncident {
   resolutionTarget: string;
   responseTarget: string;
   lifecycleStages: LifecycleStage[];
-  /** Assigned agent name */
   assignee: string;
 }
 
-// Feed entry event types — only these strings are valid values
 export type FeedEntryType =
   | 'new_ticket'
   | 'user_update'
@@ -34,7 +27,6 @@ export type FeedEntryType =
   | 'status_change'
   | 'comment_added';
 
-// Shape of a single row in the Activity Feed panel
 export interface ActivityFeedEntry {
   id: string;
   avatarLabel: string;
@@ -47,9 +39,6 @@ export interface ActivityFeedEntry {
   type: FeedEntryType;
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
-
-/** A single item in a sidebar group */
 export interface SidebarListItem {
   id: string;
   label: string;
@@ -58,7 +47,6 @@ export interface SidebarListItem {
   iconKey?: string;
 }
 
-/** A labelled group of sidebar items (e.g. "ACTIVE", "ACTIONED", "VIEWS") */
 export interface SidebarGroup {
   groupLabel: string;
   items: SidebarListItem[];
