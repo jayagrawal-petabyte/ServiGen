@@ -18,7 +18,7 @@ export default function ApprovalDetailsModal({
   const [showRejectInput, setShowRejectInput] = useState(false);
 
   if (!approval) return null;
-
+// Handles approval/rejection actions from the approval details view.
   const handleConfirmReject = () => {
     onReject(approval.id, rejectReason || 'Rejected by approver');
     onClose();
