@@ -77,6 +77,13 @@ const getActiveTickets = async (agentId = 'agent-001', query = {}) => {
 };
 
 /**
+ * Retrieve Pending tickets awaiting action or approval (SCR-004)
+ */
+const getPendingTickets = async (agentId = 'agent-001', query = {}) => {
+  return getAgentTickets(agentId, { ...query, status: 'Pending' });
+};
+
+/**
  * Retrieve a specific ticket by ID
  */
 const getTicket = async (ticketId) => {
@@ -169,6 +176,7 @@ module.exports = {
   formatSla,
   getAgentTickets,
   getActiveTickets,
+  getPendingTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,
