@@ -1,112 +1,143 @@
-import type { ChartItem } from "./incidents.data";
+import type { CategoryItem } from "./incidents.data";
 
 type CategoryChartProps = {
-  data: ChartItem[];
+  data: CategoryItem[];
 };
 
 const CATEGORY_COLORS = [
-  "#263F67",
-  "#F3A384",
-  "#6EA7D9",
-  "#F6C6B4",
+  "#084f58",
+  "#0b6670",
+  "#0d7d87",
+  "#10929e",
+  "#11a5b2",
+  "#12b2bf",
+  "#18bfcd",
+  "#62d2dd",
+  "#8edfe7",
+  "#afe8ee",
 ];
+
+function formatCategoryLabel(item: CategoryItem): string {
+  return item.showValue === false
+    ? item.label
+    : `${item.label} (${item.value})`;
+}
 
 export default function CategoryChart({
   data,
 }: CategoryChartProps) {
+  if (data.length === 0) {
+    return (
+      <section className="incident-card category-card">
+        <div className="incident-card-title">
+          <h2>Incidents by Category</h2>
+        </div>
+
+        <div className="incident-empty-state">
+          <h3>No category data</h3>
+          <p>No incident categories are available.</p>
+        </div>
+      </section>
+    );
+  }
+
   const total = data.reduce(
     (sum, item) => sum + item.value,
     0
   );
 
-  let currentAngle = 0;
+  let current = 0;
 
-  const segments = data.map((item, index) => {
-    const angle =
-      total > 0
-        ? (item.value / total) * 360
-        : 0;
+  const gradient = data
+    .map((item, index) => {
+      const start = (current / total) * 100;
 
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + angle;
+      current += item.value;
 
-    currentAngle = endAngle;
+      const end = (current / total) * 100;
 
-    return {
-      ...item,
-      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-      startAngle,
-      endAngle,
-    };
-  });
+      return `${
+        CATEGORY_COLORS[index % CATEGORY_COLORS.length]
+      } ${start}% ${end}%`;
+    })
+    .join(", ");
 
-  const gradient =
-    segments.length > 0
-      ? `conic-gradient(${segments
-          .map(
-            (segment) =>
-              `${segment.color} ${segment.startAngle}deg ${segment.endAngle}deg`
-          )
-          .join(", ")})`
-      : "#edf0f4";
+  const leftItems = data.slice(0, 5);
+  const rightItems = data.slice(5, 10);
 
   return (
     <section className="incident-card category-card">
       <div className="incident-card-title">
         <h2>Incidents by Category</h2>
+
+        <button
+          type="button"
+          className="chart-action-button"
+          aria-label="Open category chart"
+        >
+          →
+        </button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="incident-empty-state">
-          <p>No category data available.</p>
+      <div className="category-chart-layout">
+        <div className="category-label-column category-label-left">
+          {leftItems.map((item, index) => (
+            <div
+              key={item.label}
+              className="category-callout category-callout-left"
+            >
+              <span
+                className="category-callout-dot"
+                style={{
+                  background:
+                    CATEGORY_COLORS[
+                      index % CATEGORY_COLORS.length
+                    ],
+                }}
+              />
+
+              <span className="category-callout-text">
+                {formatCategoryLabel(item)}
+              </span>
+            </div>
+          ))}
         </div>
-      ) : (
-        <div className="category-chart">
+
+        <div className="category-pie-wrapper">
           <div
-            className="category-donut"
+            className="category-pie"
             style={{
-              background: gradient,
+              background: `conic-gradient(${gradient})`,
             }}
           >
-            <div className="category-donut-center" />
-          </div>
-
-          <div className="category-legend">
-            {segments.map((item) => {
-              const percentage =
-                total > 0
-                  ? Math.round(
-                      (item.value / total) * 100
-                    )
-                  : 0;
-
-              return (
-                <div
-                  className="category-legend-row"
-                  key={item.label}
-                >
-                  <div className="category-legend-name">
-                    <span
-                      className="category-legend-dot"
-                      style={{
-                        backgroundColor: item.color,
-                      }}
-                    />
-
-                    <span>{item.label}</span>
-                  </div>
-
-                  <strong>{item.value}</strong>
-
-                  <span className="category-percentage">
-                    {percentage}%
-                  </span>
-                </div>
-              );
-            })}
+            <div className="category-pie-hole" />
           </div>
         </div>
-      )}
+
+        <div className="category-label-column category-label-right">
+          {rightItems.map((item, index) => (
+            <div
+              key={item.label}
+              className="category-callout category-callout-right"
+            >
+              <span className="category-callout-text">
+                {formatCategoryLabel(item)}
+              </span>
+
+              <span
+                className="category-callout-dot"
+                style={{
+                  background:
+                    CATEGORY_COLORS[
+                      (index + 5) %
+                        CATEGORY_COLORS.length
+                    ],
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

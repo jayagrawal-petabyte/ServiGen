@@ -1,15 +1,11 @@
-import {
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
-
+import { useMemo, useState, type ChangeEvent } from "react";
 import "./Incidents.css";
 
 import PriorityChart from "./PriorityChart";
 import CategoryChart from "./CategoryChart";
 import RecentIncidents from "./RecentIncidents";
 import NewTickets from "./NewTickets";
+import StatisticsCards from "./StatisticsCards";
 
 import {
   CATEGORY_DATA,
@@ -23,121 +19,105 @@ type IncidentsProps = {
   isLoading?: boolean;
 };
 
+function getStatusClass(status: RecentIncident["status"]): string {
+  if (status === "In Progress") {
+    return "status-progress";
+  }
+
+  if (status === "Open") {
+    return "status-open";
+  }
+
+  if (status === "Resolved") {
+    return "status-resolved";
+  }
+
+  return "status-hold";
+}
+
 export default function Incidents({
   isLoading = false,
 }: IncidentsProps) {
-  const [query, setQuery] = useState<string>("");
-
+  const [search, setSearch] = useState("");
   const [selectedIncident, setSelectedIncident] =
     useState<RecentIncident | null>(null);
 
-
   const filteredIncidents = useMemo(() => {
-    const search = query.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
 
-    if (search === "") {
+    if (!query) {
       return RECENT_INCIDENTS;
     }
 
-    return RECENT_INCIDENTS.filter(
-      (incident: RecentIncident) => {
-        return (
-          incident.id
-            .toLowerCase()
-            .indexOf(search) !== -1 ||
-          incident.subject
-            .toLowerCase()
-            .indexOf(search) !== -1 ||
-          incident.priority
-            .toLowerCase()
-            .indexOf(search) !== -1 ||
-          incident.status
-            .toLowerCase()
-            .indexOf(search) !== -1 ||
-          incident.date
-            .toLowerCase()
-            .indexOf(search) !== -1
-        );
-      }
-    );
-  }, [query]);
+    return RECENT_INCIDENTS.filter((incident) => {
+      const searchableText = [
+        incident.id,
+        incident.subject,
+        incident.priority,
+        incident.status,
+        incident.assignedTo,
+        incident.organisation,
+      ]
+        .join(" ")
+        .toLowerCase();
 
-
+      return searchableText.indexOf(query) !== -1;
+    });
+  }, [search]);
 
   const filteredTickets = useMemo(() => {
-    const search = query.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
 
-    if (search === "") {
+    if (!query) {
       return NEW_TICKETS;
     }
 
     return NEW_TICKETS.filter((ticket) => {
-      return (
-        ticket.id
-          .toLowerCase()
-          .indexOf(search) !== -1 ||
-        ticket.type
-          .toLowerCase()
-          .indexOf(search) !== -1 ||
-        ticket.summary
-          .toLowerCase()
-          .indexOf(search) !== -1 ||
-        ticket.category
-          .toLowerCase()
-          .indexOf(search) !== -1 ||
-        ticket.priority
-          .toLowerCase()
-          .indexOf(search) !== -1 ||
-        ticket.status
-          .toLowerCase()
-          .indexOf(search) !== -1
-      );
-    });
-  }, [query]);
+      const searchableText = [
+        ticket.id,
+        ticket.type,
+        ticket.summary,
+        ticket.agent,
+        ticket.priority,
+      ]
+        .join(" ")
+        .toLowerCase();
 
+      return searchableText.indexOf(query) !== -1;
+    });
+  }, [search]);
 
   const handleSearchChange = (
     event: ChangeEvent<HTMLInputElement>
   ) => {
-    setQuery(event.target.value);
+    setSearch(event.target.value);
   };
 
   const clearSearch = () => {
-    setQuery("");
+    setSearch("");
   };
 
   return (
     <main className="incidents-page">
-
-
       <header className="incidents-header">
         <div className="incidents-heading">
           <h1>Incidents</h1>
-
-          <p>
-            Monitor and manage reported incidents
-          </p>
+          <p>Monitor and manage reported incidents</p>
         </div>
 
         <div className="incidents-header-actions">
-          {/* Search */}
-          <div className="incidents-search">
-            <span
-              className="incidents-search-icon"
-              aria-hidden="true"
-            >
-              ⌕
-            </span>
+          <label className="incidents-search">
+            <span className="incidents-search-icon">⌕</span>
 
             <input
               type="text"
-              value={query}
+              value={search}
               onChange={handleSearchChange}
-              placeholder="Search..."
+              placeholder="Search incidents"
               aria-label="Search incidents"
             />
 
-            {query !== "" && (
+            {search && (
               <button
                 type="button"
                 className="search-clear-button"
@@ -147,7 +127,7 @@ export default function Incidents({
                 ×
               </button>
             )}
-          </div>
+          </label>
 
           <button
             type="button"
@@ -157,16 +137,14 @@ export default function Incidents({
             ♧
           </button>
 
-
           <button
             type="button"
             className="header-icon-button"
-            aria-label="Help"
+            aria-label="Activity"
           >
-            ?
+            ◷
           </button>
 
-          {}
           <button
             type="button"
             className="new-ticket-button"
@@ -176,40 +154,36 @@ export default function Incidents({
         </div>
       </header>
 
+      <StatisticsCards />
 
       {isLoading ? (
         <div className="incidents-grid">
-          <section className="incident-card incident-loading-card">
-            Loading incident analytics...
-          </section>
+          <div className="incident-card incident-loading-card">
+            Loading incidents...
+          </div>
 
-          <section className="incident-card incident-loading-card">
+          <div className="incident-card incident-loading-card">
             Loading recent incidents...
-          </section>
+          </div>
 
-          <section className="incident-card incident-loading-card">
-            Loading category information...
-          </section>
+          <div className="incident-card incident-loading-card">
+            Loading categories...
+          </div>
 
-          <section className="incident-card incident-loading-card">
+          <div className="incident-card incident-loading-card">
             Loading new tickets...
-          </section>
+          </div>
         </div>
       ) : (
-
         <div className="incidents-grid">
-          {/* Top Left */}
           <PriorityChart data={PRIORITY_DATA} />
 
-          {}
           <RecentIncidents
             incidents={filteredIncidents}
             onSelectIncident={setSelectedIncident}
           />
 
-          {}
           <CategoryChart data={CATEGORY_DATA} />
-
 
           <NewTickets tickets={filteredTickets} />
         </div>
@@ -218,112 +192,76 @@ export default function Incidents({
       {selectedIncident && (
         <div
           className="incident-modal-overlay"
-          onClick={() =>
-            setSelectedIncident(null)
-          }
-          role="presentation"
+          onClick={() => setSelectedIncident(null)}
         >
-          <section
+          <div
             className="incident-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="incident-details-title"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
-            {}
             <button
               type="button"
               className="incident-modal-close"
-              onClick={() =>
-                setSelectedIncident(null)
-              }
+              onClick={() => setSelectedIncident(null)}
               aria-label="Close incident details"
             >
               ×
             </button>
 
-            {}
             <div className="incident-modal-header">
               <span className="incident-modal-id">
                 {selectedIncident.id}
               </span>
 
-              <h2 id="incident-details-title">
-                {selectedIncident.subject}
-              </h2>
+              <h2>{selectedIncident.subject}</h2>
+
+              <div className="incident-modal-badges">
+                <span
+                  className={`incident-pill priority-${selectedIncident.priority.toLowerCase()}`}
+                >
+                  {selectedIncident.priority}
+                </span>
+
+                <span
+                  className={`incident-pill ${getStatusClass(
+                    selectedIncident.status
+                  )}`}
+                >
+                  {selectedIncident.status}
+                </span>
+              </div>
             </div>
 
-            {}
-            <div className="incident-modal-badges">
-              <span
-                className={`incident-pill priority-${selectedIncident.priority.toLowerCase()}`}
-              >
-                {selectedIncident.priority}
-              </span>
-
-              <span
-                className={`incident-pill ${
-                  selectedIncident.status ===
-                  "In Progress"
-                    ? "status-progress"
-                    : selectedIncident.status === "Open"
-                    ? "status-open"
-                    : selectedIncident.status ===
-                      "Resolved"
-                    ? "status-resolved"
-                    : "status-hold"
-                }`}
-              >
-                {selectedIncident.status}
-              </span>
-            </div>
-
-            {}
             <div className="incident-details-grid">
               <div className="incident-detail-item">
-                <span>Organisation</span>
-
-                <strong>
-                  {selectedIncident.organisation}
-                </strong>
-              </div>
-
-              <div className="incident-detail-item">
                 <span>Assigned To</span>
-
                 <strong>
                   {selectedIncident.assignedTo}
                 </strong>
               </div>
 
               <div className="incident-detail-item">
-                <span>Priority</span>
-
+                <span>Organisation</span>
                 <strong>
-                  {selectedIncident.priority}
+                  {selectedIncident.organisation}
                 </strong>
               </div>
 
               <div className="incident-detail-item">
                 <span>Date</span>
+                <strong>{selectedIncident.date}</strong>
+              </div>
 
-                <strong>
-                  {selectedIncident.date}
-                </strong>
+              <div className="incident-detail-item">
+                <span>Status</span>
+                <strong>{selectedIncident.status}</strong>
               </div>
             </div>
 
-            {}
             <div className="incident-description">
               <span>Description</span>
-
-              <p>
-                {selectedIncident.description}
-              </p>
+              <p>{selectedIncident.description}</p>
             </div>
-          </section>
+          </div>
         </div>
       )}
     </main>
