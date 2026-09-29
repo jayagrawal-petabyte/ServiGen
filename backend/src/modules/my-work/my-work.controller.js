@@ -1,5 +1,8 @@
 const {
   getAgentTickets,
+  getActiveTickets,
+  getPendingTickets,
+  getActionedTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,
@@ -29,13 +32,65 @@ const getAgentIdFromReq = (req) => {
 const listMyWorkTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const tickets = await getAgentTickets(agentId, req.query);
+    const { tickets, pagination } = await getAgentTickets(agentId, req.query);
     return res.status(200).json({
       success: true,
       data: tickets,
+      pagination,
     });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch personal tickets');
+  }
+};
+
+/**
+ * GET /my-work/active - List tickets in the Active queue for the acting agent (SCR-004)
+ */
+const listActiveTickets = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const { tickets, pagination } = await getActiveTickets(agentId, req.query);
+    return res.status(200).json({
+      success: true,
+      data: tickets,
+      pagination,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch active tickets');
+  }
+};
+
+/**
+ * GET /my-work/pending - List tickets in the Pending queue for the acting agent (SCR-004)
+ */
+const listPendingTickets = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const { tickets, pagination } = await getPendingTickets(agentId, req.query);
+    return res.status(200).json({
+      success: true,
+      data: tickets,
+      pagination,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch pending tickets');
+  }
+};
+
+/**
+ * GET /my-work/actioned - List tickets in the Actioned queue for the acting agent (SCR-004)
+ */
+const listActionedTickets = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const { tickets, pagination } = await getActionedTickets(agentId, req.query);
+    return res.status(200).json({
+      success: true,
+      data: tickets,
+      pagination,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch actioned tickets');
   }
 };
 
@@ -45,10 +100,11 @@ const listMyWorkTickets = async (req, res) => {
 const listOnHoldTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const tickets = await getOnHoldTickets(agentId, req.query);
+    const { tickets, pagination } = await getOnHoldTickets(agentId, req.query);
     return res.status(200).json({
       success: true,
       data: tickets,
+      pagination,
     });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch on-hold tickets');
@@ -103,6 +159,9 @@ const logTimeHandler = async (req, res) => {
 
 module.exports = {
   listMyWorkTickets,
+  listActiveTickets,
+  listPendingTickets,
+  listActionedTickets,
   listOnHoldTickets,
   getTicketDetails,
   updateTicketStatusHandler,

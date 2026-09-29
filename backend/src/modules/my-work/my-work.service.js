@@ -7,6 +7,16 @@ const {
 
 const VALID_STATUSES = ['Active', 'Pending', 'Actioned', 'On Hold'];
 const VALID_PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
+const DEFAULT_PAGE_SIZE = 20;
+
+/**
+ * Parse and validate pagination query params (page, limit)
+ */
+const parsePagination = (query) => {
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || DEFAULT_PAGE_SIZE));
+  return { page, limit };
+};
 
 /**
  * Format minutes into human-readable SLA string (e.g. "2h 30m" or "Breached")
@@ -54,12 +64,31 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
     filters.ticketType = query.ticketType.trim();
   }
 
-  const rawTickets = await getTickets(filters);
+  if (query.organisation) {
+    filters.organisation = query.organisation.trim();
+  }
 
-  return rawTickets.map((t) => ({
+  const allMatched = await getTickets(filters);
+  const total = allMatched.length;
+
+  const { page, limit } = parsePagination(query);
+  const startIndex = (page - 1) * limit;
+  const paginated = allMatched.slice(startIndex, startIndex + limit);
+
+  const tickets = paginated.map((t) => ({
     ...t,
     slaFormatted: formatSla(t.slaTimeLeft),
   }));
+
+  return {
+    tickets,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 /**
@@ -67,6 +96,27 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
  */
 const getOnHoldTickets = async (agentId = 'agent-001', query = {}) => {
   return getAgentTickets(agentId, { ...query, status: 'On Hold' });
+};
+
+/**
+ * Retrieve Active tickets for the agent's current working queue (SCR-004)
+ */
+const getActiveTickets = async (agentId = 'agent-001', query = {}) => {
+  return getAgentTickets(agentId, { ...query, status: 'Active' });
+};
+
+/**
+ * Retrieve Pending tickets awaiting action or approval (SCR-004)
+ */
+const getPendingTickets = async (agentId = 'agent-001', query = {}) => {
+  return getAgentTickets(agentId, { ...query, status: 'Pending' });
+};
+
+/**
+ * Retrieve Actioned tickets that have been worked and resolved (SCR-004)
+ */
+const getActionedTickets = async (agentId = 'agent-001', query = {}) => {
+  return getAgentTickets(agentId, { ...query, status: 'Actioned' });
 };
 
 /**
@@ -161,6 +211,9 @@ module.exports = {
   VALID_PRIORITIES,
   formatSla,
   getAgentTickets,
+  getActiveTickets,
+  getPendingTickets,
+  getActionedTickets,
   getOnHoldTickets,
   getTicket,
   changeTicketStatus,
