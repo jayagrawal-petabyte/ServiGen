@@ -5,6 +5,7 @@ import BreachingSLA from "./BreachingSLA";
 import OpenIncidentsByTeam from "./OpenIncidentsByTeam";
 import DashboardCategory from "./DashboardCategory";
 import DashboardTickets from "./DashboardTickets";
+import DashboardGreeting from "./DashboardGreeting";
 
 import {
   CATEGORY_DATA,
@@ -20,6 +21,8 @@ export default function Dashboard({
 }: DashboardProps) {
   return (
     <main className="dashboard-page">
+      <DashboardGreeting />
+
       <MoodCheckIn />
 
       <section className="dashboard-main-grid">

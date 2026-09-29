@@ -1,7 +1,7 @@
 import { TEAM_INCIDENTS } from "./dashboard.data";
 
 export default function OpenIncidentsByTeam() {
-  const maxValue = 100;
+  const maxValue = 90;
 
   return (
     <section className="dashboard-card dashboard-team-card">
@@ -50,17 +50,17 @@ export default function OpenIncidentsByTeam() {
                 key={team.label}
                 className="team-bar-column"
               >
-                <span className="team-bar-value">
-                  {team.value}
-                </span>
-
-                <div className="team-bar-area">
+                <div className="team-bar-plot">
                   <div
                     className="team-bar"
                     style={{
                       height: `${(team.value / maxValue) * 100}%`,
                     }}
-                  />
+                  >
+                    <span className="team-bar-number">
+                      {team.value}
+                    </span>
+                  </div>
                 </div>
 
                 <span className="team-bar-label">

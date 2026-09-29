@@ -81,7 +81,9 @@
 
 .dashboard-main-grid {
   display: grid;
-  grid-template-columns: minmax(450px, 0.72fr) minmax(650px, 1.7fr);
+  grid-template-columns:
+    minmax(450px, 0.72fr)
+    minmax(650px, 1.7fr);
   grid-template-rows: auto auto;
   gap: 18px;
   align-items: stretch;
@@ -534,69 +536,29 @@
 
 .dashboard-category-card,
 .dashboard-tickets-card {
-  min-height: 480px;
+  min-height: 580px;
 }
 
-.dashboard-category-chart {
-  position: relative;
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
+/* ---------- Incidents by Category (Halo-style pie) ---------- */
+
+.dashboard-category-visual {
+  box-sizing: border-box;
+  padding: 0 12px 20px;
 }
 
 .dashboard-category-svg {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 760px;
-  height: 400px;
-  transform: translateX(-50%);
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
-.dashboard-category-labels {
-  position: absolute;
-  top: 0;
-  width: 250px;
-  height: 400px;
-  pointer-events: none;
+.dashboard-category-label {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.dashboard-category-labels-left {
-  left: 0;
-}
-
-.dashboard-category-labels-right {
-  right: 0;
-}
-
-.dashboard-category-label-box {
-  position: absolute;
-  width: 175px;
-  box-sizing: border-box;
-  padding: 7px 9px;
-  border-radius: 16px;
-  background: #0b6973;
-  color: #ffffff;
-  font-size: 9px;
-  line-height: 1.25;
-  font-weight: 600;
-  text-align: center;
-  overflow-wrap: break-word;
-  box-shadow: 0 3px 8px rgba(27, 64, 76, 0.14);
-}
-
-.dashboard-category-labels-left .dashboard-category-label-box {
-  right: 35px;
-}
-
-.dashboard-category-labels-right .dashboard-category-label-box {
-  left: 35px;
-}
-
-.dashboard-category-svg path {
-  stroke: #ffffff;
-  stroke-width: 1;
-}
+/* ------------------------------------------------------------ */
 
 .dashboard-ticket-table th:nth-child(2),
 .dashboard-ticket-table td:nth-child(2) {
@@ -717,32 +679,8 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-category-chart {
-    height: 390px;
-  }
-
-  .dashboard-category-svg {
-    width: 720px;
-    height: 390px;
-  }
-
-  .dashboard-category-labels {
-    width: 220px;
-    height: 390px;
-  }
-
-  .dashboard-category-label-box {
-    width: 160px;
-    font-size: 8px;
-    padding: 6px 8px;
-  }
-
-  .dashboard-category-labels-left .dashboard-category-label-box {
-    right: 25px;
-  }
-
-  .dashboard-category-labels-right .dashboard-category-label-box {
-    left: 25px;
+  .dashboard-category-card {
+    min-height: 0;
   }
 }
 
@@ -767,39 +705,6 @@
     padding-left: 14px;
     padding-right: 14px;
   }
-
-  .dashboard-category-chart {
-    height: 420px;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .dashboard-category-svg {
-    position: relative;
-    left: 50%;
-    width: 700px;
-    height: 400px;
-    transform: translateX(-50%);
-  }
-
-  .dashboard-category-labels {
-    width: 195px;
-    height: 400px;
-  }
-
-  .dashboard-category-label-box {
-    width: 140px;
-    font-size: 7.5px;
-    padding: 6px 7px;
-  }
-
-  .dashboard-category-labels-left .dashboard-category-label-box {
-    right: 8px;
-  }
-
-  .dashboard-category-labels-right .dashboard-category-label-box {
-    left: 8px;
-  }
 }
 
 @media (max-width: 650px) {
@@ -818,39 +723,159 @@
     font-size: 13px;
   }
 
-  .dashboard-category-chart {
-    height: auto;
+  .dashboard-category-card {
     min-height: 0;
-    overflow: visible;
-    padding-bottom: 20px;
   }
+}
 
-  .dashboard-category-svg {
-    position: relative;
-    left: 0;
-    width: 100%;
-    height: auto;
-    transform: none;
-  }
+.dashboard-greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 4px 8px 8px;
+}
 
-  .dashboard-category-labels {
-    position: static;
-    width: 100%;
-    height: auto;
-    display: flex;
+.greeting-title {
+  margin: 0 0 18px;
+  color: #101a28;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.greeting-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.greeting-avatar {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+}
+
+.greeting-avatar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.greeting-avatar-trophy {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.greeting-avatar-dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #45c93a;
+  border: 2px solid #eef3fb;
+}
+
+.greeting-profile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.greeting-profile-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.greeting-name {
+  color: #101a28;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.greeting-email {
+  color: #101a28;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.greeting-role {
+  color: #58657a;
+  font-size: 14px;
+}
+
+.greeting-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #58657a;
+  font-size: 14px;
+}
+
+.greeting-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #45c93a;
+}
+
+.greeting-date {
+  padding-top: 6px;
+  color: #101a28;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 650px) {
+  .dashboard-greeting {
     flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
   }
 
-  .dashboard-category-labels-left .dashboard-category-label-box,
-  .dashboard-category-labels-right .dashboard-category-label-box {
-    position: static;
-    width: 100%;
+  .greeting-title {
+    font-size: 24px;
   }
 
-  .dashboard-category-label-box {
-    font-size: 9px;
-    text-align: left;
+  .greeting-profile-line {
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
+}
+
+.team-bars {
+  padding-top: 0;
+}
+
+.team-bar-column {
+  justify-content: flex-start;
+}
+
+.team-bar-plot {
+  position: relative;
+  width: 100%;
+  height: 225px;
+}
+
+.team-bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.team-bar-number {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
 }

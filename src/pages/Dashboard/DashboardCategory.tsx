@@ -4,83 +4,58 @@ type DashboardCategoryProps = {
   data: CategoryItem[];
 };
 
-const COLORS = [
-  "#07505a",
-  "#0a6670",
-  "#0d7d87",
-  "#10929e",
-  "#11a6b3",
-  "#12b3c0",
-  "#1bc0cd",
-  "#62d3de",
-  "#94e0e7",
-  "#b5e8ed",
+// Clockwise order from 12 o'clock, as in the Halo screenshot
+const ORDER = [
+  "Network>VPN>Connection Failure",
+  "Business Applications>CRM",
+  "Hardware>Desktop>Boot Failure",
+  "Office Applications>Microsoft Teams>Audio/Video Quality",
+  "Outlook>Email Sending/Receiving",
+  "Monitor>Display Issues",
+  "Wi-Fi>Connectivity",
+  "OneDrive>Sync Issues",
+  "Security>Phishing>Email Report",
+  "Security>Multi-Factor Authentication>Token Lost",
 ];
 
-type Slice = {
-  item: CategoryItem;
-  index: number;
-  startAngle: number;
-  endAngle: number;
-  middleAngle: number;
-  side: "left" | "right";
-};
+const STYLES = [
+  { fill: "#003c50", text: "#ffffff" },
+  { fill: "#00607c", text: "#ffffff" },
+  { fill: "#0096bd", text: "#ffffff" },
+  { fill: "#00c6ff", text: "#ffffff" },
+  { fill: "#33d4ff", text: "#003040" },
+  { fill: "#80e2ff", text: "#003040" },
+  { fill: "#aeeeff", text: "#003040" },
+  { fill: "#003c50", text: "#ffffff" },
+  { fill: "#00607c", text: "#ffffff" },
+  { fill: "#0096bd", text: "#ffffff" },
+];
 
-function polarToCartesian(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angle: number
-) {
-  const radians =
-    ((angle - 90) * Math.PI) / 180;
+const W = 900;
+const H = 560;
+const CX = 450;
+const CY = 300;
+const R = 190;
+const STUB = 24;
+const CHAR_W = 7;
+const PAD = 14;
+const LABEL_H = 30;
+
+function point(angle: number, radius: number) {
+  const rad = (angle * Math.PI) / 180;
 
   return {
-    x:
-      centerX +
-      radius * Math.cos(radians),
-    y:
-      centerY +
-      radius * Math.sin(radians),
+    x: CX + radius * Math.sin(rad),
+    y: CY - radius * Math.cos(rad),
   };
 }
 
-function createArcPath(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-) {
-  const start = polarToCartesian(
-    centerX,
-    centerY,
-    radius,
-    endAngle
-  );
+function slicePath(start: number, end: number) {
+  const p1 = point(start, R);
+  const p2 = point(end, R);
+  const large = end - start > 180 ? 1 : 0;
 
-  const end = polarToCartesian(
-    centerX,
-    centerY,
-    radius,
-    startAngle
-  );
-
-  const largeArcFlag =
-    endAngle - startAngle > 180 ? 1 : 0;
-
-  return [
-    `M ${centerX} ${centerY}`,
-    `L ${start.x} ${start.y}`,
-    `A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
-    "Z",
-  ].join(" ");
-}
-
-function formatLabel(item: CategoryItem) {
-  return item.displayValue
-    ? `${item.label} (${item.value})`
-    : item.label;
+  return `M ${CX} ${CY} L ${p1.x} ${p1.y} A ${R} ${R} 0 ${large} 1 ${p2.x} ${p2.y} Z`;
 }
 
 export default function DashboardCategory({
@@ -95,114 +70,59 @@ export default function DashboardCategory({
 
         <div className="dashboard-empty">
           <strong>No category data</strong>
-          <span>
-            No incident category information is available.
-          </span>
+          <span>No incident category information is available.</span>
         </div>
       </section>
     );
   }
 
-  const total = data.reduce(
-    (sum, item) => sum + item.value,
-    0
-  );
+  const sorted = [...data].sort((a, b) => {
+    const ai = ORDER.indexOf(a.label);
+    const bi = ORDER.indexOf(b.label);
 
-  const centerX = 380;
-  const centerY = 200;
-  const radius = 125;
-
-  const slices: Slice[] = [];
-
-  let currentAngle = 0;
-
-  data.forEach((item, index) => {
-    const startAngle = currentAngle;
-
-    const sliceAngle =
-      (item.value / total) * 360;
-
-    const endAngle =
-      startAngle + sliceAngle;
-
-    const middleAngle =
-      startAngle + sliceAngle / 2;
-
-    const normalizedAngle =
-      middleAngle % 360;
-
-    const side =
-      normalizedAngle >= 0 &&
-      normalizedAngle < 180
-        ? "right"
-        : "left";
-
-    slices.push({
-      item,
-      index,
-      startAngle,
-      endAngle,
-      middleAngle,
-      side,
-    });
-
-    currentAngle = endAngle;
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
-  const leftSlices = slices
-    .filter((slice) => slice.side === "left")
-    .sort(
-      (a, b) =>
-        polarToCartesian(
-          centerX,
-          centerY,
-          radius,
-          a.middleAngle
-        ).y -
-        polarToCartesian(
-          centerX,
-          centerY,
-          radius,
-          b.middleAngle
-        ).y
-    );
+  const total = sorted.reduce((sum, item) => sum + item.value, 0);
 
-  const rightSlices = slices
-    .filter((slice) => slice.side === "right")
-    .sort(
-      (a, b) =>
-        polarToCartesian(
-          centerX,
-          centerY,
-          radius,
-          a.middleAngle
-        ).y -
-        polarToCartesian(
-          centerX,
-          centerY,
-          radius,
-          b.middleAngle
-        ).y
-    );
+  let acc = 0;
 
-  const labelY = [55, 125, 195, 265, 335];
+  const slices = sorted.map((item, index) => {
+    const start = (acc / total) * 360;
+    acc += item.value;
+    const end = (acc / total) * 360;
+    const mid = (start + end) / 2;
 
-  const leftPositions = new Map<string, number>();
+    const style = STYLES[index % STYLES.length];
 
-  leftSlices.forEach((slice, index) => {
-    leftPositions.set(
-      slice.item.label,
-      labelY[Math.min(index, labelY.length - 1)]
-    );
-  });
+    const text = item.displayValue
+      ? `${item.label} (${item.value})`
+      : item.label;
 
-  const rightPositions = new Map<string, number>();
+    const width = text.length * CHAR_W + PAD * 2;
+    const edge = point(mid, R);
+    const stub = point(mid, R + STUB);
 
-  rightSlices.forEach((slice, index) => {
-    rightPositions.set(
-      slice.item.label,
-      labelY[Math.min(index, labelY.length - 1)]
-    );
+    let x: number;
+    let y: number;
+
+    if (mid > 165 && mid < 195) {
+      // bottom: centre the label under the slice
+      x = stub.x - width / 2;
+      y = stub.y;
+    } else if (mid < 180) {
+      // right side
+      x = stub.x;
+      y = stub.y - LABEL_H / 2;
+    } else {
+      // left side
+      x = stub.x - width;
+      y = stub.y - LABEL_H / 2;
+    }
+
+    x = Math.max(4, Math.min(W - 4 - width, x));
+
+    return { item, style, text, width, edge, stub, start, end, x, y };
   });
 
   return (
@@ -219,155 +139,57 @@ export default function DashboardCategory({
         </button>
       </div>
 
-      <div className="dashboard-category-chart">
+      <div className="dashboard-category-visual">
         <svg
           className="dashboard-category-svg"
-          viewBox="0 0 760 400"
+          viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Incidents by category pie chart"
         >
-          {slices.map((slice) => (
+          {slices.map((s) => (
             <path
-              key={slice.item.label}
-              d={createArcPath(
-                centerX,
-                centerY,
-                radius,
-                slice.startAngle,
-                slice.endAngle
-              )}
-              fill={
-                COLORS[
-                  slice.index % COLORS.length
-                ]
-              }
-              stroke="#ffffff"
-              strokeWidth="1"
+              key={`slice-${s.item.label}`}
+              d={slicePath(s.start, s.end)}
+              fill={s.style.fill}
             />
           ))}
 
-          <circle
-            cx={centerX}
-            cy={centerY}
-            r="57"
-            fill="#ffffff"
-          />
+          {slices.map((s) => (
+            <g key={`label-${s.item.label}`}>
+              <line
+                x1={s.edge.x}
+                y1={s.edge.y}
+                x2={s.stub.x}
+                y2={s.stub.y}
+                stroke={s.style.fill}
+                strokeWidth="4"
+              />
 
-          {leftSlices.map((slice) => {
-            const point = polarToCartesian(
-              centerX,
-              centerY,
-              radius + 4,
-              slice.middleAngle
-            );
+              <rect
+                x={s.x}
+                y={s.y}
+                width={s.width}
+                height={LABEL_H}
+                rx={LABEL_H / 2}
+                fill={s.style.fill}
+              />
 
-            const y =
-              leftPositions.get(
-                slice.item.label
-              ) ?? centerY;
-
-            return (
-              <g key={`left-${slice.item.label}`}>
-                <path
-                  d={`M ${point.x} ${point.y} L 205 ${y} L 170 ${y}`}
-                  fill="none"
-                  stroke="#c9d5df"
-                  strokeWidth="1"
-                />
-
-                <circle
-                  cx="170"
-                  cy={y}
-                  r="4"
-                  fill={
-                    COLORS[
-                      slice.index % COLORS.length
-                    ]
-                  }
-                />
-              </g>
-            );
-          })}
-
-          {rightSlices.map((slice) => {
-            const point = polarToCartesian(
-              centerX,
-              centerY,
-              radius + 4,
-              slice.middleAngle
-            );
-
-            const y =
-              rightPositions.get(
-                slice.item.label
-              ) ?? centerY;
-
-            return (
-              <g
-                key={`right-${slice.item.label}`}
+              <text
+                className="dashboard-category-label"
+                x={s.x + s.width / 2}
+                y={s.y + LABEL_H / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                textLength={s.width - PAD * 2}
+                lengthAdjust="spacingAndGlyphs"
+                fill={s.style.text}
               >
-                <path
-                  d={`M ${point.x} ${point.y} L 555 ${y} L 590 ${y}`}
-                  fill="none"
-                  stroke="#c9d5df"
-                  strokeWidth="1"
-                />
-
-                <circle
-                  cx="590"
-                  cy={y}
-                  r="4"
-                  fill={
-                    COLORS[
-                      slice.index % COLORS.length
-                    ]
-                  }
-                />
-              </g>
-            );
-          })}
+                {s.text}
+              </text>
+            </g>
+          ))}
         </svg>
-
-        <div className="dashboard-category-labels dashboard-category-labels-left">
-          {leftSlices.map((slice) => {
-            const y =
-              leftPositions.get(
-                slice.item.label
-              ) ?? 200;
-
-            return (
-              <div
-                key={slice.item.label}
-                className="dashboard-category-label-box"
-                style={{
-                  top: `${y - 20}px`,
-                }}
-              >
-                {formatLabel(slice.item)}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="dashboard-category-labels dashboard-category-labels-right">
-          {rightSlices.map((slice) => {
-            const y =
-              rightPositions.get(
-                slice.item.label
-              ) ?? 200;
-
-            return (
-              <div
-                key={slice.item.label}
-                className="dashboard-category-label-box"
-                style={{
-                  top: `${y - 20}px`,
-                }}
-              >
-                {formatLabel(slice.item)}
-              </div>
-            );
-          })}
-        </div>
       </div>
     </section>
   );
