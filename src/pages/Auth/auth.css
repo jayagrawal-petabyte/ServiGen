@@ -1,5 +1,6 @@
-/* SCR-001 Login Screen - Pixel-Perfect Figma Accuracy */
+/* SCR-001 Login Screen & SCR-013 Splash Screen Styling */
 
+/* SCR-001 Login Page */
 .figma-login-page {
   width: 100vw;
   height: 100vh;
@@ -15,7 +16,6 @@
   box-sizing: border-box;
 }
 
-/* Central Organic Background SVG */
 .figma-svg-bg {
   position: absolute;
   top: 0;
@@ -26,7 +26,6 @@
   pointer-events: none;
 }
 
-/* Background Dots & Decorative Shapes */
 .figma-decor-layer {
   position: absolute;
   top: 0;
@@ -37,7 +36,6 @@
   pointer-events: none;
 }
 
-/* Top-left dark terracotta dot */
 .decor-dot-1 {
   position: absolute;
   top: 5.5%;
@@ -48,7 +46,6 @@
   background-color: #A8543D;
 }
 
-/* Left edge white semi-circle */
 .decor-dot-2 {
   position: absolute;
   top: 25.5%;
@@ -59,7 +56,6 @@
   background-color: #FFFFFF;
 }
 
-/* Bottom-left small light pink dot */
 .decor-dot-3 {
   position: absolute;
   bottom: 26%;
@@ -70,7 +66,6 @@
   background-color: #FBE2D8;
 }
 
-/* Bottom-center-left light pink dot */
 .decor-dot-4 {
   position: absolute;
   bottom: -15px;
@@ -81,7 +76,6 @@
   background-color: #FBE2D8;
 }
 
-/* Top-right light grey dot */
 .decor-dot-5 {
   position: absolute;
   top: 10.5%;
@@ -92,7 +86,6 @@
   background-color: #D7DEE5;
 }
 
-/* Middle-right terracotta capsule shape */
 .decor-capsule-6 {
   position: absolute;
   top: 33.5%;
@@ -103,7 +96,6 @@
   background-color: #C2674D;
 }
 
-/* Bottom-right light pink dot (upper) */
 .decor-dot-7 {
   position: absolute;
   bottom: 21.5%;
@@ -114,7 +106,6 @@
   background-color: #FBE2D8;
 }
 
-/* Bottom-right light pink dot (lower) */
 .decor-dot-8 {
   position: absolute;
   bottom: 8.5%;
@@ -125,7 +116,6 @@
   background-color: #FBE2D8;
 }
 
-/* Center Content Container */
 .figma-login-wrapper {
   position: relative;
   z-index: 10;
@@ -136,7 +126,6 @@
   align-items: center;
 }
 
-/* Header Text "Login" */
 .figma-login-header {
   font-size: 28px;
   font-weight: 500;
@@ -146,7 +135,6 @@
   letter-spacing: -0.01em;
 }
 
-/* Card Box */
 .figma-card-box {
   width: 100%;
   background-color: #FFFBF8;
@@ -156,7 +144,6 @@
   box-sizing: border-box;
 }
 
-/* Field Container */
 .figma-field {
   display: flex;
   flex-direction: column;
@@ -170,7 +157,6 @@
   margin-bottom: 6px;
 }
 
-/* Input Fields */
 .figma-input-field {
   width: 100%;
   height: 42px;
@@ -189,7 +175,6 @@
   box-shadow: 0 0 0 2px #C4674E;
 }
 
-/* Button Row */
 .figma-btn-row {
   display: flex;
   justify-content: center;
@@ -222,7 +207,6 @@
   transform: translateY(0);
 }
 
-/* Forget Password Link directly under the right edge of the card */
 .figma-forget-row {
   width: 100%;
   display: flex;
@@ -242,10 +226,97 @@
   text-decoration: underline;
 }
 
-/* Error message styling */
 .figma-error-msg {
   color: #D32F2F;
   font-size: 12px;
   margin-bottom: 12px;
   text-align: center;
+}
+
+/* ==========================================================================
+   SCR-013 Splash / Sign-In Loading Screen - Exact Figma Design
+   ========================================================================== */
+
+.figma-splash-page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Right Curved Teal Graphic */
+.splash-teal-curve {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .splash-teal-curve {
+    width: 60%;
+  }
+}
+
+/* Center Content Area */
+.splash-content-wrapper {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* "Hello Demo" Welcome Heading */
+.splash-welcome-heading {
+  font-size: 24px;
+  font-weight: 500;
+  color: #1F1F1F;
+  margin: 0 0 32px 0;
+  letter-spacing: -0.01em;
+}
+
+/* Logo & Orbiting Loader Container */
+.splash-logo-container {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+/* Orbiting Loader Animation */
+.splash-loader-orbit {
+  position: absolute;
+  inset: -12px;
+  animation: splashSpin 1.8s linear infinite;
+}
+
+@keyframes splashSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Subtext "We are signing you in" */
+.splash-subtext {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1F1F1F;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
