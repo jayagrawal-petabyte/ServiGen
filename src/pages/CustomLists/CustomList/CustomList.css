@@ -1,0 +1,325 @@
+/* CustomList.css */
+
+.cl-page {
+  min-height: 100vh;
+  background-color: #faf5ef;
+  padding: 36px 40px 60px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.cl-container {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* Page Top Header */
+.cl-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.cl-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e2022;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.cl-gear-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #8c97a5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.cl-gear-icon-btn:hover {
+  color: #475569;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Tab Navigation */
+.cl-tab-navigation {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.cl-pill-tab {
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: #475569;
+  padding: 5px 22px;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.cl-pill-tab:hover {
+  color: #1e2022;
+}
+
+.cl-pill-tab.active {
+  color: #1e2022;
+  border-color: #e5905c;
+  background-color: transparent;
+  font-weight: 600;
+}
+
+/* Main White Card with Curvy Edges */
+.cl-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #f2e9e0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.025);
+  padding: 26px 36px 42px;
+  box-sizing: border-box;
+}
+
+/* Action Header inside Card */
+.cl-action-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.cl-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cl-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #ea8a54;
+  border: none;
+  border-radius: 9999px;
+  padding: 7px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-btn-save:hover:not(:disabled) {
+  background-color: #dc7c46;
+}
+
+.cl-btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cl-btn-cancel {
+  background-color: #ffffff;
+  border: 1px solid #cfd7df;
+  border-radius: 9999px;
+  padding: 7px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-btn-cancel:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.cl-status-msg {
+  font-size: 12.5px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+.cl-status-msg.success {
+  color: #10b981;
+}
+
+.cl-status-msg.error {
+  color: #ef4444;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Fields */
+.cl-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cl-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cl-field-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  user-select: none;
+}
+
+.cl-req {
+  color: #ef4444;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+/* Curved Input Boxes */
+.cl-input-curved {
+  width: 100%;
+  height: 42px;
+  padding: 10px 18px;
+  border: 1px solid #c8d1db;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cl-input-curved:focus {
+  border-color: #ea8a54;
+  box-shadow: 0 0 0 2px rgba(234, 138, 84, 0.15);
+}
+
+.cl-input-curved.error {
+  border-color: #ef4444;
+}
+
+.cl-input-curved.error:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+.cl-input-sequence {
+  width: 150px;
+}
+
+/* Curved Select Wrappers & Elements */
+.cl-select-curved-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.cl-select-curved {
+  width: 100%;
+  height: 42px;
+  padding: 10px 42px 10px 18px;
+  border: 1px solid #c8d1db;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+  background-color: #ffffff;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cl-select-curved:focus {
+  border-color: #ea8a54;
+  box-shadow: 0 0 0 2px rgba(234, 138, 84, 0.15);
+}
+
+.cl-select-curved.is-placeholder {
+  color: #94a3b8;
+}
+
+.cl-select-curved-wrap.error .cl-select-curved {
+  border-color: #ef4444;
+}
+
+.cl-select-curved-wrap.error .cl-select-curved:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+/* Custom Dropdown Chevron Arrow */
+.cl-select-curved-wrap::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 7px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c97a5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Checkbox Subfields */
+.cl-checkbox-subfield {
+  margin-top: 6px;
+}
+
+.cl-checkbox-subfield-group {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cl-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cl-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #ea8a54;
+  border-radius: 3px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.cl-field-error {
+  font-size: 11.5px;
+  color: #ef4444;
+  margin-top: 2px;
+}
