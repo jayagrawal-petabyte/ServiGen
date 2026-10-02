@@ -6,6 +6,7 @@ import OpenIncidentsByTeam from "./OpenIncidentsByTeam";
 import DashboardCategory from "./DashboardCategory";
 import DashboardTickets from "./DashboardTickets";
 import DashboardGreeting from "./DashboardGreeting";
+import Sidebar from "../OnHoldTicket/sidebar/Sidebar";
 
 import {
   CATEGORY_DATA,
@@ -20,40 +21,44 @@ export default function Dashboard({
   isLoading = false,
 }: DashboardProps) {
   return (
-    <main className="dashboard-page">
-      <DashboardGreeting />
+    <div className="dashboard-layout">
+      <Sidebar />
 
-      <MoodCheckIn />
+      <main className="dashboard-page">
+        <DashboardGreeting />
 
-      <section className="dashboard-main-grid">
-        <div className="dashboard-stats-grid">
-          {DASHBOARD_STATS.map((stat) => (
-            <article
-              key={stat.label}
-              className={`dashboard-stat-card dashboard-stat-${stat.type}`}
-            >
-              <h2>
-                {stat.label}
-                {"suffix" in stat && (
-                  <span> ({stat.suffix})</span>
-                )}
-              </h2>
+        <MoodCheckIn />
 
-              <strong>{stat.value}</strong>
-            </article>
-          ))}
-        </div>
+        <section className="dashboard-main-grid">
+          <div className="dashboard-stats-grid">
+            {DASHBOARD_STATS.map((stat) => (
+              <article
+                key={stat.label}
+                className={`dashboard-stat-card dashboard-stat-${stat.type}`}
+              >
+                <h2>
+                  {stat.label}
+                  {"suffix" in stat && (
+                    <span> ({stat.suffix})</span>
+                  )}
+                </h2>
 
-        <BreachingSLA isLoading={isLoading} />
+                <strong>{stat.value}</strong>
+              </article>
+            ))}
+          </div>
 
-        <OpenIncidentsByTeam />
-      </section>
+          <BreachingSLA isLoading={isLoading} />
 
-      <section className="dashboard-lower-grid">
-        <DashboardCategory data={CATEGORY_DATA} />
+          <OpenIncidentsByTeam />
+        </section>
 
-        <DashboardTickets isLoading={isLoading} />
-      </section>
-    </main>
+        <section className="dashboard-lower-grid">
+          <DashboardCategory data={CATEGORY_DATA} />
+
+          <DashboardTickets isLoading={isLoading} />
+        </section>
+      </main>
+    </div>
   );
 }
