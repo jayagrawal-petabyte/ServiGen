@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChangeRequest } from '../../types/cmdb';
+import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
 import { X, Clock, Tag, User, CheckSquare } from 'lucide-react';
@@ -99,7 +99,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <CheckSquare className="w-4 h-4 text-[#E87A5D]" /> Subtask Implementation Plan
             </h3>
             <div className="space-y-2">
-              {changeRequest.subtasks.map((st) => (
+              {changeRequest.subtasks.map((st: SubTask) => (
                 <div
                   key={st.id}
                   className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl"

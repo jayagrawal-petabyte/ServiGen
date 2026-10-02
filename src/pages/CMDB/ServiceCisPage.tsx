@@ -68,7 +68,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {items.map((svc) => (
+        {items.map((svc: ServiceCI) => (
           <div
             key={svc.id}
             className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between"

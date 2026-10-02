@@ -1,23 +1,23 @@
 import React, { useState, useMemo } from 'react';
-import { INITIAL_ARTICLE_DRAFTS } from './mockArticleDraftsData';
-import ArticleDraftSidebar from './ArticleDraftSidebar';
+import { INITIAL_ARTICLE_DRAFTS, type ArticleDraft } from './mockArticleDraftsData';
+import ArticleDraftSidebar, { type ArticleDraftView } from './ArticleDraftSidebar';
 import ArticleDraftsDesignView from './ArticleDraftsDesignView';
 import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
 import './articleDrafts.css';
 
 export default function ArticleDraftsPage() {
-  const [drafts, setDrafts] = useState(INITIAL_ARTICLE_DRAFTS);
-  const [viewMode, setViewMode] = useState('design'); // 'design' | 'live'
-  const [activeSubnavView, setActiveSubnavView] = useState('all'); // 'all' | 'my-lists' | 'by-agent' | 'by-team' | 'by-status'
+  const [drafts, setDrafts] = useState<ArticleDraft[]>(INITIAL_ARTICLE_DRAFTS);
+  const [viewMode, setViewMode] = useState<'design' | 'live'>('design');
+  const [activeSubnavView, setActiveSubnavView] = useState<ArticleDraftView>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [perPage, setPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' | 'desc'
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedArticle, setSelectedArticle] = useState<ArticleDraft | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Subnav filtering
   const filteredByView = useMemo(() => {
@@ -66,7 +66,7 @@ export default function ArticleDraftsPage() {
   }, [sortedDrafts, currentPage, perPage]);
 
   // Selection handlers
-  const handleToggleSelect = (id) => {
+  const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -83,7 +83,7 @@ export default function ArticleDraftsPage() {
   };
 
   // Status updates
-  const handleUpdateStatus = (id, newStatus) => {
+  const handleUpdateStatus = (id: string, newStatus: ArticleDraft['status']) => {
     setDrafts((prev) =>
       prev.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
     );
@@ -275,7 +275,7 @@ export default function ArticleDraftsPage() {
             article={selectedArticle}
             onClose={() => setSelectedArticle(null)}
             onUpdateStatus={handleUpdateStatus}
-            onSaveContent={(id, updates) => {
+            onSaveContent={(id: string, updates: Pick<ArticleDraft, 'summaryTitle' | 'body'>) => {
               setDrafts((prev) =>
                 prev.map((d) => (d.id === id ? { ...d, ...updates } : d))
               );
