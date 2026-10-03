@@ -62,6 +62,7 @@ const tickets = [
     slaTimeLeft: 420,
     timeRecord: 15,
     holdReason: 'Awaiting vendor quote',
+    holdStartedAt: '2026-09-24T14:30:00.000Z',
     createdAt: '2026-09-24T14:00:00.000Z',
     updatedAt: '2026-09-25T08:00:00.000Z',
   },
@@ -77,6 +78,7 @@ const tickets = [
     slaTimeLeft: 540,
     timeRecord: 30,
     holdReason: 'Awaiting hardware shipment',
+    holdStartedAt: '2026-09-24T11:45:00.000Z',
     createdAt: '2026-09-24T11:20:00.000Z',
     updatedAt: '2026-09-25T07:30:00.000Z',
   },
@@ -143,6 +145,13 @@ const updateTicket = async (id, changes) => {
 
   if (!ticket) {
     return null;
+  }
+
+  // Auto-manage holdStartedAt when status transitions to/from On Hold
+  if (changes.status === 'On Hold' && ticket.status !== 'On Hold') {
+    changes.holdStartedAt = new Date().toISOString();
+  } else if (changes.status && changes.status !== 'On Hold' && ticket.status === 'On Hold') {
+    changes.holdStartedAt = null;
   }
 
   Object.assign(ticket, changes, { updatedAt: new Date().toISOString() });

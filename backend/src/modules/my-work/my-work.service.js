@@ -30,6 +30,31 @@ const formatSla = (minutes) => {
 };
 
 /**
+ * Compute how long a ticket has been on hold from holdStartedAt to now.
+ * Returns a human-readable string (e.g. "1h 45m") or null if not on hold.
+ */
+const formatHoldDuration = (holdStartedAt) => {
+  if (!holdStartedAt) return null;
+  const diffMs = Date.now() - new Date(holdStartedAt).getTime();
+  if (diffMs < 0) return null;
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
+
+/**
+ * Attach all computed SLA and hold-duration fields to a raw ticket object.
+ * Used consistently across every service response to guarantee a uniform contract.
+ */
+const formatTicket = (t) => ({
+  ...t,
+  slaFormatted: formatSla(t.slaTimeLeft),
+  slaBreach: typeof t.slaTimeLeft === 'number' && t.slaTimeLeft <= 0,
+  holdDuration: formatHoldDuration(t.holdStartedAt),
+});
+
+/**
  * Retrieve personal tickets for an agent, optionally filtered by queue status or priority
  */
 const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
@@ -75,10 +100,7 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
   const startIndex = (page - 1) * limit;
   const paginated = allMatched.slice(startIndex, startIndex + limit);
 
-  const tickets = paginated.map((t) => ({
-    ...t,
-    slaFormatted: formatSla(t.slaTimeLeft),
-  }));
+  const tickets = paginated.map(formatTicket);
 
   return {
     tickets,
@@ -130,10 +152,7 @@ const getTicket = async (ticketId) => {
     throw error;
   }
 
-  return {
-    ...ticket,
-    slaFormatted: formatSla(ticket.slaTimeLeft),
-  };
+  return formatTicket(ticket);
 };
 
 /**
@@ -172,10 +191,7 @@ const changeTicketStatus = async (ticketId, payload = {}) => {
 
   const updatedTicket = await updateTicket(ticketId, updates);
 
-  return {
-    ...updatedTicket,
-    slaFormatted: formatSla(updatedTicket.slaTimeLeft),
-  };
+  return formatTicket(updatedTicket);
 };
 
 /**
@@ -200,16 +216,15 @@ const logTicketTime = async (ticketId, minutesSpent) => {
   const newTotalTime = (existingTicket.timeRecord || 0) + parsedMinutes;
   const updatedTicket = await updateTicket(ticketId, { timeRecord: newTotalTime });
 
-  return {
-    ...updatedTicket,
-    slaFormatted: formatSla(updatedTicket.slaTimeLeft),
-  };
+  return formatTicket(updatedTicket);
 };
 
 module.exports = {
   VALID_STATUSES,
   VALID_PRIORITIES,
   formatSla,
+  formatHoldDuration,
+  formatTicket,
   getAgentTickets,
   getActiveTickets,
   getPendingTickets,
