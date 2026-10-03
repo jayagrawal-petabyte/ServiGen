@@ -1,15 +1,8 @@
-import {
-  useMemo,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import "./ServiceCatalogue.css";
 
-type Category =
-  | "Business Applications"
-  | "End-User Catalogue"
-  | "Services";
+type Category = "Business Applications" | "End-User Catalogue" | "Services";
+type CategoryFilter = "All Services" | Category;
 
 type Service = {
   name: string;
@@ -18,159 +11,61 @@ type Service = {
   category: Category;
 };
 
-type RequestState = "idle" | "success" | "error";
-
-type ServiceCardProps = {
-  service: Service;
-  onViewDetails: (service: Service) => void;
-  onRequest: (service: Service) => void;
-};
-
-const getCategoryClass = (category: Category): string => {
-  if (category === "Business Applications") {
-    return "business-applications";
-  }
-
-  if (category === "End-User Catalogue") {
-    return "end-user-catalogue";
-  }
-
-  return "services";
-};
+type RequestState = "idle" | "error" | "success";
 
 const services: Service[] = [
-  {
-    name: "Absence Management",
-    description:
-      "Click here to raise an absence management request.",
-    icon: "📅",
-    category: "End-User Catalogue",
-  },
-  {
-    name: "Administrator Rights",
-    description:
-      "Click here if you require administrator rights.",
-    icon: "⚙️",
-    category: "End-User Catalogue",
-  },
-  {
-    name: "Air Con",
-    description:
-      "Click here to raise an issue with the air conditioning.",
-    icon: "❄️",
-    category: "Services",
-  },
-  {
-    name: "Benefit Change",
-    description:
-      "Click here to raise a benefit change request.",
-    icon: "🎁",
-    category: "End-User Catalogue",
-  },
-  {
-    name: "Building Fabric",
-    description:
-      "Click here to raise an issue with the building fabric.",
-    icon: "🏢",
-    category: "Services",
-  },
-  {
-    name: "CRM",
-    description:
-      "Manage customer and sales relationships and pipelines.",
-    icon: "👥",
-    category: "Business Applications",
-  },
-  {
-    name: "Data Integration",
-    description:
-      "Coordinate and integrate data, applications, and workflows.",
-    icon: "🧩",
-    category: "Business Applications",
-  },
-  {
-    name: "Database Administration",
-    description:
-      "Provides secure and reliable database storage and management.",
-    icon: "🗄️",
-    category: "Business Applications",
-  },
-  {
-    name: "Desk Booking",
-    description:
-      "Click here to reserve a desk.",
-    icon: "🪑",
-    category: "End-User Catalogue",
-  },
-  {
-    name: "Desktop",
-    description:
-      "Click here to request a new desktop.",
-    icon: "🖥️",
-    category: "End-User Catalogue",
-  },
-  {
-    name: "Dynamics CRM",
-    description:
-      "Manages sales, marketing, and customer service processes.",
-    icon: "📊",
-    category: "Business Applications",
-  },
-  {
-    name: "Electrical",
-    description:
-      "Click here to raise an issue with electrical services.",
-    icon: "🔌",
-    category: "Services",
-  },
+  { name: "Absence Management", description: "Raise an absence management request.", icon: "📅", category: "End-User Catalogue" },
+  { name: "Administrator Rights", description: "Request administrator access to your device.", icon: "⚙️", category: "End-User Catalogue" },
+  { name: "Air Con", description: "Report an air conditioning issue.", icon: "❄️", category: "Services" },
+  { name: "Benefit Change", description: "Raise a request to change your benefits.", icon: "🎁", category: "End-User Catalogue" },
+  { name: "Building Fabric", description: "Report an issue with the building or its facilities.", icon: "🏢", category: "Services" },
+  { name: "CRM", description: "Get support for customer relationship management.", icon: "👥", category: "Business Applications" },
+  { name: "Data Integration", description: "Request help with data and application integration.", icon: "🧩", category: "Business Applications" },
+  { name: "Database Administration", description: "Request database support and administration.", icon: "🗄️", category: "Business Applications" },
+  { name: "Desk Booking", description: "Request assistance with desk booking.", icon: "🪑", category: "End-User Catalogue" },
+  { name: "Desktop", description: "Request a desktop or desktop support.", icon: "🖥️", category: "End-User Catalogue" },
+  { name: "Dynamics CRM", description: "Get support for Dynamics CRM.", icon: "📊", category: "Business Applications" },
+  { name: "Electrical", description: "Report an electrical issue.", icon: "🔌", category: "Services" },
 ];
 
-const categories: Array<"All Services" | Category> = [
+const categories: CategoryFilter[] = [
   "All Services",
   "Business Applications",
   "End-User Catalogue",
   "Services",
 ];
 
-function ServiceCard({
-  service,
-  onViewDetails,
-  onRequest,
-}: ServiceCardProps) {
+const categoryClass = (category: Category): string =>
+  category === "Business Applications"
+    ? "business-applications"
+    : category === "End-User Catalogue"
+      ? "end-user-catalogue"
+      : "services";
+
+type ServiceCardProps = {
+  service: Service;
+  onDetails: (service: Service) => void;
+  onRequest: (service: Service) => void;
+};
+
+function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
   return (
     <article className="service-card">
       <div className="service-card-top">
-        <div
-          className={`service-icon service-icon-${getCategoryClass(
-            service.category
-          )}`}
-        >
-          <span>{service.icon}</span>
+        <div className={`service-icon service-icon-${categoryClass(service.category)}`}>
+          {service.icon}
         </div>
-
-        <span className="service-category">
-          {service.category}
-        </span>
+        <span className="service-category">{service.category}</span>
       </div>
 
       <h3>{service.name}</h3>
-
       <p>{service.description}</p>
 
       <div className="service-card-actions">
-        <button
-          type="button"
-          className="details-button"
-          onClick={() => onViewDetails(service)}
-        >
+        <button type="button" className="details-button" onClick={() => onDetails(service)}>
           View details
         </button>
-
-        <button
-          type="button"
-          className="request-button"
-          onClick={() => onRequest(service)}
-        >
+        <button type="button" className="request-button" onClick={() => onRequest(service)}>
           Request
         </button>
       </div>
@@ -179,84 +74,61 @@ function ServiceCard({
 }
 
 export default function ServiceCatalogue() {
-  const [selectedCategory, setSelectedCategory] =
-    useState<"All Services" | Category>("All Services");
-
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All Services");
   const [searchText, setSearchText] = useState("");
+  const [detailsService, setDetailsService] = useState<Service | null>(null);
 
-  const [selectedService, setSelectedService] =
-    useState<Service | null>(null);
-
-  const [requestService, setRequestService] =
-    useState<Service | null>(null);
-
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestService, setRequestService] = useState<Service | null>(null);
   const [requestDetails, setRequestDetails] = useState("");
-
-  const [requestState, setRequestState] =
-    useState<RequestState>("idle");
+  const [requestState, setRequestState] = useState<RequestState>("idle");
 
   const filteredServices = useMemo(() => {
     const search = searchText.trim().toLowerCase();
 
-    return services.filter((service: Service) => {
-      const categoryMatches =
-        selectedCategory === "All Services" ||
-        service.category === selectedCategory;
+    return services.filter((service) => {
+      const matchesCategory =
+        selectedCategory === "All Services" || service.category === selectedCategory;
 
-      const searchMatches =
-        search === "" ||
+      const matchesSearch =
+        !search ||
         service.name.toLowerCase().includes(search) ||
         service.description.toLowerCase().includes(search) ||
         service.category.toLowerCase().includes(search);
 
-      return categoryMatches && searchMatches;
+      return matchesCategory && matchesSearch;
     });
   }, [selectedCategory, searchText]);
 
-  const handleSearch = (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
-    setSearchText(event.target.value);
-  };
-
-  const handleCategoryChange = (
-    category: "All Services" | Category
-  ) => {
-    setSelectedCategory(category);
-  };
-
-  const handleViewDetails = (service: Service) => {
-    setSelectedService(service);
-  };
-
-  const handleRequest = (service: Service) => {
-    setSelectedService(null);
-    setRequestService(service);
+  const openRequest = (service?: Service) => {
+    setDetailsService(null);
+    setRequestService(service ?? null);
     setRequestDetails("");
     setRequestState("idle");
-  };
-
-  const closeDetails = () => {
-    setSelectedService(null);
+    setRequestOpen(true);
   };
 
   const closeRequest = () => {
+    setRequestOpen(false);
     setRequestService(null);
     setRequestDetails("");
     setRequestState("idle");
   };
 
-  const handleSubmitRequest = (
-    event: FormEvent<HTMLFormElement>
-  ) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!requestDetails.trim()) {
+    if (!requestService || !requestDetails.trim()) {
       setRequestState("error");
       return;
     }
 
+    // Frontend fallback: simulates a successful backend response.
     setRequestState("success");
+  };
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchText(event.target.value);
   };
 
   const clearFilters = () => {
@@ -267,53 +139,34 @@ export default function ServiceCatalogue() {
   return (
     <main className="services-page">
       <div className="services-container">
-
-        {/* HEADER */}
         <header className="services-header">
           <div className="services-heading">
             <h1>Services</h1>
-
-            <p>
-              Browse available services and submit requests
-            </p>
+            <p>Browse available services and submit requests</p>
           </div>
 
           <div className="header-actions">
             <div className="service-count">
-              <strong>67</strong>
+              <strong>{services.length}</strong>
               <span>services</span>
             </div>
-
-            <button
-              type="button"
-              className="new-button"
-            >
-              <span>+</span>
-              New
+            <button type="button" className="new-button" onClick={() => openRequest()}>
+              <span>+</span> New
             </button>
           </div>
         </header>
 
-        {/* CATALOGUE */}
         <div className="catalogue-layout">
-
-          {/* CATEGORY SIDEBAR */}
           <aside className="category-sidebar">
-
-            {/* SEARCH */}
             <div className="sidebar-search">
-              <span className="sidebar-search-icon">
-                ⌕
-              </span>
-
+              <span className="sidebar-search-icon">⌕</span>
               <input
-                type="text"
+                type="search"
                 value={searchText}
                 onChange={handleSearch}
                 placeholder="Search services..."
                 aria-label="Search services"
               />
-
               {searchText && (
                 <button
                   type="button"
@@ -326,281 +179,171 @@ export default function ServiceCatalogue() {
               )}
             </div>
 
-            {/* CATEGORY TITLE */}
-            <h2 className="sidebar-title">
-              Services by Category
-            </h2>
+            <h2 className="sidebar-title">Services by Category</h2>
 
-            {/* CATEGORY LIST */}
             <div className="category-list">
               {categories.map((category) => (
                 <button
                   type="button"
                   key={category}
-                  className={`category-button ${
-                    selectedCategory === category
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    handleCategoryChange(category)
-                  }
+                  className={`category-button ${selectedCategory === category ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(category)}
+                  aria-pressed={selectedCategory === category}
                 >
                   <span className="category-dot">
-                    {selectedCategory === category
-                      ? "●"
-                      : "○"}
+                    {selectedCategory === category ? "●" : "○"}
                   </span>
-
-                  <span>{category}</span>
+                  {category}
                 </button>
               ))}
             </div>
           </aside>
 
-          {/* SERVICE GRID */}
-          <section className="service-grid">
+          <section className="service-grid" aria-label="Available services">
             {filteredServices.length > 0 ? (
-              filteredServices.map(
-                (service: Service) => (
-                  <ServiceCard
-                    key={service.name}
-                    service={service}
-                    onViewDetails={handleViewDetails}
-                    onRequest={handleRequest}
-                  />
-                )
-              )
+              filteredServices.map((service) => (
+                <ServiceCard
+                  key={service.name}
+                  service={service}
+                  onDetails={setDetailsService}
+                  onRequest={openRequest}
+                />
+              ))
             ) : (
               <div className="empty-state">
-                <div className="empty-icon">
-                  🔍
-                </div>
-
+                <div className="empty-icon">⌕</div>
                 <h3>No services found</h3>
-
-                <p>
-                  We couldn't find any services matching
-                  your search.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                >
-                  Clear filters
-                </button>
+                <p>We couldn't find any services matching your search.</p>
+                <button type="button" onClick={clearFilters}>Clear filters</button>
               </div>
             )}
           </section>
         </div>
       </div>
 
-      {/* SERVICE DETAILS MODAL */}
-      {selectedService && (
-        <div
-          className="modal-overlay"
-          onClick={closeDetails}
-          role="presentation"
-        >
-          <div
+      {detailsService && (
+        <div className="modal-overlay" onClick={() => setDetailsService(null)}>
+          <section
             className="service-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
             role="dialog"
             aria-modal="true"
-            aria-labelledby="service-details-title"
+            aria-labelledby="details-title"
+            onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               className="modal-close"
-              onClick={closeDetails}
-              aria-label="Close service details"
+              onClick={() => setDetailsService(null)}
+              aria-label="Close details"
             >
               ×
             </button>
 
-            <div
-              className={`modal-icon service-icon-${getCategoryClass(
-                selectedService.category
-              )}`}
-            >
-              {selectedService.icon}
+            <div className={`modal-icon service-icon-${categoryClass(detailsService.category)}`}>
+              {detailsService.icon}
             </div>
-
-            <span className="modal-category">
-              {selectedService.category}
-            </span>
-
-            <h2 id="service-details-title">
-              {selectedService.name}
-            </h2>
-
-            <p className="modal-description">
-              {selectedService.description}
-            </p>
+            <span className="modal-category">{detailsService.category}</span>
+            <h2 id="details-title">{detailsService.name}</h2>
+            <p className="modal-description">{detailsService.description}</p>
 
             <div className="service-info">
-              <div>
-                <span>Service</span>
-                <strong>
-                  {selectedService.name}
-                </strong>
-              </div>
-
-              <div>
-                <span>Category</span>
-                <strong>
-                  {selectedService.category}
-                </strong>
-              </div>
-
-              <div>
-                <span>Status</span>
-                <strong>Available</strong>
-              </div>
+              <div><span>Service</span><strong>{detailsService.name}</strong></div>
+              <div><span>Category</span><strong>{detailsService.category}</strong></div>
+              <div><span>Status</span><strong>Available</strong></div>
             </div>
 
             <div className="modal-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={closeDetails}
-              >
+              <button type="button" className="secondary-button" onClick={() => setDetailsService(null)}>
                 Close
               </button>
-
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() =>
-                  handleRequest(selectedService)
-                }
-              >
+              <button type="button" className="primary-button" onClick={() => openRequest(detailsService)}>
                 Request this service
               </button>
             </div>
-          </div>
+          </section>
         </div>
       )}
 
-      {/* REQUEST MODAL */}
-      {requestService && (
-        <div
-          className="modal-overlay"
-          onClick={closeRequest}
-          role="presentation"
-        >
-          <div
+      {requestOpen && (
+        <div className="modal-overlay" onClick={closeRequest}>
+          <section
             className="request-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
             role="dialog"
             aria-modal="true"
             aria-labelledby="request-title"
+            onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              className="modal-close"
-              onClick={closeRequest}
-              aria-label="Close request"
-            >
+            <button type="button" className="modal-close" onClick={closeRequest} aria-label="Close request">
               ×
             </button>
 
             {requestState === "success" ? (
               <div className="success-state">
-                <div className="success-icon">
-                  ✓
-                </div>
-
-                <h2>Request submitted</h2>
-
+                <div className="success-icon">✓</div>
+                <h2 id="request-title">Request submitted</h2>
                 <p>
-                  Your request for{" "}
-                  <strong>
-                    {requestService.name}
-                  </strong>{" "}
-                  has been submitted successfully.
+                  Your request for <strong>{requestService?.name}</strong> has been submitted successfully.
                 </p>
-
-                <button
-                  type="button"
-                  className="primary-button full-width"
-                  onClick={closeRequest}
-                >
+                <p className="mock-response-note">Demo confirmation — no backend request was sent.</p>
+                <button type="button" className="primary-button full-width" onClick={closeRequest}>
                   Done
                 </button>
               </div>
             ) : (
               <>
                 <div className="request-header">
-                  <div
-                    className={`modal-icon service-icon-${getCategoryClass(
-                      requestService.category
-                    )}`}
-                  >
-                    {requestService.icon}
-                  </div>
-
+                  <div className="request-heading-icon">✉</div>
                   <div>
                     <span>Service request</span>
-
-                    <h2 id="request-title">
-                      {requestService.name}
-                    </h2>
+                    <h2 id="request-title">Create a request</h2>
                   </div>
                 </div>
 
-                <form
-                  className="request-form"
-                  onSubmit={handleSubmitRequest}
-                >
-                  <label htmlFor="request-details">
-                    Request details
-                  </label>
+                <form className="request-form" onSubmit={handleSubmit}>
+                  <label htmlFor="service-choice">Choose a service</label>
+                  <select
+                    id="service-choice"
+                    value={requestService?.name ?? ""}
+                    onChange={(event) => {
+                      const chosen = services.find((service) => service.name === event.target.value);
+                      setRequestService(chosen ?? null);
+                      setRequestState("idle");
+                    }}
+                  >
+                    <option value="">Select a service</option>
+                    {services.map((service) => (
+                      <option key={service.name} value={service.name}>{service.name}</option>
+                    ))}
+                  </select>
 
+                  <label htmlFor="request-details">Request details</label>
                   <textarea
                     id="request-details"
                     value={requestDetails}
-                    onChange={(event) =>
-                      setRequestDetails(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => {
+                      setRequestDetails(event.target.value);
+                      if (requestState === "error") setRequestState("idle");
+                    }}
                     placeholder="Describe what you need..."
                     rows={5}
                   />
 
                   {requestState === "error" && (
-                    <p className="error-message">
-                      Please enter your request details
-                      before submitting.
-                    </p>
+                    <p className="error-message">Please select a service and enter your request details.</p>
                   )}
 
                   <div className="modal-actions">
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={closeRequest}
-                    >
+                    <button type="button" className="secondary-button" onClick={closeRequest}>
                       Cancel
                     </button>
-
-                    <button
-                      type="submit"
-                      className="primary-button"
-                    >
+                    <button type="submit" className="primary-button">
                       Submit request
                     </button>
                   </div>
                 </form>
               </>
             )}
-          </div>
+          </section>
         </div>
       )}
     </main>
