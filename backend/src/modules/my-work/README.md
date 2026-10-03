@@ -14,11 +14,13 @@ Endpoints read the acting agent ID from the `x-user-id` HTTP header (or `?agentI
 ## Endpoints
 
 ### 1. `GET /`
-List personal tickets assigned to the acting agent.
+List personal tickets assigned to the acting agent. Results are always **priority-sorted** (Critical → High → Medium → Low).
 * **Query Parameters:**
   * `status` (optional): Filter by queue — `Active`, `Pending`, `Actioned`, `On Hold`.
   * `priority` (optional): `Critical`, `High`, `Medium`, `Low`.
   * `ticketType` (optional): `Incident`, `Service Request`, etc.
+  * `organisation` (optional): Filter by organisation name.
+  * `page` / `limit` (optional): Pagination (default page `1`, limit `20`, max `100`).
 * **Response `200`:**
   ```json
   {
@@ -35,12 +37,18 @@ List personal tickets assigned to the acting agent.
         "assignedAgentId": "agent-001",
         "slaTimeLeft": 180,
         "slaFormatted": "3h 0m",
+        "slaBreach": false,
+        "holdDuration": null,
+        "needsEscalation": false,
+        "escalationReason": null,
         "timeRecord": 45,
         "holdReason": null,
+        "holdStartedAt": null,
         "createdAt": "2026-09-25T08:30:00.000Z",
         "updatedAt": "2026-09-25T09:15:00.000Z"
       }
-    ]
+    ],
+    "pagination": { "total": 6, "page": 1, "limit": 20, "totalPages": 1 }
   }
   ```
 
