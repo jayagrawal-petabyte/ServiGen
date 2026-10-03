@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Lock file — committed only by platform lead during deployment setup
+package-lock.json
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime
+pids/
+*.pid
+*.seed
+
+# OS
+.DS_Store
+Thumbs.db
