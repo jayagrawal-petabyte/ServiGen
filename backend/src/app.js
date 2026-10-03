@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 
 const myWorkRouter = require('./modules/my-work/my-work.routes');
+const dashboardRouter = require('./modules/dashboard/dashboard.routes');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get('/api/health', (_req, res) => {
 // ─── Module routes ────────────────────────────────────────────────────────────
 
 app.use('/api/my-work', myWorkRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // ─── 404 handler ─────────────────────────────────────────────────────────────
 
