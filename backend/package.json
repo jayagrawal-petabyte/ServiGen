@@ -5,7 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -14,5 +15,14 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "jest": "^30.5.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.js"
+    ]
+  }
 }
