@@ -1,0 +1,369 @@
+// ─── Prisma Schema for Halo AI / ServiGen ──────────────────────────────────
+// PostgreSQL & Supabase Compatible
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Organisation & Multi-Tenancy ──────────────────────────────────────────
+
+model Organisation {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique
+  tier      String   @default("Standard")
+  sites     Site[]
+  users     User[]
+  tickets   Ticket[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organisations")
+}
+
+model Site {
+  id                 String              @id @default(uuid())
+  name               String
+  timezone           String              @default("UTC")
+  organisationId     String
+  organisation       Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  users              User[]
+  configurationItems ConfigurationItem[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("sites")
+}
+
+// ─── Users & RBAC ──────────────────────────────────────────────────────────
+
+model User {
+  id               String       @id @default(uuid())
+  email            String       @unique
+  username         String?      @unique
+  phoneNumber      String?
+  networkLogin     String?
+  availability     String       @default("Available")
+  teamMemberships  TeamMembership[]
+  calendarEvents   CalendarEvent[]
+  assignedChanges  ChangeRequest[]
+  customLists      CustomList[]
+  authoredArticles KnowledgeArticle[]
+  passwordHash     String
+  firstName        String
+  lastName         String
+  role             String       @default("Service User") // "Service User", "Service Agent", "Approver", "Support Team User", "Admin"
+  organisationId   String?
+  organisation     Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  siteId           String?
+  site             Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  assignedTickets  Ticket[]     @relation("AssignedAgent")
+  requestedTickets Ticket[]     @relation("Requester")
+  approvals        Approval[]   @relation("Approver")
+  moodEntries      AgentMood[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@map("users")
+}
+
+// ─── Core Service Management (Tickets) ─────────────────────────────────────
+
+model Ticket {
+  id              String          @id // e.g., "INC-1001", "REQ-1002"
+  summary         String
+  description     String?         @db.Text
+  ticketType      String          // "Incident", "Service Request", "Major Incident"
+  priority        String          // "Critical", "High", "Medium", "Low", "P1", "P2"
+  status          String          @default("Active") // "Active", "Pending", "Actioned", "On Hold", "Resolved", "Closed"
+  organisationId  String?
+  organisation    Organisation?   @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  siteName        String?         // Denormalized site name for fast list rendering
+  requesterId     String?
+  requester       User?           @relation("Requester", fields: [requesterId], references: [id], onDelete: SetNull)
+  assignedAgentId String?
+  assignedAgent   User?           @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  teamId          String?
+  team            Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  assignedTeam    String?         // "1st Line Support", "2nd Line Support", "Major Incidents"
+  slaTimeLeft     Int?            // Remaining minutes before SLA breach
+  timeRecord      Int             @default(0) // Cumulative logged minutes spent
+  holdReason      String?
+  holdStartedAt   DateTime?
+  incident        Incident?
+  serviceRequest  ServiceRequest?
+  approvals       Approval[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([assignedAgentId, status])
+  @@index([organisationId])
+  @@map("tickets")
+}
+
+// ─── Incidents & Major Incidents ───────────────────────────────────────────
+
+model Incident {
+  id            String         @id @default(uuid())
+  ticketId      String         @unique
+  ticket        Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  category      String         @default("General") // "Network", "Hardware", "Software", "Access & Identity", etc.
+  impact        String         @default("Low")
+  urgency       String         @default("Low")
+  majorIncident MajorIncident?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("incidents")
+}
+
+model MajorIncident {
+  id               String                @id // e.g., "MI-1001"
+  incidentId       String?               @unique
+  incident         Incident?             @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  title            String
+  description      String                @db.Text
+  priority         String                // "P1", "P2"
+  status           String                @default("Investigating") // "Investigating", "Identified", "Monitoring", "Resolved"
+  impact           String
+  affectedServices String[]              // List of affected service names
+  responseTargetAt DateTime?
+  resolutionTargetAt DateTime?
+  updateDueAt      DateTime? // Update Required is derived from this deadline
+  productTags      String[]              @default([])
+  commander        String                @default("Unassigned")
+  startedAt        DateTime              @default(now())
+  resolvedAt       DateTime?
+  updates          MajorIncidentUpdate[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@map("major_incidents")
+}
+
+model MajorIncidentUpdate {
+  id              String        @id @default(uuid())
+  majorIncidentId String
+  majorIncident   MajorIncident @relation(fields: [majorIncidentId], references: [id], onDelete: Cascade)
+  message         String        @db.Text
+  author          String        @default("Commander")
+  timestamp       DateTime      @default(now())
+
+  @@map("major_incident_updates")
+}
+
+// ─── Service Catalogue & Service Requests ──────────────────────────────────
+
+model ServiceCatalogueItem {
+  id               String           @id @default(uuid())
+  name             String
+  description      String           @db.Text
+  category         String           // "Hardware", "Software Access", "Cloud Resources"
+  status           String           @default("Active")
+  icon             String?
+  requiresApproval Boolean          @default(false)
+  formFields       Json?            @default("[]")
+  serviceRequests  ServiceRequest[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@map("service_catalogue_items")
+}
+
+model ServiceRequest {
+  id                     String               @id @default(uuid())
+  ticketId               String               @unique
+  ticket                 Ticket               @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  serviceCatalogueItemId String
+  serviceCatalogueItem   ServiceCatalogueItem @relation(fields: [serviceCatalogueItemId], references: [id], onDelete: Restrict)
+  approvals              Approval[]
+  requestedData          Json?                @default("{}")
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  @@map("service_requests")
+}
+
+// ─── Approvals ─────────────────────────────────────────────────────────────
+
+model Approval {
+  id         String    @id // e.g., "APP-1001"
+  ticketId   String?
+  ticket     Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  entityType String    // "Service Request", "Change Request"
+  entityId   String    // Legacy target identifier; use typed relations below for integrity
+  serviceRequestId String?
+  serviceRequest ServiceRequest? @relation(fields: [serviceRequestId], references: [id], onDelete: Restrict)
+  changeRequestId String?
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: Restrict)
+  summary    String
+  status     String    @default("Pending") // "Pending", "Approved", "Rejected"
+  approverId String?
+  approver   User?     @relation("Approver", fields: [approverId], references: [id], onDelete: SetNull)
+  comments   String?
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([approverId, status])
+  @@map("approvals")
+}
+
+// ─── CMDB & Configuration Items ────────────────────────────────────────────
+
+model ConfigurationItem {
+  id             String          @id // e.g., "CI-001"
+  name           String
+  type           String          // "Server", "Database", "Application", "Network"
+  tag            String          @unique // "PAY-001", "DB-001"
+  siteId         String?
+  site           Site?           @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  siteName       String?         // Denormalized site name
+  status         String          @default("Active")
+  businessOwner  String?
+  changeRequests ChangeRequest[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("configuration_items")
+}
+
+// ─── Change Requests ───────────────────────────────────────────────────────
+
+model ChangeRequest {
+  id                  String             @id // e.g., "CR-001"
+  summary             String
+  changeType          String             // "Standard", "Normal", "Emergency"
+  status              String             @default("Active") // "Draft", "Pending Approval", "Approved", "Active", "Scheduled", "Completed", "Rejected"
+  ciId                String?
+  configurationItem   ConfigurationItem? @relation(fields: [ciId], references: [id], onDelete: SetNull)
+  ciTag               String?            // Denormalized tag e.g. "PAY-001"
+  assignedAgentId     String?
+  assignedAgent       User? @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  approvals           Approval[]
+  relatedService      String?
+  startDate           DateTime?
+  endDate             DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@map("change_requests")
+}
+
+// ─── Projects & Tasks ──────────────────────────────────────────────────────
+
+model Project {
+  id        String           @id // e.g., "P-001"
+  name      String
+  status    String           @default("ACTIVE") // "ACTIVE", "COMPLETED"
+  startDate DateTime?
+  endDate   DateTime?
+  timeSpent Int              @default(0) // Hours or minutes spent
+  subtasks  ProjectSubtask[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("projects")
+}
+
+model ProjectSubtask {
+  id        String   @id // e.g., "ST-001"
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  status    String   @default("PENDING") // "PENDING", "COMPLETED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("project_subtasks")
+}
+
+// ─── List Builder (Custom Lists) ───────────────────────────────────────────
+
+model CustomList {
+  id             String   @id // e.g., "LIST-001"
+  name           String
+  description    String?
+  status         String   @default("Draft")
+  fields         String[] // Display column names
+  filterCriteria Json?    @default("{}")
+  scope          String?
+  group          String?
+  columnProfile  Json?
+  sequence       Int      @default(0)
+  displayType    String?
+  createdById    String?
+  creator        User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      String   @default("Admin")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("custom_lists")
+}
+
+// ─── Agent Mood Tracker (Dashboard SCR-014) ────────────────────────────────
+
+model AgentMood {
+  id          String   @id @default(uuid())
+  agentId     String
+  agent       User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mood        String   // "Great", "Good", "Neutral", "Struggling", "Overwhelmed"
+  submittedAt DateTime @default(now())
+
+  @@map("agent_moods")
+}
+
+// Roles remain display-name strings for compatibility with existing modules.
+// The shared permission layer validates them. Multi-role membership and
+// cross-organisation access policy are not inferred from the functional document.
+model Team {
+  id String @id @default(uuid())
+  name String @unique
+  memberships TeamMembership[]
+  tickets Ticket[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("teams")
+}
+model TeamMembership {
+  teamId String
+  userId String
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_memberships")
+}
+model KnowledgeArticle {
+  id String @id @default(uuid())
+  title String
+  content String @db.Text
+  category String?
+  priority String?
+  status String @default("Draft")
+  approvalStatus String @default("Pending")
+  slaDueAt DateTime?
+  authorId String?
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("knowledge_articles")
+}
+model CalendarEvent {
+  id String @id @default(uuid())
+  title String
+  appointmentType String
+  startsAt DateTime
+  endsAt DateTime
+  agentId String
+  agent User @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([agentId, startsAt])
+  @@map("calendar_events")
+}
