@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import type {
   ArticleDraft,
+  ArticleDraftStatus,
 } from './mockArticleDraftsData';
 
 interface ArticleDraftDetailModalProps {
-  article: ArticleDraft | null;
+  article: ArticleDraft;
   onClose: () => void;
   onUpdateStatus: (
     id: string,
-    newStatus: ArticleDraft['status']
+    status: ArticleDraftStatus
   ) => void;
-  onSaveContent?: (
+  onSaveContent: (
     id: string,
-    updates: Pick<ArticleDraft, 'summaryTitle' | 'body'>
+    updates: Partial<ArticleDraft>
   ) => void;
 }
 

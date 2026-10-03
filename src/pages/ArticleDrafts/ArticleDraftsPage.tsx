@@ -1,289 +1,552 @@
-import React, { useState, useMemo } from 'react';
-import { INITIAL_ARTICLE_DRAFTS } from './mockArticleDraftsData';
-import ArticleDraftSidebar from './ArticleDraftSidebar';
+import React, { useMemo, useState } from 'react';
+
+import {
+  INITIAL_ARTICLE_DRAFTS,
+  type ArticleDraft,
+  type ArticleDraftStatus,
+} from './mockArticleDraftsData';
+
+import ArticleDraftSidebar, {
+  type ArticleDraftView,
+} from './ArticleDraftSidebar';
+
 import ArticleDraftsDesignView from './ArticleDraftsDesignView';
 import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
+
 import './articleDrafts.css';
 
+type ViewMode = 'design' | 'live';
+
 export default function ArticleDraftsPage() {
-  const [drafts, setDrafts] = useState(INITIAL_ARTICLE_DRAFTS);
-  const [viewMode, setViewMode] = useState('design'); // 'design' | 'live'
-  const [activeSubnavView, setActiveSubnavView] = useState('all'); // 'all' | 'my-lists' | 'by-agent' | 'by-team' | 'by-status'
-  const [searchQuery, setSearchQuery] = useState('');
-  const [perPage, setPerPage] = useState(20);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' | 'desc'
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [selectedArticle, setSelectedArticle] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // -----------------------------
+  // State
+  // -----------------------------
 
-  // Subnav filtering
-  const filteredByView = useMemo(() => {
-    switch (activeSubnavView) {
-      case 'my-lists':
-        return drafts.filter((d) => d.author === 'Demo User' || d.author === 'Aditya Kumar Singh');
-      case 'by-status':
-        return drafts.filter((d) => d.status === 'Draft' || d.status === 'Awaiting Approval');
-      case 'by-agent':
-      case 'by-team':
-      case 'all':
-      default:
-        return drafts;
+  const [drafts, setDrafts] =
+    useState<ArticleDraft[]>(INITIAL_ARTICLE_DRAFTS);
+
+  const [viewMode, setViewMode] =
+    useState<ViewMode>('design');
+
+  const [activeSubnavView, setActiveSubnavView] =
+    useState<ArticleDraftView>('all');
+
+  const [searchQuery, setSearchQuery] =
+    useState<string>('');
+
+  const [perPage, setPerPage] =
+    useState<number>(20);
+
+  const [currentPage, setCurrentPage] =
+    useState<number>(1);
+
+  const [sortDirection, setSortDirection] =
+    useState<'asc' | 'desc'>('desc');
+
+  const [selectedIds, setSelectedIds] =
+    useState<string[]>([]);
+
+  const [selectedArticle, setSelectedArticle] =
+    useState<ArticleDraft | null>(null);
+
+  const [isLoading, setIsLoading] =
+    useState<boolean>(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  // -----------------------------
+  // Filter drafts
+  // -----------------------------
+
+  const filteredDrafts = useMemo(() => {
+    let result = [...drafts];
+
+    // Filter based on the selected sidebar view.
+    if (activeSubnavView === 'my-lists') {
+      result = result.filter(
+        (draft) =>
+          draft.author.toLowerCase().includes('demo') ||
+          draft.author.toLowerCase().includes('user')
+      );
     }
-  }, [drafts, activeSubnavView]);
 
-  // Search filtering
-  const searchedDrafts = useMemo(() => {
-    if (!searchQuery.trim()) return filteredByView;
-    const q = searchQuery.toLowerCase();
-    return filteredByView.filter(
-      (d) =>
-        d.id.toLowerCase().includes(q) ||
-        d.summaryTitle.toLowerCase().includes(q) ||
-        d.summarySubtitle.toLowerCase().includes(q) ||
-        d.category.toLowerCase().includes(q) ||
-        d.author.toLowerCase().includes(q) ||
-        d.status.toLowerCase().includes(q)
-    );
-  }, [filteredByView, searchQuery]);
+    if (activeSubnavView === 'by-agent') {
+      result = result.filter(
+        (draft) => draft.agent.trim().length > 0
+      );
+    }
 
-  // Sorting
+    if (activeSubnavView === 'by-team') {
+      result = result.filter(
+        (draft) => draft.team.trim().length > 0
+      );
+    }
+
+    if (activeSubnavView === 'by-status') {
+      result = result.filter(
+        (draft) => draft.status.trim().length > 0
+      );
+    }
+
+    // Search by ID, title, category, author, team, or agent.
+    const query = searchQuery.trim().toLowerCase();
+
+    if (query) {
+      result = result.filter((draft) =>
+        [
+          draft.id,
+          draft.summaryTitle,
+          draft.summarySubtitle,
+          draft.category,
+          draft.priority,
+          draft.status,
+          draft.author,
+          draft.team,
+          draft.agent,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(query)
+      );
+    }
+
+    return result;
+  }, [
+    drafts,
+    activeSubnavView,
+    searchQuery,
+  ]);
+
+  // -----------------------------
+  // Sort drafts
+  // -----------------------------
+
   const sortedDrafts = useMemo(() => {
-    return [...searchedDrafts].sort((a, b) => {
-      const cmp = a.id.localeCompare(b.id);
-      return sortDirection === 'asc' ? cmp : -cmp;
+    return [...filteredDrafts].sort((a, b) => {
+      const first = a.id.localeCompare(b.id);
+      return sortDirection === 'asc'
+        ? first
+        : -first;
     });
-  }, [searchedDrafts, sortDirection]);
+  }, [filteredDrafts, sortDirection]);
 
+  // -----------------------------
   // Pagination
-  const totalDrafts = sortedDrafts.length;
-  const totalPages = Math.ceil(totalDrafts / perPage) || 1;
-  const paginatedDrafts = useMemo(() => {
-    const start = (currentPage - 1) * perPage;
-    return sortedDrafts.slice(start, start + perPage);
-  }, [sortedDrafts, currentPage, perPage]);
+  // -----------------------------
 
-  // Selection handlers
-  const handleToggleSelect = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedDrafts.length / perPage)
+  );
+
+  const safeCurrentPage = Math.min(
+    currentPage,
+    totalPages
+  );
+
+  const paginatedDrafts = useMemo(() => {
+    const startIndex =
+      (safeCurrentPage - 1) * perPage;
+
+    return sortedDrafts.slice(
+      startIndex,
+      startIndex + perPage
+    );
+  }, [
+    sortedDrafts,
+    safeCurrentPage,
+    perPage,
+  ]);
+
+  // -----------------------------
+  // Selection
+  // -----------------------------
+
+  const allVisibleSelected =
+    paginatedDrafts.length > 0 &&
+    paginatedDrafts.every((draft) =>
+      selectedIds.includes(draft.id)
+    );
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((previousIds) =>
+      previousIds.includes(id)
+        ? previousIds.filter(
+            (selectedId) => selectedId !== id
+          )
+        : [...previousIds, id]
     );
   };
 
   const handleToggleSelectAll = () => {
-    const pageIds = paginatedDrafts.map((d) => d.id);
-    const allSelected = pageIds.every((id) => selectedIds.includes(id));
-    if (allSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    const visibleIds = paginatedDrafts.map(
+      (draft) => draft.id
+    );
+
+    if (allVisibleSelected) {
+      setSelectedIds((previousIds) =>
+        previousIds.filter(
+          (id) => !visibleIds.includes(id)
+        )
+      );
     } else {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+      setSelectedIds((previousIds) => [
+        ...new Set([
+          ...previousIds,
+          ...visibleIds,
+        ]),
+      ]);
     }
   };
 
-  // Status updates
-  const handleUpdateStatus = (id, newStatus) => {
-    setDrafts((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
+  // -----------------------------
+  // Article status
+  // -----------------------------
+
+  const handleUpdateStatus = (
+    id: string,
+    newStatus: ArticleDraftStatus
+  ) => {
+    setDrafts((previousDrafts) =>
+      previousDrafts.map((draft) =>
+        draft.id === id
+          ? {
+              ...draft,
+              status: newStatus,
+            }
+          : draft
+      )
+    );
+
+    setSelectedArticle((previousArticle) =>
+      previousArticle &&
+      previousArticle.id === id
+        ? {
+            ...previousArticle,
+            status: newStatus,
+          }
+        : previousArticle
     );
   };
 
+  // -----------------------------
   // Bulk actions
+  // -----------------------------
+
   const handleBulkSubmit = () => {
-    setDrafts((prev) =>
-      prev.map((d) =>
-        selectedIds.includes(d.id) ? { ...d, status: 'Awaiting Approval' } : d
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    setDrafts((previousDrafts) =>
+      previousDrafts.map((draft) =>
+        selectedIds.includes(draft.id)
+          ? {
+              ...draft,
+              status: 'Awaiting Approval',
+            }
+          : draft
       )
     );
+
     setSelectedIds([]);
   };
 
   const handleBulkDelete = () => {
-    if (window.confirm(`Delete ${selectedIds.length} selected draft(s)?`)) {
-      setDrafts((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
-      setSelectedIds([]);
+    if (selectedIds.length === 0) {
+      return;
     }
+
+    setDrafts((previousDrafts) =>
+      previousDrafts.filter(
+        (draft) => !selectedIds.includes(draft.id)
+      )
+    );
+
+    setSelectedIds([]);
   };
 
-  const handleToggleSort = () => {
-    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-  };
+  // -----------------------------
+  // Reset mock data
+  // -----------------------------
 
   const handleResetData = () => {
     setIsLoading(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
       setDrafts(INITIAL_ARTICLE_DRAFTS);
-      setIsLoading(false);
-      setSearchQuery('');
-      setActiveSubnavView('all');
       setSelectedIds([]);
+      setSelectedArticle(null);
       setCurrentPage(1);
-    }, 400);
+    } catch {
+      setError(
+        'Unable to reset article draft data.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // -----------------------------
+  // Search
+  // -----------------------------
+
+  const handleSearchChange = (
+    value: string
+  ) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  // -----------------------------
+  // Sidebar navigation
+  // -----------------------------
+
+  const handleSelectView = (
+    view: ArticleDraftView
+  ) => {
+    setActiveSubnavView(view);
+    setCurrentPage(1);
+    setSelectedIds([]);
+  };
+
+  // -----------------------------
+  // Page size
+  // -----------------------------
+
+  const handlePerPageChange = (
+    value: number
+  ) => {
+    setPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // -----------------------------
+  // Page change
+  // -----------------------------
+
+  const handlePageChange = (
+    page: number
+  ) => {
+    if (
+      page < 1 ||
+      page > totalPages
+    ) {
+      return;
+    }
+
+    setCurrentPage(page);
+  };
+
+  // -----------------------------
+  // Sorting
+  // -----------------------------
+
+  const handleToggleSort = () => {
+    setSortDirection((previousDirection) =>
+      previousDirection === 'asc'
+        ? 'desc'
+        : 'asc'
+    );
+  };
+
+  // -----------------------------
+  // Render
+  // -----------------------------
+
   return (
-    <div className="article-drafts-container">
-      {/* Peach Sub-Navigation Panel */}
+    <div className="article-drafts-page">
       <ArticleDraftSidebar
         activeView={activeSubnavView}
-        onSelectView={(v) => {
-          setActiveSubnavView(v);
-          setCurrentPage(1);
-        }}
+        onSelectView={handleSelectView}
         searchQuery={searchQuery}
-        onSearchChange={(q) => {
-          setSearchQuery(q);
-          setCurrentPage(1);
-        }}
+        onSearchChange={handleSearchChange}
       />
 
-      {/* Main Content Area */}
-      <section className="article-drafts-main">
-        {/* Top View Mode Bar (Figma Design View vs Live View) */}
-        <div className="view-mode-bar">
-          <div className="view-mode-toggle">
-            <button
-              type="button"
-              className={`view-mode-btn ${viewMode === 'design' ? 'active' : ''}`}
-              onClick={() => setViewMode('design')}
-            >
-              Design View (Figma)
-            </button>
-            <button
-              type="button"
-              className={`view-mode-btn ${viewMode === 'live' ? 'active' : ''}`}
-              onClick={() => setViewMode('live')}
-            >
-              Live View (Portal)
-            </button>
+      <main className="article-drafts-main">
+        {/* Page header */}
+        <div className="article-drafts-header">
+          <div>
+            <h1>Article Drafts</h1>
+
+            <p>
+              Manage and review article drafts
+            </p>
           </div>
 
-          <div style={{ fontSize: '12px', color: '#64748b' }}>
-            {activeSubnavView !== 'all' && (
-              <span>Filter: <strong>{activeSubnavView}</strong></span>
-            )}
+          <div className="article-drafts-header-actions">
+            <button
+              type="button"
+              onClick={() =>
+                setViewMode('design')
+              }
+              className={
+                viewMode === 'design'
+                  ? 'active'
+                  : ''
+              }
+            >
+              Design View
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setViewMode('live')
+              }
+              className={
+                viewMode === 'live'
+                  ? 'active'
+                  : ''
+              }
+            >
+              Live View
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetData}
+            >
+              Reset
+            </button>
           </div>
         </div>
 
-        {/* Page Title */}
-        <h1 className="drafts-title">
-          Open Article Drafts (Including SLA Hold)
-        </h1>
-
-        {/* Bulk Action Bar (when items selected) */}
-        {selectedIds.length > 0 && (
-          <div className="bulk-actions-bar">
-            <span>
-              <strong>{selectedIds.length}</strong> article draft(s) selected
-            </span>
-            <div className="bulk-actions-buttons">
-              <button
-                type="button"
-                className="btn-bulk"
-                onClick={handleBulkSubmit}
-              >
-                Submit for Approval
-              </button>
-              <button
-                type="button"
-                className="btn-bulk"
-                style={{ backgroundColor: '#dc2626' }}
-                onClick={handleBulkDelete}
-              >
-                Delete Selected
-              </button>
-              <button
-                type="button"
-                className="btn-bulk"
-                onClick={() => setSelectedIds([])}
-              >
-                Clear Selection
-              </button>
-            </div>
+        {/* Error message */}
+        {error && (
+          <div
+            className="article-drafts-error"
+            role="alert"
+          >
+            {error}
           </div>
         )}
 
-        {/* Error state */}
-        {error && (
-          <div style={{ backgroundColor: '#fee2e2', padding: '14px', borderRadius: '8px', color: '#dc2626', marginBottom: '16px' }}>
-            <span>Error: {error}</span>
+        {/* Bulk action bar */}
+        {selectedIds.length > 0 && (
+          <div className="article-drafts-bulk-actions">
+            <span>
+              {selectedIds.length} selected
+            </span>
+
+            <button
+              type="button"
+              onClick={handleBulkSubmit}
+            >
+              Submit for Approval
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+            >
+              Delete
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedIds([])
+              }
+            >
+              Clear Selection
+            </button>
           </div>
         )}
 
         {/* Loading state */}
         {isLoading ? (
-          <div style={{ padding: '30px 0' }}>
-            <div className="approval-skeleton" style={{ width: '100%', height: '48px', marginBottom: '12px' }} />
-            <div className="approval-skeleton" style={{ width: '100%', height: '240px' }} />
-          </div>
-        ) : paginatedDrafts.length === 0 ? (
-          /* Empty state */
-          <div className="approvals-empty">
-            <div className="approvals-empty-icon" style={{ backgroundColor: '#fff7ed', color: '#ea580c' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <line x1="9" y1="15" x2="15" y2="15" />
-              </svg>
-            </div>
-            <h3>No article drafts found</h3>
-            <p>
-              {searchQuery
-                ? `No articles match the keyword "${searchQuery}".`
-                : 'No article drafts in this view.'}
-            </p>
-            <button
-              type="button"
-              className="btn-reset-approvals"
-              onClick={handleResetData}
-            >
-              Reset Sample Articles
-            </button>
+          <div className="article-drafts-loading">
+            Loading article drafts...
           </div>
         ) : viewMode === 'design' ? (
-          /* Figma Design View */
           <ArticleDraftsDesignView
             drafts={paginatedDrafts}
-            totalDrafts={totalDrafts}
-            currentPage={currentPage}
+            totalDrafts={sortedDrafts.length}
+            currentPage={safeCurrentPage}
             totalPages={totalPages}
             perPage={perPage}
-            onPageChange={setCurrentPage}
-            onPerPageChange={(n) => {
-              setPerPage(n);
-              setCurrentPage(1);
-            }}
+            onPageChange={handlePageChange}
+            onPerPageChange={
+              handlePerPageChange
+            }
             selectedIds={selectedIds}
-            onToggleSelect={handleToggleSelect}
-            onToggleSelectAll={handleToggleSelectAll}
-            onOpenArticle={(item) => setSelectedArticle(item)}
+            onToggleSelect={
+              handleToggleSelect
+            }
+            onToggleSelectAll={
+              handleToggleSelectAll
+            }
+            onOpenArticle={
+              setSelectedArticle
+            }
             sortDirection={sortDirection}
-            onToggleSort={handleToggleSort}
+            onToggleSort={
+              handleToggleSort
+            }
           />
         ) : (
-          /* Live Knowledge Base View */
           <ArticleDraftsLiveView
             drafts={sortedDrafts}
-            onOpenArticle={(item) => setSelectedArticle(item)}
-            onUpdateStatus={handleUpdateStatus}
+            onOpenArticle={(article) =>
+              setSelectedArticle(article)
+            }
           />
         )}
 
-        {/* Detail Modal */}
-        {selectedArticle && (
-          <ArticleDraftDetailModal
-            article={selectedArticle}
-            onClose={() => setSelectedArticle(null)}
-            onUpdateStatus={handleUpdateStatus}
-            onSaveContent={(id, updates) => {
-              setDrafts((prev) =>
-                prev.map((d) => (d.id === id ? { ...d, ...updates } : d))
-              );
-              setSelectedArticle((prev) => (prev ? { ...prev, ...updates } : null));
-            }}
-          />
-        )}
-      </section>
+        {/* Empty state */}
+        {!isLoading &&
+          sortedDrafts.length === 0 && (
+            <div className="article-drafts-empty">
+              <h3>
+                No article drafts found
+              </h3>
+
+              <p>
+                Try changing your search or
+                filter.
+              </p>
+
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSearchChange('')
+                  }
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          )}
+      </main>
+
+{/* Article detail modal */}
+{selectedArticle !== null && (
+  <ArticleDraftDetailModal
+    article={selectedArticle}
+    onClose={() => setSelectedArticle(null)}
+    onUpdateStatus={handleUpdateStatus}
+    onSaveContent={(id, updates) => {
+      setDrafts((previousDrafts) =>
+        previousDrafts.map((draft) =>
+          draft.id === id
+            ? { ...draft, ...updates }
+            : draft
+        )
+      );
+
+      setSelectedArticle((previousArticle) =>
+        previousArticle
+          ? { ...previousArticle, ...updates }
+          : null
+      );
+    }}
+  />
+)}
     </div>
   );
 }

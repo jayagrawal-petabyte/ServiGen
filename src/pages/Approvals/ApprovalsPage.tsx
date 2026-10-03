@@ -34,47 +34,49 @@ export default function ApprovalsPage() {
 
 // Filter approvals based on the selected status tab and search query.
 const filteredApprovals = useMemo(() => {
-  const filteredApprovals = useMemo(() => {
-    return approvals.filter((item) => {
-      if (currentTab !== 'all' && item.status !== currentTab) {
-        return false;
-      }
+  return approvals.filter((item) => {
+    if (
+      currentTab !== 'all' &&
+      item.status !== currentTab
+    ) {
+      return false;
+    }
 
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
 
-        const matchesTicket = item.ticketNumber
-          .toLowerCase()
-          .includes(query);
+      const matchesTicket = item.ticketNumber
+        .toLowerCase()
+        .includes(query);
 
-        const matchesTitle = item.title
-          .toLowerCase()
-          .includes(query);
+      const matchesTitle = item.title
+        .toLowerCase()
+        .includes(query);
 
-        const matchesAuthor = item.authorName
-          .toLowerCase()
-          .includes(query);
+      const matchesAuthor = item.authorName
+        .toLowerCase()
+        .includes(query);
 
-        const matchesBehalf = item.onBehalfOf
-          ?.toLowerCase()
-          .includes(query);
+      const matchesBehalf = item.onBehalfOf
+        ?.toLowerCase()
+        .includes(query);
 
-        const matchesDesc = item.description
-          .toLowerCase()
-          .includes(query);
+      const matchesDesc = item.description
+        .toLowerCase()
+        .includes(query);
 
-        return (
-          matchesTicket ||
-          matchesTitle ||
-          matchesAuthor ||
-          matchesBehalf ||
-          matchesDesc
-        );
-      }
+      return (
+        matchesTicket ||
+        matchesTitle ||
+        matchesAuthor ||
+        matchesBehalf ||
+        matchesDesc
+      );
+    }
 
-      return true;
-    });
-  }, [approvals, currentTab, searchQuery]);
+    return true;
+  });
+}, [approvals, currentTab, searchQuery]);
 
   const pendingCount = approvals.filter(
     (a) => a.status === 'pending'
