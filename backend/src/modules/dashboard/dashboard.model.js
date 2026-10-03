@@ -23,6 +23,26 @@ const moodEntries = [
   { agentId: 'agent-002', mood: 'Neutral', submittedAt: '2026-10-03T07:45:00.000Z' },
 ];
 
+// ─── Personalized Summary Seed Data (SCR-002) ─────────────────────────────────
+
+// Pending approvals awaiting each agent's action
+const agentApprovals = [
+  { agentId: 'agent-001', pendingCount: 3 },
+  { agentId: 'agent-002', pendingCount: 1 },
+];
+
+// Work items assigned to each agent (e.g. linked tasks from tickets)
+const agentAssignments = [
+  { agentId: 'agent-001', totalCount: 4 },
+  { agentId: 'agent-002', totalCount: 2 },
+];
+
+// Standalone tasks (checklist / follow-up items) for each agent
+const agentTasks = [
+  { agentId: 'agent-001', totalCount: 2 },
+  { agentId: 'agent-002', totalCount: 0 },
+];
+
 // ─── Team Breakdown Seed Data ─────────────────────────────────────────────────
 
 const teamBreakdown = [
@@ -124,6 +144,22 @@ const getCategoryBreakdown = async () => [...categoryBreakdown];
  */
 const getNewTickets = async (limit = 10) => newTickets.slice(0, limit);
 
+/**
+ * Return raw summary data for a given agent (SCR-002)
+ * Ticket status counts are derived at the service layer from the my-work model.
+ */
+const getAgentSummaryData = async (agentId) => {
+  const approvals = agentApprovals.find((a) => a.agentId === agentId);
+  const assignments = agentAssignments.find((a) => a.agentId === agentId);
+  const tasks = agentTasks.find((a) => a.agentId === agentId);
+
+  return {
+    approvals: { pending: approvals ? approvals.pendingCount : 0 },
+    assignments: { total: assignments ? assignments.totalCount : 0 },
+    tasks: { total: tasks ? tasks.totalCount : 0 },
+  };
+};
+
 module.exports = {
   getKpis,
   getMoodEntries,
@@ -131,4 +167,5 @@ module.exports = {
   getTeamBreakdown,
   getCategoryBreakdown,
   getNewTickets,
+  getAgentSummaryData,
 };

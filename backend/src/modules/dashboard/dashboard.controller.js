@@ -5,6 +5,7 @@ const {
   getIncidentsByTeam,
   getIncidentsByCategory,
   getNewTicketsPanel,
+  getAgentSummary,
 } = require('./dashboard.service');
 
 /**
@@ -114,6 +115,23 @@ const getNewTicketsHandler = async (req, res) => {
   }
 };
 
+// ─── SCR-002: Personalized Summary ───────────────────────────────────────────────
+
+/**
+ * GET /dashboard/summary
+ * Returns a personalized overview for the acting agent:
+ * ticket counts by status, pending approvals, assignments, tasks (SCR-002)
+ */
+const getSummaryHandler = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const data = await getAgentSummary(agentId);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch dashboard summary');
+  }
+};
+
 module.exports = {
   getKpisHandler,
   getMoodHandler,
@@ -121,4 +139,5 @@ module.exports = {
   getIncidentsByTeamHandler,
   getIncidentsByCategoryHandler,
   getNewTicketsHandler,
+  getSummaryHandler,
 };

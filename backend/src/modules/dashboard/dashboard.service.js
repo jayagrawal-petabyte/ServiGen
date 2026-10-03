@@ -13,7 +13,10 @@ const {
   getTeamBreakdown,
   getCategoryBreakdown,
   getNewTickets,
+  getAgentSummaryData,
 } = require('./dashboard.model');
+
+const { getTickets } = require('../my-work/my-work.model');
 
 const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
 
@@ -93,6 +96,39 @@ const getNewTicketsPanel = async (query = {}) => {
   return tickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
+// ─── SCR-002: Personalized Dashboard Summary ────────────────────────────────
+
+/**
+ * Return a personalized overview for the acting agent (SCR-002).
+ * Aggregates:
+ *   - Ticket counts per status (from my-work model — single source of truth)
+ *   - Pending approvals count
+ *   - Assignments count
+ *   - Tasks count
+ */
+const getAgentSummary = async (agentId) => {
+  // Pull all tickets owned by this agent from the my-work model
+  const allTickets = await getTickets({ assignedAgentId: agentId });
+
+  const ticketCounts = {
+    active: allTickets.filter((t) => t.status === 'Active').length,
+    pending: allTickets.filter((t) => t.status === 'Pending').length,
+    actioned: allTickets.filter((t) => t.status === 'Actioned').length,
+    onHold: allTickets.filter((t) => t.status === 'On Hold').length,
+    total: allTickets.length,
+  };
+
+  // Pull personalized approvals / assignments / tasks
+  const { approvals, assignments, tasks } = await getAgentSummaryData(agentId);
+
+  return {
+    tickets: ticketCounts,
+    approvals,
+    assignments,
+    tasks,
+  };
+};
+
 module.exports = {
   VALID_MOODS,
   getDashboardKpis,
@@ -101,4 +137,5 @@ module.exports = {
   getIncidentsByTeam,
   getIncidentsByCategory,
   getNewTicketsPanel,
+  getAgentSummary,
 };

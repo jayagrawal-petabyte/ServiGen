@@ -7,6 +7,7 @@ const {
   getIncidentsByTeamHandler,
   getIncidentsByCategoryHandler,
   getNewTicketsHandler,
+  getSummaryHandler,
 } = require('./dashboard.controller');
 
 const router = express.Router();
@@ -24,5 +25,8 @@ router.get('/incidents-by-category', getIncidentsByCategoryHandler);
 
 // SCR-015 — New tickets panel
 router.get('/new-tickets', getNewTicketsHandler);
+
+// SCR-002 — Personalized dashboard summary
+router.get('/summary', getSummaryHandler);
 
 module.exports = router;
