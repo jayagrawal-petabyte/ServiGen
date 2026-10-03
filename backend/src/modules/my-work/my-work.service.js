@@ -10,6 +10,24 @@ const VALID_PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 const DEFAULT_PAGE_SIZE = 20;
 
 /**
+ * Numeric sort weight for each priority level — lower = higher urgency.
+ * Used to sort ticket queues so Critical tickets always surface first.
+ */
+const PRIORITY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+/**
+ * SLA escalation thresholds (minutes remaining) per priority.
+ * A ticket needs escalation when slaTimeLeft falls at or below this value.
+ */
+const ESCALATION_THRESHOLDS = { Critical: 60, High: 120, Medium: 240, Low: 480 };
+
+/**
+ * On Hold escalation thresholds (hours on hold) per priority.
+ * A ticket needs escalation when it has been on hold at or beyond this duration.
+ */
+const HOLD_ESCALATION_HOURS = { Critical: 4, High: 8, Medium: 24, Low: 48 };
+
+/**
  * Parse and validate pagination query params (page, limit)
  */
 const parsePagination = (query) => {
@@ -44,7 +62,38 @@ const formatHoldDuration = (holdStartedAt) => {
 };
 
 /**
- * Attach all computed SLA and hold-duration fields to a raw ticket object.
+ * Determine whether a ticket needs escalation and why.
+ * Escalation triggers:
+ *   1. SLA time left is at or below the priority threshold (applies to all statuses)
+ *   2. On Hold duration exceeds the priority threshold in hours (On Hold only)
+ */
+const computeEscalation = (t) => {
+  const slaThreshold = ESCALATION_THRESHOLDS[t.priority] ?? 60;
+  const slaCritical =
+    typeof t.slaTimeLeft === 'number' &&
+    t.slaTimeLeft >= 0 &&
+    t.slaTimeLeft <= slaThreshold;
+
+  let holdOverdue = false;
+  if (t.status === 'On Hold' && t.holdStartedAt) {
+    const hoursOnHold =
+      (Date.now() - new Date(t.holdStartedAt).getTime()) / 3600000;
+    holdOverdue = hoursOnHold >= (HOLD_ESCALATION_HOURS[t.priority] ?? 24);
+  }
+
+  const needsEscalation = slaCritical || holdOverdue;
+  const reasons = [];
+  if (slaCritical) reasons.push('SLA threshold reached');
+  if (holdOverdue) reasons.push('Hold duration exceeded');
+
+  return {
+    needsEscalation,
+    escalationReason: reasons.length > 0 ? reasons.join('; ') : null,
+  };
+};
+
+/**
+ * Attach all computed SLA, hold-duration, and escalation fields to a raw ticket.
  * Used consistently across every service response to guarantee a uniform contract.
  */
 const formatTicket = (t) => ({
@@ -52,6 +101,7 @@ const formatTicket = (t) => ({
   slaFormatted: formatSla(t.slaTimeLeft),
   slaBreach: typeof t.slaTimeLeft === 'number' && t.slaTimeLeft <= 0,
   holdDuration: formatHoldDuration(t.holdStartedAt),
+  ...computeEscalation(t),
 });
 
 /**
@@ -94,6 +144,13 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
   }
 
   const allMatched = await getTickets(filters);
+
+  // Sort by priority: Critical → High → Medium → Low
+  // Ensures highest-urgency tickets are always on the first page.
+  allMatched.sort(
+    (a, b) => (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
+  );
+
   const total = allMatched.length;
 
   const { page, limit } = parsePagination(query);
@@ -222,9 +279,13 @@ const logTicketTime = async (ticketId, minutesSpent) => {
 module.exports = {
   VALID_STATUSES,
   VALID_PRIORITIES,
+  PRIORITY_ORDER,
+  ESCALATION_THRESHOLDS,
+  HOLD_ESCALATION_HOURS,
   formatSla,
   formatHoldDuration,
   formatTicket,
+  computeEscalation,
   getAgentTickets,
   getActiveTickets,
   getPendingTickets,
