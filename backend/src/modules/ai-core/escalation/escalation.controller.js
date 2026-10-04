@@ -23,7 +23,10 @@ const checkEscalationDecision = async (req, res) => {
 
 const createEscalationHandoff = async (req, res) => {
     try {
-        const result = await prepareHandoff(req.body);
+        const callerId = req.user?.id;
+        const isCallerAdmin = req.user?.role === 'Admin';
+        const targetUserId = (isCallerAdmin && req.body?.userId) ? req.body.userId : (callerId || req.body?.userId);
+        const result = await prepareHandoff({ ...req.body, userId: targetUserId });
 
         res.status(200).json({
         success: true,

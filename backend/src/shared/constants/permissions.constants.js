@@ -9,5 +9,6 @@ const PERMISSIONS = Object.freeze({
   CATALOGUE: Object.freeze([ROLES.SERVICE_USER, ROLES.SERVICE_AGENT]),
   APPROVALS: Object.freeze([ROLES.APPROVER]),
   ADMIN_ONLY: Object.freeze([]),
+  AI: Object.freeze([ROLES.SERVICE_USER, ...STAFF]),
 });
 module.exports = { PERMISSIONS };

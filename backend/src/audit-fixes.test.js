@@ -360,4 +360,79 @@ describe('Security Fixes Audit Verification Suite', () => {
       assert.equal(body.message, 'Authentication token has expired');
     });
   });
+
+  // ─── SG-08: AI Core Role Gating & Identity Binding ────────────────────────
+  describe('SG-08: AI Core Role Gating & Identity Binding', () => {
+    it('blocks unauthorized roles (like Approver) from accessing AI endpoints', async () => {
+      const approverToken = generateToken({ id: 'approver-001', role: 'Approver' });
+      const res = await fetch(`${baseUrl}/api/ai-core/intent/analyze`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${approverToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'need server access' }),
+      });
+      assert.equal(res.status, 403);
+      const body = await res.json();
+      assert.deepEqual(body, { success: false, message: 'Forbidden' });
+    });
+
+    it('permits authorized roles (Service User, Service Agent) to access AI endpoints', async () => {
+      for (const role of ['Service User', 'Service Agent', 'Support Team User', 'Admin']) {
+        const token = generateToken({ id: 'user-001', role });
+        const res = await fetch(`${baseUrl}/api/ai-core/intent/analyze`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${token}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ text: 'need server access' }),
+        });
+        assert.equal(res.status, 200, `Role ${role} should be allowed on AI endpoints`);
+      }
+    });
+
+    it('forces escalation handoff userId to verified caller identity for non-Admins', async () => {
+      const agentToken = generateToken({ id: 'real-agent-123', role: 'Service Agent' });
+      const res = await fetch(`${baseUrl}/api/ai-core/escalation/handoff`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${agentToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'spoofed-victim-user',
+          summary: 'Cannot connect to database',
+          resolved: false,
+        }),
+      });
+
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.success, true);
+      assert.equal(body.data.request.userId, 'real-agent-123', 'Must bind to caller req.user.id');
+    });
+
+    it('allows Admin to escalate on behalf of a specified target user', async () => {
+      const adminToken = generateToken({ id: 'admin-001', role: 'Admin' });
+      const res = await fetch(`${baseUrl}/api/ai-core/escalation/handoff`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'delegated-user-456',
+          summary: 'Admin assisted escalation',
+          resolved: false,
+        }),
+      });
+
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.success, true);
+      assert.equal(body.data.request.userId, 'delegated-user-456', 'Admin can specify target userId');
+    });
+  });
 });

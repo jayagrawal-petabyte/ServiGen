@@ -94,6 +94,7 @@ app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogue
 app.use('/api/major-incidents', (req, res, next) =>
   restrictTo(...(['GET', 'HEAD'].includes(req.method) ? PERMISSIONS.STAFF : PERMISSIONS.ADMIN_ONLY))(req, res, next), majorIncidentsRouter);
 app.use('/api/change-requests', restrictTo(...PERMISSIONS.STAFF), changeRequestsRouter);
+app.use('/api/ai-core', restrictTo(...PERMISSIONS.AI));
 app.use('/api/ai-core/response', aiResponseRouter);
 // These routers already contain /projects, /lists and /escalation prefixes.
 app.use('/api/projects', restrictTo(...PERMISSIONS.STAFF));
