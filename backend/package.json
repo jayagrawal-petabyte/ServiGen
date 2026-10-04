@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "test:jest": "jest --forceExit src/modules/my-work/my-work.test.js",
-    "test:node": "node --test src/config/*.test.js src/app.test.js src/shared/*.test.js src/modules/approvals/*.test.js src/modules/services-catalogue/*.test.js src/modules/ai-core/response/*.test.js",
+    "test:node": "node scripts/run-node-tests.js",
     "test": "npm run test:jest && npm run test:node",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -22,6 +22,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2"
   },
   "engines": {

@@ -2,8 +2,10 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const env = require('./config/env');
+const { createRateLimiter } = require('./shared/middleware/rate-limit.middleware');
 const { requestLogger, errorHandler, requireAuth, restrictTo, PERMISSIONS, approvalScope } = require('./shared');
 
 // ─── Module Routers ─────────────────────────────────────────────────────────
@@ -22,15 +24,21 @@ const intentRouter = require('./modules/ai-core/intent/intent.routes');
 const escalationRouter = require('./modules/ai-core/escalation/escalation.routes');
 
 const app = express();
+app.disable('x-powered-by');
 
 // ─── Core Middleware ────────────────────────────────────────────────────────
+app.use(helmet({
+  strictTransportSecurity: env.isProduction ? undefined : false,
+  contentSecurityPolicy: {
+    directives: { 'upgrade-insecure-requests': env.isProduction ? [] : null },
+  },
+}));
 app.use(
   cors({
     origin: env.CORS_ORIGIN,
-    credentials: env.CORS_ORIGIN !== '*',
+    credentials: true,
   })
 );
-app.use(express.json());
 app.use(requestLogger);
 
 // ─── Health Check ───────────────────────────────────────────────────────────
@@ -44,6 +52,12 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// Limits run before body parsing and authentication. Health and browser
+// preflights stay available; AI receives an additional, smaller IP budget.
+app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
+app.use('/api/ai-core', createRateLimiter(env.RATE_LIMIT.AI_MAX));
+app.use(express.json({ limit: '100kb' }));
+
 // Authenticate all implemented business APIs. Login will be mounted before this
 // boundary when the auth module is implemented.
 app.use('/api', requireAuth);
@@ -55,6 +69,16 @@ app.use('/api', (req, _res, next) => {
   req.headers['x-user-id'] = targetAgentId;
   req.headers['x-user-role'] = req.user.role;
   req.query.agentId = targetAgentId;
+  if (req.user.organisationId) {
+    req.headers['x-org-id'] = req.user.organisationId;
+  } else {
+    delete req.headers['x-org-id'];
+  }
+  if (req.user.email) {
+    req.headers['x-user-email'] = req.user.email;
+  } else {
+    delete req.headers['x-user-email'];
+  }
   next();
 });
 

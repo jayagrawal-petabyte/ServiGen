@@ -69,16 +69,22 @@ const optionalAuth = (req, _res, next) => {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
-      req.user = jwt.verify(token, env.JWT.SECRET);
+      const decoded = jwt.verify(token, env.JWT.SECRET, { algorithms: ['HS256'] });
+      if (decoded && typeof decoded.id === 'string' && decoded.id.trim() && ALL_ROLES.includes(decoded.role)) {
+        req.user = { id: decoded.id, email: decoded.email, role: decoded.role, organisationId: decoded.organisationId };
+      }
     } catch (_err) {
       // Ignored for optional auth
     }
   } else if (env.ALLOW_DEV_AUTH_OVERRIDE && req.headers['x-user-id']) {
-    req.user = {
-      id: req.headers['x-user-id'],
-      role: req.headers['x-user-role'] || ROLES.SERVICE_AGENT,
-      isDevOverride: true,
-    };
+    const devRole = req.headers['x-user-role'] || ROLES.SERVICE_AGENT;
+    if (ALL_ROLES.includes(devRole)) {
+      req.user = {
+        id: req.headers['x-user-id'],
+        role: devRole,
+        isDevOverride: true,
+      };
+    }
   }
   return next();
 };
