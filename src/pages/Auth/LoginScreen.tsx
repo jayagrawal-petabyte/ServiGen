@@ -42,7 +42,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     } else {
       setTimeout(() => {
         setLoading(false);
-        alert(`Logged in as ${credentials.username}`);
       }, 600);
     }
   };
