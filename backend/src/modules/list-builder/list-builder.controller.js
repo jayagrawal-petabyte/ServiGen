@@ -45,29 +45,51 @@ const getListById = async (req, res) => {
 
 const createList = async (req, res) => {
   try {
-    const { name, description, fields, status, createdBy } = req.body;
+    const {
+      name,
+      description,
+      fields,
+      status,
+      createdBy,
+    } = req.body || {};
 
-    if (!name || !fields) {
+    // BI-15: Validate list name
+    if (typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({
         success: false,
-        message: 'Name and fields are required',
+        message: 'Name must be a non-empty string',
+      });
+    }
+
+    // BI-15: Validate fields array and field entries
+    if (
+      !Array.isArray(fields) ||
+      fields.length === 0 ||
+      fields.some(
+        (field) =>
+          typeof field !== 'string' || field.trim() === ''
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fields must be a non-empty array of non-empty strings',
       });
     }
 
     const newList = await createNewList({
-      name,
+      name: name.trim(),
       description,
       fields,
       status: status || 'Draft',
       createdBy,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: newList,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to create list',
     });
