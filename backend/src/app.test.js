@@ -19,6 +19,48 @@ test('health is public but business APIs reject anonymous access', async () => {
     assert.equal((await fetch(base + path)).status, 401);
   }
 });
+
+test('development header identities and the published signing key cannot bypass authentication', async () => {
+  const spoofed = {'x-user-id':'attacker', 'x-user-role':'Admin'};
+  assert.equal((await fetch(base+'/api/major-incidents', {headers:spoofed})).status, 401);
+  const forged = require('jsonwebtoken').sign({id:'attacker',role:'Admin'}, 'servigen-super-secret-jwt-key-dev-only-change-in-prod');
+  assert.equal((await fetch(base+'/api/major-incidents', {headers:{authorization:'Bearer '+forged}})).status, 401);
+});
+
+test('API headers are protected and local HTTP is not forced to HTTPS', async () => {
+  const response = await fetch(base+'/api/health');
+  assert.equal(response.headers.get('x-powered-by'), null);
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(response.headers.get('x-frame-options'), 'SAMEORIGIN');
+  assert.equal(response.headers.get('strict-transport-security'), null);
+  assert.ok(!response.headers.get('content-security-policy').includes('upgrade-insecure-requests'));
+});
+
+test('only configured browser origins receive CORS permission; preflight and non-browser clients work', async () => {
+  const allowed = await fetch(base+'/api/my-work', {method:'OPTIONS', headers:{origin:'http://localhost:5173','access-control-request-method':'GET','access-control-request-headers':'authorization'}});
+  assert.equal(allowed.status, 204);
+  assert.equal(allowed.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+  const denied = await fetch(base+'/api/my-work', {headers:{...headers, origin:'https://unlisted.example.com'}});
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+  assert.equal((await fetch(base+'/api/my-work', {headers})).status, 200);
+});
+
+test('oversized JSON is rejected before business mutations with the normal error envelope', async () => {
+  const response = await fetch(base+'/api/ai-core/response', {
+    method:'POST', headers:{...headers,'content-type':'application/json'},
+    body:JSON.stringify({query:'x'.repeat(103000)}),
+  });
+  assert.equal(response.status, 413);
+  const body = await response.json();
+  assert.equal(body.success, false);
+  assert.match(body.message, /100 KB/);
+});
+
+test('forbidden responses do not disclose role names or the permission matrix', async () => {
+  const response = await fetch(base+'/api/my-work', {headers:{authorization:'Bearer '+generateToken({id:'user-test',role:'Service User'})}});
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), {success:false,message:'Forbidden'});
+});
 test('all existing routers are reachable with verified identity', async () => {
   for (const path of ['/api/projects', '/api/cmdb/configuration-items', '/api/list-builder/lists']) {
     assert.equal((await fetch(base + path, { headers })).status, 200);

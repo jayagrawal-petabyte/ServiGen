@@ -30,6 +30,10 @@ const errorHandler = (err, req, res, next) => {
   if (res.headersSent) return next(err);
   let error = err;
 
+  if (err.type === 'entity.too.large') {
+    error = new AppError('Request body exceeds the 100 KB limit', 413);
+  }
+
   // Handle invalid JSON body from express.json()
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     error = new AppError('Malformed JSON payload received', HTTP_STATUS.BAD_REQUEST);

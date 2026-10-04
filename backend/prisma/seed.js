@@ -1,10 +1,14 @@
 'use strict';
 
+const env = require('../src/config/env');
+if (env.isProduction) {
+  throw new Error('Sample seed accounts are development-only');
+}
+
 const bcrypt = require('bcryptjs');
 const db = require('../src/config/db');
 
 async function main() {
-  if (require('../src/config/env').isProduction) throw new Error('Sample seed accounts are development-only');
   console.log('[servigen:seed] Seeding database...');
 
   // 1. Seed Organisations

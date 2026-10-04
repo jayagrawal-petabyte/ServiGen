@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Lock file — committed only by platform lead during deployment setup
-package-lock.json
+# Keep package-lock.json tracked for repeatable installs.
 
 # Environment variables — never commit secrets
 .env

@@ -19,7 +19,7 @@ const restrictTo = (...allowedRoles) => {
     if (req.user.role !== ROLES.ADMIN && !allowedRoles.includes(req.user.role)) {
       return next(
         new AppError(
-          `Forbidden: Role '${req.user.role}' is not authorized to access this resource. Required: [${allowedRoles.join(', ')}]`,
+          'Forbidden',
           HTTP_STATUS.FORBIDDEN
         )
       );
@@ -43,7 +43,7 @@ const requireSelfOrRole = (userIdParamName = 'id', ...elevatedRoles) => {
     const hasElevatedRole = req.user.role === ROLES.ADMIN || elevatedRoles.includes(req.user.role);
 
     if (!isSelf && !hasElevatedRole) {
-      return next(new AppError('Forbidden: You can only access your own resource', HTTP_STATUS.FORBIDDEN));
+      return next(new AppError('Forbidden', HTTP_STATUS.FORBIDDEN));
     }
 
     next();

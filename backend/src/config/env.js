@@ -1,33 +1,59 @@
 'use strict';
 
 const path = require('path');
+const { randomBytes } = require('node:crypto');
 const dotenv = require('dotenv');
 
 // Load .env from backend root if present
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Tests must not inherit credentials or development overrides from a local file.
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+}
 
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = process.env.NODE_ENV;
 if (!['development', 'test', 'production'].includes(NODE_ENV)) {
-  throw new Error('NODE_ENV must be development, test, or production');
+  throw new Error('NODE_ENV must be explicitly set to development, test, or production');
 }
 
 const isProduction = NODE_ENV === 'production';
 const isTest = NODE_ENV === 'test';
 
-// In production, prevent the use of fallback development secrets
-const DEFAULT_DEV_JWT_SECRET = 'servigen-super-secret-jwt-key-dev-only-change-in-prod';
-const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_DEV_JWT_SECRET;
-
-if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEFAULT_DEV_JWT_SECRET)) {
-  throw new Error('SECURITY VIOLATION: A secure, unique JWT_SECRET must be provided in production.');
+const KNOWN_EXAMPLE_JWT_SECRET = 'servigen-super-secret-jwt-key-dev-only-change-in-prod';
+const configuredSecret = process.env.JWT_SECRET;
+if (configuredSecret?.trim() === KNOWN_EXAMPLE_JWT_SECRET ||
+    (!isTest && (!configuredSecret?.trim() || Buffer.byteLength(configuredSecret, 'utf8') < 32))) {
+  throw new Error('JWT_SECRET must be a unique secret of at least 32 bytes; the published example key is not permitted');
 }
+// A test-only random key is never shared with a development or production server.
+const JWT_SECRET = configuredSecret || randomBytes(32).toString('hex');
 
 // Dev auth override can ONLY be enabled in non-production environments
-const ALLOW_DEV_AUTH_OVERRIDE = !isProduction && process.env.ALLOW_DEV_AUTH_OVERRIDE === 'true';
+const ALLOW_DEV_AUTH_OVERRIDE = ['development', 'test'].includes(NODE_ENV) && process.env.ALLOW_DEV_AUTH_OVERRIDE === 'true';
 
 const parseCorsOrigins = (rawOrigins) => {
-  if (!rawOrigins || rawOrigins === '*') return '*';
-  return rawOrigins.split(',').map((origin) => origin.trim()).filter(Boolean);
+  if (!rawOrigins?.trim()) {
+    if (isProduction) throw new Error('CORS_ORIGIN must explicitly list production browser origins');
+    return ['http://localhost:5173', 'http://localhost:3000'];
+  }
+  return [...new Set(rawOrigins.split(',').map((entry) => {
+    try {
+      const url = new URL(entry.trim());
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
+          url.pathname !== '/' || url.search || url.hash) throw new Error();
+      return url.origin;
+    } catch {
+      throw new Error('CORS_ORIGIN must contain HTTP(S) origins without wildcards, credentials, paths, queries or fragments');
+    }
+  }))];
+};
+
+const positiveInteger = (name, fallback, maximum = Number.MAX_SAFE_INTEGER) => {
+  const raw = process.env[name] ?? String(fallback);
+  const value = Number(raw);
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < 1 || value > maximum) {
+    throw new Error(`${name} must be a positive integer no greater than ${maximum}`);
+  }
+  return value;
 };
 
 const PORT = Number(process.env.PORT || 3000);
@@ -61,6 +87,11 @@ const env = {
 
   CORS_ORIGIN: parseCorsOrigins(process.env.CORS_ORIGIN),
   ALLOW_DEV_AUTH_OVERRIDE,
+  RATE_LIMIT: {
+    WINDOW_MS: positiveInteger('RATE_LIMIT_WINDOW_MS', 60000, 2147483647),
+    MAX: positiveInteger('RATE_LIMIT_MAX', 300),
+    AI_MAX: positiveInteger('AI_RATE_LIMIT_MAX', 30),
+  },
 };
 
 module.exports = env;
