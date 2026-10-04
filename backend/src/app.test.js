@@ -149,3 +149,33 @@ test('Admin can inspect another agent queue while ordinary users cannot imperson
   assert.ok(JSON.stringify(body).includes('REQ-1007'));
   assert.ok(!JSON.stringify(body).includes('INC-1001'));
 });
+
+test('AI endpoints enforce role restrictions and verified caller identity', async () => {
+  const approver = authFor('Approver');
+  const user = authFor('Service User');
+  const agent = authFor('Service Agent', 'agent-001');
+  const admin = authFor('Admin', 'admin-001');
+
+  assert.equal((await fetch(base + '/api/ai-core/intent/analyze', {
+    method: 'POST', headers: { ...approver, 'content-type': 'application/json' },
+    body: JSON.stringify({ text: 'test query' }),
+  })).status, 403);
+
+  assert.equal((await fetch(base + '/api/ai-core/intent/analyze', {
+    method: 'POST', headers: { ...user, 'content-type': 'application/json' },
+    body: JSON.stringify({ text: 'test query' }),
+  })).status, 200);
+
+  const agentHandoff = await (await fetch(base + '/api/ai-core/escalation/handoff', {
+    method: 'POST', headers: { ...agent, 'content-type': 'application/json' },
+    body: JSON.stringify({ userId: 'spoofed-id', summary: 'test', resolved: false }),
+  })).json();
+  assert.equal(agentHandoff.data.request.userId, 'agent-001');
+
+  const adminHandoff = await (await fetch(base + '/api/ai-core/escalation/handoff', {
+    method: 'POST', headers: { ...admin, 'content-type': 'application/json' },
+    body: JSON.stringify({ userId: 'target-user', summary: 'test', resolved: false }),
+  })).json();
+  assert.equal(adminHandoff.data.request.userId, 'target-user');
+});
+
