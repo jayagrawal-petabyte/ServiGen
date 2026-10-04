@@ -230,5 +230,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-
-export default ProjectsPage;
