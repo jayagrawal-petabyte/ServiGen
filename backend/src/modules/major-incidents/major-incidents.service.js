@@ -8,6 +8,33 @@ const {
 
 const VALID_STATUSES = ['Investigating', 'Identified', 'Monitoring', 'Resolved'];
 const VALID_PRIORITIES = ['P1', 'P2'];
+const EDITABLE_FIELDS = new Set([
+  'title',
+  'description',
+  'status',
+  'priority',
+  'impact',
+  'affectedServices',
+  'commander',
+]);
+
+let incidentSequence = 0;
+let incidentUpdateSequence = 0;
+
+const createValidationError = (message) => {
+  const error = new Error(message);
+  error.statusCode = 400;
+  return error;
+};
+
+const requireNonBlankString = (value, field) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw createValidationError(`${field} must be a non-empty string`);
+  }
+};
+
+const nextIncidentId = () => `MI-${Date.now()}-${++incidentSequence}`;
+const nextIncidentUpdateId = (incidentId) => `${incidentId}-U${Date.now()}-${++incidentUpdateSequence}`;
 
 const createMajorIncident = async (payload) => {
   const { title, description, priority, impact, affectedServices } = payload;
@@ -26,7 +53,7 @@ const createMajorIncident = async (payload) => {
 
   const now = new Date().toISOString();
   const incident = {
-    id: `MI-${String(Date.now()).slice(-6)}`,
+    id: nextIncidentId(),
     title,
     description,
     status: 'Investigating',
@@ -43,19 +70,36 @@ const createMajorIncident = async (payload) => {
 };
 
 const changeMajorIncident = async (id, payload) => {
-  if (payload.status && !VALID_STATUSES.includes(payload.status)) {
-    const error = new Error(`status must be one of: ${VALID_STATUSES.join(', ')}`);
-    error.statusCode = 400;
-    throw error;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw createValidationError('incident changes must be an object');
   }
 
-  if (payload.priority && !VALID_PRIORITIES.includes(payload.priority)) {
-    const error = new Error('priority must be P1 or P2');
-    error.statusCode = 400;
-    throw error;
+  const unsupportedFields = Object.keys(payload).filter((field) => !EDITABLE_FIELDS.has(field));
+  if (unsupportedFields.length) {
+    throw createValidationError(`cannot update protected fields: ${unsupportedFields.join(', ')}`);
   }
 
-  const changes = { ...payload };
+  const changes = {};
+  for (const [field, value] of Object.entries(payload)) {
+    if (['title', 'description', 'impact', 'commander'].includes(field)) {
+      requireNonBlankString(value, field);
+    }
+
+    if (field === 'status' && (typeof value !== 'string' || !VALID_STATUSES.includes(value))) {
+      throw createValidationError(`status must be one of: ${VALID_STATUSES.join(', ')}`);
+    }
+
+    if (field === 'priority' && (typeof value !== 'string' || !VALID_PRIORITIES.includes(value))) {
+      throw createValidationError('priority must be P1 or P2');
+    }
+
+    if (field === 'affectedServices' && !Array.isArray(value)) {
+      throw createValidationError('affectedServices must be an array');
+    }
+
+    changes[field] = value;
+  }
+
   if (changes.status === 'Resolved' && !changes.resolvedAt) {
     changes.resolvedAt = new Date().toISOString();
   }
@@ -71,7 +115,7 @@ const createIncidentUpdate = async (id, payload) => {
   }
 
   const update = {
-    id: `${id}-U${Date.now()}`,
+    id: nextIncidentUpdateId(id),
     message: payload.message,
     author: payload.author || 'Unassigned',
     createdAt: new Date().toISOString(),
