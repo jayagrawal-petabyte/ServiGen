@@ -150,9 +150,19 @@ export default function ServiceCatalogue() {
               <strong>{services.length}</strong>
               <span>services</span>
             </div>
-            <button type="button" className="new-button" onClick={() => openRequest()}>
-              <span>+</span> New
-            </button>
+          <button
+  type="button"
+  className="new-button"
+  onClick={() => {
+    setDetailsService(null);
+    setRequestService(null);
+    setRequestDetails("");
+    setRequestState("idle");
+    setRequestOpen(true);
+  }}
+>
+  <span>+</span> New
+</button>
           </div>
         </header>
 
