@@ -19,26 +19,22 @@ export const Pagination: React.FC<PaginationProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex items-center gap-2 text-xs text-slate-500 ${className}`}>
-      <span className="font-medium">{currentRange}</span>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onPrevious}
-          disabled={!hasPrevious}
-          className="p-1 rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          title="Previous page"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={onNext}
-          disabled={!hasNext}
-          className="p-1 rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          title="Next page"
-        >
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
+    <div className={`flex items-center gap-2 bg-white border border-slate-200 rounded-full px-3 py-1 text-xs font-bold text-slate-600 shadow-2xs select-none ${className}`}>
+      <button
+        disabled={!hasPrevious}
+        onClick={onPrevious}
+        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <span>{currentRange}</span>
+      <button
+        disabled={!hasNext}
+        onClick={onNext}
+        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
   );
 };

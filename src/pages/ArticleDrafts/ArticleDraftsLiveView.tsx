@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import type { ArticleDraft } from './mockArticleDraftsData';
+import React, { useMemo, useState } from 'react';
+
+import type { ArticleDraft, ArticleDraftStatus } from './mockArticleDraftsData';
 
 interface ArticleDraftsLiveViewProps {
   drafts: ArticleDraft[];
-  onOpenArticle: (draft: ArticleDraft) => void;
-  onUpdateStatus: (
-    id: string,
-    newStatus: ArticleDraft['status']
-  ) => void;
+  onOpenArticle: (article: ArticleDraft) => void;
+  onUpdateStatus?: (id: string, newStatus: ArticleDraftStatus) => void;
 }
 
 export default function ArticleDraftsLiveView({
@@ -15,20 +13,37 @@ export default function ArticleDraftsLiveView({
   onOpenArticle,
   onUpdateStatus,
 }: ArticleDraftsLiveViewProps) {
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [categoryFilter, setCategoryFilter] =
+    useState<string>('All');
 
-  const categories = [
-    'All',
-    ...Array.from(new Set(drafts.map((d) => d.category))),
-  ];
+  const categories = useMemo(() => {
+    return [
+      'All',
+      ...Array.from(
+        new Set(
+          drafts.map(
+            (draft) => draft.category
+          )
+        )
+      ),
+    ];
+  }, [drafts]);
 
-  const visibleDrafts =
-    categoryFilter === 'All'
-      ? drafts
-      : drafts.filter((d) => d.category === categoryFilter);
+  const visibleDrafts = useMemo(() => {
+    if (categoryFilter === 'All') {
+      return drafts;
+    }
+
+    return drafts.filter(
+      (draft) =>
+        draft.category === categoryFilter
+    );
+  }, [drafts, categoryFilter]);
 
   return (
     <div style={{ marginTop: '12px' }}>
+
+      {/* Category filters */}
       <div
         style={{
           display: 'flex',
@@ -37,39 +52,64 @@ export default function ArticleDraftsLiveView({
           marginBottom: '20px',
         }}
       >
-        {categories.map((cat) => (
+        {categories.map((category) => (
           <button
-            key={cat}
+            key={category}
             type="button"
-            onClick={() => setCategoryFilter(cat)}
+            onClick={() =>
+              setCategoryFilter(category)
+            }
             style={{
               padding: '6px 14px',
               borderRadius: '999px',
               fontSize: '12.5px',
               fontWeight: 600,
               backgroundColor:
-                categoryFilter === cat ? '#1e293b' : '#ffffff',
+                categoryFilter === category
+                  ? '#1e293b'
+                  : '#ffffff',
               color:
-                categoryFilter === cat ? '#ffffff' : '#64748b',
-              border: '1px solid #e2e8f0',
+                categoryFilter === category
+                  ? '#ffffff'
+                  : '#64748b',
+              border:
+                '1px solid #e2e8f0',
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
           >
-            {cat}
+            {category}
           </button>
         ))}
       </div>
 
+      {/* Article cards */}
       <div className="live-cards-grid">
+
         {visibleDrafts.map((draft) => (
           <div
             key={draft.id}
             className="live-card"
-            onClick={() => onOpenArticle(draft)}
+            onClick={() =>
+              onOpenArticle(draft)
+            }
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (
+                event.key === 'Enter' ||
+                event.key === ' '
+              ) {
+                onOpenArticle(draft);
+              }
+            }}
           >
+
+            {/* Top section */}
             <div>
+
               <div className="live-card-top">
+
                 <span
                   style={{
                     fontSize: '12px',
@@ -87,23 +127,37 @@ export default function ArticleDraftsLiveView({
                     gap: '6px',
                   }}
                 >
-                  {draft.slaStatus === 'overdue' ? (
+
+                  {draft.slaStatus ===
+                  'overdue' ? (
+
                     <span className="sla-pill-overdue">
                       Overdue SLA
                     </span>
+
                   ) : (
+
                     <span
                       className="sla-dot-text"
-                      style={{ fontSize: '11.5px' }}
+                      style={{
+                        fontSize: '11.5px',
+                      }}
                     >
-                      <span className={`sla-dot ${draft.slaStatus}`} />
-                      <span>{draft.slaTimeLeft}</span>
+                      <span
+                        className={`sla-dot ${draft.slaStatus}`}
+                      />
+
+                      <span>
+                        {draft.slaTimeLeft}
+                      </span>
                     </span>
+
                   )}
 
                   <span
                     className={`status-pill ${
-                      draft.status === 'Awaiting Approval'
+                      draft.status ===
+                      'Awaiting Approval'
                         ? 'awaiting'
                         : draft.status.toLowerCase()
                     }`}
@@ -114,22 +168,34 @@ export default function ArticleDraftsLiveView({
                   >
                     {draft.status}
                   </span>
+
                 </div>
+
               </div>
 
-              <h3>{draft.summaryTitle}</h3>
-              <p>{draft.summarySubtitle}</p>
+              <h3>
+                {draft.summaryTitle}
+              </h3>
+
+              <p>
+                {draft.summarySubtitle}
+              </p>
+
             </div>
 
+            {/* Bottom section */}
             <div>
+
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent:
+                    'space-between',
                   alignItems: 'center',
                   marginBottom: '10px',
                 }}
               >
+
                 <span
                   style={{
                     fontSize: '11.5px',
@@ -151,10 +217,14 @@ export default function ArticleDraftsLiveView({
                 >
                   {draft.team}
                 </span>
+
               </div>
 
               <div className="live-card-footer">
-                <span>By {draft.author}</span>
+
+                <span>
+                  By {draft.author}
+                </span>
 
                 <span
                   style={{
@@ -164,11 +234,29 @@ export default function ArticleDraftsLiveView({
                 >
                   View details →
                 </span>
+
               </div>
+
             </div>
+
           </div>
         ))}
+
       </div>
+
+      {/* Empty state */}
+      {visibleDrafts.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: '#64748b',
+          }}
+        >
+          No article drafts found.
+        </div>
+      )}
+
     </div>
   );
 }

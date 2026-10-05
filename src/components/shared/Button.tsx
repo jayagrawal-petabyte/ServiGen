@@ -18,8 +18,8 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const variantStyles = {
     primary: 'bg-[#E87A5D] hover:bg-[#D96A4C] text-white shadow-xs',
-    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800',
-    outline: 'border border-slate-300 hover:bg-slate-50 text-slate-700',
+    secondary: 'bg-[#1B254B] hover:bg-[#141C3A] text-white',
+    outline: 'border border-slate-300 hover:bg-slate-50 text-slate-700 bg-white',
     danger: 'bg-rose-600 hover:bg-rose-700 text-white',
   };
 
@@ -35,7 +35,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {icon && <span>{icon}</span>}
-      {children}
+      <span>{children}</span>
     </button>
   );
 };

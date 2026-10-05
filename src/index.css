@@ -2,17 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bg-sidebar: #131d2b;
+  --bg-sidebar-hover: #1c2b3d;
+  --bg-sidebar-active: #f6c0af;
+  --text-sidebar: #94a3b8;
+  --text-sidebar-active: #8c3b23;
+  
+  --bg-canvas: #faf6f2;
+  --bg-card: #ffffff;
+  --bg-peach: #f7c5b3;
+  --bg-peach-light: #fdede7;
+  --accent-coral: #eb6a47;
+  --accent-coral-hover: #db5936;
+  --accent-coral-light: #f7a58b;
+  --accent-tan: #eec2b0;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-link: #1e60c6;
+  
+  --border-light: #f1eae3;
+  --border-subtle: #e2e8f0;
+  --border-focus: #f28b6d;
+  
+  --badge-draft-bg: #fdeee8;
+  --badge-draft-text: #b84c2a;
+  --badge-awaiting-bg: #1e293b;
+  --badge-awaiting-text: #ffffff;
+  --badge-rejected-bg: #fee2e2;
+  --badge-rejected-text: #dc2626;
+  --badge-approved-bg: #dcfce7;
+  --badge-approved-text: #16a34a;
+  --badge-overdue-bg: #ffe4e6;
+  --badge-overdue-text: #e11d48;
+}
+
 * {
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #0f172a;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

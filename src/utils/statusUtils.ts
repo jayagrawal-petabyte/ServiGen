@@ -1,52 +1,59 @@
-export function getCiStatusVariant(status: string): string {
-  switch (status?.toLowerCase()) {
-    case 'active':
+import type { ChangeStatus, CiStatus, ServiceHealthStatus } from '../types/cmdb';
+
+export const getChangeStatusVariant = (status: ChangeStatus | string): 'blue' | 'orange' | 'yellow' | 'purple' | 'green' | 'gray' => {
+  switch (status) {
+    case 'In Progress':
+      return 'blue';
+    case 'On Hold':
+      return 'orange';
+    case 'Pending Approval':
+      return 'yellow';
+    case 'Scheduled':
+      return 'purple';
+    case 'Completed':
+      return 'green';
+    default:
+      return 'gray';
+  }
+};
+
+export const getCiStatusVariant = (status: CiStatus | string): 'green' | 'yellow' | 'red' | 'gray' => {
+  switch (status) {
+    case 'Active':
     case 'operational':
       return 'green';
-    case 'maintenance':
+    case 'Maintenance':
     case 'degraded':
       return 'yellow';
-    case 'deprecated':
+    case 'Deprecated':
     case 'outage':
       return 'red';
     default:
       return 'gray';
   }
-}
+};
 
-export function getChangeStatusVariant(status: string): string {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-      return 'green';
-    case 'in progress':
-      return 'blue';
-    case 'scheduled':
-      return 'purple';
-    case 'pending approval':
-      return 'yellow';
-    default:
-      return 'gray';
-  }
-}
-
-export function getPercentBadgeVariant(percent: number): string {
+export const getPercentBadgeVariant = (percent: number): string => {
   if (percent >= 100) return 'green';
   if (percent >= 50) return 'blue';
   if (percent > 0) return 'yellow';
   return 'gray';
-}
+};
 
-export function getServiceHealthVariant(health: string): string {
-  switch (health?.toLowerCase()) {
+export const getServiceHealthVariant = (status: ServiceHealthStatus | string): 'green' | 'yellow' | 'red' => {
+  switch (status) {
+    case 'Operational':
     case 'operational':
       return 'green';
+    case 'Degraded':
     case 'degraded':
       return 'yellow';
+    case 'Maintenance':
     case 'maintenance':
-      return 'yellow';
+    case 'Outage':
     case 'outage':
       return 'red';
     default:
-      return 'gray';
+      return 'green';
   }
-}
+};

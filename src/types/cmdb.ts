@@ -1,44 +1,15 @@
-export type CiType = 'Cloud Service' | 'Database' | 'Network' | 'Application' | 'Server' | 'Security';
-
-export type CiStatus = 'Active' | 'Maintenance' | 'Deprecated';
-
-export interface ConfigurationItem {
-  id: string;
-  name: string;
-  type: CiType;
-  status: CiStatus;
-  tag: string;
-  environment: string;
-  site: string;
-  businessOwner: string;
-  technicalContact: string;
-  activeIncidentsCount: number;
-  linkedChangesCount: number;
-  lastUpdated: string;
-}
-
-export type HealthStatus = 'Operational' | 'Degraded' | 'Maintenance' | 'Outage';
-
-export interface ServiceCI {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  healthStatus: HealthStatus;
-  uptimeSlaPercent: number;
-  businessOwner: string;
-  supportingCisCount: number;
-}
-
 export type ChangeType = 'Standard' | 'Normal' | 'Emergency';
-export type RiskLevel = 'Low' | 'Medium' | 'High';
-export type ChangeStatus = 'In Progress' | 'Scheduled' | 'Completed' | 'Pending Approval';
+export type ChangeStatus = 'In Progress' | 'On Hold' | 'Pending Approval' | 'Scheduled' | 'Completed';
+export type RiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
+export type ImpactLevel = 'Low' | 'Medium' | 'High';
 
-export interface SubTask {
+export interface Subtask {
   id: string;
   title: string;
   completed: boolean;
 }
+
+export type SubTask = Subtask;
 
 export interface ChangeRequest {
   id: string;
@@ -47,7 +18,7 @@ export interface ChangeRequest {
   type: ChangeType;
   status: ChangeStatus;
   risk: RiskLevel;
-  impact: string;
+  impact: ImpactLevel | string;
   linkedCiId: string;
   linkedCiName: string;
   agentName: string;
@@ -57,5 +28,39 @@ export interface ChangeRequest {
   targetHours: number;
   completionPercent: number;
   tags: string[];
-  subtasks: SubTask[];
+  subtasks: Subtask[];
+}
+
+export type CiType = 'Cloud Service' | 'Database' | 'Network' | 'Application' | 'Server' | 'Security';
+export type CiStatus = 'Active' | 'Maintenance' | 'Deprecated';
+
+export interface ConfigurationItem {
+  id: string;
+  name: string;
+  type: CiType;
+  tag: string;
+  site: string;
+  status: CiStatus;
+  businessOwner: string;
+  technicalContact: string;
+  environment: string;
+  activeIncidentsCount: number;
+  linkedChangesCount: number;
+  ipAddress?: string;
+  lastUpdated?: string;
+}
+
+export type ServiceHealthStatus = 'Operational' | 'Degraded' | 'Maintenance' | 'Outage';
+export type HealthStatus = ServiceHealthStatus;
+
+export interface ServiceCI {
+  id: string;
+  name: string;
+  category: string;
+  healthStatus: ServiceHealthStatus;
+  uptimeSlaPercent: number;
+  businessOwner: string;
+  supportingCisCount: number;
+  description: string;
+  lastIncidentDate?: string;
 }
