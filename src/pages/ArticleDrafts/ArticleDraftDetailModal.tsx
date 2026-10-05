@@ -17,6 +17,25 @@ interface ArticleDraftDetailModalProps {
   ) => Promise<void> | void;
 }
 
+const CATEGORIES = [
+  'Email & Messaging',
+  'HR Self-Service',
+  'HR Systems',
+  'Localization & Time',
+  'Hardware & Printing',
+  'Network & Remote',
+  'Security & Access',
+  'Collaboration',
+  'Cloud Infrastructure',
+];
+
+const PRIORITIES = [
+  { label: 'High', color: '#a16207' },
+  { label: 'Medium', color: '#c27803' },
+  { label: 'Low', color: '#64748b' },
+  { label: 'Critical', color: '#dc2626' },
+];
+
 export default function ArticleDraftDetailModal({
   article,
   onClose,
@@ -25,8 +44,13 @@ export default function ArticleDraftDetailModal({
 }: ArticleDraftDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(article ? article.summaryTitle : '');
+  const [editedSubtitle, setEditedSubtitle] = useState(article ? article.summarySubtitle : '');
+  const [editedCategory, setEditedCategory] = useState(article ? article.category : CATEGORIES[0]);
+  const [editedPriority, setEditedPriority] = useState(article ? article.priority : 'High');
   const [editedBody, setEditedBody] = useState(article ? article.body : '');
+
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [subtitleError, setSubtitleError] = useState<string | null>(null);
   const [bodyError, setBodyError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -35,6 +59,7 @@ export default function ArticleDraftDetailModal({
   const validate = (): boolean => {
     let isValid = true;
     const trimmedTitle = editedTitle.trim();
+    const trimmedSubtitle = editedSubtitle.trim();
     const trimmedBody = editedBody.trim();
 
     if (!trimmedTitle) {
@@ -48,6 +73,13 @@ export default function ArticleDraftDetailModal({
       isValid = false;
     } else {
       setTitleError(null);
+    }
+
+    if (!trimmedSubtitle) {
+      setSubtitleError('Summary subtitle is required.');
+      isValid = false;
+    } else {
+      setSubtitleError(null);
     }
 
     if (!trimmedBody) {
@@ -68,8 +100,13 @@ export default function ArticleDraftDetailModal({
 
     setIsSubmitting(true);
     try {
+      const priorityObj = PRIORITIES.find((p) => p.label === editedPriority);
       await onSaveContent?.(article.id, {
         summaryTitle: editedTitle.trim(),
+        summarySubtitle: editedSubtitle.trim(),
+        category: editedCategory,
+        priority: editedPriority,
+        priorityColor: priorityObj?.color || '#a16207',
         body: editedBody.trim(),
       });
       setIsEditing(false);
@@ -79,7 +116,6 @@ export default function ArticleDraftDetailModal({
   };
 
   const handleStatusTransition = async (newStatus: ArticleDraftStatus) => {
-    // If submitting for approval, make sure draft is not empty
     if (newStatus === 'Awaiting Approval') {
       if (!article.summaryTitle || article.summaryTitle.trim().length < 3) {
         alert('Validation Error: Article title must be at least 3 characters before submitting for approval.');
@@ -162,6 +198,7 @@ export default function ArticleDraftDetailModal({
         </div>
 
         <div className="modal-body">
+          {/* Metadata Grid */}
           <div
             style={{
               display: 'grid',
@@ -213,16 +250,37 @@ export default function ArticleDraftDetailModal({
                 Category
               </div>
 
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginTop: '2px',
-                  color: '#1e293b',
-                }}
-              >
-                {article.category}
-              </div>
+              {isEditing ? (
+                <select
+                  value={editedCategory}
+                  onChange={(e) => setEditedCategory(e.target.value)}
+                  style={{
+                    fontSize: '12px',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    marginTop: '2px',
+                    width: '100%',
+                  }}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    marginTop: '2px',
+                    color: '#1e293b',
+                  }}
+                >
+                  {article.category}
+                </div>
+              )}
             </div>
 
             <div>
@@ -237,18 +295,39 @@ export default function ArticleDraftDetailModal({
                 Priority
               </div>
 
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginTop: '2px',
-                  color:
-                    article.priorityColor ||
-                    '#1e293b',
-                }}
-              >
-                {article.priority}
-              </div>
+              {isEditing ? (
+                <select
+                  value={editedPriority}
+                  onChange={(e) => setEditedPriority(e.target.value)}
+                  style={{
+                    fontSize: '12px',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    marginTop: '2px',
+                    width: '100%',
+                  }}
+                >
+                  {PRIORITIES.map((p) => (
+                    <option key={p.label} value={p.label}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    marginTop: '2px',
+                    color:
+                      article.priorityColor ||
+                      '#1e293b',
+                  }}
+                >
+                  {article.priority}
+                </div>
+              )}
             </div>
 
             <div>
@@ -276,52 +355,93 @@ export default function ArticleDraftDetailModal({
             </div>
           </div>
 
+          {/* Title & Subtitle Edit or View */}
           {isEditing ? (
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <label
+                    htmlFor="edit-title-input"
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#475569',
+                    }}
+                  >
+                    Article Title <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    {editedTitle.length}/120
+                  </span>
+                </div>
+
+                <input
+                  id="edit-title-input"
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => {
+                    setEditedTitle(e.target.value);
+                    if (titleError && e.target.value.trim().length >= 3) {
+                      setTitleError(null);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${titleError ? '#ef4444' : '#cbd5e1'}`,
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+
+                {titleError && (
+                  <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                    ⚠️ {titleError}
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label
-                  htmlFor="edit-title-input"
+                  htmlFor="edit-subtitle-input"
                   style={{
                     display: 'block',
                     fontSize: '12px',
                     fontWeight: 700,
                     color: '#475569',
+                    marginBottom: '4px',
                   }}
                 >
-                  Article Title <span style={{ color: '#dc2626' }}>*</span>
+                  Summary Subtitle <span style={{ color: '#dc2626' }}>*</span>
                 </label>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  {editedTitle.length}/120
-                </span>
+                <input
+                  id="edit-subtitle-input"
+                  type="text"
+                  value={editedSubtitle}
+                  onChange={(e) => {
+                    setEditedSubtitle(e.target.value);
+                    if (subtitleError) setSubtitleError(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${subtitleError ? '#ef4444' : '#cbd5e1'}`,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+                {subtitleError && (
+                  <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                    ⚠️ {subtitleError}
+                  </div>
+                )}
               </div>
-
-              <input
-                id="edit-title-input"
-                type="text"
-                value={editedTitle}
-                onChange={(e) => {
-                  setEditedTitle(e.target.value);
-                  if (titleError && e.target.value.trim().length >= 3) {
-                    setTitleError(null);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: `1.5px solid ${titleError ? '#ef4444' : '#cbd5e1'}`,
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-              />
-
-              {titleError && (
-                <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
-                  ⚠️ {titleError}
-                </div>
-              )}
             </div>
           ) : (
             <div style={{ marginBottom: '16px' }}>
@@ -347,6 +467,7 @@ export default function ArticleDraftDetailModal({
             </div>
           )}
 
+          {/* Body Content */}
           <div>
             <div
               style={{
@@ -371,6 +492,7 @@ export default function ArticleDraftDetailModal({
                 onClick={() => {
                   setIsEditing(!isEditing);
                   setTitleError(null);
+                  setSubtitleError(null);
                   setBodyError(null);
                 }}
                 style={{

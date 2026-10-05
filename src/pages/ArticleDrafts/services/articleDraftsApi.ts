@@ -35,7 +35,7 @@ function setStoredDrafts(data: ArticleDraft[]): void {
 
 /**
  * Article Drafts API Service
- * Handles API interactions, input validation, status workflow rules,
+ * Handles API interactions, input validation, creation, editing, status workflow rules,
  * and persistent storage.
  */
 export const articleDraftsApi = {
@@ -48,11 +48,44 @@ export const articleDraftsApi = {
   },
 
   /**
-   * Update article draft content with validation
+   * Create a new article draft with validation
+   */
+  async createArticleDraft(newDraft: Omit<ArticleDraft, 'id'>): Promise<ArticleDraft> {
+    if (!newDraft.summaryTitle || newDraft.summaryTitle.trim().length < 3) {
+      throw new Error('Validation Error: Article title must be at least 3 characters.');
+    }
+    if (!newDraft.body || newDraft.body.trim().length < 10) {
+      throw new Error('Validation Error: Article content must be at least 10 characters.');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+
+    const list = getStoredDrafts();
+    
+    // Generate next unique 7-digit ID (e.g. 0003028)
+    const numericIds = list
+      .map((d) => parseInt(d.id, 10))
+      .filter((n) => !isNaN(n));
+    const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 3027;
+    const nextId = String(maxId + 1).padStart(7, '0');
+
+    const created: ArticleDraft = {
+      ...newDraft,
+      id: nextId,
+    };
+
+    const nextList = [created, ...list];
+    setStoredDrafts(nextList);
+
+    return created;
+  },
+
+  /**
+   * Update article draft content and metadata with validation
    */
   async updateDraftContent(
     id: string,
-    updates: { summaryTitle?: string; body?: string; summarySubtitle?: string }
+    updates: Partial<ArticleDraft>
   ): Promise<ArticleDraft> {
     if (!id) {
       throw new Error('Validation Error: Article ID is required.');

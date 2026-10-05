@@ -1,18 +1,17 @@
 import React, { useMemo, useState } from 'react';
 
-import type { ArticleDraft } from './mockArticleDraftsData';
+import type { ArticleDraft, ArticleDraftStatus } from './mockArticleDraftsData';
 
 interface ArticleDraftsLiveViewProps {
   drafts: ArticleDraft[];
-
-  onOpenArticle: (
-    article: ArticleDraft
-  ) => void;
+  onOpenArticle: (article: ArticleDraft) => void;
+  onUpdateStatus?: (id: string, newStatus: ArticleDraftStatus) => void;
 }
 
 export default function ArticleDraftsLiveView({
   drafts,
   onOpenArticle,
+  onUpdateStatus,
 }: ArticleDraftsLiveViewProps) {
   const [categoryFilter, setCategoryFilter] =
     useState<string>('All');

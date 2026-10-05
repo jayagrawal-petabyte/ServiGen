@@ -10,6 +10,7 @@ import ArticleDraftSidebar, {
 import ArticleDraftsDesignView from './ArticleDraftsDesignView';
 import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
+import CreateArticleDraftModal from './CreateArticleDraftModal';
 import './articleDrafts.css';
 
 type ViewMode = 'design' | 'live';
@@ -24,6 +25,7 @@ export default function ArticleDraftsPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<ArticleDraft | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,20 @@ export default function ArticleDraftsPage() {
       setSelectedIds((previousIds) => [
         ...new Set([...previousIds, ...visibleIds]),
       ]);
+    }
+  };
+
+  // Create article draft
+  const handleCreateDraft = async (draftData: Omit<ArticleDraft, 'id'>) => {
+    setIsActionLoading(true);
+    try {
+      const created = await articleDraftsApi.createArticleDraft(draftData);
+      setDrafts((prev) => [created, ...prev]);
+      showToast(`Created draft #${created.id} successfully!`);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to create article draft');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -270,11 +286,35 @@ export default function ArticleDraftsPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{
+                backgroundColor: '#f28b6d',
+                color: '#ffffff',
+                padding: '6px 16px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '12.5px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(242, 139, 109, 0.35)',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>New Draft</span>
+            </button>
+
             {activeSubnavView !== 'all' && (
               <span style={{ fontSize: '12px', color: '#64748b' }}>
                 Filter: <strong>{activeSubnavView}</strong>
               </span>
             )}
+
             <button
               type="button"
               onClick={handleResetData}
@@ -419,7 +459,7 @@ export default function ArticleDraftsPage() {
         )}
       </main>
 
-      {/* Article Detail Modal */}
+      {/* Article Detail & Edit Modal */}
       {selectedArticle !== null && (
         <ArticleDraftDetailModal
           article={selectedArticle}
@@ -428,6 +468,13 @@ export default function ArticleDraftsPage() {
           onSaveContent={handleSaveContent}
         />
       )}
+
+      {/* Create Article Draft Modal */}
+      <CreateArticleDraftModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreateDraft={handleCreateDraft}
+      />
 
       {/* Toast Notification */}
       {toastMessage && (
