@@ -1,11 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import "./OnHoldTicketScreen.css";
-import Sidebar from "../sidebar/Sidebar";
 import MyList from "../mylist/MyList";
-import Agent from "../mylist/agent/Agent";
-import Team from "../mylist/team/Team";
-import Type from "../mylist/type/Type";
-import Status from "../mylist/status/Status";
 
 interface Ticket {
   id: string;
@@ -14,27 +9,25 @@ interface Ticket {
   org: string;
   summary: string;
   status: "On H" | "With";
+  type: "Incident" | "Service Request";
 }
 
-const INCIDENT_TICKETS: Ticket[] = [
-  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be f...", status: "On H" },
-  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to ...", status: "With" },
-  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few second...", status: "With" },
-  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mans...",summary: "Trading desk computer won't b...", status: "With" },
-  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to exter...", status: "With" },
-  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say...", status: "On H" },
-  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeabl...", status: "With" },
-  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support ca...", status: "With" },
-  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly wh...", status: "On H" },
-  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter neve...", status: "With" },
-  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner abou...", status: "On H" },
-  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to a virtual mach...", status: "With" },
-  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authen...", status: "With" },
-  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jum...", status: "On H" },
-];
-
-const SERVICE_TICKETS: Ticket[] = [
-  { id: "0003947", priority: "Low", priorityColor: "green", org: "consultancy/APAC/Diego Morales", summary: "Requesting approval to install p...", status: "With" },
+const ALL_TICKETS: Ticket[] = [
+  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be f...", status: "On H", type: "Incident" },
+  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to ...", status: "With", type: "Incident" },
+  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few second...", status: "With", type: "Incident" },
+  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mans...",summary: "Trading desk computer won't b...", status: "With", type: "Incident" },
+  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to exter...", status: "With", type: "Incident" },
+  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say...", status: "On H", type: "Incident" },
+  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeabl...", status: "With", type: "Incident" },
+  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support ca...", status: "With", type: "Incident" },
+  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly wh...", status: "On H", type: "Incident" },
+  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter neve...", status: "With", type: "Incident" },
+  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner abou...", status: "On H", type: "Incident" },
+  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to a virtual mach...", status: "With", type: "Incident" },
+  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authen...", status: "With", type: "Incident" },
+  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jum...", status: "On H", type: "Incident" },
+  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install p...", status: "With", type: "Service Request" },
 ];
 
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
@@ -82,7 +75,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
     <td className="col-summary">{ticket.summary}</td>
     <td className="col-status">
       <span className={"status-badge " + (ticket.status === "On H" ? "status-cyan" : "status-teal")}>
-        {ticket.status === "On H" ? "On H..." : "With..."}
+        {ticket.status === "On H" ? "On Hold" : "With User"}
       </span>
     </td>
   </tr>
@@ -90,36 +83,102 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
 
 const OnHoldTicketScreen: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [incidentCollapsed, setIncidentCollapsed] = useState<boolean>(false);
-  const [serviceCollapsed, setServiceCollapsed] = useState<boolean>(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeView, setActiveView] = useState<string>("My Lists");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [hasError, setHasError] = useState<boolean>(false);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 10;
+
+  const [tickets, setTickets] = useState<Ticket[]>(ALL_TICKETS);
 
   React.useEffect(() => {
-    // Simulate initial data fetching
+    fetchData();
+  }, [activeView]); // Refetch on view change just to simulate loading
+
+  const fetchData = () => {
     setIsLoading(true);
+    setCurrentPage(1);
+    setSelectedItems([]);
     const timer = setTimeout(() => {
       setIsLoading(false);
-      // setHasError(true); // Uncomment to test error state
-    }, 1200);
+    }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  };
 
-  const filteredIncident = INCIDENT_TICKETS.filter(t => 
-    t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.org.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.summary.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const filteredService = SERVICE_TICKETS.filter(t => 
-    t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.org.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    t.summary.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleRefresh = () => {
+    fetchData();
+  };
 
-  const allIds = [...filteredIncident, ...filteredService].map((t) => t.id);
+  const handleNewTicket = () => {
+    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000); // Generate 4-digit ID
+    const newTicket: Ticket = {
+      id: newId,
+      priority: "Medium",
+      priorityColor: "yellow",
+      org: "consultancy/US/Jane Doe",
+      summary: "Newly created mock ticket...",
+      status: "On H",
+      type: "Incident",
+    };
+    
+    // Add to the front of the list
+    setTickets(prev => [newTicket, ...prev]);
+    setCurrentPage(1); // Go to page 1 to see it
+    
+    // Simulate loading for effect
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 400);
+  };
+
+  // 1. Filter Tickets
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(t => 
+      t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.org.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.summary.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, tickets]);
+
+  // 2. Pagination
+  const totalPages = Math.ceil(filteredTickets.length / pageSize);
+  const paginatedTickets = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredTickets.slice(startIndex, startIndex + pageSize);
+  }, [filteredTickets, currentPage]);
+
+  const goToNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
+  const goToPrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
+
+  const countStart = filteredTickets.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const countEnd = Math.min(currentPage * pageSize, filteredTickets.length);
+
+  // 3. Group Tickets
+  const groupedTickets = useMemo(() => {
+    const groups: Record<string, Ticket[]> = {};
+    paginatedTickets.forEach(ticket => {
+      let groupKey = "Other";
+      if (activeView === "My Lists" || activeView === "Tickets by Type") {
+        groupKey = ticket.type;
+      } else if (activeView === "Tickets by Status") {
+        groupKey = ticket.status === "On H" ? "On Hold" : "With User";
+      } else if (activeView === "Tickets by Team") {
+        const parts = ticket.org.split("/");
+        groupKey = parts.length > 1 ? `${parts[0]}/${parts[1]}` : ticket.org;
+      } else if (activeView === "Tickets by Agent") {
+        const parts = ticket.org.split("/");
+        groupKey = parts.length > 2 ? parts[2] : ticket.org;
+      }
+
+      if (!groups[groupKey]) groups[groupKey] = [];
+      groups[groupKey].push(ticket);
+    });
+    return groups;
+  }, [paginatedTickets, activeView]);
+
+  const allVisibleIds = paginatedTickets.map((t) => t.id);
 
   const toggleSelect = (id: string): void =>
     setSelectedItems((prev) =>
@@ -127,11 +186,17 @@ const OnHoldTicketScreen: React.FC = () => {
     );
 
   const toggleAll = (e: React.ChangeEvent<HTMLInputElement>): void =>
-    setSelectedItems(e.target.checked ? allIds : []);
+    setSelectedItems(e.target.checked ? allVisibleIds : []);
+
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
 
   return (
     <div className="app-shell">
-      {/* -- Main Area -- */}
       <div className="main-area">
 
         {/* Top Nav */}
@@ -150,30 +215,30 @@ const OnHoldTicketScreen: React.FC = () => {
             <span className="tab-plus">+</span>
           </div>
           <div className="topnav-right">
-            <button className="btn-get-started">Get started</button>
-            <button className="btn-new-ticket">
+            <button className="btn-get-started" onClick={() => alert("Get Started: Coming soon!")}>Get started</button>
+            <button className="btn-new-ticket" onClick={handleNewTicket}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Ticket
             </button>
             <div className="topnav-icons">
-              <button className="tnav-icon-btn">
+              <button className="tnav-icon-btn" onClick={() => alert("Global Search: Coming soon!")}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </button>
-              <button className="tnav-icon-btn notif-wrap">
+              <button className="tnav-icon-btn notif-wrap" onClick={() => alert("Notifications: You have 1 unread alert!")}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 <span className="notif-dot">1</span>
               </button>
-              <button className="tnav-icon-btn">
+              <button className="tnav-icon-btn" onClick={() => alert("Menu: Coming soon!")}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
               </button>
-              <button className="tnav-icon-btn">
+              <button className="tnav-icon-btn" onClick={() => alert("History: Coming soon!")}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </button>
-              <button className="tnav-icon-btn">
+              <button className="tnav-icon-btn" onClick={() => alert("Settings: Coming soon!")}>
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </button>
             </div>
-            <div className="user-avatar-circle">
+            <div className="user-avatar-circle" onClick={() => alert("User Profile: Coming soon!")} style={{ cursor: 'pointer' }}>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
             </div>
           </div>
@@ -181,8 +246,6 @@ const OnHoldTicketScreen: React.FC = () => {
 
         {/* Content */}
         <div className="content-row">
-
-          {/* Left Panel */}
           <MyList 
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
@@ -190,31 +253,29 @@ const OnHoldTicketScreen: React.FC = () => {
             setActiveView={setActiveView}
           />
 
-          {/* Right Table */}
-          {activeView === "Tickets by Agent" ? (
-            <Agent />
-          ) : activeView === "Tickets by Team" ? (
-            <Team />
-          ) : activeView === "Tickets by Type" ? (
-            <Type />
-          ) : activeView === "Tickets by Status" ? (
-            <Status />
-          ) : (
-            <div className="right-panel">
-              <div className="table-toolbar">
+          <div className="right-panel">
+            <div className="table-toolbar">
               <button className="tb-add-btn">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <div style={{flex:1}}></div>
-              <span className="count-text">1-24 of 24</span>
-              <button className="tb-nav-btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
-              <button className="tb-nav-btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
-              <button className="tb-nav-btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-              <button className="btn-new-green">
+              <span className="count-text">{countStart}-{countEnd} of {filteredTickets.length}</span>
+              <button className="tb-nav-btn" onClick={goToPrevPage} disabled={currentPage === 1} style={{ opacity: currentPage === 1 ? 0.4 : 1 }}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button className="tb-nav-btn" onClick={goToNextPage} disabled={currentPage === totalPages || totalPages === 0} style={{ opacity: currentPage === totalPages || totalPages === 0 ? 0.4 : 1 }}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button className="tb-nav-btn" onClick={handleRefresh}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+              <button className="btn-new-green" onClick={handleNewTicket}>
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
               </button>
-              <button className="tb-nav-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+              <button className="tb-nav-btn">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </button>
             </div>
 
             <div className="table-scroll-wrap">
@@ -251,14 +312,7 @@ const OnHoldTicketScreen: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-              ) : hasError ? (
-                <div className="error-state">
-                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="error-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                  <h3>Failed to load tickets</h3>
-                  <p>There was a problem connecting to the server. Please try again.</p>
-                  <button className="btn-retry" onClick={() => { setIsLoading(true); setHasError(false); setTimeout(() => setIsLoading(false), 1200); }}>Retry</button>
-                </div>
-              ) : filteredIncident.length === 0 && filteredService.length === 0 ? (
+              ) : filteredTickets.length === 0 ? (
                 <div className="empty-state">
                   <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="empty-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <h3>No tickets found</h3>
@@ -274,7 +328,13 @@ const OnHoldTicketScreen: React.FC = () => {
                   <thead>
                     <tr>
                       <th className="col-type">Type</th>
-                      <th className="col-check"><input type="checkbox" onChange={toggleAll} checked={selectedItems.length === allIds.length && allIds.length > 0}/></th>
+                      <th className="col-check">
+                        <input 
+                          type="checkbox" 
+                          onChange={toggleAll} 
+                          checked={selectedItems.length === allVisibleIds.length && allVisibleIds.length > 0}
+                        />
+                      </th>
                       <th className="col-viewing">Viewing</th>
                       <th className="col-id">ID</th>
                       <th className="col-sla">SLA Time Left</th>
@@ -285,31 +345,32 @@ const OnHoldTicketScreen: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredIncident.length > 0 && (
-                      <tr className="group-header-row" onClick={() => setIncidentCollapsed(!incidentCollapsed)}>
-                        <td colSpan={9}>
-                          <span className="group-toggle">{incidentCollapsed ? "▶" : "▼"}</span>
-                          <span className="group-title"> Incident ({filteredIncident.length})</span>
-                        </td>
-                      </tr>
-                    )}
-                    {!incidentCollapsed && filteredIncident.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
-  
-                    {filteredService.length > 0 && (
-                      <tr className="group-header-row" onClick={() => setServiceCollapsed(!serviceCollapsed)}>
-                        <td colSpan={9}>
-                          <span className="group-toggle">{serviceCollapsed ? "▶" : "▼"}</span>
-                          <span className="group-title"> Service Request ({filteredService.length})</span>
-                        </td>
-                      </tr>
-                    )}
-                    {!serviceCollapsed && filteredService.map((t) => <TicketRow key={t.id} ticket={t} selectedItems={selectedItems} onToggle={toggleSelect} />)}
+                    {Object.entries(groupedTickets).map(([groupName, tickets]) => {
+                      const isCollapsed = collapsedGroups[groupName];
+                      return (
+                        <React.Fragment key={groupName}>
+                          <tr className="group-header-row" onClick={() => toggleGroup(groupName)}>
+                            <td colSpan={9}>
+                              <span className="group-toggle">{isCollapsed ? "▶" : "▼"}</span>
+                              <span className="group-title"> {groupName} ({tickets.length})</span>
+                            </td>
+                          </tr>
+                          {!isCollapsed && tickets.map((t) => (
+                            <TicketRow 
+                              key={t.id} 
+                              ticket={t} 
+                              selectedItems={selectedItems} 
+                              onToggle={toggleSelect} 
+                            />
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
             </div>
           </div>
-          )}
         </div>
       </div>
     </div>
