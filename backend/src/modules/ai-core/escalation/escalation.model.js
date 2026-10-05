@@ -56,6 +56,7 @@ const createEscalationHandoff = async (requestData) => {
     userId: requestData.requesterId,
 
     request: {
+      userId: requestData.requesterId,
       summary: requestData.summary,
       conversationId: requestData.conversationId || null,
       reason: requestData.reason,

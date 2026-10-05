@@ -2,6 +2,7 @@ const {
   checkEscalation,
   prepareHandoff,
 } = require('./escalation.service');
+const { ROLES } = require('../../../shared/constants/roles.constants');
 
 const checkEscalationDecision = async (req, res) => {
   try {
@@ -33,26 +34,28 @@ const createEscalationHandoff = async (req, res) => {
     const actorId = req.user.id;
     const role = req.user.role;
 
-    const privilegedRoles = [
-      'Admin',
+    const permittedRoles = [
+      ROLES.SERVICE_USER,
+      ROLES.SERVICE_AGENT,
+      ROLES.SUPPORT_TEAM_USER,
+      ROLES.ADMIN,
+      'ServiceUser',
+      'ServiceAgent',
       'Agent',
       'ServiceDeskAgent',
     ];
 
-    let requesterId;
-
-    if (role === 'ServiceUser') {
-      // Self-service users can only create requests for themselves.
-      requesterId = actorId;
-    } else if (privilegedRoles.includes(role)) {
-      // Privileged users can act on behalf of another requester.
-      requesterId = req.body.userId || actorId;
-    } else {
+    if (!permittedRoles.includes(role)) {
       return res.status(403).json({
         success: false,
         message: 'Role is not permitted to create an escalation handoff',
       });
     }
+
+    // Only Admin is permitted to act on behalf of another requester;
+    // self-service callers cannot substitute an unauthorized requester.
+    const isPrivileged = role === ROLES.ADMIN || role === 'Admin';
+    const requesterId = (isPrivileged && req.body?.userId) ? req.body.userId : actorId;
 
     const handoffData = {
       resolved: req.body.resolved,
