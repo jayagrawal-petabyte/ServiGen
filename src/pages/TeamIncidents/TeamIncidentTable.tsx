@@ -10,6 +10,7 @@ interface Incident {
   sla: string;
   summary: string;
   category: string;
+  agent: string;
   priority: string;
   status: string;
   type: string;
@@ -26,6 +27,7 @@ const initialIncidents: Incident[] = [
     sla: "-18:53",
     summary: "Screen share button does not work",
     category: "Office Applications",
+    agent: "Anjali Prasad",
     priority: "Medium",
     status: "In Progress",
     type: "Incident",
@@ -35,6 +37,7 @@ const initialIncidents: Incident[] = [
     sla: "-42:54",
     summary: "Audio echo looping when two people join",
     category: "Collaboration Tools",
+    agent: "Mohammad Taha Ali",
     priority: "Low",
     status: "In Progress",
     type: "Incident",
@@ -44,6 +47,7 @@ const initialIncidents: Incident[] = [
     sla: "05:05",
     summary: "Account locked while working from home",
     category: "Security",
+    agent: "Monalisa Panda",
     priority: "Medium",
     status: "In Progress",
     type: "Incident",
@@ -53,10 +57,18 @@ const initialIncidents: Incident[] = [
     sla: "05:05",
     summary: "VPN worked yesterday, now says unavailable",
     category: "Network",
+    agent: "Aditya Kumar Singh",
     priority: "Medium",
     status: "In Progress",
     type: "Incident",
   },
+];
+
+const agents = [
+  "Anjali Prasad",
+  "Mohammad Taha Ali",
+  "Monalisa Panda",
+  "Aditya Kumar Singh",
 ];
 
 function TeamIncidentTable({
@@ -82,8 +94,13 @@ function TeamIncidentTable({
     useState<Incident | null>(null);
 
   const [newSummary, setNewSummary] = useState("");
+
   const [newCategory, setNewCategory] =
     useState("Network");
+
+  const [newAgent, setNewAgent] =
+    useState(agents[0]);
+
   const [newPriority, setNewPriority] =
     useState("Medium");
 
@@ -106,6 +123,9 @@ function TeamIncidentTable({
           .toLowerCase()
           .includes(searchValue) ||
         incident.category
+          .toLowerCase()
+          .includes(searchValue) ||
+        incident.agent
           .toLowerCase()
           .includes(searchValue);
 
@@ -213,6 +233,7 @@ function TeamIncidentTable({
   const openNewIncidentForm = () => {
     setNewSummary("");
     setNewCategory("Network");
+    setNewAgent(agents[0]);
     setNewPriority("Medium");
     setCreateError("");
     setShowNewIncidentForm(true);
@@ -221,6 +242,7 @@ function TeamIncidentTable({
   const closeNewIncidentForm = () => {
     setNewSummary("");
     setNewCategory("Network");
+    setNewAgent(agents[0]);
     setNewPriority("Medium");
     setCreateError("");
     setShowNewIncidentForm(false);
@@ -241,6 +263,7 @@ function TeamIncidentTable({
       sla: "10:00",
       summary: newSummary.trim(),
       category: newCategory,
+      agent: newAgent,
       priority: newPriority,
       status: "New",
       type: "Incident",
@@ -253,6 +276,7 @@ function TeamIncidentTable({
 
     setNewSummary("");
     setNewCategory("Network");
+    setNewAgent(agents[0]);
     setNewPriority("Medium");
     setCreateError("");
     setShowNewIncidentForm(false);
@@ -325,7 +349,6 @@ function TeamIncidentTable({
               onNext={handleNext}
             />
 
-            {/* BLUE + NEW BUTTON */}
             <button
               type="button"
               className="new-incident-button"
@@ -362,6 +385,7 @@ function TeamIncidentTable({
 
               <div className="new-incident-modal-body">
 
+                {/* SUMMARY */}
                 <label htmlFor="incident-summary">
                   Incident Summary
                 </label>
@@ -379,6 +403,7 @@ function TeamIncidentTable({
                   }}
                 />
 
+                {/* CATEGORY */}
                 <label htmlFor="incident-category">
                   Category
                 </label>
@@ -409,6 +434,31 @@ function TeamIncidentTable({
                   </option>
                 </select>
 
+                {/* AGENT */}
+                <label htmlFor="incident-agent">
+                  Agent
+                </label>
+
+                <select
+                  id="incident-agent"
+                  value={newAgent}
+                  onChange={(event) =>
+                    setNewAgent(
+                      event.target.value
+                    )
+                  }
+                >
+                  {agents.map((agent) => (
+                    <option
+                      key={agent}
+                      value={agent}
+                    >
+                      {agent}
+                    </option>
+                  ))}
+                </select>
+
+                {/* PRIORITY */}
                 <label htmlFor="incident-priority">
                   Priority
                 </label>
@@ -492,6 +542,7 @@ function TeamIncidentTable({
               <th>SLA Time Left</th>
               <th>Summary</th>
               <th>Category</th>
+              <th>Agent</th>
               <th>Priority</th>
               <th>Status</th>
               <th>Type</th>
@@ -568,6 +619,11 @@ function TeamIncidentTable({
                       {incident.category}
                     </td>
 
+                    {/* AGENT */}
+                    <td>
+                      {incident.agent}
+                    </td>
+
                     {/* PRIORITY */}
                     <td>
                       <PriorityIndicator
@@ -602,7 +658,7 @@ function TeamIncidentTable({
             ) : (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={10}
                   className="empty-state"
                 >
                   No incidents found.
@@ -650,6 +706,11 @@ function TeamIncidentTable({
           <p>
             <strong>Category:</strong>{" "}
             {selectedIncident.category}
+          </p>
+
+          <p>
+            <strong>Agent:</strong>{" "}
+            {selectedIncident.agent}
           </p>
 
           <p>
