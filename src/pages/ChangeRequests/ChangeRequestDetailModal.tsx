@@ -7,11 +7,13 @@ import { X, Clock, Tag, User, CheckSquare } from 'lucide-react';
 interface ChangeRequestDetailModalProps {
   changeRequest: ChangeRequest | null;
   onClose: () => void;
+  onToggleSubtask?: (subtaskId: string) => void;
 }
 
 export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> = ({
   changeRequest,
   onClose,
+  onToggleSubtask,
 }) => {
   if (!changeRequest) return null;
 
@@ -102,7 +104,9 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               {changeRequest.subtasks.map((st: SubTask) => (
                 <div
                   key={st.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl"
+                  onClick={() => onToggleSubtask && onToggleSubtask(st.id)}
+                  className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:bg-slate-100/70 transition-colors cursor-pointer"
+                  title="Click to toggle completion status"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono font-bold text-[#E87A5D]">{st.id}</span>
