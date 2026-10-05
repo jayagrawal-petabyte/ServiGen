@@ -1,0 +1,92 @@
+/* --- Figma Left Sidebar --- */
+.figma-left-sidebar {
+  width: 72px;
+  background: #0b2239;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 50;
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.figma-left-sidebar::-webkit-scrollbar {
+  width: 0;
+  display: none;
+}
+
+.sidebar-logo {
+  height: 48px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #081929;
+  flex-shrink: 0;
+}
+
+.logo-circle {
+  width: 30px;
+  height: 30px;
+  background: #00b0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 0 10px rgba(0, 176, 240, 0.4);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 6px 0;
+  gap: 4px;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 2px;
+  color: #94a3b8;
+  text-decoration: none;
+  min-height: 46px;
+  gap: 2px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-nav-link.active {
+  color: #ffffff;
+  background: #00b0f0;
+}
+
+.sidebar-nav-link svg {
+  flex-shrink: 0;
+}
+
+.nav-label {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 66px;
+  font-weight: 500;
+}
+
+.nav-label-sm {
+  font-size: 8.5px;
+  text-align: center;
+  line-height: 1.05;
+}

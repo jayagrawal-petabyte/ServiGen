@@ -131,9 +131,6 @@ const OnHoldTicketScreen: React.FC = () => {
 
   return (
     <div className="app-shell">
-      {/* -- Left Sidebar -- */}
-      <Sidebar />
-
       {/* -- Main Area -- */}
       <div className="main-area">
 

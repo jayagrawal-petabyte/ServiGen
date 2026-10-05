@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import AppLayout from './layouts/AppLayout'
 
 // Auth
 import { AuthPage } from './pages/Auth'
@@ -18,8 +19,9 @@ import {
   SCR025_MajorIncidentsListMockup,
 } from './pages/MajorIncidents'
 
-// Projects
+// Projects & Calendar
 import ProjectsPage from './pages/Projects/ProjectsPage'
+import CalendarPage from './pages/Calendar/CalendarPage'
 
 // Services Catalogue
 import ServiceCatalogue from './pages/ServicesCatalogue/ServiceCatalogue'
@@ -83,28 +85,34 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/auth" replace />} />
+        {/* Auth (Standalone screen - No sidebar) */}
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/incidents" element={<Incidents />} />
-        <Route path="/major-incidents/design" element={<SCR021_MajorIncidentsDesign />} />
-        <Route path="/major-incidents/live" element={<SCR022_MajorIncidentsLive />} />
-        <Route path="/major-incidents/feed" element={<SCR023_MajorIncidentsWithFeed />} />
-        <Route path="/major-incidents/list" element={<SCR025_MajorIncidentsListMockup />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/services-catalogue" element={<ServiceCatalogue />} />
-        <Route path="/approvals" element={<ApprovalsPage />} />
-        <Route path="/article-drafts" element={<ArticleDraftsPage />} />
-        <Route path="/my-work" element={<MyWork />} />
-        <Route path="/on-hold" element={<OnHoldTicketScreen />} />
-        <Route path="/custom-lists" element={<CustomLists />} />
-        <Route path="/team/1st-line-live" element={<FirstLineLive />} />
-        <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
-        <Route path="/team/2nd-line-live" element={<SecondLineLive />} />
-        <Route path="/team/2nd-line-design" element={<SecondLineDesign />} />
-        <Route path="/cmdb" element={<CmdbPage />} />
-        <Route path="/cmdb/services" element={<ServiceCisPage />} />
-        <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
+
+        {/* All App Screens (Inside Figma Left Sidebar Shell) */}
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/incidents" element={<Incidents />} />
+          <Route path="/my-work" element={<MyWork />} />
+          <Route path="/major-incidents/design" element={<SCR021_MajorIncidentsDesign />} />
+          <Route path="/major-incidents/live" element={<SCR022_MajorIncidentsLive />} />
+          <Route path="/major-incidents/feed" element={<SCR023_MajorIncidentsWithFeed />} />
+          <Route path="/major-incidents/list" element={<SCR025_MajorIncidentsListMockup />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/services-catalogue" element={<ServiceCatalogue />} />
+          <Route path="/approvals" element={<ApprovalsPage />} />
+          <Route path="/article-drafts" element={<ArticleDraftsPage />} />
+          <Route path="/on-hold" element={<OnHoldTicketScreen />} />
+          <Route path="/custom-lists" element={<CustomLists />} />
+          <Route path="/team/1st-line-live" element={<FirstLineLive />} />
+          <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
+          <Route path="/team/2nd-line-live" element={<SecondLineLive />} />
+          <Route path="/team/2nd-line-design" element={<SecondLineDesign />} />
+          <Route path="/cmdb" element={<CmdbPage />} />
+          <Route path="/cmdb/services" element={<ServiceCisPage />} />
+          <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )
