@@ -1,55 +1,59 @@
 const {
-    evaluateEscalation,
-    createEscalationHandoff,
+  evaluateEscalation,
+  createEscalationHandoff,
 } = require('./escalation.model');
 
 const checkEscalation = async (requestData) => {
-    if (!requestData || typeof requestData !== 'object') {
-        throw new Error('Request data is required');
-    }
+  if (!requestData || typeof requestData !== 'object') {
+    throw new Error('Request data is required');
+  }
 
-    if (typeof requestData.resolved !== 'boolean') {
-        throw new Error('resolved must be a boolean');
-    }
+  if (typeof requestData.resolved !== 'boolean') {
+    throw new Error('resolved must be a boolean');
+  }
 
-    return await evaluateEscalation(requestData);
+  return await evaluateEscalation(requestData);
 };
 
 const prepareHandoff = async (requestData) => {
-    if (!requestData || typeof requestData !== 'object') {
-        throw new Error('Request data is required');
-    }
+  if (!requestData || typeof requestData !== 'object') {
+    throw new Error('Request data is required');
+  }
 
-    if (!requestData.userId) {
-        throw new Error('userId is required for escalation');
-    }
+  if (!requestData.actorId) {
+    throw new Error('actorId is required');
+  }
 
-    if (!requestData.summary) {
-        throw new Error('summary is required for escalation');
-    }
+  if (!requestData.requesterId) {
+    throw new Error('requesterId is required');
+  }
 
-    if (typeof requestData.resolved !== 'boolean') {
-        throw new Error('resolved must be a boolean');
-    }
+  if (!requestData.summary) {
+    throw new Error('summary is required');
+  }
 
-const escalationResult = await evaluateEscalation(requestData);
+  if (typeof requestData.resolved !== 'boolean') {
+    throw new Error('resolved must be a boolean');
+  }
 
-    if (!escalationResult.escalate) {
-        return {
-        handoff: false,
-        ticketCreationRequested: false,
-        decision: escalationResult.decision,
-        reason: escalationResult.reason,
-        };
-    }
+  const escalationResult = await evaluateEscalation(requestData);
 
-    return await createEscalationHandoff({
-        ...requestData,
-        reason: escalationResult.reason,
-    });
+  if (!escalationResult.escalate) {
+    return {
+      handoff: false,
+      ticketCreationRequested: false,
+      decision: escalationResult.decision,
+      reason: escalationResult.reason,
+    };
+  }
+
+  return await createEscalationHandoff({
+    ...requestData,
+    reason: escalationResult.reason,
+  });
 };
 
 module.exports = {
-    checkEscalation,
-    prepareHandoff,
+  checkEscalation,
+  prepareHandoff,
 };
