@@ -5,7 +5,8 @@ interface ApprovalDetailsModalProps {
   approval: Approval | null;
   onClose: () => void;
   onApprove: (id: string) => void;
-  onReject: (id: string, reason?: string) => void;
+  onReject: (id: string, reason: string) => void;
+  initialRejectMode?: boolean;
 }
 
 export default function ApprovalDetailsModal({
@@ -13,24 +14,52 @@ export default function ApprovalDetailsModal({
   onClose,
   onApprove,
   onReject,
+  initialRejectMode = false,
 }: ApprovalDetailsModalProps) {
   const [rejectReason, setRejectReason] = useState('');
-  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [showRejectInput, setShowRejectInput] = useState(initialRejectMode);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!approval) return null;
-// Handles approval/rejection actions from the approval details view.
-  const handleConfirmReject = () => {
-    onReject(approval.id, rejectReason || 'Rejected by approver');
-    onClose();
+
+  const handleConfirmReject = async () => {
+    const trimmed = rejectReason.trim();
+    if (!trimmed) {
+      setValidationError('Please provide a reason for rejecting this request.');
+      return;
+    }
+    if (trimmed.length < 5) {
+      setValidationError('Rejection reason must be at least 5 characters long.');
+      return;
+    }
+
+    setValidationError(null);
+    setIsSubmitting(true);
+    try {
+      await onReject(approval.id, trimmed);
+      onClose();
+    } catch {
+      // Error handled by parent toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleConfirmApprove = () => {
-    onApprove(approval.id);
-    onClose();
+  const handleConfirmApprove = async () => {
+    setIsSubmitting(true);
+    try {
+      await onApprove(approval.id);
+      onClose();
+    } catch {
+      // Error handled by parent toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
@@ -56,6 +85,7 @@ export default function ApprovalDetailsModal({
             className="btn-close-modal"
             onClick={onClose}
             type="button"
+            aria-label="Close details"
           >
             <svg
               width="20"
@@ -317,39 +347,56 @@ export default function ApprovalDetailsModal({
             <div
               style={{
                 marginBottom: '16px',
-                padding: '12px',
+                padding: '14px',
                 background: '#fef2f2',
                 borderRadius: '8px',
-                border: '1px solid #fecaca',
+                border: `1px solid ${validationError ? '#ef4444' : '#fecaca'}`,
               }}
             >
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#991b1b',
-                  marginBottom: '6px',
-                }}
-              >
-                Reason for Rejection:
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label
+                  htmlFor="reject-reason-input"
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#991b1b',
+                  }}
+                >
+                  Reason for Rejection <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                <span style={{ fontSize: '11px', color: rejectReason.trim().length >= 5 ? '#16a34a' : '#94a3b8' }}>
+                  {rejectReason.trim().length} / 5 min chars
+                </span>
+              </div>
 
               <textarea
+                id="reject-reason-input"
                 rows={3}
                 value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Please state why this request is being rejected..."
+                onChange={(e) => {
+                  setRejectReason(e.target.value);
+                  if (validationError && e.target.value.trim().length >= 5) {
+                    setValidationError(null);
+                  }
+                }}
+                placeholder="State the justification or compliance reason for rejecting this request..."
                 style={{
                   width: '100%',
                   padding: '8px 10px',
                   borderRadius: '6px',
-                  border: '1px solid #fca5a5',
+                  border: `1.5px solid ${validationError ? '#ef4444' : '#fca5a5'}`,
                   fontSize: '13px',
                   outline: 'none',
                   boxSizing: 'border-box',
                 }}
               />
+
+              {validationError && (
+                <div style={{ marginTop: '6px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                  ⚠️ {validationError}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -359,6 +406,7 @@ export default function ApprovalDetailsModal({
             type="button"
             className="btn-approval-action"
             onClick={onClose}
+            disabled={isSubmitting}
           >
             Cancel
           </button>
@@ -369,6 +417,7 @@ export default function ApprovalDetailsModal({
                 <button
                   type="button"
                   onClick={handleConfirmReject}
+                  disabled={isSubmitting}
                   style={{
                     backgroundColor: '#dc2626',
                     color: 'white',
@@ -376,14 +425,16 @@ export default function ApprovalDetailsModal({
                     borderRadius: '999px',
                     fontWeight: 600,
                     fontSize: '13px',
+                    opacity: isSubmitting ? 0.7 : 1,
                   }}
                 >
-                  Confirm Rejection
+                  {isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setShowRejectInput(true)}
+                  disabled={isSubmitting}
                   style={{
                     backgroundColor: '#fef2f2',
                     color: '#dc2626',
@@ -401,6 +452,7 @@ export default function ApprovalDetailsModal({
               <button
                 type="button"
                 onClick={handleConfirmApprove}
+                disabled={isSubmitting}
                 style={{
                   backgroundColor: '#16a34a',
                   color: 'white',
@@ -409,9 +461,10 @@ export default function ApprovalDetailsModal({
                   fontWeight: 600,
                   fontSize: '13px',
                   boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
+                  opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                Approve Request
+                {isSubmitting ? 'Approving...' : 'Approve Request'}
               </button>
             </>
           )}

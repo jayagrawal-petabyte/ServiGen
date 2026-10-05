@@ -10,11 +10,11 @@ interface ArticleDraftDetailModalProps {
   onUpdateStatus: (
     id: string,
     status: ArticleDraftStatus
-  ) => void;
+  ) => Promise<void> | void;
   onSaveContent: (
     id: string,
     updates: Partial<ArticleDraft>
-  ) => void;
+  ) => Promise<void> | void;
 }
 
 export default function ArticleDraftDetailModal({
@@ -24,30 +24,88 @@ export default function ArticleDraftDetailModal({
   onSaveContent,
 }: ArticleDraftDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
-
-  const [editedTitle, setEditedTitle] = useState(
-    article ? article.summaryTitle : ''
-  );
-
-  const [editedBody, setEditedBody] = useState(
-    article ? article.body : ''
-  );
+  const [editedTitle, setEditedTitle] = useState(article ? article.summaryTitle : '');
+  const [editedBody, setEditedBody] = useState(article ? article.body : '');
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [bodyError, setBodyError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!article) return null;
 
-  const handleSave = () => {
-    onSaveContent?.(article.id, {
-      summaryTitle: editedTitle,
-      body: editedBody,
-    });
+  const validate = (): boolean => {
+    let isValid = true;
+    const trimmedTitle = editedTitle.trim();
+    const trimmedBody = editedBody.trim();
 
-    setIsEditing(false);
+    if (!trimmedTitle) {
+      setTitleError('Article title is required.');
+      isValid = false;
+    } else if (trimmedTitle.length < 3) {
+      setTitleError('Article title must be at least 3 characters.');
+      isValid = false;
+    } else if (trimmedTitle.length > 120) {
+      setTitleError('Article title cannot exceed 120 characters.');
+      isValid = false;
+    } else {
+      setTitleError(null);
+    }
+
+    if (!trimmedBody) {
+      setBodyError('Article body content is required.');
+      isValid = false;
+    } else if (trimmedBody.length < 10) {
+      setBodyError('Article body content must be at least 10 characters.');
+      isValid = false;
+    } else {
+      setBodyError(null);
+    }
+
+    return isValid;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      await onSaveContent?.(article.id, {
+        summaryTitle: editedTitle.trim(),
+        body: editedBody.trim(),
+      });
+      setIsEditing(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusTransition = async (newStatus: ArticleDraftStatus) => {
+    // If submitting for approval, make sure draft is not empty
+    if (newStatus === 'Awaiting Approval') {
+      if (!article.summaryTitle || article.summaryTitle.trim().length < 3) {
+        alert('Validation Error: Article title must be at least 3 characters before submitting for approval.');
+        return;
+      }
+      if (!article.body || article.body.trim().length < 10) {
+        alert('Validation Error: Article draft content must be at least 10 characters before submitting for approval.');
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onUpdateStatus(article.id, newStatus);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div
       className="modal-overlay"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="modal-content"
@@ -87,6 +145,7 @@ export default function ArticleDraftDetailModal({
             className="btn-close-modal"
             onClick={onClose}
             type="button"
+            aria-label="Close modal"
           >
             <svg
               width="20"
@@ -106,8 +165,7 @@ export default function ArticleDraftDetailModal({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns:
-                'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '10px',
               marginBottom: '20px',
               padding: '12px 14px',
@@ -220,34 +278,50 @@ export default function ArticleDraftDetailModal({
 
           {isEditing ? (
             <div style={{ marginBottom: '16px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#475569',
-                  marginBottom: '4px',
-                }}
-              >
-                Article Title
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label
+                  htmlFor="edit-title-input"
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#475569',
+                  }}
+                >
+                  Article Title <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  {editedTitle.length}/120
+                </span>
+              </div>
 
               <input
+                id="edit-title-input"
                 type="text"
                 value={editedTitle}
-                onChange={(e) =>
-                  setEditedTitle(e.target.value)
-                }
+                onChange={(e) => {
+                  setEditedTitle(e.target.value);
+                  if (titleError && e.target.value.trim().length >= 3) {
+                    setTitleError(null);
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: `1.5px solid ${titleError ? '#ef4444' : '#cbd5e1'}`,
                   fontSize: '15px',
                   fontWeight: 600,
                   boxSizing: 'border-box',
+                  outline: 'none',
                 }}
               />
+
+              {titleError && (
+                <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                  ⚠️ {titleError}
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ marginBottom: '16px' }}>
@@ -289,44 +363,56 @@ export default function ArticleDraftDetailModal({
                   color: '#334155',
                 }}
               >
-                Draft Article Content
+                Draft Article Content <span style={{ color: '#dc2626' }}>*</span>
               </span>
 
               <button
                 type="button"
-                onClick={() =>
-                  setIsEditing(!isEditing)
-                }
+                onClick={() => {
+                  setIsEditing(!isEditing);
+                  setTitleError(null);
+                  setBodyError(null);
+                }}
                 style={{
                   fontSize: '12px',
                   color: '#1d68c9',
                   fontWeight: 600,
                 }}
               >
-                {isEditing
-                  ? 'Cancel Edit'
-                  : '✎ Edit Content'}
+                {isEditing ? 'Cancel Edit' : '✎ Edit Content'}
               </button>
             </div>
 
             {isEditing ? (
-              <textarea
-                rows={10}
-                value={editedBody}
-                onChange={(e) =>
-                  setEditedBody(e.target.value)
-                }
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                  fontFamily: 'monospace',
-                  lineHeight: 1.5,
-                  boxSizing: 'border-box',
-                }}
-              />
+              <div>
+                <textarea
+                  rows={10}
+                  value={editedBody}
+                  onChange={(e) => {
+                    setEditedBody(e.target.value);
+                    if (bodyError && e.target.value.trim().length >= 10) {
+                      setBodyError(null);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `1.5px solid ${bodyError ? '#ef4444' : '#cbd5e1'}`,
+                    fontSize: '13px',
+                    fontFamily: 'monospace',
+                    lineHeight: 1.5,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+
+                {bodyError && (
+                  <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                    ⚠️ {bodyError}
+                  </div>
+                )}
+              </div>
             ) : (
               <div
                 style={{
@@ -340,8 +426,7 @@ export default function ArticleDraftDetailModal({
                   whiteSpace: 'pre-wrap',
                 }}
               >
-                {article.body ||
-                  'No draft content specified yet.'}
+                {article.body || 'No draft content specified yet.'}
               </div>
             )}
           </div>
@@ -358,6 +443,7 @@ export default function ArticleDraftDetailModal({
               <button
                 type="button"
                 onClick={handleSave}
+                disabled={isSubmitting}
                 style={{
                   backgroundColor: '#0284c7',
                   color: 'white',
@@ -365,9 +451,10 @@ export default function ArticleDraftDetailModal({
                   borderRadius: '999px',
                   fontWeight: 600,
                   fontSize: '13px',
+                  opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                Save Changes
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </button>
             )}
           </div>
@@ -381,13 +468,8 @@ export default function ArticleDraftDetailModal({
             {article.status === 'Draft' && (
               <button
                 type="button"
-                onClick={() => {
-                  onUpdateStatus(
-                    article.id,
-                    'Awaiting Approval'
-                  );
-                  onClose();
-                }}
+                disabled={isSubmitting}
+                onClick={() => handleStatusTransition('Awaiting Approval')}
                 style={{
                   backgroundColor: '#1e293b',
                   color: 'white',
@@ -395,9 +477,10 @@ export default function ArticleDraftDetailModal({
                   borderRadius: '999px',
                   fontWeight: 600,
                   fontSize: '13px',
+                  opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                Submit for Approval
+                {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
               </button>
             )}
 
@@ -405,13 +488,8 @@ export default function ArticleDraftDetailModal({
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    onUpdateStatus(
-                      article.id,
-                      'Draft'
-                    );
-                    onClose();
-                  }}
+                  disabled={isSubmitting}
+                  onClick={() => handleStatusTransition('Draft')}
                   style={{
                     backgroundColor: '#f1f5f9',
                     color: '#475569',
@@ -426,13 +504,8 @@ export default function ArticleDraftDetailModal({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    onUpdateStatus(
-                      article.id,
-                      'Published'
-                    );
-                    onClose();
-                  }}
+                  disabled={isSubmitting}
+                  onClick={() => handleStatusTransition('Published')}
                   style={{
                     backgroundColor: '#16a34a',
                     color: 'white',
@@ -451,6 +524,7 @@ export default function ArticleDraftDetailModal({
               type="button"
               className="btn-approval-action"
               onClick={onClose}
+              disabled={isSubmitting}
             >
               Close
             </button>

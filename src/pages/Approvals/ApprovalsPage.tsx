@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { INITIAL_APPROVALS } from './mockApprovalsData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
 import './approvals.css';
@@ -17,215 +17,197 @@ interface Toast {
 }
 
 export default function ApprovalsPage() {
-  const [approvals, setApprovals] =
-    useState<Approval[]>(INITIAL_APPROVALS);
-
-  const [currentTab, setCurrentTab] =
-    useState<ApprovalTab>('pending');
-
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [currentTab, setCurrentTab] = useState<ApprovalTab>('pending');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [selectedApproval, setSelectedApproval] =
-    useState<Approval | null>(null);
-
+  const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
+  const [modalRejectMode, setModalRejectMode] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
 
-// Filter approvals based on the selected status tab and search query.
-const filteredApprovals = useMemo(() => {
-  return approvals.filter((item) => {
-    if (
-      currentTab !== 'all' &&
-      item.status !== currentTab
-    ) {
-      return false;
+  // Load approvals from API on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await approvalsApi.getApprovals();
+        if (isMounted) {
+          setApprovals(data);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load approvals');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+  // Filter approvals based on tab and search query
+  const filteredApprovals = useMemo(() => {
+    return approvals.filter((item) => {
+      if (currentTab !== 'all' && item.status !== currentTab) {
+        return false;
+      }
 
-      const matchesTicket = item.ticketNumber
-        .toLowerCase()
-        .includes(query);
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTicket = item.ticketNumber.toLowerCase().includes(query);
+        const matchesTitle = item.title.toLowerCase().includes(query);
+        const matchesAuthor = item.authorName.toLowerCase().includes(query);
+        const matchesBehalf = item.onBehalfOf?.toLowerCase().includes(query);
+        const matchesDesc = item.description.toLowerCase().includes(query);
 
-      const matchesTitle = item.title
-        .toLowerCase()
-        .includes(query);
+        return matchesTicket || matchesTitle || matchesAuthor || matchesBehalf || matchesDesc;
+      }
 
-      const matchesAuthor = item.authorName
-        .toLowerCase()
-        .includes(query);
+      return true;
+    });
+  }, [approvals, currentTab, searchQuery]);
 
-      const matchesBehalf = item.onBehalfOf
-        ?.toLowerCase()
-        .includes(query);
+  const pendingCount = approvals.filter((a) => a.status === 'pending').length;
+  const approvedCount = approvals.filter((a) => a.status === 'approved').length;
+  const rejectedCount = approvals.filter((a) => a.status === 'rejected').length;
 
-      const matchesDesc = item.description
-        .toLowerCase()
-        .includes(query);
-
-      return (
-        matchesTicket ||
-        matchesTitle ||
-        matchesAuthor ||
-        matchesBehalf ||
-        matchesDesc
-      );
-    }
-
-    return true;
-  });
-}, [approvals, currentTab, searchQuery]);
-
-  const pendingCount = approvals.filter(
-    (a) => a.status === 'pending'
-  ).length;
-
-  const approvedCount = approvals.filter(
-    (a) => a.status === 'approved'
-  ).length;
-
-  const rejectedCount = approvals.filter(
-    (a) => a.status === 'rejected'
-  ).length;
-
-  const showToast = (
-    message: string,
-    lastAction: ToastAction | null = null
-  ) => {
+  const showToast = (message: string, lastAction: ToastAction | null = null) => {
     setToast({ message, lastAction });
-
     setTimeout(() => {
       setToast(null);
     }, 4500);
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     const item = approvals.find((a) => a.id === id);
     const prevStatus = item ? item.status : 'pending';
 
-    setApprovals((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? { ...app, status: 'approved' }
-          : app
-      )
-    );
-
-    showToast(
-      `Request ${item?.ticketNumber || id} approved`,
-      { id, prevStatus }
-    );
+    setActionLoadingId(id);
+    try {
+      const updated = await approvalsApi.approveRequest(id);
+      setApprovals((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      showToast(`Request ${item?.ticketNumber || id} approved`, { id, prevStatus });
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to approve request');
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
-  const handleReject = (
-    id: string,
-    reason?: string
-  ) => {
+  const handleReject = async (id: string, reason = 'Rejected by approver') => {
     const item = approvals.find((a) => a.id === id);
     const prevStatus = item ? item.status : 'pending';
 
-    setApprovals((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? {
-              ...app,
-              status: 'rejected',
-              rejectReason: reason,
-            }
-          : app
-      )
-    );
-
-    showToast(
-      `Request ${item?.ticketNumber || id} rejected`,
-      { id, prevStatus }
-    );
+    setActionLoadingId(id);
+    try {
+      const updated = await approvalsApi.rejectRequest(id, reason);
+      setApprovals((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      showToast(`Request ${item?.ticketNumber || id} rejected`, { id, prevStatus });
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to reject request');
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
-  const handleAcceptAll = () => {
-    const pendingItems = approvals.filter(
-      (a) => a.status === 'pending'
-    );
-
+  const handleAcceptAll = async () => {
+    const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
       showToast('No pending approvals to accept');
       return;
     }
 
-    setApprovals((prev) =>
-      prev.map((app) =>
-        app.status === 'pending'
-          ? { ...app, status: 'approved' }
-          : app
-      )
-    );
-
-    showToast(
-      `Approved all ${pendingItems.length} pending request(s)`
-    );
+    setIsBatchLoading(true);
+    try {
+      const pendingIds = pendingItems.map((a) => a.id);
+      await approvalsApi.batchApprove(pendingIds);
+      setApprovals((prev) =>
+        prev.map((app) => (app.status === 'pending' ? { ...app, status: 'approved' } : app))
+      );
+      showToast(`Approved all ${pendingItems.length} pending request(s)`);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Batch approve failed');
+    } finally {
+      setIsBatchLoading(false);
+    }
   };
 
-  const handleRejectAll = () => {
-    const pendingItems = approvals.filter(
-      (a) => a.status === 'pending'
-    );
-
+  const handleRejectAll = async () => {
+    const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
       showToast('No pending approvals to reject');
       return;
     }
 
-    setApprovals((prev) =>
-      prev.map((app) =>
-        app.status === 'pending'
-          ? { ...app, status: 'rejected' }
-          : app
-      )
-    );
-
-    showToast(
-      `Rejected all ${pendingItems.length} pending request(s)`
-    );
+    setIsBatchLoading(true);
+    try {
+      const pendingIds = pendingItems.map((a) => a.id);
+      await approvalsApi.batchReject(pendingIds, 'Bulk rejection by user');
+      setApprovals((prev) =>
+        prev.map((app) => (app.status === 'pending' ? { ...app, status: 'rejected' } : app))
+      );
+      showToast(`Rejected all ${pendingItems.length} pending request(s)`);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Batch reject failed');
+    } finally {
+      setIsBatchLoading(false);
+    }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
     setError(null);
-
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const data = await approvalsApi.getApprovals();
+      setApprovals(data);
       showToast('Approvals list refreshed');
-    }, 600);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh approvals');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResetData = () => {
+  const handleResetData = async () => {
     setIsLoading(true);
-
-    setTimeout(() => {
-      setApprovals(INITIAL_APPROVALS);
-      setIsLoading(false);
+    try {
+      const data = await approvalsApi.resetData();
+      setApprovals(data);
       setCurrentTab('pending');
       setSearchQuery('');
       showToast('Reset to initial sample approvals');
-    }, 400);
+    } catch {
+      showToast('Failed to reset approvals');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleUndo = () => {
+  const handleUndo = async () => {
     if (!toast?.lastAction) return;
-
     const { id, prevStatus } = toast.lastAction;
+    try {
+      const reverted = await approvalsApi.undoStatus(id, prevStatus);
+      setApprovals((prev) => prev.map((app) => (app.id === id ? reverted : app)));
+      setToast(null);
+    } catch {
+      showToast('Undo failed');
+    }
+  };
 
-    setApprovals((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? { ...app, status: prevStatus }
-          : app
-      )
-    );
-
-    setToast(null);
+  const handleOpenDetails = (approval: Approval, defaultRejectMode = false) => {
+    setSelectedApproval(approval);
+    setModalRejectMode(defaultRejectMode);
   };
 
   return (
@@ -233,17 +215,17 @@ const filteredApprovals = useMemo(() => {
       <div className="approvals-header">
         <div className="approvals-title-group">
           <h1>My Approvals</h1>
-          <p>
-            Review and manage requests awaiting your approval
-          </p>
+          <p>Review and manage requests awaiting your approval</p>
         </div>
 
         <div className="approvals-actions">
           <button
             className="btn-approval-action accept-all"
             type="button"
+            disabled={isBatchLoading || isLoading}
             onClick={handleAcceptAll}
             title="Accept all pending approval requests"
+            style={{ opacity: isBatchLoading ? 0.6 : 1 }}
           >
             <svg
               width="15"
@@ -255,14 +237,16 @@ const filteredApprovals = useMemo(() => {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Accept All</span>
+            <span>{isBatchLoading ? 'Processing...' : 'Accept All'}</span>
           </button>
 
           <button
             className="btn-approval-action reject-all"
             type="button"
+            disabled={isBatchLoading || isLoading}
             onClick={handleRejectAll}
             title="Reject all pending approval requests"
+            style={{ opacity: isBatchLoading ? 0.6 : 1 }}
           >
             <svg
               width="14"
@@ -281,10 +265,12 @@ const filteredApprovals = useMemo(() => {
           <button
             className="btn-approval-action refresh"
             type="button"
+            disabled={isLoading}
             onClick={handleRefresh}
             title="Refresh requests list"
           >
             <svg
+              className={isLoading ? 'spinning' : ''}
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -305,9 +291,7 @@ const filteredApprovals = useMemo(() => {
         <div className="approval-tabs">
           <button
             type="button"
-            className={`approval-tab ${
-              currentTab === 'pending' ? 'active' : ''
-            }`}
+            className={`approval-tab ${currentTab === 'pending' ? 'active' : ''}`}
             onClick={() => setCurrentTab('pending')}
           >
             Pending ({pendingCount})
@@ -315,9 +299,7 @@ const filteredApprovals = useMemo(() => {
 
           <button
             type="button"
-            className={`approval-tab ${
-              currentTab === 'approved' ? 'active' : ''
-            }`}
+            className={`approval-tab ${currentTab === 'approved' ? 'active' : ''}`}
             onClick={() => setCurrentTab('approved')}
           >
             Approved ({approvedCount})
@@ -325,9 +307,7 @@ const filteredApprovals = useMemo(() => {
 
           <button
             type="button"
-            className={`approval-tab ${
-              currentTab === 'rejected' ? 'active' : ''
-            }`}
+            className={`approval-tab ${currentTab === 'rejected' ? 'active' : ''}`}
             onClick={() => setCurrentTab('rejected')}
           >
             Rejected ({rejectedCount})
@@ -335,9 +315,7 @@ const filteredApprovals = useMemo(() => {
 
           <button
             type="button"
-            className={`approval-tab ${
-              currentTab === 'all' ? 'active' : ''
-            }`}
+            className={`approval-tab ${currentTab === 'all' ? 'active' : ''}`}
             onClick={() => setCurrentTab('all')}
           >
             All ({approvals.length})
@@ -354,12 +332,7 @@ const filteredApprovals = useMemo(() => {
             strokeWidth="2"
           >
             <circle cx="11" cy="11" r="8" />
-            <line
-              x1="21"
-              y1="21"
-              x2="16.65"
-              y2="16.65"
-            />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
 
           <input
@@ -399,7 +372,7 @@ const filteredApprovals = useMemo(() => {
           }}
         >
           <div>
-            <strong>Error loading approvals:</strong> {error}
+            <strong>Error:</strong> {error}
           </div>
 
           <button
@@ -555,9 +528,8 @@ const filteredApprovals = useMemo(() => {
               approval={approval}
               onApprove={handleApprove}
               onReject={handleReject}
-              onOpenDetails={(item) =>
-                setSelectedApproval(item)
-              }
+              onOpenDetails={handleOpenDetails}
+              isActionLoading={actionLoadingId === approval.id}
             />
           ))}
         </div>
@@ -566,7 +538,11 @@ const filteredApprovals = useMemo(() => {
       {selectedApproval && (
         <ApprovalDetailsModal
           approval={selectedApproval}
-          onClose={() => setSelectedApproval(null)}
+          initialRejectMode={modalRejectMode}
+          onClose={() => {
+            setSelectedApproval(null);
+            setModalRejectMode(false);
+          }}
           onApprove={handleApprove}
           onReject={handleReject}
         />

@@ -32,7 +32,8 @@ interface ApprovalCardProps {
   approval: Approval;
   onApprove: (id: string) => void;
   onReject: (id: string, reason?: string) => void;
-  onOpenDetails?: (approval: Approval) => void;
+  onOpenDetails?: (approval: Approval, defaultRejectMode?: boolean) => void;
+  isActionLoading?: boolean;
 }
 
 export default function ApprovalCard({
@@ -40,6 +41,7 @@ export default function ApprovalCard({
   onApprove,
   onReject,
   onOpenDetails,
+  isActionLoading = false,
 }: ApprovalCardProps) {
   const isPending = approval.status === 'pending';
 
@@ -70,7 +72,7 @@ export default function ApprovalCard({
 
                 <span
                   className="behalf-link"
-                  onClick={() => onOpenDetails?.(approval)}
+                  onClick={() => onOpenDetails?.(approval, false)}
                 >
                   {approval.onBehalfOf}
                 </span>
@@ -81,7 +83,7 @@ export default function ApprovalCard({
           <div className="approval-card-title-line">
             <span
               className="ticket-id-link"
-              onClick={() => onOpenDetails?.(approval)}
+              onClick={() => onOpenDetails?.(approval, false)}
             >
               {approval.ticketNumber}
             </span>
@@ -128,7 +130,7 @@ export default function ApprovalCard({
                 href="#details"
                 onClick={(e) => {
                   e.preventDefault();
-                  onOpenDetails?.(approval);
+                  onOpenDetails?.(approval, false);
                 }}
               >
                 {approval.ticketDetails.ticketId}
@@ -179,25 +181,40 @@ export default function ApprovalCard({
             className="btn-thumb approve"
             title="Approve Request"
             type="button"
+            disabled={isActionLoading}
             onClick={() => onApprove(approval.id)}
+            style={{ opacity: isActionLoading ? 0.6 : 1, position: 'relative' }}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
+            {isActionLoading ? (
+              <span className="spinner-mini" />
+            ) : (
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+              </svg>
+            )}
           </button>
 
           <button
             className="btn-thumb reject"
-            title="Reject Request"
+            title="Reject Request (Requires Reason)"
             type="button"
-            onClick={() => onReject(approval.id)}
+            disabled={isActionLoading}
+            onClick={() => {
+              if (onOpenDetails) {
+                // Open modal with reject mode active for validated input
+                onOpenDetails(approval, true);
+              } else {
+                onReject(approval.id);
+              }
+            }}
+            style={{ opacity: isActionLoading ? 0.6 : 1 }}
           >
             <svg
               width="20"
@@ -224,7 +241,11 @@ export default function ApprovalCard({
           <strong style={{ textTransform: 'capitalize' }}>
             {approval.status}
           </strong>
-          .
+          {approval.rejectReason && (
+            <span style={{ display: 'block', fontSize: '12px', color: '#991b1b', marginTop: '4px' }}>
+              Reason: {approval.rejectReason}
+            </span>
+          )}
         </div>
       )}
     </div>
