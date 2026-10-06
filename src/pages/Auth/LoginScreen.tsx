@@ -118,14 +118,46 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   autoComplete="current-password"
                 />
                 <button
-                  type="button"
-                  className="figma-eye-btn"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
-                >
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
+  type="button"
+  className="figma-eye-btn"
+  onClick={() => setShowPassword(!showPassword)}
+  aria-label={showPassword ? 'Hide password' : 'Show password'}
+>
+  {showPassword ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M3 3l18 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.6 5.1A10.8 10.8 0 0 1 12 5c7 0 10 7 10 7a18.5 18.5 0 0 1-3.1 4.3M6.1 6.1C3.4 8.1 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.4 4.5-1"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )}
+</button>
               </div>
             </div>
 
