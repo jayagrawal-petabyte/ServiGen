@@ -25,7 +25,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
   return (
     <div className="figma-splash-page">
-      {/* Right-side Teal Curved Graphic - Exact Match with Rounded Bottom Corner */}
+      {/* Right-side Teal Curved Graphic - Exact Match for Figma design */}
       <svg
         className="splash-teal-curve"
         viewBox="0 0 500 1000"

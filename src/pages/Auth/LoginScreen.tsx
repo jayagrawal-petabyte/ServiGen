@@ -17,6 +17,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     rememberMe: false,
   });
 
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Field validation - SG-10 compliant (no console.log of passwords or credentials)
     if (!credentials.username.trim() || !credentials.password.trim()) {
       setErrorMessage('Please enter both User Name and Password.');
       return;
@@ -40,9 +42,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (onLoginSubmit) {
       onLoginSubmit(credentials);
     } else {
+      // SG-10 compliant: No fake alert() or credential logging
       setTimeout(() => {
         setLoading(false);
-        alert(`Logged in as ${credentials.username}`);
       }, 600);
     }
   };
@@ -99,27 +101,38 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               />
             </div>
 
-            {/* Password */}
+            {/* Password with Visibility Toggle */}
             <div className="figma-field">
               <label className="figma-field-label" htmlFor="password">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                className="figma-input-field"
-                value={credentials.password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleInputChange('password', e.target.value)
-                }
-                autoComplete="current-password"
-              />
+              <div className="figma-password-input-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="figma-input-field"
+                  value={credentials.password}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('password', e.target.value)
+                  }
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="figma-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
 
             {/* Login Button */}
             <div className="figma-btn-row">
               <button type="submit" className="figma-submit-btn" disabled={loading}>
-                {loading ? 'Login...' : 'Login'}
+                {loading ? 'Logging in...' : 'Login'}
               </button>
             </div>
           </form>
@@ -133,8 +146,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               e.preventDefault();
               if (onForgotPasswordClick) {
                 onForgotPasswordClick();
-              } else {
-                alert('Forget Password clicked');
               }
             }}
           >

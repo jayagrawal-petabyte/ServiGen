@@ -1,4 +1,4 @@
-/* SCR-001 Login Screen & SCR-013 Splash Screen Styling */
+/* SCR-001 Login Screen, SCR-013 Splash Screen & SCR-020 Users List Styling */
 
 /* SCR-001 Login Page */
 .figma-login-page {
@@ -157,6 +157,13 @@
   margin-bottom: 6px;
 }
 
+.figma-password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .figma-input-field {
   width: 100%;
   height: 42px;
@@ -173,6 +180,19 @@
 
 .figma-input-field:focus {
   box-shadow: 0 0 0 2px #C4674E;
+}
+
+.figma-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .figma-btn-row {
@@ -233,10 +253,7 @@
   text-align: center;
 }
 
-/* ==========================================================================
-   SCR-013 Splash / Sign-In Loading Screen - Exact Figma Design
-   ========================================================================== */
-
+/* SCR-013 Splash Screen */
 .figma-splash-page {
   width: 100vw;
   height: 100vh;
@@ -252,7 +269,6 @@
   box-sizing: border-box;
 }
 
-/* Right Curved Teal Graphic */
 .splash-teal-curve {
   position: absolute;
   top: 0;
@@ -269,7 +285,6 @@
   }
 }
 
-/* Center Content Area */
 .splash-content-wrapper {
   position: relative;
   z-index: 10;
@@ -280,7 +295,6 @@
   text-align: center;
 }
 
-/* "Hello Demo" Welcome Heading */
 .splash-welcome-heading {
   font-size: 24px;
   font-weight: 500;
@@ -289,7 +303,6 @@
   letter-spacing: -0.01em;
 }
 
-/* Logo & Orbiting Loader Container */
 .splash-logo-container {
   position: relative;
   width: 110px;
@@ -300,7 +313,6 @@
   margin-bottom: 28px;
 }
 
-/* Orbiting Loader Animation */
 .splash-loader-orbit {
   position: absolute;
   inset: -12px;
@@ -312,11 +324,267 @@
   to { transform: rotate(360deg); }
 }
 
-/* Subtext "We are signing you in" */
 .splash-subtext {
   font-size: 15px;
   font-weight: 500;
   color: #1F1F1F;
   margin: 0;
   letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   SCR-020 / SCR-031 Organisations - Users List Screen
+   ========================================================================== */
+
+.figma-users-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #0F172A;
+  color: #F8FAFC;
+  padding: 2rem;
+  box-sizing: border-box;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.users-screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.users-title-section h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #FFFFFF;
+}
+
+.users-title-section p {
+  color: #94A3B8;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.users-header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.users-btn-secondary {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #F8FAFC;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.users-btn-secondary:hover {
+  background-color: #334155;
+}
+
+.users-btn-primary {
+  background-color: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.users-btn-primary:hover {
+  background-color: #2563EB;
+}
+
+.region-tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.region-tab-btn {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #94A3B8;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.region-tab-btn:hover {
+  color: #FFFFFF;
+  background-color: #334155;
+}
+
+.region-tab-btn.active {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border-color: #3B82F6;
+}
+
+.users-filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.search-input-box {
+  flex: 1;
+  min-width: 260px;
+}
+
+.users-search-input {
+  width: 100%;
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.users-search-input:focus {
+  border-color: #3B82F6;
+}
+
+.users-filter-select {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #FFFFFF;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.users-table-card {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.table-responsive-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.users-table th {
+  background-color: #0F172A;
+  padding: 0.85rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+  border-bottom: 1px solid #334155;
+}
+
+.users-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #334155;
+  font-size: 0.875rem;
+  color: #E2E8F0;
+}
+
+.users-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.user-cell-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-full-name {
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.user-username-handle {
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+
+.network-login-code {
+  background-color: #0F172A;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #E2E8F0;
+}
+
+.region-badge {
+  font-size: 0.8rem;
+  color: #93C5FD;
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.status-active {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.status-inactive {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.status-pending {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.users-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #94A3B8;
 }
