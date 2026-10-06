@@ -60,7 +60,7 @@
   text-decoration: none;
   min-height: 46px;
   gap: 2px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .sidebar-nav-link:hover {
