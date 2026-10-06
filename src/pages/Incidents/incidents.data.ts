@@ -57,7 +57,7 @@ export const CATEGORY_DATA: CategoryItem[] = [
   },
   {
     label: "Business Applications>CRM",
-    value: 6,
+    value: 12,
     showValue: false,
   },
   {

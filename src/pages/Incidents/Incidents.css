@@ -1127,3 +1127,150 @@
     grid-template-columns: 1fr;
   }
 }
+.new-ticket-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 31, 48, 0.45);
+}
+
+.new-ticket-modal {
+  width: min(520px, 100%);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(20, 35, 52, 0.2);
+}
+
+.new-ticket-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5eaf0;
+}
+
+.new-ticket-modal-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.new-ticket-modal-close {
+  border: none;
+  background: transparent;
+  color: #687487;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.new-ticket-form {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.new-ticket-form label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.new-ticket-form input,
+.new-ticket-form select,
+.new-ticket-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d8e0eb;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #273449;
+  font: inherit;
+}
+
+.new-ticket-form input:focus,
+.new-ticket-form select:focus,
+.new-ticket-form textarea:focus {
+  border-color: #1bc6df;
+}
+
+.new-ticket-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.new-ticket-cancel,
+.new-ticket-submit {
+  border: none;
+  border-radius: 20px;
+  padding: 9px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.new-ticket-cancel {
+  background: #eef2f6;
+  color: #445166;
+}
+
+.new-ticket-submit {
+  background: #1bc6df;
+  color: #ffffff;
+}
+
+.new-ticket-submit:hover {
+  background: #12b6ce;
+}
+.incident-state-card {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px solid #e1e7ef;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #7b8797;
+  text-align: center;
+}
+
+.incident-state-card strong {
+  color: #536175;
+  font-size: 15px;
+}
+
+.incident-state-card span {
+  font-size: 13px;
+}
+
+.category-card {
+  min-height: 0;
+}
+
+.halo-cat-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.halo-cat-label {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}

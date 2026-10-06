@@ -889,3 +889,25 @@
   flex: 1;
   min-width: 0;
 }
+.dashboard-mood-button {
+  border: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.dashboard-mood-button:hover {
+  transform: translateY(-2px);
+}
+
+.dashboard-mood-button:active {
+  transform: scale(0.97);
+}
+
+.dashboard-mood-button.dashboard-mood-selected {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 3px rgba(0, 176, 240, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.15);
+}

@@ -5,6 +5,8 @@ import {
 
 type DashboardTicketsProps = {
   isLoading?: boolean;
+  isEmpty?: boolean;
+  isError?: boolean;
 };
 
 const PRIORITY_CLASS: Record<DashboardPriority, string> = {
@@ -27,6 +29,8 @@ function TicketAvatar() {
 
 export default function DashboardTickets({
   isLoading = false,
+  isEmpty = false,
+  isError = false,
 }: DashboardTicketsProps) {
   return (
     <section className="dashboard-card dashboard-tickets-card">
@@ -37,13 +41,21 @@ export default function DashboardTickets({
         </div>
 
         <div className="dashboard-table-pagination">
-          <span>1–10 of 12</span>
+          <span>{isEmpty ? "0 of 0" : "1–10 of 12"}</span>
 
-          <button type="button" aria-label="Previous page">
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={isEmpty || isError || isLoading}
+          >
             ‹
           </button>
 
-          <button type="button" aria-label="Next page">
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={isEmpty || isError || isLoading}
+          >
             ›
           </button>
         </div>
@@ -52,6 +64,16 @@ export default function DashboardTickets({
       {isLoading ? (
         <div className="dashboard-loading">
           Loading new tickets...
+        </div>
+      ) : isError ? (
+        <div className="dashboard-empty">
+          <strong>Unable to load new tickets</strong>
+          <span>Please try again later.</span>
+        </div>
+      ) : isEmpty ? (
+        <div className="dashboard-empty">
+          <strong>No new tickets</strong>
+          <span>There are currently no new tickets to display.</span>
         </div>
       ) : (
         <div className="dashboard-table-scroll">
@@ -64,6 +86,7 @@ export default function DashboardTickets({
                     aria-label="Select all tickets"
                   />
                 </th>
+
                 <th>ID</th>
                 <th>Ticket Type</th>
                 <th>Summary</th>

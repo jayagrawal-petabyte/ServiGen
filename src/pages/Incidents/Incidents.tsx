@@ -1,4 +1,9 @@
-import { useMemo, useState, type ChangeEvent } from "react";
+import {
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import "./Incidents.css";
 
 import PriorityChart from "./PriorityChart";
@@ -17,6 +22,8 @@ import {
 
 type IncidentsProps = {
   isLoading?: boolean;
+  isEmpty?: boolean;
+  isError?: boolean;
 };
 
 function getStatusClass(status: RecentIncident["status"]): string {
@@ -37,10 +44,14 @@ function getStatusClass(status: RecentIncident["status"]): string {
 
 export default function Incidents({
   isLoading = false,
+  isEmpty = false,
+  isError = false,
 }: IncidentsProps) {
   const [search, setSearch] = useState("");
   const [selectedIncident, setSelectedIncident] =
     useState<RecentIncident | null>(null);
+  const [showNewTicketModal, setShowNewTicketModal] =
+    useState(false);
 
   const filteredIncidents = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -97,6 +108,13 @@ export default function Incidents({
     setSearch("");
   };
 
+  const handleCreateTicket = (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setShowNewTicketModal(false);
+  };
+
   return (
     <main className="incidents-page">
       <header className="incidents-header">
@@ -148,6 +166,7 @@ export default function Incidents({
           <button
             type="button"
             className="new-ticket-button"
+            onClick={() => setShowNewTicketModal(true)}
           >
             + New Ticket
           </button>
@@ -173,6 +192,18 @@ export default function Incidents({
           <div className="incident-card incident-loading-card">
             Loading new tickets...
           </div>
+        </div>
+      ) : isError ? (
+        <div className="incident-card incident-state-card">
+          <strong>Unable to load incidents</strong>
+          <span>Please try again later.</span>
+        </div>
+      ) : isEmpty ? (
+        <div className="incident-card incident-state-card">
+          <strong>No incidents found</strong>
+          <span>
+            There are currently no incidents to display.
+          </span>
         </div>
       ) : (
         <div className="incidents-grid">
@@ -261,6 +292,91 @@ export default function Incidents({
               <span>Description</span>
               <p>{selectedIncident.description}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showNewTicketModal && (
+        <div
+          className="new-ticket-modal-overlay"
+          onClick={() => setShowNewTicketModal(false)}
+        >
+          <div
+            className="new-ticket-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="new-ticket-modal-header">
+              <h2>New Ticket</h2>
+
+              <button
+                type="button"
+                className="new-ticket-modal-close"
+                onClick={() => setShowNewTicketModal(false)}
+                aria-label="Close new ticket form"
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              className="new-ticket-form"
+              onSubmit={handleCreateTicket}
+            >
+              <label>
+                Ticket Type
+                <select defaultValue="Incident">
+                  <option value="Incident">Incident</option>
+                  <option value="Service Request">
+                    Service Request
+                  </option>
+                </select>
+              </label>
+
+              <label>
+                Summary
+                <input
+                  type="text"
+                  placeholder="Enter ticket summary"
+                  required
+                />
+              </label>
+
+              <label>
+                Description
+                <textarea
+                  rows={4}
+                  placeholder="Enter ticket description"
+                  required
+                />
+              </label>
+
+              <label>
+                Priority
+                <select defaultValue="Medium">
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </label>
+
+              <div className="new-ticket-form-actions">
+                <button
+                  type="button"
+                  className="new-ticket-cancel"
+                  onClick={() => setShowNewTicketModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="new-ticket-submit"
+                >
+                  Create Ticket
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
