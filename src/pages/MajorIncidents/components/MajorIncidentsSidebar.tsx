@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { SidebarListItem } from '../types/majorIncident.types';
 import { SIDEBAR_GROUPS } from '../data/mockData';
 
@@ -196,41 +197,49 @@ const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectL
       )}
 
       {/* Inline create form — above the absolute button */}
-      {isCreating && (
-        <div className="absolute bottom-16 left-3 right-3 z-20">
-          <div className="flex items-center gap-1.5 bg-white border border-cyan-300 rounded-lg px-2 py-1.5 shadow-lg">
-            <svg className="w-3.5 h-3.5 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            <input
-              ref={newListInputRef}
-              type="text"
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateList();
-                if (e.key === 'Escape') { setIsCreating(false); setNewListName(''); }
-              }}
-              placeholder="List name…"
-              className="flex-1 text-sm text-gray-700 outline-none bg-transparent placeholder-gray-400"
-            />
-            <button
-              onClick={handleCreateList}
-              className="shrink-0 text-[11px] font-semibold text-white bg-cyan-400 hover:bg-cyan-500 px-2 py-0.5 rounded transition-colors"
-            >
-              Add
-            </button>
-            <button
-              onClick={() => { setIsCreating(false); setNewListName(''); }}
-              className="shrink-0 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6 6 18M6 6l12 12" />
+      <AnimatePresence>
+        {isCreating && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-16 left-3 right-3 z-20"
+          >
+            <div className="flex items-center gap-1.5 bg-white border border-cyan-300 rounded-lg px-2 py-1.5 shadow-lg">
+              <svg className="w-3.5 h-3.5 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-            </button>
-          </div>
-        </div>
-      )}
+              <input
+                ref={newListInputRef}
+                type="text"
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateList();
+                  if (e.key === 'Escape') { setIsCreating(false); setNewListName(''); }
+                }}
+                placeholder="List name…"
+                className="flex-1 text-sm text-gray-700 outline-none bg-transparent placeholder-gray-400"
+              />
+              <button
+                onClick={handleCreateList}
+                className="shrink-0 text-[11px] font-semibold text-white bg-cyan-400 hover:bg-cyan-500 px-2 py-0.5 rounded transition-colors"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => { setIsCreating(false); setNewListName(''); }}
+                className="shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="absolute bottom-4 left-0 right-0 px-8 flex justify-center z-10 bg-gradient-to-t from-gray-50 to-transparent pt-8 pb-2">
         <button
