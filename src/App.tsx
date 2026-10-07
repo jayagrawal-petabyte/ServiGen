@@ -7,10 +7,12 @@ import { ChangeRequestsPage } from './pages/ChangeRequests/ChangeRequestsPage';
 import { CreateChangeModal } from './pages/ChangeRequests/CreateChangeModal';
 import { ChangeRequestDetailModal } from './pages/ChangeRequests/ChangeRequestDetailModal';
 import type { ChangeRequest } from './types/cmdb';
+import ProjectsPage from './pages/Projects';
+import CalendarPage from './pages/Calendar';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<
-    'approvals' | 'articleDrafts' | 'changeRequests' | 'cmdb' | 'serviceCis'
+    'approvals' | 'articleDrafts' | 'changeRequests' | 'cmdb' | 'serviceCis' | 'projects' | 'calendar'
   >('approvals');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedChangeRequest, setSelectedChangeRequest] =
@@ -55,6 +57,27 @@ export function App() {
           </button>
 
           <span className="text-slate-600 px-1">|</span>
+          <button
+  onClick={() => setActiveTab('projects')}
+  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+    activeTab === 'projects'
+      ? 'bg-[#00bcd4] text-white shadow-sm'
+      : 'text-slate-300 hover:bg-slate-800'
+  }`}
+>
+  Projects
+</button>
+
+<button
+  onClick={() => setActiveTab('calendar')}
+  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+    activeTab === 'calendar'
+      ? 'bg-[#00bcd4] text-white shadow-sm'
+      : 'text-slate-300 hover:bg-slate-800'
+  }`}
+>
+  Calendar
+</button>
 
           <button
             onClick={() => setActiveTab('changeRequests')}
@@ -125,7 +148,17 @@ export function App() {
             <CmdbPage />
           </div>
         )}
+        {activeTab === 'projects' && (
+  <div className="flex-1 overflow-y-auto w-full">
+    <ProjectsPage />
+  </div>
+)}
 
+{activeTab === 'calendar' && (
+  <div className="flex-1 overflow-y-auto w-full">
+    <CalendarPage />
+  </div>
+)}
         {activeTab === 'serviceCis' && (
           <div className="flex-1 overflow-hidden w-full">
             <ServiceCisPage />
