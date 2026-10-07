@@ -56,28 +56,29 @@ export function App() {
             Article Drafts
           </button>
 
-          <span className="text-slate-600 px-1">|</span>
           <button
-  onClick={() => setActiveTab('projects')}
-  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-    activeTab === 'projects'
-      ? 'bg-[#00bcd4] text-white shadow-sm'
-      : 'text-slate-300 hover:bg-slate-800'
-  }`}
->
-  Projects
-</button>
+            onClick={() => setActiveTab('projects')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'projects'
+                ? 'bg-[#eb6a47] text-white shadow-sm'
+                : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Projects
+          </button>
 
-<button
-  onClick={() => setActiveTab('calendar')}
-  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-    activeTab === 'calendar'
-      ? 'bg-[#00bcd4] text-white shadow-sm'
-      : 'text-slate-300 hover:bg-slate-800'
-  }`}
->
-  Calendar
-</button>
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'calendar'
+                ? 'bg-[#eb6a47] text-white shadow-sm'
+                : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            Calendar
+          </button>
+
+          <span className="text-slate-600 px-1">|</span>
 
           <button
             onClick={() => setActiveTab('changeRequests')}
@@ -134,6 +135,18 @@ export function App() {
           </div>
         )}
 
+        {activeTab === 'projects' && (
+          <div className="flex-1 overflow-y-auto w-full">
+            <ProjectsPage />
+          </div>
+        )}
+
+        {activeTab === 'calendar' && (
+          <div className="flex-1 overflow-y-auto w-full">
+            <CalendarPage />
+          </div>
+        )}
+
         {activeTab === 'changeRequests' && (
           <div className="flex-1 overflow-hidden w-full">
             <ChangeRequestsPage
@@ -148,17 +161,7 @@ export function App() {
             <CmdbPage />
           </div>
         )}
-        {activeTab === 'projects' && (
-  <div className="flex-1 overflow-y-auto w-full">
-    <ProjectsPage />
-  </div>
-)}
 
-{activeTab === 'calendar' && (
-  <div className="flex-1 overflow-y-auto w-full">
-    <CalendarPage />
-  </div>
-)}
         {activeTab === 'serviceCis' && (
           <div className="flex-1 overflow-hidden w-full">
             <ServiceCisPage />
