@@ -22,6 +22,14 @@ const getUsersHandler = async (req, res) => {
   try {
     const { organisationId } = req.params;
 
+    // SG-05 / BI-20: Prevent cross-tenant user enumeration (IDOR)
+    if (req.user && req.user.role !== 'Admin' && req.user.organisationId && req.user.organisationId !== organisationId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden',
+      });
+    }
+
     const users = await getUsers(organisationId);
 
     return res.status(200).json({
@@ -49,6 +57,14 @@ const getUserHandler = async (req, res) => {
       organisationId,
       userId,
     } = req.params;
+
+    // SG-05 / BI-20: Prevent cross-tenant user access (IDOR)
+    if (req.user && req.user.role !== 'Admin' && req.user.organisationId && req.user.organisationId !== organisationId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden',
+      });
+    }
 
     const user = await getUser(organisationId, userId);
 

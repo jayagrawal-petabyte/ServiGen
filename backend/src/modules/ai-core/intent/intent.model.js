@@ -23,22 +23,31 @@ const intentRules = [
   { keywords: ['requirement', 'business', 'ba'], category: 'BA', confidence: 0.78 },
 ];
 
-// Simulates intent classification for a given text input.
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const matchesKeyword = (text, keyword) => {
+  const escaped = escapeRegex(keyword.trim().toLowerCase()).replace(/\s+/g, '\\s+');
+  const pattern = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i');
+  return pattern.test(text);
+};
+
+// Simulates intent classification for a given text input.
 const analyzeTextIntent = async (text) => {
-  // Here I implemented a temporary workaround with keyword matching to simulate AI intent classification, since the Bedrock Titan integration is pending.
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== 'string' || !text.trim()) {
     throw new Error('Valid text input is required');
   }
 
-  const lowerText = text.toLowerCase();
+  const trimmedText = text.trim();
+  if (trimmedText.length > 2000) {
+    throw new Error('Text input must not exceed 2000 characters');
+  }
 
   let detectedCategory = fallbackCategory;
   let confidence = 0.40;
 
-  // Optimized keyword matching using array iteration
-  const matchedRule = intentRules.find(rule => 
-    rule.keywords.some(keyword => lowerText.includes(keyword))
+  // BI-17: Whole-word boundary matching prevents substring collisions (e.g. "ui" inside "build")
+  const matchedRule = intentRules.find(rule =>
+    rule.keywords.some(keyword => matchesKeyword(trimmedText, keyword))
   );
 
   if (matchedRule) {

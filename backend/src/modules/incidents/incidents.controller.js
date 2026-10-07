@@ -14,12 +14,21 @@ const respondWithError = (res, error, fallbackMessage) => {
   });
 };
 
+const resolveScopedQuery = (req) => {
+  const query = { ...req.query };
+  if (req.user && req.user.role !== 'Admin' && req.user.organisationId && !query.organisation) {
+    query.organisation = req.user.organisationId;
+  }
+  return query;
+};
+
 /**
  * GET /api/incidents
  */
 const listIncidentRecords = async (req, res) => {
   try {
-    const result = await listIncidents(req.query);
+    const query = resolveScopedQuery(req);
+    const result = await listIncidents(query);
 
     return res.status(200).json({
       success: true,
@@ -44,6 +53,16 @@ const getIncidentRecord = async (req, res) => {
       });
     }
 
+    // SG-05 / BI-20: Prevent cross-tenant incident retrieval (IDOR)
+    if (req.user && req.user.role !== 'Admin' && req.user.organisationId) {
+      if (incident.organisation && !incident.organisation.toLowerCase().includes(req.user.organisationId.toLowerCase())) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden',
+        });
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: incident,
@@ -58,7 +77,8 @@ const getIncidentRecord = async (req, res) => {
  */
 const getIncidentPriorityAnalytics = async (req, res) => {
   try {
-    const analytics = await getPriorityAnalytics();
+    const query = resolveScopedQuery(req);
+    const analytics = await getPriorityAnalytics(query);
 
     return res.status(200).json({
       success: true,
@@ -78,7 +98,8 @@ const getIncidentPriorityAnalytics = async (req, res) => {
  */
 const getIncidentCategoryAnalytics = async (req, res) => {
   try {
-    const analytics = await getCategoryAnalytics();
+    const query = resolveScopedQuery(req);
+    const analytics = await getCategoryAnalytics(query);
 
     return res.status(200).json({
       success: true,
@@ -98,7 +119,8 @@ const getIncidentCategoryAnalytics = async (req, res) => {
  */
 const getRecentIncidentRecords = async (req, res) => {
   try {
-    const result = await getRecentIncidents(req.query);
+    const query = resolveScopedQuery(req);
+    const result = await getRecentIncidents(query);
 
     return res.status(200).json({
       success: true,
@@ -118,7 +140,8 @@ const getRecentIncidentRecords = async (req, res) => {
  */
 const getNewIncidentTickets = async (req, res) => {
   try {
-    const result = await getNewTickets(req.query);
+    const query = resolveScopedQuery(req);
+    const result = await getNewTickets(query);
 
     return res.status(200).json({
       success: true,

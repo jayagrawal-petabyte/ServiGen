@@ -26,13 +26,16 @@ const searchKnowledgeHandler = async (req, res) => {
       limit,
     } = req.query;
 
-    const parsedLimit =
-      limit === undefined
-        ? 5
-        : Number(limit);
+    // SG-05 / BI-20: Non-admin users cannot query another organisation's knowledge
+    const targetOrgId = (req.user && req.user.role !== 'Admin' && req.user.organisationId)
+      ? req.user.organisationId
+      : (organisationId || req.user?.organisationId);
+
+    const rawLimit = limit === undefined ? 5 : Number(limit);
+    const parsedLimit = Math.min(50, Math.max(1, isNaN(rawLimit) ? 5 : rawLimit));
 
     const results = await searchKnowledge(
-      organisationId,
+      targetOrgId,
       query,
       parsedLimit
     );
@@ -66,8 +69,13 @@ const getKnowledgeHandler = async (req, res) => {
       documentId,
     } = req.params;
 
+    // SG-05 / BI-20: Non-admin users cannot access another organisation's knowledge
+    const targetOrgId = (req.user && req.user.role !== 'Admin' && req.user.organisationId)
+      ? req.user.organisationId
+      : (organisationId || req.user?.organisationId);
+
     const document = await getKnowledge(
-      organisationId,
+      targetOrgId,
       documentId
     );
 

@@ -14,8 +14,6 @@ const analyzeIntent = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Intent analysis error:', error);
-
     // Respond with 400 Bad Request if validation fails
     res.status(400).json({
       success: false,

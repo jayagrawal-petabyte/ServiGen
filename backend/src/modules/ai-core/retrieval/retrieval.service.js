@@ -11,13 +11,14 @@ const {
  * similarity search.
  */
 const calculateRelevance = (document, query) => {
-  const normalizedQuery = query.toLowerCase();
+  const normalizedQuery = typeof query === 'string' ? query.trim().slice(0, 500).toLowerCase() : '';
+  const tags = Array.isArray(document?.tags) ? document.tags : [];
 
   const searchableText = [
-    document.title,
-    document.content,
-    document.category,
-    ...document.tags,
+    document?.title || '',
+    document?.content || '',
+    document?.category || '',
+    ...tags,
   ]
     .join(' ')
     .toLowerCase();

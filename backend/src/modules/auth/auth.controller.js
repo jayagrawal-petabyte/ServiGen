@@ -20,10 +20,11 @@ const respondWithError = (res, error, fallbackMessage) => {
  */
 const loginHandler = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
     const user = await login(username, password);
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -38,17 +39,14 @@ const loginHandler = async (req, res) => {
  * GET /auth/session
  *
  * Load the currently authenticated user's session.
- *
- * Temporary implementation:
- * Reads the user ID from the x-user-id header until
- * the shared authentication/session middleware is available.
  */
 const getSessionHandler = async (req, res) => {
   try {
-    const userId = req.headers['x-user-id'];
+    const userId = req.user?.id || req.headers['x-user-id'];
 
     const user = await getSession(userId);
 
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
       message: 'Session loaded successfully',

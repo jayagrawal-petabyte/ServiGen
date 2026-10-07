@@ -1,4 +1,3 @@
-// Implementation Summary: Mock data model for Change Requests, implementing the required schema (ID, agent, summary, dates, etc.) as an in-memory store.
 const changeRequests = [
   {
     id: 'CR-001',
@@ -10,6 +9,7 @@ const changeRequests = [
     relatedService: 'Customer Database',
     startDate: '2026-10-01T00:00:00Z',
     endDate: '2026-10-02T04:00:00Z',
+    organisationId: 'org-001',
   },
   {
     id: 'CR-002',
@@ -21,6 +21,7 @@ const changeRequests = [
     relatedService: 'Web Server',
     startDate: '2026-09-25T10:00:00Z',
     endDate: '2026-09-25T12:00:00Z',
+    organisationId: 'org-001',
   },
   {
     id: 'CR-003',
@@ -32,19 +33,32 @@ const changeRequests = [
     relatedService: 'Internal Network',
     startDate: '2026-10-15T02:00:00Z',
     endDate: '2026-10-15T06:00:00Z',
+    organisationId: 'org-001',
   },
 ];
 
-const getChangeRequests = async () => {
+const getChangeRequests = async (options = {}) => {
+  const { organisationId } = options;
+  if (organisationId) {
+    return changeRequests.filter((cr) => !cr.organisationId || cr.organisationId === organisationId);
+  }
   return changeRequests;
 };
 
-const getChangeRequestById = async (id) => {
-  return changeRequests.find((cr) => cr.id === id) || null;
+const getChangeRequestById = async (id, organisationId = null) => {
+  const cr = changeRequests.find((item) => item.id === id);
+  if (!cr) return null;
+  if (organisationId && cr.organisationId && cr.organisationId !== organisationId) {
+    return null;
+  }
+  return cr;
 };
 
-const getActiveChangeRequests = async () => {
-  return changeRequests.filter((cr) => cr.status === 'Active');
+const getActiveChangeRequests = async (options = {}) => {
+  const { organisationId } = options;
+  return changeRequests.filter((cr) =>
+    cr.status === 'Active' && (!organisationId || !cr.organisationId || cr.organisationId === organisationId)
+  );
 };
 
 module.exports = {

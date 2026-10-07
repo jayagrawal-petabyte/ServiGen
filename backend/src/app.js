@@ -20,7 +20,11 @@ const aiResponseRouter = require('./modules/ai-core/response/response.routes');
 const projectsRouter = require('./modules/projects/projects.routes');
 const cmdbRouter = require('./modules/cmdb/cmdb.routes');
 const listsRouter = require('./modules/list-builder/list-builder.routes');
+const incidentsRouter = require('./modules/incidents/incidents.routes');
+const organisationsRouter = require('./modules/organisations/organisations.routes');
+const authRouter = require('./modules/auth/auth.routes');
 const intentRouter = require('./modules/ai-core/intent/intent.routes');
+const retrievalRouter = require('./modules/ai-core/retrieval/retrieval.routes');
 const escalationRouter = require('./modules/ai-core/escalation/escalation.routes');
 
 const app = express();
@@ -58,8 +62,19 @@ app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
 app.use('/api/ai-core', createRateLimiter(env.RATE_LIMIT.AI_MAX));
 app.use(express.json({ limit: '100kb' }));
 
-// Authenticate all implemented business APIs. Login will be mounted before this
-// boundary when the auth module is implemented.
+// Authentication module: login is public with strict rate limiting; session requires verified token.
+app.use('/api/auth/login', createRateLimiter(20));
+app.use('/api/auth', (req, res, next) => {
+  if (req.path === '/login') return next();
+  return requireAuth(req, res, (err) => {
+    if (err) return next(err);
+    req.headers['x-user-id'] = req.user.id;
+    req.headers['x-user-role'] = req.user.role;
+    next();
+  });
+}, authRouter);
+
+// Authenticate all implemented business APIs.
 app.use('/api', requireAuth);
 // Temporary compatibility for modules that still read headers/query identity.
 // Verified JWT identity takes precedence over client-supplied agent identifiers.
@@ -93,9 +108,25 @@ app.use('/api/approvals', restrictTo(...PERMISSIONS.APPROVALS),
 app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
 app.use('/api/major-incidents', (req, res, next) =>
   restrictTo(...(['GET', 'HEAD'].includes(req.method) ? PERMISSIONS.STAFF : PERMISSIONS.ADMIN_ONLY))(req, res, next), majorIncidentsRouter);
+app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
+app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
+  if (req.user.role !== 'Admin' && req.user.organisationId) {
+    const match = req.path.match(/^\/([^/]+)/);
+    if (match && match[1] && match[1] !== req.user.organisationId) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+  }
+  next();
+}, organisationsRouter);
 app.use('/api/change-requests', restrictTo(...PERMISSIONS.STAFF), changeRequestsRouter);
 app.use('/api/ai-core', restrictTo(...PERMISSIONS.AI));
 app.use('/api/ai-core/response', aiResponseRouter);
+app.use('/api/ai-core/retrieval', (req, res, next) => {
+  if (req.user.organisationId && (req.user.role !== 'Admin' || !req.query.organisationId)) {
+    req.query.organisationId = req.user.organisationId;
+  }
+  next();
+}, retrievalRouter);
 // These routers already contain /projects, /lists and /escalation prefixes.
 app.use('/api/projects', restrictTo(...PERMISSIONS.STAFF));
 app.use('/api', projectsRouter);

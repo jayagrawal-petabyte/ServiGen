@@ -179,3 +179,120 @@ test('AI endpoints enforce role restrictions and verified caller identity', asyn
   assert.equal(adminHandoff.data.request.userId, 'target-user');
 });
 
+test('newly mounted module routes enforce authentication, RBAC, and tenant boundary', async () => {
+  const staff = authFor('Service Agent', 'agent-001');
+  const user = authFor('Service User', 'user-001');
+  const org1Staff = { authorization: 'Bearer ' + generateToken({ id: 'user-001', role: 'Service Agent', organisationId: 'org-001' }) };
+  const admin = authFor('Admin', 'admin-001');
+
+  // Incidents route
+  assert.equal((await fetch(base + '/api/incidents')).status, 401);
+  assert.equal((await fetch(base + '/api/incidents', { headers: user })).status, 403);
+  assert.equal((await fetch(base + '/api/incidents', { headers: staff })).status, 200);
+
+  // Organisations route: IDOR protection
+  assert.equal((await fetch(base + '/api/organisations/org-001/users')).status, 401);
+  assert.equal((await fetch(base + '/api/organisations/org-001/users', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/organisations/org-002/users', { headers: org1Staff })).status, 403);
+  assert.equal((await fetch(base + '/api/organisations/org-002/users', { headers: admin })).status, 200);
+
+  // AI Retrieval route
+  assert.equal((await fetch(base + '/api/ai-core/retrieval/search?query=vpn')).status, 401);
+  assert.equal((await fetch(base + '/api/ai-core/retrieval/search?query=vpn', { headers: org1Staff })).status, 200);
+
+  // Auth routes: login is public, session requires auth
+  assert.equal((await fetch(base + '/api/auth/session')).status, 401);
+  assert.equal((await fetch(base + '/api/auth/session', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 'agent001', password: 'Password@123' }),
+  })).status, 200);
+});
+
+test('unfinished modules enforce tenant boundary, BOLA/IDOR protection, identity spoofing defense, and BI-17 keyword boundary', async () => {
+  const org1Staff = { authorization: 'Bearer ' + generateToken({ id: 'agent-001', role: 'Service Agent', organisationId: 'org-001' }) };
+  const org2Staff = { authorization: 'Bearer ' + generateToken({ id: 'agent-002', role: 'Service Agent', organisationId: 'org-002' }) };
+  const admin = authFor('Admin', 'admin-001');
+
+  // 1. Projects: tenant isolation and subtask BOLA/IDOR
+  const org1Projects = await (await fetch(base + '/api/projects', { headers: org1Staff })).json();
+  assert.ok(org1Projects.data.length > 0);
+  const org2Projects = await (await fetch(base + '/api/projects', { headers: org2Staff })).json();
+  assert.equal(org2Projects.data.length, 0);
+
+  // Subtasks BOLA: Org-2 cannot read Org-1 subtasks
+  assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: org2Staff })).status, 404);
+  assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: admin })).status, 200);
+
+  // 2. CMDB: tenant isolation and IDOR on configuration items
+  const org1Cis = await (await fetch(base + '/api/cmdb/configuration-items', { headers: org1Staff })).json();
+  assert.ok(org1Cis.data.length > 0);
+  const org2Cis = await (await fetch(base + '/api/cmdb/configuration-items', { headers: org2Staff })).json();
+  assert.equal(org2Cis.data.length, 0);
+
+  // Single CI lookup
+  assert.equal((await fetch(base + '/api/cmdb/configuration-items/CI-001', { headers: org2Staff })).status, 404);
+  assert.equal((await fetch(base + '/api/cmdb/configuration-items/CI-001', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/cmdb/configuration-items/CI-001', { headers: admin })).status, 200);
+
+  // 3. Change Requests: tenant isolation and single CR lookup
+  const org1Crs = await (await fetch(base + '/api/change-requests', { headers: org1Staff })).json();
+  assert.ok(org1Crs.data.length > 0);
+  const org2Crs = await (await fetch(base + '/api/change-requests', { headers: org2Staff })).json();
+  assert.equal(org2Crs.data.length, 0);
+
+  assert.equal((await fetch(base + '/api/change-requests/CR-001', { headers: org2Staff })).status, 404);
+  assert.equal((await fetch(base + '/api/change-requests/CR-001', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/change-requests/CR-001', { headers: admin })).status, 200);
+
+  // 4. List Builder: BI-16 identity spoofing prevention & tenant boundary
+  // Ordinary staff cannot spoof createdBy
+  const spoofAttempt = await (await fetch(base + '/api/list-builder/lists', {
+    method: 'POST',
+    headers: { ...org1Staff, 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'Spoofed List', fields: ['name', 'status'], createdBy: 'Admin' }),
+  })).json();
+  assert.equal(spoofAttempt.data.createdBy, 'agent-001');
+
+  // Admin CAN specify createdBy
+  const adminCreated = await (await fetch(base + '/api/list-builder/lists', {
+    method: 'POST',
+    headers: { ...admin, 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'Admin Custom List', fields: ['name'], createdBy: 'CustomAuthor' }),
+  })).json();
+  assert.equal(adminCreated.data.createdBy, 'CustomAuthor');
+
+  // Input validation: empty name or fields rejected with 400
+  assert.equal((await fetch(base + '/api/list-builder/lists', {
+    method: 'POST',
+    headers: { ...org1Staff, 'content-type': 'application/json' },
+    body: JSON.stringify({ name: '', fields: ['name'] }),
+  })).status, 400);
+
+  assert.equal((await fetch(base + '/api/list-builder/lists', {
+    method: 'POST',
+    headers: { ...org1Staff, 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'Valid Name', fields: [] }),
+  })).status, 400);
+
+  // 5. AI Core Intent: BI-17 regression test & input validation
+  // "build an api database" must classify as Backend (confidence 0.90), NOT Frontend ("ui" in "build")
+  const intentRes = await (await fetch(base + '/api/ai-core/intent/analyze', {
+    method: 'POST',
+    headers: { ...org1Staff, 'content-type': 'application/json' },
+    body: JSON.stringify({ text: 'build an api database' }),
+  })).json();
+  assert.equal(intentRes.data.category, 'Backend');
+  assert.equal(intentRes.data.confidence, 0.90);
+
+  // Invalid text rejected with 400
+  assert.equal((await fetch(base + '/api/ai-core/intent/analyze', {
+    method: 'POST',
+    headers: { ...org1Staff, 'content-type': 'application/json' },
+    body: JSON.stringify({ text: '' }),
+  })).status, 400);
+});
+
+

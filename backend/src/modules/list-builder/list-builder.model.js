@@ -6,6 +6,7 @@ const lists = [
     status: 'Draft',
     fields: ['name', 'type', 'site', 'status'],
     createdBy: 'Admin',
+    organisationId: 'org-001',
   },
   {
     id: 'LIST-002',
@@ -14,15 +15,25 @@ const lists = [
     status: 'Published',
     fields: ['name', 'type', 'businessOwner', 'status'],
     createdBy: 'Admin',
+    organisationId: 'org-001',
   },
 ];
 
-const getLists = async () => {
+const getLists = async (options = {}) => {
+  const { organisationId } = options;
+  if (organisationId) {
+    return lists.filter((list) => !list.organisationId || list.organisationId === organisationId);
+  }
   return lists;
 };
 
-const getListById = async (id) => {
-  return lists.find((list) => list.id === id);
+const getListById = async (id, organisationId = null) => {
+  const list = lists.find((l) => l.id === id);
+  if (!list) return null;
+  if (organisationId && list.organisationId && list.organisationId !== organisationId) {
+    return null;
+  }
+  return list;
 };
 
 const createList = async (listData) => {

@@ -5,23 +5,23 @@ const {
 } = require('./projects.model');
 
 const calculateCompletionPercentage = (subtasks = []) => {
-    if (subtasks.length === 0) {
+    if (!Array.isArray(subtasks) || subtasks.length === 0) {
         return 0;
     }
 
     const completed = subtasks.filter(
-        (subtask) => subtask.status === 'COMPLETED'
+        (subtask) => subtask && subtask.status === 'COMPLETED'
     ).length;
 
   return Math.round((completed / subtasks.length) * 100);
 };
 
-const getAllProjects = async () => {
-    return await getProjects();
+const getAllProjects = async (options = {}) => {
+    return await getProjects(options);
 };
 
-const getActiveProjectsData = async () => {
-    const activeProjects = await getActiveProjects();
+const getActiveProjectsData = async (options = {}) => {
+    const activeProjects = await getActiveProjects(options);
 
     return activeProjects.map((project) => ({
         ...project,
@@ -29,8 +29,8 @@ const getActiveProjectsData = async () => {
     }));
 };
 
-const getProjectSubtasks = async (projectId) => {
-    return await getSubtasksByProject(projectId);
+const getProjectSubtasks = async (projectId, organisationId = null) => {
+    return await getSubtasksByProject(projectId, organisationId);
 };
 
 module.exports = {

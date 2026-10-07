@@ -31,35 +31,46 @@ const matchesText = (value, search) => {
   return value.toLowerCase().includes(search.toLowerCase());
 };
 
+const toLowerScalar = (val) => {
+  if (typeof val === 'string') return val.trim().toLowerCase();
+  if (Array.isArray(val) && typeof val[0] === 'string') return val[0].trim().toLowerCase();
+  return null;
+};
+
 const filterIncidents = (incidents, query = {}) => {
+  const priorityFilter = toLowerScalar(query.priority);
+  const statusFilter = toLowerScalar(query.status);
+  const categoryFilter = toLowerScalar(query.category);
+  const teamFilter = toLowerScalar(query.assignedTeam);
+  const orgFilter = toLowerScalar(query.organisation);
+  const searchFilter = toLowerScalar(query.search);
+
   return incidents.filter((incident) => {
     const matchesPriority =
-      !query.priority ||
-      incident.priority.toLowerCase() === query.priority.toLowerCase();
+      !priorityFilter ||
+      incident.priority.toLowerCase() === priorityFilter;
 
     const matchesStatus =
-      !query.status ||
-      incident.status.toLowerCase() === query.status.toLowerCase();
+      !statusFilter ||
+      incident.status.toLowerCase() === statusFilter;
 
     const matchesCategory =
-      !query.category ||
-      incident.incident.category.toLowerCase() === query.category.toLowerCase();
+      !categoryFilter ||
+      incident.incident.category.toLowerCase() === categoryFilter;
 
     const matchesTeam =
-      !query.assignedTeam ||
-      incident.assignedTeam.toLowerCase() === query.assignedTeam.toLowerCase();
+      !teamFilter ||
+      incident.assignedTeam.toLowerCase() === teamFilter;
 
     const matchesOrganisation =
-      !query.organisation ||
-      incident.organisation
-        .toLowerCase()
-        .includes(query.organisation.toLowerCase());
+      !orgFilter ||
+      incident.organisation.toLowerCase().includes(orgFilter);
 
     const matchesSearch =
-      !query.search ||
-      matchesText(incident.id, query.search) ||
-      matchesText(incident.summary, query.search) ||
-      matchesText(incident.description, query.search);
+      !searchFilter ||
+      matchesText(incident.id, searchFilter) ||
+      matchesText(incident.summary, searchFilter) ||
+      matchesText(incident.description, searchFilter);
 
     return (
       matchesPriority &&
@@ -125,10 +136,11 @@ const getIncident = async (incidentId) => {
  * SCR-003
  * Group incidents by priority.
  */
-const getPriorityAnalytics = async () => {
+const getPriorityAnalytics = async (query = {}) => {
   const incidents = await getIncidents();
+  const filtered = filterIncidents(incidents, query);
 
-  return incidents.reduce((result, incident) => {
+  return filtered.reduce((result, incident) => {
     result[incident.priority] = (result[incident.priority] || 0) + 1;
     return result;
   }, {});
@@ -138,10 +150,11 @@ const getPriorityAnalytics = async () => {
  * SCR-003
  * Group incidents by category.
  */
-const getCategoryAnalytics = async () => {
+const getCategoryAnalytics = async (query = {}) => {
   const incidents = await getIncidents();
+  const filtered = filterIncidents(incidents, query);
 
-  return incidents.reduce((result, incident) => {
+  return filtered.reduce((result, incident) => {
     const category = incident.incident.category;
 
     result[category] = (result[category] || 0) + 1;
@@ -155,8 +168,9 @@ const getCategoryAnalytics = async () => {
  */
 const getRecentIncidents = async (query = {}) => {
   const incidents = await getIncidents();
+  const filtered = filterIncidents(incidents, query);
 
-  const sorted = [...incidents].sort(
+  const sorted = [...filtered].sort(
     (a, b) =>
       new Date(b.updatedAt).getTime() -
       new Date(a.updatedAt).getTime()
@@ -174,8 +188,9 @@ const getRecentIncidents = async (query = {}) => {
  */
 const getNewTickets = async (query = {}) => {
   const incidents = await getIncidents();
+  const filtered = filterIncidents(incidents, query);
 
-  const sorted = [...incidents]
+  const sorted = [...filtered]
     .filter((incident) => incident.ticketType === 'Incident')
     .sort(
       (a, b) =>
