@@ -50,8 +50,31 @@ const updateStatus = async (id, status) => {
   return null;
 };
 
+/**
+ * CR / BI-12: Atomic conditional update for the in-memory store.
+ * Finds the record, verifies its current status, and writes the new status in
+ * one synchronous operation — eliminating the read-then-write race.
+ *
+ * Returns:
+ *   { found: false }                          — record does not exist
+ *   { found: true, updated: false }           — record exists but is not in requiredStatus
+ *   { found: true, updated: true, record }    — successfully updated
+ */
+const conditionalUpdateStatus = async (id, requiredStatus, newStatus) => {
+  const index = mockApprovals.findIndex(a => a.id === id);
+  if (index === -1) {
+    return { found: false };
+  }
+  if (mockApprovals[index].status !== requiredStatus) {
+    return { found: true, updated: false };
+  }
+  mockApprovals[index] = { ...mockApprovals[index], status: newStatus };
+  return { found: true, updated: true, record: mockApprovals[index] };
+};
+
 module.exports = {
   getPendingApprovals,
   getApprovalById,
-  updateStatus
+  updateStatus,
+  conditionalUpdateStatus
 };

@@ -56,8 +56,9 @@ describe('Approvals Service', () => {
     assert.equal(updatedApproval.id, 'a2');
     assert.equal(updatedApproval.status, 'Rejected');
 
-    // Verify no pending approvals left
+    // CR: Verify only that a2 is no longer pending — do NOT assert total count=0
+    //     because that would depend on the 'approve a1' test having run first.
     const pendingApprovals = await approvalsService.fetchPendingApprovals();
-    assert.equal(pendingApprovals.length, 0);
+    assert.equal(pendingApprovals.find(a => a.id === 'a2'), undefined, 'a2 should no longer be in the pending list');
   });
 });

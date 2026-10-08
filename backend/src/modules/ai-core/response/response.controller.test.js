@@ -37,6 +37,18 @@ describe('AI Response Controller', () => {
   // ── formatResponse – validation ──────────────────────────────────────────
 
   describe('formatResponse – input validation', () => {
+    // CR: missing/null body must be caught before destructuring (no TypeError 500)
+    it('should return 400 when request body is missing or null', () => {
+      const req = { body: null };
+      const res = mockRes();
+
+      controller.formatResponse(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.equal(res._body.message, 'Request body is required');
+    });
+
     it('should return 400 when both query and intent are missing', () => {
       const req = mockReq({ body: {} });
       const res = mockRes();
@@ -68,6 +80,44 @@ describe('AI Response Controller', () => {
       assert.equal(res._status, 400);
       assert.equal(res._body.success, false);
       assert.equal(res._body.message, 'query and intent are required');
+    });
+
+    // BI-11: knowledge sent as a plain object (not array) must return 400, not 500
+    it('should return 400 when knowledge is an object instead of an array (BI-11)', () => {
+      const req = mockReq({
+        body: {
+          query: 'I need a laptop',
+          intent: 'service_request',
+          knowledge: { id: 'k1', title: 'Bad shape' }, // object, not array
+          recommendations: []
+        }
+      });
+      const res = mockRes();
+
+      controller.formatResponse(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.ok(res._body.message.includes('knowledge'), 'error should mention the bad field');
+    });
+
+    // BI-11: recommendations sent as a string must return 400, not 500
+    it('should return 400 when recommendations is not an array (BI-11)', () => {
+      const req = mockReq({
+        body: {
+          query: 'I need a laptop',
+          intent: 'service_request',
+          knowledge: [],
+          recommendations: 'apply'
+        }
+      });
+      const res = mockRes();
+
+      controller.formatResponse(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.ok(res._body.message.includes('recommendations'), 'error should mention the bad field');
     });
   });
 

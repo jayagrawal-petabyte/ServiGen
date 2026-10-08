@@ -6,6 +6,10 @@ const getServices = async (req, res) => {
     const services = await servicesCatalogueService.fetchServices(category, search);
     res.status(200).json({ success: true, data: services });
   } catch (error) {
+    // BI-9: non-string query params (e.g. repeated ?category=) surface as 400
+    if (error.code === 'INVALID_QUERY_TYPE') {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
