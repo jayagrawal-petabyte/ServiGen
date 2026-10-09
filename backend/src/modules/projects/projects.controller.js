@@ -1,6 +1,7 @@
 const {
   getAllProjects,
   getActiveProjectsData,
+  getProjectDetail,
   getProjectSubtasks: getProjectSubtasksService,
 } = require('./projects.service');
 
@@ -45,6 +46,39 @@ const getActiveProjects = async (req, res) => {
   }
 };
 
+const getProjectById = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    if (typeof projectId !== 'string' || !projectId.trim() || projectId.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID format',
+      });
+    }
+
+    const organisationId = getEffectiveOrgId(req);
+    const project = await getProjectDetail(projectId.trim(), organisationId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: project,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch project details',
+    });
+  }
+};
+
 const getProjectSubtasks = async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -81,5 +115,6 @@ const getProjectSubtasks = async (req, res) => {
 module.exports = {
   getProjects,
   getActiveProjects,
+  getProjectById,
   getProjectSubtasks,
 };

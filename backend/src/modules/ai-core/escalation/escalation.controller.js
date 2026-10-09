@@ -13,7 +13,9 @@ const checkEscalationDecision = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Escalation check error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[escalation:check:error]', error?.message || error);
+    }
 
     res.status(400).json({
       success: false,
@@ -76,7 +78,9 @@ const createEscalationHandoff = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Escalation handoff error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[escalation:handoff:error]', error?.message || error);
+    }
 
     res.status(400).json({
       success: false,

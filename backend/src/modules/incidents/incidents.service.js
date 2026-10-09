@@ -64,7 +64,10 @@ const filterIncidents = (incidents, query = {}) => {
 
     const matchesOrganisation =
       !orgFilter ||
-      incident.organisation.toLowerCase().includes(orgFilter);
+      (incident.organisationId && incident.organisationId.toLowerCase() === orgFilter) ||
+      (incident.organisation && incident.organisation.toLowerCase().includes(orgFilter)) ||
+      (orgFilter === 'org-001' && incident.organisation && incident.organisation.toLowerCase().includes('acme')) ||
+      (orgFilter === 'org-002' && incident.organisation && incident.organisation.toLowerCase().includes('globex'));
 
     const matchesSearch =
       !searchFilter ||

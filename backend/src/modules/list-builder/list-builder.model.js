@@ -36,10 +36,13 @@ const getListById = async (id, organisationId = null) => {
   return list;
 };
 
+let _listSeq = lists.length;
+
 const createList = async (listData) => {
+  const { id: _ignoredId, ...safeData } = listData || {};
   const newList = {
-    id: `LIST-${String(lists.length + 1).padStart(3, '0')}`,
-    ...listData,
+    ...safeData,
+    id: `LIST-${String(++_listSeq).padStart(3, '0')}`,
   };
 
   lists.push(newList);

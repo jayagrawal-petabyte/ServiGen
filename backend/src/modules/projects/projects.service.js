@@ -1,6 +1,7 @@
 const {
     getProjects,
     getActiveProjects,
+    getProjectById,
     getSubtasksByProject,
 } = require('./projects.model');
 
@@ -29,6 +30,15 @@ const getActiveProjectsData = async (options = {}) => {
     }));
 };
 
+const getProjectDetail = async (projectId, organisationId = null) => {
+    const project = await getProjectById(projectId, organisationId);
+    if (!project) return null;
+    return {
+        ...project,
+        completionPercentage: calculateCompletionPercentage(project.subtasks),
+    };
+};
+
 const getProjectSubtasks = async (projectId, organisationId = null) => {
     return await getSubtasksByProject(projectId, organisationId);
 };
@@ -36,5 +46,6 @@ const getProjectSubtasks = async (projectId, organisationId = null) => {
 module.exports = {
     getAllProjects,
     getActiveProjectsData,
+    getProjectDetail,
     getProjectSubtasks,
 };

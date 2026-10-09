@@ -16,7 +16,7 @@ const respondWithError = (res, error, fallbackMessage) => {
 
 const resolveScopedQuery = (req) => {
   const query = { ...req.query };
-  if (req.user && req.user.role !== 'Admin' && req.user.organisationId && !query.organisation) {
+  if (req.user && req.user.role !== 'Admin' && req.user.organisationId) {
     query.organisation = req.user.organisationId;
   }
   return query;
@@ -53,12 +53,17 @@ const getIncidentRecord = async (req, res) => {
       });
     }
 
-    // SG-05 / BI-20: Prevent cross-tenant incident retrieval (IDOR)
+    // SG-05 / BI-20: Prevent cross-tenant incident retrieval (IDOR) with non-disclosure 404
     if (req.user && req.user.role !== 'Admin' && req.user.organisationId) {
-      if (incident.organisation && !incident.organisation.toLowerCase().includes(req.user.organisationId.toLowerCase())) {
-        return res.status(403).json({
+      const userOrg = req.user.organisationId.toLowerCase();
+      const incOrg = (incident.organisation || '').toLowerCase();
+      const incOrgId = (incident.organisationId || '').toLowerCase();
+      const matchesTenant = incOrgId === userOrg || incOrg.includes(userOrg) || (userOrg === 'org-001' && incOrg.includes('acme')) || (userOrg === 'org-002' && incOrg.includes('globex'));
+
+      if (!matchesTenant) {
+        return res.status(404).json({
           success: false,
-          message: 'Forbidden',
+          message: 'Incident not found',
         });
       }
     }

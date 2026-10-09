@@ -185,10 +185,11 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
   const org1Staff = { authorization: 'Bearer ' + generateToken({ id: 'user-001', role: 'Service Agent', organisationId: 'org-001' }) };
   const admin = authFor('Admin', 'admin-001');
 
-  // Incidents route
+  // Incidents route: authentication, RBAC, and tenant boundary
   assert.equal((await fetch(base + '/api/incidents')).status, 401);
   assert.equal((await fetch(base + '/api/incidents', { headers: user })).status, 403);
   assert.equal((await fetch(base + '/api/incidents', { headers: staff })).status, 200);
+  assert.equal((await fetch(base + '/api/incidents/INC-1005', { headers: org1Staff })).status, 404);
 
   // Organisations route: IDOR protection
   assert.equal((await fetch(base + '/api/organisations/org-001/users')).status, 401);
@@ -203,6 +204,11 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
   // Auth routes: login is public, session requires auth
   assert.equal((await fetch(base + '/api/auth/session')).status, 401);
   assert.equal((await fetch(base + '/api/auth/session', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 1234, password: 'Password@123' }),
+  })).status, 400);
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -225,6 +231,11 @@ test('unfinished modules enforce tenant boundary, BOLA/IDOR protection, identity
   assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: org2Staff })).status, 404);
   assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: org1Staff })).status, 200);
   assert.equal((await fetch(base + '/api/projects/P-001/subtasks', { headers: admin })).status, 200);
+
+  // Single project detail lookup
+  assert.equal((await fetch(base + '/api/projects/P-001', { headers: org2Staff })).status, 404);
+  assert.equal((await fetch(base + '/api/projects/P-001', { headers: org1Staff })).status, 200);
+  assert.equal((await fetch(base + '/api/projects/P-001', { headers: admin })).status, 200);
 
   // 2. CMDB: tenant isolation and IDOR on configuration items
   const org1Cis = await (await fetch(base + '/api/cmdb/configuration-items', { headers: org1Staff })).json();

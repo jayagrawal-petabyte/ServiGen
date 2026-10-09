@@ -1,12 +1,20 @@
 const crypto = require('node:crypto');
+const bcrypt = require('bcryptjs');
 const {
   findUserByUsername,
   findUserById,
 } = require('./auth.model');
 const { generateToken } = require('../../shared');
 
-const safePasswordCompare = (supplied, stored) => {
+const safePasswordCompare = async (supplied, stored) => {
   if (typeof supplied !== 'string' || typeof stored !== 'string') return false;
+  if (/^\$2[aby]\$\d{2}\$/.test(stored)) {
+    try {
+      return await bcrypt.compare(supplied, stored);
+    } catch {
+      return false;
+    }
+  }
   const suppliedBuf = Buffer.from(supplied);
   const storedBuf = Buffer.from(stored);
   if (suppliedBuf.length !== storedBuf.length) return false;
@@ -21,21 +29,22 @@ const safePasswordCompare = (supplied, stored) => {
  * Supabase/Prisma layer is available.
  */
 const login = async (username, password) => {
-  if (!username || !username.trim()) {
-    const error = new Error('Username is required');
+  if (typeof username !== 'string' || !username.trim()) {
+    const error = new Error('Username must be a non-empty string');
     error.statusCode = 400;
     throw error;
   }
 
-  if (!password) {
+  if (typeof password !== 'string' || !password) {
     const error = new Error('Password is required');
     error.statusCode = 400;
     throw error;
   }
 
   const user = await findUserByUsername(username);
+  const isPasswordValid = user && user.active && (await safePasswordCompare(password, user.password));
 
-  if (!user || !user.active || !safePasswordCompare(password, user.password)) {
+  if (!user || !user.active || !isPasswordValid) {
     const error = new Error('Invalid username or password');
     error.statusCode = 401;
     throw error;

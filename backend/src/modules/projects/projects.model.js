@@ -79,6 +79,15 @@ const getActiveProjects = async (options = {}) => {
   );
 };
 
+const getProjectById = async (projectId, organisationId = null) => {
+  const project = projects.find((project) => project.id === projectId);
+  if (!project) return null;
+  if (organisationId && project.organisationId && project.organisationId !== organisationId) {
+    return null;
+  }
+  return project;
+};
+
 const getSubtasksByProject = async (projectId, organisationId = null) => {
   const project = projects.find((project) => project.id === projectId);
   if (!project) return null;
@@ -91,5 +100,6 @@ const getSubtasksByProject = async (projectId, organisationId = null) => {
 module.exports = {
   getProjects,
   getActiveProjects,
+  getProjectById,
   getSubtasksByProject,
 };

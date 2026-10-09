@@ -110,9 +110,9 @@ app.use('/api/major-incidents', (req, res, next) =>
   restrictTo(...(['GET', 'HEAD'].includes(req.method) ? PERMISSIONS.STAFF : PERMISSIONS.ADMIN_ONLY))(req, res, next), majorIncidentsRouter);
 app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
-  if (req.user.role !== 'Admin' && req.user.organisationId) {
+  if (req.user.role !== 'Admin') {
     const match = req.path.match(/^\/([^/]+)/);
-    if (match && match[1] && match[1] !== req.user.organisationId) {
+    if (match && match[1] && (!req.user.organisationId || match[1] !== req.user.organisationId)) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
   }
