@@ -8,9 +8,43 @@
  * @returns {Object} Structured response payload
  */
 const structureResponse = (query, intent, knowledge, recommendations) => {
-  // Generate a formatted message based on intent
+  // BI-11: Validate collection types before any .map() call.
+  //        Non-array knowledge or recommendations → INVALID_COLLECTION (400).
+  if (!Array.isArray(knowledge)) {
+    const err = new Error('"knowledge" must be an array');
+    err.code = 'INVALID_COLLECTION';
+    throw err;
+  }
+  if (!Array.isArray(recommendations)) {
+    const err = new Error('"recommendations" must be an array');
+    err.code = 'INVALID_COLLECTION';
+    throw err;
+  }
+
+  // Validate individual entries are plain objects (not null, arrays, or primitives)
+  for (const entry of knowledge) {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+      const err = new Error('Each knowledge entry must be a plain object');
+      err.code = 'INVALID_COLLECTION';
+      throw err;
+    }
+  }
+  for (const entry of recommendations) {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+      const err = new Error('Each recommendations entry must be a plain object');
+      err.code = 'INVALID_COLLECTION';
+      throw err;
+    }
+  }
+
+  // Generate a formatted message based on intent and result availability
   let message = '';
-  if (intent === 'service_request') {
+  const hasResults = knowledge.length > 0 || recommendations.length > 0;
+
+  if (!hasResults) {
+    // CR: Use a no-results message when the corresponding arrays are empty
+    message = `No results were found for "${query}".`;
+  } else if (intent === 'service_request') {
     message = `Based on your request "${query}", here are the recommended services you can apply for.`;
   } else if (intent === 'troubleshooting') {
     message = `I found some helpful articles in our knowledge base regarding "${query}". Please check the recommended steps.`;

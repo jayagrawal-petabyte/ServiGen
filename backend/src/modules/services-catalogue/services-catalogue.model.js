@@ -15,6 +15,9 @@ const mockCategories = [
 
 const mockRequests = [];
 
+// BI-10: monotonic counter — prevents ID collision when Date.now() ties within one millisecond
+let _seq = 0;
+
 const getAllServices = async () => {
   return mockServices;
 };
@@ -28,10 +31,13 @@ const getServiceById = async (id) => {
 };
 
 const createRequest = async (requestData) => {
+  // BI-8:  Server-controlled fields are placed AFTER the spread so they cannot be
+  //        overwritten by caller-supplied values in requestData.
+  // BI-10: Append sequence counter so simultaneous calls never share the same id.
   const newReq = {
-    id: `req_${Date.now()}`,
-    submittedAt: new Date().toISOString(),
-    ...requestData
+    ...requestData,
+    id: `req_${Date.now()}_${_seq++}`,
+    submittedAt: new Date().toISOString()
   };
   mockRequests.push(newReq);
   return newReq;

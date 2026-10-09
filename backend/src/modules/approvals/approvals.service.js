@@ -9,17 +9,20 @@ const fetchApprovalById = async (approvalId) => {
 };
 
 const updateApprovalStatus = async (approvalId, status) => {
-  const approval = await approvalsModel.getApprovalById(approvalId);
+  // CR / BI-12: The existence check, pending-state guard, and write are now
+  //   collapsed into one atomic operation in the model layer.
+  //   At DB integration: replace conditionalUpdateStatus with a single
+  //   UPDATE ... WHERE id = ? AND status = 'Pending' (+ approver predicate).
+  const result = await approvalsModel.conditionalUpdateStatus(approvalId, 'Pending', status);
 
-  if (!approval) {
+  if (!result.found) {
     throw new Error('Approval request not found');
   }
-
-  if (approval.status !== 'Pending') {
+  if (!result.updated) {
     throw new Error('Cannot update non-pending request');
   }
 
-  return await approvalsModel.updateStatus(approvalId, status);
+  return result.record;
 };
 
 module.exports = {

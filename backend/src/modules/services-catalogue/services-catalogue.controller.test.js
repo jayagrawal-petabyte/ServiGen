@@ -66,6 +66,29 @@ describe('Services Catalogue Controller', () => {
       assert.equal(res._body.success, true);
       assert.ok(res._body.data.every(s => s.category === 'Hardware'));
     });
+
+    // BI-9: repeated query params arrive as arrays from Express — must return 400
+    it('should return 400 when category query param is an array (repeated param)', async () => {
+      const req = mockReq({ query: { category: ['Hardware', 'Software'] } });
+      const res = mockRes();
+
+      await controller.getServices(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.ok(res._body.message.includes('category'), 'error message should mention the bad param');
+    });
+
+    it('should return 400 when search query param is an array (repeated param)', async () => {
+      const req = mockReq({ query: { search: ['laptop', 'vpn'] } });
+      const res = mockRes();
+
+      await controller.getServices(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.ok(res._body.message.includes('search'), 'error message should mention the bad param');
+    });
   });
 
   // ── getServiceById ───────────────────────────────────────────────────────
@@ -124,6 +147,31 @@ describe('Services Catalogue Controller', () => {
       assert.ok(res._body.data.id.startsWith('req_'), 'should have a generated request ID');
       assert.equal(res._body.data.serviceId, '1');
       assert.equal(res._body.data.status, 'Pending Approval');
+    });
+
+    // BI-8: a caller injecting protected metadata in the body must not be able
+    //       to overwrite server-selected serviceId, serviceName, id or submittedAt
+    it('should ignore injected serviceId/serviceName in the request body (BI-8)', async () => {
+      const req = mockReq({
+        params: { serviceId: '1' },
+        body: {
+          requester: 'Attacker',
+          serviceId: '99',           // attempt to overwrite
+          serviceName: 'Evil Service', // attempt to overwrite
+          id: 'req_FAKE',            // attempt to overwrite
+          submittedAt: '1970-01-01T00:00:00Z' // attempt to overwrite
+        }
+      });
+      const res = mockRes();
+
+      await controller.submitServiceRequest(req, res);
+
+      assert.equal(res._status, 201);
+      const data = res._body.data;
+      assert.equal(data.serviceId, '1', 'serviceId must be from the URL, not the body');
+      assert.equal(data.serviceName, 'Request a Laptop', 'serviceName must come from the service catalogue');
+      assert.notEqual(data.id, 'req_FAKE', 'id must be server-generated, not caller-supplied');
+      assert.notEqual(data.submittedAt, '1970-01-01T00:00:00Z', 'submittedAt must be server-generated');
     });
   });
 });

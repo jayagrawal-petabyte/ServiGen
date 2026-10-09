@@ -37,21 +37,45 @@ describe('Response Service', () => {
     assert.ok(!isNaN(date.getTime()), 'processedAt should be a valid ISO string');
   });
 
-  it('should map intent to the correct response type and message (troubleshooting)', () => {
+  it('should use no-results message when arrays are empty (troubleshooting intent)', () => {
     const query = 'vpn not working';
     const intent = 'troubleshooting';
 
+    // CR: Both arrays empty — should produce a no-results message, not an intent message
     const response = responseService.structureResponse(query, intent, [], []);
+
+    assert.equal(response.type, 'troubleshooting');
+    assert.equal(response.message, 'No results were found for "vpn not working".');
+  });
+
+  it('should use intent message when troubleshooting results are present', () => {
+    const query = 'vpn not working';
+    const intent = 'troubleshooting';
+    const knowledge = [{ id: 'k1', title: 'VPN Guide', content: 'Check your VPN settings.' }];
+
+    const response = responseService.structureResponse(query, intent, knowledge, []);
 
     assert.equal(response.type, 'troubleshooting');
     assert.equal(response.message, 'I found some helpful articles in our knowledge base regarding "vpn not working". Please check the recommended steps.');
   });
 
-  it('should map unknown intent to a generic message', () => {
+  it('should use no-results message for unknown intent when arrays are empty', () => {
     const query = 'hello world';
     const intent = 'unknown';
 
+    // CR: Both arrays empty — no-results message takes priority over intent message
     const response = responseService.structureResponse(query, intent, [], []);
+
+    assert.equal(response.type, 'unknown');
+    assert.equal(response.message, 'No results were found for "hello world".');
+  });
+
+  it('should use generic intent message when results are present for unknown intent', () => {
+    const query = 'hello world';
+    const intent = 'unknown';
+    const recommendations = [{ action: 'view', targetId: 'x1', description: 'Some item' }];
+
+    const response = responseService.structureResponse(query, intent, [], recommendations);
 
     assert.equal(response.type, 'unknown');
     assert.equal(response.message, 'Here is what I found for "hello world".');

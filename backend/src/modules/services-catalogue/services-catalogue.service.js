@@ -1,6 +1,19 @@
 const servicesCatalogueModel = require('./services-catalogue.model');
 
 const fetchServices = async (categoryFilter, searchQuery) => {
+  // BI-9: Reject non-string query values (e.g. arrays from repeated params) before
+  //       any .toLowerCase() call; callers receive 400 instead of a 500 crash.
+  if (categoryFilter !== undefined && categoryFilter !== null && typeof categoryFilter !== 'string') {
+    const err = new Error('Query parameter "category" must be a scalar string');
+    err.code = 'INVALID_QUERY_TYPE';
+    throw err;
+  }
+  if (searchQuery !== undefined && searchQuery !== null && typeof searchQuery !== 'string') {
+    const err = new Error('Query parameter "search" must be a scalar string');
+    err.code = 'INVALID_QUERY_TYPE';
+    throw err;
+  }
+
   let services = await servicesCatalogueModel.getAllServices();
 
   if (categoryFilter) {
@@ -37,11 +50,22 @@ const createServiceRequest = async (serviceId, requestData) => {
     throw new Error('Service is not available for requests');
   }
 
-  // Inject required metadata
+  // BI-8: Strip the four server-controlled fields from caller data so a crafted
+  //        request body cannot overwrite serviceId, serviceName, id, or submittedAt.
+  //        All other dynamic form fields in requestData are preserved.
+  const {
+    serviceId: _sid,
+    serviceName: _sname,
+    id: _id,
+    submittedAt: _sat,
+    status: _status,
+    ...safeData
+  } = requestData;
+
   const requestRecord = {
+    ...safeData,
     serviceId,
     serviceName: service.name,
-    ...requestData,
     status: 'Pending Approval'
   };
 
