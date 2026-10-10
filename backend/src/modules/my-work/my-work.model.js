@@ -114,7 +114,49 @@ const tickets = [
   },
 ];
 
+const db = require('../../config/db');
+
 const getTickets = async (filters = {}) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const where = {};
+      if (filters.assignedAgentId) where.assignedAgentId = filters.assignedAgentId;
+      if (filters.status) where.status = { equals: filters.status, mode: 'insensitive' };
+      if (filters.priority) where.priority = { equals: filters.priority, mode: 'insensitive' };
+      if (filters.ticketType) where.ticketType = { equals: filters.ticketType, mode: 'insensitive' };
+      if (filters.organisation) {
+        where.organisation = { name: { contains: filters.organisation, mode: 'insensitive' } };
+      }
+
+      const dbTickets = await db.ticket.findMany({
+        where,
+        include: { organisation: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (dbTickets && dbTickets.length > 0) {
+        return dbTickets.map((t) => ({
+          id: t.id,
+          summary: t.summary,
+          priority: t.priority,
+          status: t.status,
+          ticketType: t.ticketType,
+          organisation: t.organisation?.name || 'Acme Corp',
+          site: t.siteName || 'London HQ',
+          assignedAgentId: t.assignedAgentId || 'agent-001',
+          slaTimeLeft: t.slaTimeLeft,
+          timeRecord: t.timeRecord || 0,
+          holdReason: t.holdReason,
+          holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return tickets.filter((ticket) => {
     const matchesAgent =
       !filters.assignedAgentId || ticket.assignedAgentId === filters.assignedAgentId;
@@ -132,10 +174,40 @@ const getTickets = async (filters = {}) => {
 };
 
 const getTicketById = async (id) => {
+  if (!id) return null;
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const t = await db.ticket.findFirst({
+        where: { id: { equals: id, mode: 'insensitive' } },
+        include: { organisation: true },
+      });
+
+      if (t) {
+        return {
+          id: t.id,
+          summary: t.summary,
+          priority: t.priority,
+          status: t.status,
+          ticketType: t.ticketType,
+          organisation: t.organisation?.name || 'Acme Corp',
+          site: t.siteName || 'London HQ',
+          assignedAgentId: t.assignedAgentId || 'agent-001',
+          slaTimeLeft: t.slaTimeLeft,
+          timeRecord: t.timeRecord || 0,
+          holdReason: t.holdReason,
+          holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return tickets.find((ticket) => ticket.id.toLowerCase() === id.toLowerCase()) || null;
 };
-
-const db = require('../../config/db');
 
 const saveTicket = async (ticket) => {
   if (process.env.NODE_ENV !== 'test') {

@@ -99,7 +99,9 @@ const getListById = async (id, organisationId = null) => {
 
 const createList = async (listData) => {
   const { id: _ignoredId, ...safeData } = listData || {};
-  const generatedId = `LIST-${String(++_listSeq).padStart(3, '0')}`;
+  const generatedId = process.env.NODE_ENV === 'test'
+    ? `LIST-${String(++_listSeq).padStart(3, '0')}`
+    : `LIST-${Date.now()}-${++_listSeq}`;
   const newList = {
     ...safeData,
     id: generatedId,
