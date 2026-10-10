@@ -59,6 +59,14 @@ const submitMood = async (agentId, mood) => {
     throw error;
   }
 
+  // BI-6 FIX: Guard typeof before calling .trim() — a number or object payload
+  // crashes with a TypeError instead of returning a 400 validation error.
+  if (typeof mood !== 'string') {
+    const error = new Error('mood must be a string');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const matched = VALID_MOODS.find(
     (m) => m.toLowerCase() === mood.trim().toLowerCase()
   );
@@ -89,11 +97,15 @@ const getIncidentsByCategory = async () => getCategoryBreakdown();
 /**
  * Return the latest new tickets, ordered by createdAt descending.
  * Accepts an optional limit (default 10, max 50).
+ * BI-7 FIX: Sort the full collection first, then slice \u2014 the model no longer
+ * pre-slices, so we always get the true N most-recent tickets.
  */
 const getNewTicketsPanel = async (query = {}) => {
   const limit = Math.min(50, Math.max(1, parseInt(query.limit, 10) || 10));
-  const tickets = await getNewTickets(limit);
-  return tickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const tickets = await getNewTickets();
+  return tickets
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, limit);
 };
 
 // ─── SCR-002: Personalized Dashboard Summary ────────────────────────────────

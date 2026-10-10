@@ -140,9 +140,12 @@ const getTeamBreakdown = async () => [...teamBreakdown];
 const getCategoryBreakdown = async () => [...categoryBreakdown];
 
 /**
- * Return the latest new tickets, limited by count (SCR-015)
+ * Return all new tickets — sorting and limiting are handled by the service layer.
+ * BI-7 FIX: Previously sliced before sorting in the service, so the returned
+ * "latest N" tickets could be wrong. The service now sorts all records first,
+ * then truncates to the requested limit.
  */
-const getNewTickets = async (limit = 10) => newTickets.slice(0, limit);
+const getNewTickets = async () => [...newTickets];
 
 /**
  * Return raw summary data for a given agent (SCR-002)

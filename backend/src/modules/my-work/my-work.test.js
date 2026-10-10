@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Unit tests for the My Work service layer.
  * Covers: SLA formatting, priority sorting, filtering, pagination,
  * escalation logic, on-hold duration, status transitions, time logging.
@@ -352,4 +352,121 @@ describe('logTicketTime()', () => {
   test('throws 404 for non-existent ticket', async () => {
     await expect(logTicketTime('INC-9999', 30)).rejects.toMatchObject({ statusCode: 404 });
   });
+
+  // BI-1 regression: Number(true) === 1 and isNaN('Infinity') === false
+  test('throws 400 when minutesSpent is boolean true (BI-1)', async () => {
+    await expect(logTicketTime('INC-1001', true)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when minutesSpent is boolean false (BI-1)', async () => {
+    await expect(logTicketTime('INC-1001', false)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when minutesSpent is Infinity (BI-1)', async () => {
+    await expect(logTicketTime('INC-1001', Infinity)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when minutesSpent is the string "Infinity" (BI-1)', async () => {
+    await expect(logTicketTime('INC-1001', 'Infinity')).rejects.toMatchObject({ statusCode: 400 });
+  });
 });
+
+// ---------------------------------------------------------------------------
+// BI-2 regression: non-string query/payload params
+// ---------------------------------------------------------------------------
+describe('BI-2 — typeof guards on query params and payload', () => {
+  test('throws 400 when query.status is an array (repeated param)', async () => {
+    await expect(
+      getAgentTickets('agent-001', { status: ['Active', 'Pending'] })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when query.priority is an array (repeated param)', async () => {
+    await expect(
+      getAgentTickets('agent-001', { priority: ['High', 'Low'] })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when query.ticketType is an array (repeated param)', async () => {
+    await expect(
+      getAgentTickets('agent-001', { ticketType: ['Incident', 'Service Request'] })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when query.organisation is an array (repeated param)', async () => {
+    await expect(
+      getAgentTickets('agent-001', { organisation: ['Acme Corp', 'Initech'] })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  test('throws 400 when payload.status is a number in changeTicketStatus', async () => {
+    await expect(
+      changeTicketStatus('INC-1001', { status: 42 })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BI-3 regression: already-breached SLA (slaTimeLeft < 0) must still escalate
+// ---------------------------------------------------------------------------
+describe('BI-3 — negative slaTimeLeft triggers escalation', () => {
+  test('escalates when slaTimeLeft is negative (already breached)', () => {
+    const result = computeEscalation({ priority: 'High', slaTimeLeft: -10, status: 'Active' });
+    expect(result.needsEscalation).toBe(true);
+    expect(result.escalationReason).toContain('SLA threshold reached');
+  });
+
+  test('escalates when slaTimeLeft is exactly 0', () => {
+    const result = computeEscalation({ priority: 'Low', slaTimeLeft: 0, status: 'Active' });
+    expect(result.needsEscalation).toBe(true);
+  });
+
+  test('does not escalate when slaTimeLeft is null (N/A)', () => {
+    const result = computeEscalation({ priority: 'High', slaTimeLeft: null, status: 'Active' });
+    expect(result.needsEscalation).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BI-4 regression: IDOR / BOLA — cross-agent access must be denied
+// ---------------------------------------------------------------------------
+describe('BI-4 — ownership check (IDOR prevention)', () => {
+  test('getTicket throws 403 when agentId does not own the ticket', async () => {
+    // INC-1001 is owned by agent-001; agent-002 must be denied
+    await expect(getTicket('INC-1001', 'agent-002')).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  test('getTicket succeeds when agentId matches ticket owner', async () => {
+    const ticket = await getTicket('INC-1001', 'agent-001');
+    expect(ticket.id).toBe('INC-1001');
+  });
+
+  test('getTicket succeeds when no agentId provided (system/unscoped call)', async () => {
+    const ticket = await getTicket('INC-1001');
+    expect(ticket.id).toBe('INC-1001');
+  });
+
+  test('changeTicketStatus throws 403 when agentId does not own the ticket', async () => {
+    await expect(
+      changeTicketStatus('INC-1001', { status: 'Pending' }, 'agent-002')
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  test('changeTicketStatus succeeds when agentId matches ticket owner', async () => {
+    const result = await changeTicketStatus('INC-1006', { status: 'Pending' }, 'agent-001');
+    expect(result.status).toBe('Pending');
+  });
+
+  test('logTicketTime throws 403 when agentId does not own the ticket', async () => {
+    await expect(
+      logTicketTime('INC-1001', 15, 'agent-002')
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  test('logTicketTime succeeds when agentId matches ticket owner', async () => {
+    const before = await getTicket('REQ-1005', 'agent-001');
+    const result = await logTicketTime('REQ-1005', 10, 'agent-001');
+    expect(result.timeRecord).toBe(before.timeRecord + 10);
+  });
+});
+

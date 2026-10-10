@@ -69,9 +69,11 @@ const formatHoldDuration = (holdStartedAt) => {
  */
 const computeEscalation = (t) => {
   const slaThreshold = ESCALATION_THRESHOLDS[t.priority] ?? 60;
+
+  // BI-3 FIX: Remove the `>= 0` guard so already-breached tickets (slaTimeLeft < 0)
+  // also trigger escalation — a breached SLA always needs escalation.
   const slaCritical =
     typeof t.slaTimeLeft === 'number' &&
-    t.slaTimeLeft >= 0 &&
     t.slaTimeLeft <= slaThreshold;
 
   let holdOverdue = false;
@@ -110,7 +112,14 @@ const formatTicket = (t) => ({
 const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
   const filters = { assignedAgentId: agentId };
 
+  // BI-2 FIX: Guard typeof before calling .trim() — repeated query params arrive
+  // as arrays, and non-string values (numbers, objects) crash with a TypeError.
   if (query.status) {
+    if (typeof query.status !== 'string') {
+      const error = new Error('status must be a string');
+      error.statusCode = 400;
+      throw error;
+    }
     const formattedStatus = query.status.trim();
     const matched = VALID_STATUSES.find(
       (s) => s.toLowerCase() === formattedStatus.toLowerCase()
@@ -124,6 +133,11 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
   }
 
   if (query.priority) {
+    if (typeof query.priority !== 'string') {
+      const error = new Error('priority must be a string');
+      error.statusCode = 400;
+      throw error;
+    }
     const matchedPriority = VALID_PRIORITIES.find(
       (p) => p.toLowerCase() === query.priority.trim().toLowerCase()
     );
@@ -136,10 +150,22 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
   }
 
   if (query.ticketType) {
+    // BI-2: Same typeof guard — repeated ?ticketType params arrive as an array.
+    if (typeof query.ticketType !== 'string') {
+      const error = new Error('ticketType must be a string');
+      error.statusCode = 400;
+      throw error;
+    }
     filters.ticketType = query.ticketType.trim();
   }
 
   if (query.organisation) {
+    // BI-2: Same typeof guard — repeated ?organisation params arrive as an array.
+    if (typeof query.organisation !== 'string') {
+      const error = new Error('organisation must be a string');
+      error.statusCode = 400;
+      throw error;
+    }
     filters.organisation = query.organisation.trim();
   }
 
@@ -200,12 +226,21 @@ const getActionedTickets = async (agentId = 'agent-001', query = {}) => {
 
 /**
  * Retrieve a specific ticket by ID
+ * BI-4 FIX: Verify the requesting agent owns the ticket (IDOR / BOLA prevention).
+ * The caller passes agentId; we reject with 403 if it does not match assignedAgentId.
  */
-const getTicket = async (ticketId) => {
+const getTicket = async (ticketId, agentId) => {
   const ticket = await getTicketById(ticketId);
   if (!ticket) {
     const error = new Error(`Ticket with ID '${ticketId}' not found`);
     error.statusCode = 404;
+    throw error;
+  }
+
+  // BI-4: Ownership check — only the assigned agent (or an unscoped system call) may read.
+  if (agentId && ticket.assignedAgentId !== agentId) {
+    const error = new Error('Access denied: you do not own this ticket');
+    error.statusCode = 403;
     throw error;
   }
 
@@ -214,12 +249,20 @@ const getTicket = async (ticketId) => {
 
 /**
  * Update the status of a ticket (e.g. moving between Active, Pending, On Hold, Actioned)
+ * BI-4 FIX: agentId added so we can verify ownership before mutating.
  */
-const changeTicketStatus = async (ticketId, payload = {}) => {
+const changeTicketStatus = async (ticketId, payload = {}, agentId) => {
   const { status, holdReason } = payload;
 
   if (!status) {
     const error = new Error('status is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // BI-2 FIX: Guard typeof before calling .trim() on payload.status.
+  if (typeof status !== 'string') {
+    const error = new Error('status must be a string');
     error.statusCode = 400;
     throw error;
   }
@@ -241,6 +284,13 @@ const changeTicketStatus = async (ticketId, payload = {}) => {
     throw error;
   }
 
+  // BI-4: Ownership check — only the assigned agent may change ticket status.
+  if (agentId && existingTicket.assignedAgentId !== agentId) {
+    const error = new Error('Access denied: you do not own this ticket');
+    error.statusCode = 403;
+    throw error;
+  }
+
   const updates = {
     status: matchedStatus,
     holdReason: matchedStatus === 'On Hold' ? holdReason || 'Pending external input' : null,
@@ -253,11 +303,20 @@ const changeTicketStatus = async (ticketId, payload = {}) => {
 
 /**
  * Log time worked on a ticket
+ * BI-1 FIX: Number(true) === 1 and isNaN('Infinity') === false, so we must
+ *   (a) require the raw value to be a finite number type before coercing, and
+ *   (b) reject non-finite values (Infinity, -Infinity, NaN) explicitly.
+ * BI-4 FIX: agentId added so we can verify ownership before mutating.
  */
-const logTicketTime = async (ticketId, minutesSpent) => {
-  const parsedMinutes = Number(minutesSpent);
+const logTicketTime = async (ticketId, minutesSpent, agentId) => {
+  // BI-1: Reject non-number types (booleans, strings like 'Infinity', objects, etc.)
+  if (typeof minutesSpent !== 'number' || !Number.isFinite(minutesSpent)) {
+    const error = new Error('minutesSpent must be a finite number');
+    error.statusCode = 400;
+    throw error;
+  }
 
-  if (isNaN(parsedMinutes) || parsedMinutes <= 0) {
+  if (minutesSpent <= 0) {
     const error = new Error('minutesSpent must be a positive number');
     error.statusCode = 400;
     throw error;
@@ -270,7 +329,17 @@ const logTicketTime = async (ticketId, minutesSpent) => {
     throw error;
   }
 
-  const newTotalTime = (existingTicket.timeRecord || 0) + parsedMinutes;
+  // BI-4: Ownership check — only the assigned agent may log time.
+  if (agentId && existingTicket.assignedAgentId !== agentId) {
+    const error = new Error('Access denied: you do not own this ticket');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  // BI-5 (noted/deferred): Read-modify-write is safe for the in-memory store;
+  // migrate to atomic DB increment (UPDATE ... SET timeRecord = timeRecord + $1) when
+  // switching to Postgres/Prisma.
+  const newTotalTime = (existingTicket.timeRecord || 0) + minutesSpent;
   const updatedTicket = await updateTicket(ticketId, { timeRecord: newTotalTime });
 
   return formatTicket(updatedTicket);

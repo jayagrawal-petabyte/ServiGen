@@ -116,7 +116,9 @@ const listOnHoldTickets = async (req, res) => {
  */
 const getTicketDetails = async (req, res) => {
   try {
-    const ticket = await getTicket(req.params.ticketId);
+    // BI-4: Pass agentId so the service can verify ownership.
+    const agentId = getAgentIdFromReq(req);
+    const ticket = await getTicket(req.params.ticketId, agentId);
     return res.status(200).json({
       success: true,
       data: ticket,
@@ -131,7 +133,9 @@ const getTicketDetails = async (req, res) => {
  */
 const updateTicketStatusHandler = async (req, res) => {
   try {
-    const updated = await changeTicketStatus(req.params.ticketId, req.body);
+    // BI-4: Pass agentId so the service can verify ownership before mutating.
+    const agentId = getAgentIdFromReq(req);
+    const updated = await changeTicketStatus(req.params.ticketId, req.body, agentId);
     return res.status(200).json({
       success: true,
       data: updated,
@@ -147,7 +151,9 @@ const updateTicketStatusHandler = async (req, res) => {
 const logTimeHandler = async (req, res) => {
   try {
     const { minutesSpent } = req.body;
-    const updated = await logTicketTime(req.params.ticketId, minutesSpent);
+    // BI-4: Pass agentId so the service can verify ownership before mutating.
+    const agentId = getAgentIdFromReq(req);
+    const updated = await logTicketTime(req.params.ticketId, minutesSpent, agentId);
     return res.status(200).json({
       success: true,
       data: updated,
