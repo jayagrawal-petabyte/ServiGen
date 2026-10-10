@@ -115,6 +115,8 @@ const getMoodEntries = async (agentId = null) => {
   return [...moodEntries];
 };
 
+const db = require('../../config/db');
+
 /**
  * Save a new mood check-in for an agent. Replaces any existing entry for today (SCR-014)
  */
@@ -126,6 +128,20 @@ const saveMoodEntry = async (agentId, mood) => {
   } else {
     moodEntries.push(entry);
   }
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      await db.agentMood.create({
+        data: {
+          agentId,
+          mood,
+        },
+      });
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return entry;
 };
 

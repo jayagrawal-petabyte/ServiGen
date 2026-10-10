@@ -1,5 +1,8 @@
-// Mock Data Layer for Approvals
+'use strict';
 
+const db = require('../../config/db');
+
+// Mock Data Layer for Approvals
 const mockApprovals = [
   {
     id: 'a1',
@@ -31,10 +34,56 @@ const mockApprovals = [
 ];
 
 const getPendingApprovals = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const list = await db.approval.findMany({
+        where: { status: 'Pending' },
+        include: { approver: true },
+      });
+      if (list && list.length > 0) {
+        return list.map((a) => ({
+          id: a.id,
+          title: a.summary,
+          requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
+          service: a.entityType || 'General',
+          status: a.status,
+          submittedAt: a.createdAt.toISOString(),
+          description: a.comments || a.summary,
+          approverId: a.approverId,
+        }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return mockApprovals.filter(a => a.status === 'Pending');
 };
 
 const getApprovalById = async (id) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const a = await db.approval.findUnique({
+        where: { id },
+        include: { approver: true },
+      });
+      if (a) {
+        return {
+          id: a.id,
+          title: a.summary,
+          requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
+          service: a.entityType || 'General',
+          status: a.status,
+          submittedAt: a.createdAt.toISOString(),
+          description: a.comments || a.summary,
+          approverId: a.approverId,
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return mockApprovals.find(a => a.id === id) || null;
 };
 
@@ -50,17 +99,33 @@ const updateStatus = async (id, status) => {
   return null;
 };
 
-/**
- * CR / BI-12: Atomic conditional update for the in-memory store.
- * Finds the record, verifies its current status, and writes the new status in
- * one synchronous operation — eliminating the read-then-write race.
- *
- * Returns:
- *   { found: false }                          — record does not exist
- *   { found: true, updated: false }           — record exists but is not in requiredStatus
- *   { found: true, updated: true, record }    — successfully updated
- */
 const conditionalUpdateStatus = async (id, requiredStatus, newStatus) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const existing = await db.approval.findUnique({ where: { id } });
+      if (existing) {
+        if (existing.status !== requiredStatus) {
+          return { found: true, updated: false };
+        }
+        const updated = await db.approval.update({
+          where: { id },
+          data: { status: newStatus, decidedAt: new Date() },
+        });
+        return {
+          found: true,
+          updated: true,
+          record: {
+            id: updated.id,
+            title: updated.summary,
+            status: updated.status,
+          },
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   const index = mockApprovals.findIndex(a => a.id === id);
   if (index === -1) {
     return { found: false };

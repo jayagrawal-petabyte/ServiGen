@@ -207,12 +207,22 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 1234, password: 'Password@123' }),
+    body: JSON.stringify({ email: 1234, password: 'Password@123' }),
   })).status, 400);
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'agent001@servigen.local', password: 'Password@123' }),
+  })).status, 200);
+  assert.equal((await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username: 'agent001', password: 'Password@123' }),
+  })).status, 200);
+  assert.equal((await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 'agent001', email: 'agent001@servigen.local', password: 'Password@123' }),
   })).status, 200);
 });
 

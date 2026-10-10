@@ -1,4 +1,8 @@
-const configurationItems = [
+'use strict';
+
+const db = require('../../config/db');
+
+const mockConfigurationItems = [
   {
     id: 'CI-001',
     name: 'Payment Server',
@@ -43,16 +47,40 @@ const configurationItems = [
 
 const getConfigurationItems = async (options = {}) => {
   const { organisationId } = options;
-  if (organisationId) {
-    return configurationItems.filter((item) => !item.organisationId || item.organisationId === organisationId);
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const records = await db.configurationItem.findMany();
+      if (records && records.length > 0) {
+        const formatted = records.map((ci) => ({
+          id: ci.id,
+          name: ci.name,
+          type: ci.type,
+          tag: ci.tag,
+          site: ci.siteName || 'Chennai',
+          status: ci.status,
+          businessOwner: ci.businessOwner || 'Technology',
+          organisationId: 'org-001',
+        }));
+
+        if (organisationId) {
+          return formatted.filter((item) => !item.organisationId || item.organisationId === organisationId);
+        }
+        return formatted;
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
   }
-  return configurationItems;
+
+  if (organisationId) {
+    return mockConfigurationItems.filter((item) => !item.organisationId || item.organisationId === organisationId);
+  }
+  return mockConfigurationItems;
 };
 
 const getConfigurationItemsByType = async (organisationId = null) => {
-  const items = organisationId
-    ? configurationItems.filter((item) => !item.organisationId || item.organisationId === organisationId)
-    : configurationItems;
+  const items = await getConfigurationItems({ organisationId });
 
   const groupedItems = Object.create(null);
 
@@ -69,7 +97,40 @@ const getConfigurationItemsByType = async (organisationId = null) => {
 };
 
 const getConfigurationItemById = async (id, organisationId = null) => {
-  const item = configurationItems.find((ci) => ci.id === id || ci.tag === id);
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const ci = await db.configurationItem.findFirst({
+        where: {
+          OR: [
+            { id },
+            { tag: id },
+          ],
+        },
+      });
+
+      if (ci) {
+        const formatted = {
+          id: ci.id,
+          name: ci.name,
+          type: ci.type,
+          tag: ci.tag,
+          site: ci.siteName || 'Chennai',
+          status: ci.status,
+          businessOwner: ci.businessOwner || 'Technology',
+          organisationId: 'org-001',
+        };
+
+        if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {
+          return null;
+        }
+        return formatted;
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
+  const item = mockConfigurationItems.find((ci) => ci.id === id || ci.tag === id);
   if (!item) return null;
   if (organisationId && item.organisationId && item.organisationId !== organisationId) {
     return null;

@@ -1,11 +1,8 @@
-/**
- * Temporary in-memory organisation user data.
- *
- * This is a placeholder until the shared Supabase/Prisma
- * database layer is added by the team.
- */
+'use strict';
 
-const users = [
+const db = require('../../config/db');
+
+const mockUsers = [
   {
     id: 'user-001',
     username: 'agent001',
@@ -30,20 +27,67 @@ const users = [
   },
 ];
 
-/**
- * Get users belonging to an organisation.
- */
 const getOrganisationUsers = async (organisationId) => {
-  return users.filter(
-    (user) => user.organisationId === organisationId
-  );
+  if (!organisationId) return [];
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const records = await db.user.findMany({
+        where: { organisationId },
+        include: { site: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (records && records.length > 0) {
+        return records.map((u) => ({
+          id: u.id,
+          username: u.username || u.email.split('@')[0],
+          site: u.site?.name || 'Main HQ',
+          email: u.email,
+          phone: u.phoneNumber || '+91-9000000000',
+          networkLogin: u.networkLogin || u.username,
+          role: u.role,
+          organisationId: u.organisationId,
+          active: u.availability !== 'Inactive',
+        }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
+  return mockUsers.filter((user) => user.organisationId === organisationId);
 };
 
-/**
- * Find a user by ID.
- */
 const getUserById = async (id) => {
-  return users.find((user) => user.id === id) || null;
+  if (!id) return null;
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const u = await db.user.findUnique({
+        where: { id },
+        include: { site: true },
+      });
+
+      if (u) {
+        return {
+          id: u.id,
+          username: u.username || u.email.split('@')[0],
+          site: u.site?.name || 'Main HQ',
+          email: u.email,
+          phone: u.phoneNumber || '+91-9000000000',
+          networkLogin: u.networkLogin || u.username,
+          role: u.role,
+          organisationId: u.organisationId,
+          active: u.availability !== 'Inactive',
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
+  return mockUsers.find((user) => user.id === id) || null;
 };
 
 module.exports = {

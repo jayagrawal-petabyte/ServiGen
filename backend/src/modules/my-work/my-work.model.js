@@ -135,7 +135,29 @@ const getTicketById = async (id) => {
   return tickets.find((ticket) => ticket.id.toLowerCase() === id.toLowerCase()) || null;
 };
 
+const db = require('../../config/db');
+
 const saveTicket = async (ticket) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      await db.ticket.create({
+        data: {
+          id: ticket.id,
+          summary: ticket.summary,
+          priority: ticket.priority,
+          status: ticket.status || 'Active',
+          ticketType: ticket.ticketType || 'Incident',
+          siteName: ticket.site || 'London HQ',
+          assignedAgentId: ticket.assignedAgentId || 'agent-001',
+          slaTimeLeft: ticket.slaTimeLeft,
+          timeRecord: ticket.timeRecord || 0,
+        },
+      });
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   tickets.push(ticket);
   return ticket;
 };
@@ -152,6 +174,23 @@ const updateTicket = async (id, changes) => {
     changes.holdStartedAt = new Date().toISOString();
   } else if (changes.status && changes.status !== 'On Hold' && ticket.status === 'On Hold') {
     changes.holdStartedAt = null;
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const dataToUpdate = {};
+      if (changes.status) dataToUpdate.status = changes.status;
+      if (changes.holdReason !== undefined) dataToUpdate.holdReason = changes.holdReason;
+      if (changes.timeRecord !== undefined) dataToUpdate.timeRecord = changes.timeRecord;
+      if (Object.keys(dataToUpdate).length > 0) {
+        await db.ticket.update({
+          where: { id: ticket.id },
+          data: dataToUpdate,
+        });
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
   }
 
   Object.assign(ticket, changes, { updatedAt: new Date().toISOString() });

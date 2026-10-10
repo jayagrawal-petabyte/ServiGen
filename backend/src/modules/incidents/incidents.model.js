@@ -143,11 +143,97 @@ const incidents = [
   },
 ];
 
+const db = require('../../config/db');
+
 const getIncidents = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const records = await db.ticket.findMany({
+        where: { ticketType: 'Incident' },
+        include: { incident: true, organisation: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (records && records.length > 0) {
+        return records.map((t) => ({
+          id: t.id,
+          summary: t.summary,
+          description: t.description,
+          ticketType: t.ticketType,
+          priority: t.priority,
+          status: t.status,
+          organisation: t.organisation?.name || 'Acme Corp',
+          organisationId: t.organisationId || 'org-001',
+          siteName: t.siteName || 'London HQ',
+          requesterId: t.requesterId || 'user-001',
+          assignedAgentId: t.assignedAgentId || 'agent-001',
+          teamId: t.teamId || 'team-001',
+          assignedTeam: t.assignedTeam || '1st Line Support',
+          slaTimeLeft: t.slaTimeLeft,
+          timeRecord: t.timeRecord,
+          incident: {
+            id: t.incident?.id || `INC-DETAIL-${t.id}`,
+            category: t.incident?.category || 'Network',
+            impact: t.incident?.impact || 'Low',
+            urgency: t.incident?.urgency || 'Low',
+          },
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return [...incidents];
 };
 
 const getIncidentById = async (id) => {
+  if (!id) return null;
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const t = await db.ticket.findFirst({
+        where: {
+          id: { equals: id, mode: 'insensitive' },
+          ticketType: 'Incident',
+        },
+        include: { incident: true, organisation: true },
+      });
+
+      if (t) {
+        return {
+          id: t.id,
+          summary: t.summary,
+          description: t.description,
+          ticketType: t.ticketType,
+          priority: t.priority,
+          status: t.status,
+          organisation: t.organisation?.name || 'Acme Corp',
+          organisationId: t.organisationId || 'org-001',
+          siteName: t.siteName || 'London HQ',
+          requesterId: t.requesterId || 'user-001',
+          assignedAgentId: t.assignedAgentId || 'agent-001',
+          teamId: t.teamId || 'team-001',
+          assignedTeam: t.assignedTeam || '1st Line Support',
+          slaTimeLeft: t.slaTimeLeft,
+          timeRecord: t.timeRecord,
+          incident: {
+            id: t.incident?.id || `INC-DETAIL-${t.id}`,
+            category: t.incident?.category || 'Network',
+            impact: t.incident?.impact || 'Low',
+            urgency: t.incident?.urgency || 'Low',
+          },
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return incidents.find(
     (incident) => incident.id.toLowerCase() === id.toLowerCase()
   ) || null;

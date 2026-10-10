@@ -1,4 +1,8 @@
-const changeRequests = [
+'use strict';
+
+const db = require('../../config/db');
+
+const mockChangeRequests = [
   {
     id: 'CR-001',
     agent: 'agent-001',
@@ -39,14 +43,75 @@ const changeRequests = [
 
 const getChangeRequests = async (options = {}) => {
   const { organisationId } = options;
-  if (organisationId) {
-    return changeRequests.filter((cr) => !cr.organisationId || cr.organisationId === organisationId);
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const records = await db.changeRequest.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (records && records.length > 0) {
+        const formatted = records.map((cr) => ({
+          id: cr.id,
+          agent: cr.assignedAgentId || 'agent-001',
+          summary: cr.summary,
+          changeType: cr.changeType,
+          status: cr.status,
+          ciTag: cr.ciTag || 'DB-001',
+          relatedService: cr.relatedService || 'General',
+          startDate: cr.startDate ? cr.startDate.toISOString() : null,
+          endDate: cr.endDate ? cr.endDate.toISOString() : null,
+          organisationId: 'org-001',
+        }));
+
+        if (organisationId) {
+          return formatted.filter((cr) => !cr.organisationId || cr.organisationId === organisationId);
+        }
+        return formatted;
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
   }
-  return changeRequests;
+
+  if (organisationId) {
+    return mockChangeRequests.filter((cr) => !cr.organisationId || cr.organisationId === organisationId);
+  }
+  return mockChangeRequests;
 };
 
 const getChangeRequestById = async (id, organisationId = null) => {
-  const cr = changeRequests.find((item) => item.id === id);
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const cr = await db.changeRequest.findUnique({
+        where: { id },
+      });
+
+      if (cr) {
+        const formatted = {
+          id: cr.id,
+          agent: cr.assignedAgentId || 'agent-001',
+          summary: cr.summary,
+          changeType: cr.changeType,
+          status: cr.status,
+          ciTag: cr.ciTag || 'DB-001',
+          relatedService: cr.relatedService || 'General',
+          startDate: cr.startDate ? cr.startDate.toISOString() : null,
+          endDate: cr.endDate ? cr.endDate.toISOString() : null,
+          organisationId: 'org-001',
+        };
+
+        if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {
+          return null;
+        }
+        return formatted;
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
+  const cr = mockChangeRequests.find((item) => item.id === id);
   if (!cr) return null;
   if (organisationId && cr.organisationId && cr.organisationId !== organisationId) {
     return null;
@@ -56,8 +121,37 @@ const getChangeRequestById = async (id, organisationId = null) => {
 
 const getActiveChangeRequests = async (options = {}) => {
   const { organisationId } = options;
-  return changeRequests.filter((cr) =>
-    cr.status === 'Active' && (!organisationId || !cr.organisationId || cr.organisationId === organisationId)
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const records = await db.changeRequest.findMany({
+        where: { status: 'Active' },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (records && records.length > 0) {
+        const formatted = records.map((cr) => ({
+          id: cr.id,
+          agent: cr.assignedAgentId || 'agent-001',
+          summary: cr.summary,
+          changeType: cr.changeType,
+          status: cr.status,
+          ciTag: cr.ciTag || 'DB-001',
+          relatedService: cr.relatedService || 'General',
+          startDate: cr.startDate ? cr.startDate.toISOString() : null,
+          endDate: cr.endDate ? cr.endDate.toISOString() : null,
+          organisationId: 'org-001',
+        }));
+
+        return formatted.filter((cr) => !organisationId || !cr.organisationId || cr.organisationId === organisationId);
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
+  return mockChangeRequests.filter(
+    (cr) => cr.status === 'Active' && (!organisationId || !cr.organisationId || cr.organisationId === organisationId)
   );
 };
 

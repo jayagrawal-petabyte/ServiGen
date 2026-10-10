@@ -57,16 +57,49 @@ async function main() {
     },
   });
 
-  // 3. Seed Users
-  const defaultPasswordHash = await bcrypt.hash('password123', 10);
+  // 3. Seed Users with distinct secure passwords
+  const adminPasswordHash = await bcrypt.hash('Adm!n#9vK2$7xLq', 10);
+  const agentPasswordHash = await bcrypt.hash('Ag3nt*8mP4!wR9t', 10);
+  const approverPasswordHash = await bcrypt.hash('Appr0v#5zY1$kE3s', 10);
+  const userPasswordHash = await bcrypt.hash('Us3r@4bT7&mQ6wV', 10);
+  const supportPasswordHash = await bcrypt.hash('Supp0rt!2xL8^pD5', 10);
+
+  const admin1 = await db.user.upsert({
+    where: { email: 'admin@servigen.local' },
+    update: {
+      username: 'admin001',
+      passwordHash: adminPasswordHash,
+      role: 'Admin',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
+    create: {
+      id: 'admin-001',
+      email: 'admin@servigen.local',
+      username: 'admin001',
+      passwordHash: adminPasswordHash,
+      firstName: 'Adam',
+      lastName: 'Admin',
+      role: 'Admin',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
+  });
 
   const agent1 = await db.user.upsert({
     where: { email: 'agent001@servigen.local' },
-    update: {},
+    update: {
+      username: 'agent001',
+      passwordHash: agentPasswordHash,
+      role: 'Service Agent',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
     create: {
       id: 'agent-001',
       email: 'agent001@servigen.local',
-      passwordHash: defaultPasswordHash,
+      username: 'agent001',
+      passwordHash: agentPasswordHash,
       firstName: 'Alex',
       lastName: 'Agent',
       role: 'Service Agent',
@@ -77,11 +110,18 @@ async function main() {
 
   await db.user.upsert({
     where: { email: 'approver001@servigen.local' },
-    update: {},
+    update: {
+      username: 'approver001',
+      passwordHash: approverPasswordHash,
+      role: 'Approver',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
     create: {
       id: 'approver-001',
       email: 'approver001@servigen.local',
-      passwordHash: defaultPasswordHash,
+      username: 'approver001',
+      passwordHash: approverPasswordHash,
       firstName: 'Alice',
       lastName: 'Approver',
       role: 'Approver',
@@ -92,16 +132,45 @@ async function main() {
 
   await db.user.upsert({
     where: { email: 'user001@servigen.local' },
-    update: {},
+    update: {
+      username: 'user001',
+      passwordHash: userPasswordHash,
+      role: 'Service User',
+      organisationId: globex.id,
+      siteId: nySite.id,
+    },
     create: {
       id: 'user-001',
       email: 'user001@servigen.local',
-      passwordHash: defaultPasswordHash,
+      username: 'user001',
+      passwordHash: userPasswordHash,
       firstName: 'Sam',
       lastName: 'User',
       role: 'Service User',
       organisationId: globex.id,
       siteId: nySite.id,
+    },
+  });
+
+  await db.user.upsert({
+    where: { email: 'support001@servigen.local' },
+    update: {
+      username: 'support001',
+      passwordHash: supportPasswordHash,
+      role: 'Support Team User',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
+    create: {
+      id: 'support-001',
+      email: 'support001@servigen.local',
+      username: 'support001',
+      passwordHash: supportPasswordHash,
+      firstName: 'Sarah',
+      lastName: 'Support',
+      role: 'Support Team User',
+      organisationId: acme.id,
+      siteId: londonSite.id,
     },
   });
 

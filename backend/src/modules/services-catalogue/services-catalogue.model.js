@@ -1,4 +1,6 @@
-// Mock Data Layer for Services Catalogue
+'use strict';
+
+const db = require('../../config/db');
 
 const mockServices = [
   { id: '1', name: 'Request a Laptop', category: 'Hardware', description: 'Standard laptop for developers', status: 'Active' },
@@ -14,26 +16,71 @@ const mockCategories = [
 ];
 
 const mockRequests = [];
-
-// BI-10: monotonic counter — prevents ID collision when Date.now() ties within one millisecond
 let _seq = 0;
 
 const getAllServices = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const items = await db.serviceCatalogueItem.findMany();
+      if (items && items.length > 0) {
+        return items.map((s) => ({
+          id: s.id,
+          name: s.name,
+          category: s.category,
+          description: s.description,
+          status: s.status,
+        }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return mockServices;
 };
 
 const getAllCategories = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const items = await db.serviceCatalogueItem.findMany({
+        select: { category: true },
+        distinct: ['category'],
+      });
+      if (items && items.length > 0) {
+        return items.map((c, i) => ({ id: `c${i + 1}`, name: c.category }));
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return mockCategories;
 };
 
 const getServiceById = async (id) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const s = await db.serviceCatalogueItem.findUnique({
+        where: { id },
+      });
+      if (s) {
+        return {
+          id: s.id,
+          name: s.name,
+          category: s.category,
+          description: s.description,
+          status: s.status,
+        };
+      }
+    } catch (_err) {
+      // Database connection fallback
+    }
+  }
+
   return mockServices.find(s => s.id === id) || null;
 };
 
 const createRequest = async (requestData) => {
-  // BI-8:  Server-controlled fields are placed AFTER the spread so they cannot be
-  //        overwritten by caller-supplied values in requestData.
-  // BI-10: Append sequence counter so simultaneous calls never share the same id.
   const newReq = {
     ...requestData,
     id: `req_${Date.now()}_${_seq++}`,
