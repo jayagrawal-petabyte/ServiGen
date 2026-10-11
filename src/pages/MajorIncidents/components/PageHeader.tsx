@@ -15,6 +15,7 @@ interface PageHeaderProps {
   onSearchChange?: (q: string) => void;
   onRefresh?: () => void;
   onNew?: () => void;
+  onGetStarted?: () => void;
   breadcrumb?: string;
   onSearchFocus?: () => void;
   notifCount?: number;
@@ -56,6 +57,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   onSearchChange,
   onRefresh,
   onNew,
+  onGetStarted,
   breadcrumb = 'Update Required',
   onSearchFocus,
   notifCount = 0,
@@ -87,7 +89,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <button
-            onClick={handleNew}
+            onClick={onGetStarted ?? handleNew}
             className="bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-5 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-sm"
           >
             Get started

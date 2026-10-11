@@ -4,9 +4,11 @@ import IncidentCard from './components/IncidentCard';
 import ActivityFeed from './components/ActivityFeed';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
+import GetStartedModal from './components/GetStartedModal';
+import PriorityBadge from './components/PriorityBadge';
 import IncidentDetailPanel from './components/IncidentDetailPanel';
 import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
-import type { MajorIncident, UserRole, IncidentUpdate } from './types/majorIncident.types';
+import type { MajorIncident, UserRole, IncidentUpdate, Priority } from './types/majorIncident.types';
 
 const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
 
@@ -37,14 +39,41 @@ type PanelType = 'notifications' | 'tasks' | 'performance' | 'status' | 'history
 
 interface PanelDef { title: string; body: string }
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  time: string;
+  isRead: boolean;
+  priority: 'high' | 'medium' | 'low';
+}
+
+const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  { id: 'n1', title: 'Major Incident #0002671 is OVERDUE — no update posted in 4 h. SLA breach imminent.', time: '10m ago', isRead: false, priority: 'high' },
+  { id: 'n2', title: 'War-room bridge initiated for #0002672.', time: '45m ago', isRead: false, priority: 'medium' },
+  { id: 'n3', title: 'Stakeholder update published by Ravi M. on #0002673.', time: '2h ago', isRead: true, priority: 'low' },
+];
+
+export interface TaskItem {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+const INITIAL_TASKS: TaskItem[] = [
+  { id: 't1', label: 'Escalate #0002671 to L3 support', done: false },
+  { id: 't2', label: 'Post stakeholder update for #0002673 (due in 12 min)', done: false },
+  { id: 't3', label: 'Close war-room bridge for #0002672', done: false },
+  { id: 't4', label: 'Review RCA draft for #0002670', done: true },
+];
+
 const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   notifications: {
     title: '🔔 Notifications',
-    body: '1 unread alert:\n\n• Major Incident #0002671 is OVERDUE — no update posted in 4 h. SLA breach imminent.',
+    body: '',
   },
   tasks: {
     title: '📋 My Tasks',
-    body: 'Open tasks assigned to you:\n\n• Escalate #0002671 to L3 support\n• Post stakeholder update for #0002673 (due in 12 min)\n• Close war-room bridge for #0002672\n• Review RCA draft for #0002670',
+    body: '',
   },
   performance: {
     title: '📊 SLA Performance',
@@ -71,6 +100,7 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
 const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(false);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
+  const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
   const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
@@ -79,9 +109,24 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [role, setRole]                     = useState<UserRole>('Agent');
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
   const [roleToast, setRoleToast]           = useState<string | null>(null);
-  const [notifCount, setNotifCount]         = useState<number>(1);
+  const [notifications, setNotifications]   = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [tasks, setTasks]                   = useState<TaskItem[]>(INITIAL_TASKS);
   const [feedUnreadCount, setFeedUnreadCount] = useState<number>(MOCK_FEED_ENTRIES.length);
   const PAGE_SIZE = 2;
+
+  const unreadNotifCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
+
+  const handleToggleNotificationRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: !n.isRead } : n));
+  };
+
+  const handleToggleTask = (id: string) => {
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, done: !t.done } : t));
+  };
 
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery]);
 
@@ -208,6 +253,66 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     }
   };
 
+  const handleUpdatePriority = (incidentId: string, newPriority: Priority) => {
+    const updatePrio = (list: MajorIncident[]): MajorIncident[] =>
+      list.map((inc) => {
+        if (inc.id !== incidentId) return inc;
+        const now = new Date().toLocaleString('en-GB', {
+          hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const updateLog: IncidentUpdate = {
+          id: `u-${Date.now()}`,
+          timestamp: now,
+          author: 'Admin User',
+          authorRole: 'Admin',
+          type: 'status_change',
+          content: `Priority changed to ${newPriority}`,
+        };
+        return { ...inc, priority: newPriority, updates: [...(inc.updates ?? []), updateLog] };
+      });
+
+    setLocalIncidents((prev) => updatePrio(prev));
+    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
+    if (isMock) {
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
+      setLocalIncidents((prev) => {
+        const alreadyLocal = prev.some((i) => i.id === incidentId);
+        if (alreadyLocal) return updatePrio(prev);
+        return updatePrio([{ ...original }, ...prev]);
+      });
+    }
+  };
+
+  const handleUpdateProduct = (incidentId: string, newProduct: string) => {
+    const updateProd = (list: MajorIncident[]): MajorIncident[] =>
+      list.map((inc) => {
+        if (inc.id !== incidentId) return inc;
+        const now = new Date().toLocaleString('en-GB', {
+          hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const updateLog: IncidentUpdate = {
+          id: `u-${Date.now()}`,
+          timestamp: now,
+          author: 'Admin User',
+          authorRole: 'Admin',
+          type: 'status_change',
+          content: `Product / CI changed to ${newProduct}`,
+        };
+        return { ...inc, product: newProduct, updates: [...(inc.updates ?? []), updateLog] };
+      });
+
+    setLocalIncidents((prev) => updateProd(prev));
+    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
+    if (isMock) {
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
+      setLocalIncidents((prev) => {
+        const alreadyLocal = prev.some((i) => i.id === incidentId);
+        if (alreadyLocal) return updateProd(prev);
+        return updateProd([{ ...original }, ...prev]);
+      });
+    }
+  };
+
   /* Search icon → focus the sub-bar search input */
   const handleSearchFocus = useCallback(() => {
     const el = document.getElementById('header-search-input') as HTMLInputElement | null;
@@ -217,13 +322,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   /* Toggle a named info panel; clicking same icon again closes it */
   const handlePanel = useCallback((panel: NonNullable<PanelType>) => {
-    setOpenPanel((prev) => {
-      const next = prev === panel ? null : panel;
-      if (next === 'notifications') {
-        setNotifCount(0);
-      }
-      return next;
-    });
+    setOpenPanel((prev) => (prev === panel ? null : panel));
     setIsFeedOpen(false);
   }, []);
 
@@ -297,8 +396,9 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setOpenPanel(null);
           }}
           feedNewCount={isFeedOpen ? 0 : feedUnreadCount}
-          notifCount={notifCount}
+          notifCount={unreadNotifCount}
           onNew={() => setShowNewModal(true)}
+          onGetStarted={() => setShowGetStartedModal(true)}
           onNotifications={() => handlePanel('notifications')}
           onTasks={() => handlePanel('tasks')}
           onPerformance={() => handlePanel('performance')}
@@ -314,16 +414,61 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
             {selectedListId === 'board' ? (
               <div className="flex h-full gap-4 overflow-x-auto pb-4">
-                {['Started', 'Diagnosed', 'Mitigated', 'Resolved'].map(column => (
-                  <div key={column} className="w-80 shrink-0 bg-gray-100 rounded-lg p-3 flex flex-col border border-gray-200">
-                    <div className="text-sm font-bold text-gray-700 mb-3 flex items-center justify-between">
-                      {column} <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs">2</span>
+                {['Started', 'Diagnosed', 'Mitigated', 'Resolved'].map((column) => {
+                  const colIncidents = allIncidents.filter((inc) => {
+                    const activeStage = inc.lifecycleStages.find((s) => s.isActive)?.label;
+                    return activeStage === column || (!activeStage && column === 'Started');
+                  });
+                  return (
+                    <div key={column} className="w-80 shrink-0 bg-gray-100 rounded-xl p-3 flex flex-col border border-gray-200">
+                      <div className="text-xs font-bold text-gray-700 mb-3 flex items-center justify-between">
+                        <span>{column}</span>
+                        <span className="bg-white text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow-2xs">
+                          {colIncidents.length}
+                        </span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
+                        {colIncidents.length === 0 ? (
+                          <div className="h-32 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                            No incidents in {column}
+                          </div>
+                        ) : (
+                          colIncidents.map((inc) => (
+                            <div
+                              key={inc.id}
+                              onClick={() => setSelectedIncidentId(inc.id)}
+                              className="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs hover:shadow-xs cursor-pointer transition-all space-y-2"
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[10px] font-mono font-bold text-cyan-600 bg-cyan-50 border border-cyan-100 px-1.5 py-0.5 rounded">
+                                  #{inc.id}
+                                </span>
+                                <PriorityBadge priority={inc.priority} />
+                              </div>
+                              <h4 className="text-xs font-bold text-gray-800 leading-snug line-clamp-2">
+                                {inc.title}
+                              </h4>
+                              <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-100">
+                                <span className="truncate max-w-[120px]">{inc.assignee}</span>
+                                {(role === 'Manager' || role === 'Admin') && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAdvanceStage(inc.id);
+                                    }}
+                                    className="text-[10px] font-bold text-cyan-600 hover:text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full"
+                                  >
+                                    Advance →
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
-                      Drop incidents here
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : selectedListId === 'calendar' ? (
               <div className="h-full flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -331,36 +476,74 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
                 </div>
                 <div className="grid grid-cols-7 flex-1 auto-rows-fr">
-                  {Array.from({ length: 35 }).map((_, i) => (
-                    <div key={i} className="border-r border-b border-gray-100 p-2 relative hover:bg-gray-50 transition-colors">
-                      <span className="text-gray-400 text-xs">{i + 1}</span>
-                      {i === 12 && (
-                        <div className="mt-1 bg-red-100 text-red-700 border border-red-200 text-[10px] font-bold p-1 rounded cursor-pointer truncate">
-                          #MI-20230912
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {Array.from({ length: 35 }).map((_, i) => {
+                    const matchInc = allIncidents[i % (allIncidents.length + 5)];
+                    const hasEvent = i % 7 === 2 && matchInc;
+                    return (
+                      <div key={i} className="border-r border-b border-gray-100 p-2 relative hover:bg-gray-50 transition-colors">
+                        <span className="text-gray-400 text-xs">{i + 1}</span>
+                        {hasEvent && (
+                          <div
+                            onClick={() => setSelectedIncidentId(matchInc.id)}
+                            className="mt-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 text-[10px] font-bold p-1 rounded cursor-pointer truncate transition-colors"
+                          >
+                            #{matchInc.id} {matchInc.title}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : selectedListId === 'dashboard' ? (
               <div className="grid grid-cols-2 gap-4 h-full">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col">
-                  <h3 className="text-sm font-bold text-gray-700 mb-4">Incidents by Priority</h3>
-                  <div className="flex-1 flex items-end justify-around gap-2 mt-4 pb-2 border-b border-gray-200">
-                    <div className="w-12 bg-red-500 rounded-t-sm" style={{ height: '80%' }}></div>
-                    <div className="w-12 bg-orange-400 rounded-t-sm" style={{ height: '40%' }}></div>
-                    <div className="w-12 bg-yellow-400 rounded-t-sm" style={{ height: '20%' }}></div>
+                <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-5 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Incidents by Priority</h3>
+                    <span className="text-xs text-gray-400 font-semibold">Total: {allIncidents.length}</span>
                   </div>
-                  <div className="flex justify-around text-xs text-gray-500 mt-2 font-medium">
-                    <span>Critical</span><span>High</span><span>Med</span>
-                  </div>
+                  {(() => {
+                    const criticalCount = allIncidents.filter((i) => i.priority === 'Critical').length;
+                    const highCount = allIncidents.filter((i) => i.priority === 'High').length;
+                    const medCount = allIncidents.filter((i) => i.priority === 'Medium' || i.priority === 'Low').length;
+                    const maxVal = Math.max(1, criticalCount, highCount, medCount);
+                    return (
+                      <>
+                        <div className="flex-1 flex items-end justify-around gap-4 mt-4 pb-3 border-b border-gray-100">
+                          <div className="flex flex-col items-center gap-1.5 w-16">
+                            <span className="text-xs font-bold text-red-600">{criticalCount}</span>
+                            <div className="w-full bg-red-500 rounded-t-lg transition-all" style={{ height: `${(criticalCount / maxVal) * 120 + 10}px` }} />
+                          </div>
+                          <div className="flex flex-col items-center gap-1.5 w-16">
+                            <span className="text-xs font-bold text-orange-500">{highCount}</span>
+                            <div className="w-full bg-orange-400 rounded-t-lg transition-all" style={{ height: `${(highCount / maxVal) * 120 + 10}px` }} />
+                          </div>
+                          <div className="flex flex-col items-center gap-1.5 w-16">
+                            <span className="text-xs font-bold text-yellow-600">{medCount}</span>
+                            <div className="w-full bg-yellow-400 rounded-t-lg transition-all" style={{ height: `${(medCount / maxVal) * 120 + 10}px` }} />
+                          </div>
+                        </div>
+                        <div className="flex justify-around text-xs text-gray-500 mt-2 font-medium">
+                          <span>Critical</span><span>High</span><span>Med/Low</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col items-center justify-center">
-                  <div className="w-32 h-32 rounded-full border-8 border-cyan-400 border-t-gray-100 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-700">75%</span>
-                  </div>
-                  <span className="text-sm text-gray-500 font-medium mt-4">Resolution SLA</span>
+                <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-5 flex flex-col items-center justify-center">
+                  {(() => {
+                    const onTimeCount = allIncidents.filter((i) => !i.resolutionTarget.startsWith('-')).length;
+                    const slaRate = Math.round((onTimeCount / Math.max(1, allIncidents.length)) * 100);
+                    return (
+                      <>
+                        <div className="w-36 h-36 rounded-full border-8 border-cyan-400 border-t-gray-100 flex items-center justify-center shadow-xs">
+                          <span className="text-3xl font-extrabold text-gray-800">{slaRate}%</span>
+                        </div>
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-4">Resolution SLA Performance</span>
+                        <p className="text-[11px] text-gray-400 mt-1">{onTimeCount} of {allIncidents.length} incidents meeting SLA</p>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             ) : (
@@ -387,7 +570,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
           {/* ── Icon-button info panels ── */}
           {openPanel && (
-            <div className="w-72 shrink-0 border-l border-gray-200 bg-white flex flex-col shadow-lg overflow-hidden">
+            <div className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col shadow-lg overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
                 <span className="text-sm font-semibold text-gray-700">
                   {PANELS[openPanel].title}
@@ -401,9 +584,94 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4">
-                <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">
-                  {PANELS[openPanel].body}
-                </p>
+                {openPanel === 'notifications' ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                      <span className="text-xs font-semibold text-gray-500">
+                        {unreadNotifCount} unread
+                      </span>
+                      {unreadNotifCount > 0 && (
+                        <button
+                          onClick={handleMarkAllNotificationsRead}
+                          className="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-4">No notifications</p>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`p-3 rounded-xl border transition-all ${
+                            notif.isRead
+                              ? 'bg-gray-50/60 border-gray-100 text-gray-500 opacity-75'
+                              : 'bg-white border-cyan-200 shadow-xs text-gray-800 ring-1 ring-cyan-100'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full mt-1 shrink-0 ${
+                                notif.isRead
+                                  ? 'bg-gray-300'
+                                  : notif.priority === 'high'
+                                  ? 'bg-red-500 ring-2 ring-red-200'
+                                  : 'bg-cyan-500 ring-2 ring-cyan-200'
+                              }`}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs leading-snug ${notif.isRead ? 'font-normal' : 'font-semibold'}`}>
+                                {notif.title}
+                              </p>
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-[10px] text-gray-400">{notif.time}</span>
+                                <button
+                                  onClick={() => handleToggleNotificationRead(notif.id)}
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
+                                    notif.isRead
+                                      ? 'text-gray-500 hover:bg-gray-200'
+                                      : 'text-cyan-600 bg-cyan-50 hover:bg-cyan-100'
+                                  }`}
+                                >
+                                  {notif.isRead ? 'Mark unread' : 'Mark as read'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : openPanel === 'tasks' ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">Assigned Action Items</p>
+                    {tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        onClick={() => handleToggleTask(task.id)}
+                        className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                          task.done ? 'bg-gray-50 border-gray-100 text-gray-400' : 'bg-white border-gray-200 text-gray-700 hover:border-cyan-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={task.done}
+                          onChange={() => {}}
+                          className="mt-0.5 rounded text-cyan-500 focus:ring-cyan-400 cursor-pointer"
+                        />
+                        <span className={`text-xs leading-snug ${task.done ? 'line-through' : 'font-medium'}`}>
+                          {task.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">
+                    {PANELS[openPanel].body}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -417,6 +685,8 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               onAdvanceStage={handleAdvanceStage}
               onAddUpdate={handleAddUpdate}
               onReassign={handleReassign}
+              onUpdatePriority={handleUpdatePriority}
+              onUpdateProduct={handleUpdateProduct}
             />
           )}
 
@@ -440,6 +710,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         <NewIncidentModal
           onClose={() => setShowNewModal(false)}
           onSubmit={handleAddIncident}
+        />
+      )}
+
+      {showGetStartedModal && (
+        <GetStartedModal
+          onClose={() => setShowGetStartedModal(false)}
+          onOpenNewTicket={() => setShowNewModal(true)}
         />
       )}
     </div>

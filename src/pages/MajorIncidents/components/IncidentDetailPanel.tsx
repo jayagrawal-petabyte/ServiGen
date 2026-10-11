@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import type { MajorIncident, UserRole, IncidentUpdate } from '../types/majorIncident.types';
+import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types/majorIncident.types';
 import PriorityBadge from './PriorityBadge';
+import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
+import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
 interface IncidentDetailPanelProps {
   incident: MajorIncident;
@@ -9,6 +11,8 @@ interface IncidentDetailPanelProps {
   onAdvanceStage: (incidentId: string) => void;
   onAddUpdate: (incidentId: string, update: IncidentUpdate) => void;
   onReassign?: (incidentId: string, newAssignee: string) => void;
+  onUpdatePriority?: (incidentId: string, newPriority: Priority) => void;
+  onUpdateProduct?: (incidentId: string, newProduct: string) => void;
 }
 
 const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
@@ -20,8 +24,12 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   onAdvanceStage,
   onAddUpdate,
   onReassign,
+  onUpdatePriority,
+  onUpdateProduct,
 }) => {
   const [updateText, setUpdateText] = useState('');
+  const [isCustomAssignee, setIsCustomAssignee] = useState(false);
+  const [customAssigneeInput, setCustomAssigneeInput] = useState('');
 
   const activeStageIndex = incident.lifecycleStages.findIndex((s) => s.isActive);
   const isClosed = incident.lifecycleStages[5]?.isCompleted;
@@ -62,7 +70,20 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             <span className="text-xs font-mono font-bold bg-cyan-500 text-white px-2 py-0.5 rounded-full">
               #{incident.id}
             </span>
-            <PriorityBadge priority={incident.priority} />
+            {role === 'Admin' && onUpdatePriority ? (
+              <select
+                value={incident.priority}
+                onChange={(e) => onUpdatePriority(incident.id, e.target.value as Priority)}
+                className="bg-white border border-gray-300 rounded px-1.5 py-0.5 text-[10px] font-bold text-gray-800 outline-none focus:border-cyan-400 cursor-pointer"
+              >
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            ) : (
+              <PriorityBadge priority={incident.priority} />
+            )}
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
               role === 'Admin' ? 'bg-red-100 text-red-700' : role === 'Manager' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
             }`}>
@@ -89,8 +110,28 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
         {/* Key Info */}
         <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs">
           <div>
-            <span className="text-gray-400 block text-[10px] font-medium uppercase tracking-wider">Product</span>
-            <span className="font-semibold text-gray-700">{incident.product}</span>
+            <span className="text-gray-400 block text-[10px] font-medium uppercase tracking-wider flex items-center gap-1">
+              Product / CI
+              {role === 'Admin' && <span className="text-[9px] text-cyan-600 font-bold">(Edit)</span>}
+            </span>
+            {role === 'Admin' && onUpdateProduct ? (
+              <select
+                value={incident.product}
+                onChange={(e) => onUpdateProduct(incident.id, e.target.value)}
+                className="mt-0.5 w-full bg-white border border-gray-300 rounded px-1 py-0.5 text-xs font-semibold text-gray-800 outline-none focus:border-cyan-400 truncate"
+              >
+                <option value={incident.product}>{incident.product} (Current)</option>
+                <optgroup label="CMDB Services & CIs">
+                  {mockConfigurationItems.map((ci) => (
+                    <option key={ci.id} value={ci.name}>
+                      {ci.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            ) : (
+              <span className="font-semibold text-gray-700 truncate block mt-0.5">{incident.product}</span>
+            )}
           </div>
           <div>
             <span className="text-gray-400 block text-[10px] font-medium uppercase tracking-wider flex items-center gap-1">
@@ -102,19 +143,63 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
               )}
             </span>
             {role === 'Admin' && onReassign ? (
-              <select
-                value={incident.assignee}
-                onChange={(e) => onReassign(incident.id, e.target.value)}
-                className="mt-0.5 w-full bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-800 outline-none focus:border-cyan-400"
-              >
-                <option value="Jennifer Williams">Jennifer Williams</option>
-                <option value="Demo User">Demo User</option>
-                <option value="Ravi Sharma">Ravi Sharma</option>
-                <option value="Priya Patel">Priya Patel</option>
-                <option value="Unassigned">Unassigned</option>
-              </select>
+              <div className="space-y-1">
+                {!isCustomAssignee ? (
+                  <select
+                    value={incident.assignee}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomAssignee(true);
+                        setCustomAssigneeInput('');
+                      } else {
+                        onReassign(incident.id, e.target.value);
+                      }
+                    }}
+                    className="mt-0.5 w-full bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs font-semibold text-gray-800 outline-none focus:border-cyan-400 truncate"
+                  >
+                    <option value={incident.assignee}>{incident.assignee} (Current)</option>
+                    <option value="Unassigned">Unassigned</option>
+                    <optgroup label="Organisation Users">
+                      {MOCK_ORGANISATION_USERS.map((u) => (
+                        <option key={u.id} value={u.fullName}>
+                          {u.fullName} ({u.role})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <option value="__custom__">+ Enter custom assignee name...</option>
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <input
+                      type="text"
+                      value={customAssigneeInput}
+                      onChange={(e) => setCustomAssigneeInput(e.target.value)}
+                      placeholder="Enter user name..."
+                      className="w-full text-xs border border-cyan-400 rounded px-1.5 py-0.5 outline-none bg-white"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => {
+                        if (customAssigneeInput.trim()) {
+                          onReassign(incident.id, customAssigneeInput.trim());
+                        }
+                        setIsCustomAssignee(false);
+                      }}
+                      className="text-[10px] bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-2 py-0.5 rounded shrink-0"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setIsCustomAssignee(false)}
+                      className="text-[10px] text-gray-400 hover:text-gray-600 px-1 shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <span className="font-semibold text-gray-700">{incident.assignee}</span>
+              <span className="font-semibold text-gray-700 block mt-0.5">{incident.assignee}</span>
             )}
           </div>
           <div>
