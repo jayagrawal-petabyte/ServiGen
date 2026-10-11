@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MajorIncident } from '../types/majorIncident.types';
+import type { MajorIncident, UserRole } from '../types/majorIncident.types';
 import PriorityBadge from './PriorityBadge';
 import LifecyclePipeline from './LifecyclePipeline';
 
@@ -7,12 +7,24 @@ interface IncidentCardProps {
   incident: MajorIncident;
   isSelected?: boolean;
   onClick?: () => void;
+  role?: UserRole;
+  onAdvanceStage?: () => void;
 }
 
 const resolutionTargetStyle = (target: string): string =>
   target.startsWith('-') ? 'text-red-500 font-medium' : 'text-gray-700 font-medium';
 
-const IncidentCard: React.FC<IncidentCardProps> = ({ incident, isSelected = false, onClick }) => {
+const IncidentCard: React.FC<IncidentCardProps> = ({
+  incident,
+  isSelected = false,
+  onClick,
+  role = 'Agent',
+  onAdvanceStage,
+}) => {
+  const activeStageIdx = incident.lifecycleStages.findIndex((s) => s.isActive);
+  const isClosed = incident.lifecycleStages[5]?.isCompleted;
+  const canAdvance = (role === 'Manager' || role === 'Admin') && !isClosed && activeStageIdx !== -1 && activeStageIdx < 5;
+
   const topBadges = [
     null,
     <PriorityBadge key="priority" priority={incident.priority} />,
@@ -50,9 +62,30 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ incident, isSelected = fals
           <p className="text-[13px] text-gray-500">
             Resolution Target <span className={resolutionTargetStyle(incident.resolutionTarget)}>{incident.resolutionTarget}</span>
           </p>
-          <p className="text-[13px] text-gray-500">
-            Response Target <span className="text-gray-800 font-medium">{incident.responseTarget}</span>
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] text-gray-500">
+              Response Target <span className="text-gray-800 font-medium">{incident.responseTarget}</span>
+            </p>
+            {canAdvance && onAdvanceStage && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdvanceStage();
+                }}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 shadow-xs"
+                title={`Advance as ${role}`}
+              >
+                <span>Advance</span>
+                <span>→</span>
+              </button>
+            )}
+            {role === 'Agent' && !isClosed && (
+              <span className="text-[10px] text-gray-400 font-medium bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded">
+                View only
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 min-w-0">

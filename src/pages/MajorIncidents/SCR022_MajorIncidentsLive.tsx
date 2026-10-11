@@ -174,6 +174,40 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     }
   };
 
+  const handleReassign = (incidentId: string, newAssignee: string) => {
+    const updateAssignee = (list: MajorIncident[]): MajorIncident[] =>
+      list.map((inc) => {
+        if (inc.id !== incidentId) return inc;
+        const now = new Date().toLocaleString('en-GB', {
+          hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const assignUpdate: IncidentUpdate = {
+          id: `u-${Date.now()}`,
+          timestamp: now,
+          author: 'Admin User',
+          authorRole: 'Admin',
+          type: 'status_change',
+          content: `Assignee reassigned to ${newAssignee}`,
+        };
+        return {
+          ...inc,
+          assignee: newAssignee,
+          updates: [...(inc.updates ?? []), assignUpdate],
+        };
+      });
+
+    setLocalIncidents((prev) => updateAssignee(prev));
+    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
+    if (isMock) {
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
+      setLocalIncidents((prev) => {
+        const alreadyLocal = prev.some((i) => i.id === incidentId);
+        if (alreadyLocal) return updateAssignee(prev);
+        return updateAssignee([{ ...original }, ...prev]);
+      });
+    }
+  };
+
   /* Search icon → focus the sub-bar search input */
   const handleSearchFocus = useCallback(() => {
     const el = document.getElementById('header-search-input') as HTMLInputElement | null;
@@ -340,6 +374,8 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                     key={incident.id}
                     incident={incident}
                     isSelected={selectedIncidentId === incident.id}
+                    role={role}
+                    onAdvanceStage={() => handleAdvanceStage(incident.id)}
                     onClick={() => setSelectedIncidentId(
                       selectedIncidentId === incident.id ? null : incident.id
                     )}
@@ -380,6 +416,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               onClose={() => setSelectedIncidentId(null)}
               onAdvanceStage={handleAdvanceStage}
               onAddUpdate={handleAddUpdate}
+              onReassign={handleReassign}
             />
           )}
 
