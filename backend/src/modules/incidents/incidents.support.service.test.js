@@ -143,6 +143,61 @@ describe('Incidents Support Service', () => {
 
       expect(db.ticket.findMany).not.toHaveBeenCalled();
     });
+    test('ignores an organisation ID supplied in the query string', async () => {
+    db.ticket.findMany.mockResolvedValue([]);
+
+    await listTeamIncidents(
+        TEAM_NAMES.FIRST_LINE,
+        staffUser,
+        { organisationId: 'org-002' }
+    );
+
+    const query = db.ticket.findMany.mock.calls[0][0];
+    const conditions = query.where.AND;
+
+    expect(conditions).toContainEqual({
+        organisationId: 'org-001',
+    });
+
+    expect(conditions).not.toContainEqual({
+        organisationId: 'org-002',
+    });
+    });
+
+    test('fails closed when the user organisation ID is missing', async () => {
+    db.ticket.findMany.mockResolvedValue([]);
+
+    await listTeamIncidents(
+        TEAM_NAMES.FIRST_LINE,
+        { role: 'Service Agent' },
+        {}
+    );
+
+    const query = db.ticket.findMany.mock.calls[0][0];
+
+    expect(query.where.AND).toContainEqual({
+        organisationId: '__unassigned_organisation__',
+    });
+    });
+
+    test('allows Admin queries without a tenant organisation filter', async () => {
+    db.ticket.findMany.mockResolvedValue([]);
+
+    await listTeamIncidents(
+        TEAM_NAMES.FIRST_LINE,
+        { role: 'Admin' },
+        {}
+    );
+
+    const query = db.ticket.findMany.mock.calls[0][0];
+
+    expect(
+        query.where.AND.some((condition) =>
+        Object.prototype.hasOwnProperty.call(condition, 'organisationId')
+        )
+    ).toBe(false);
+    });
+
   });
 
   describe('getTeamAgents', () => {
