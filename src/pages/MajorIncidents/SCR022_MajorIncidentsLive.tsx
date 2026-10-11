@@ -79,11 +79,24 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [role, setRole]                     = useState<UserRole>('Agent');
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
   const [roleToast, setRoleToast]           = useState<string | null>(null);
+  const [notifCount, setNotifCount]         = useState<number>(1);
+  const [feedUnreadCount, setFeedUnreadCount] = useState<number>(MOCK_FEED_ENTRIES.length);
   const PAGE_SIZE = 2;
 
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery]);
 
   const allIncidents = useMemo(() => [...localIncidents, ...MOCK_MAJOR_INCIDENTS], [localIncidents]);
+
+  const sidebarCounts = useMemo(() => {
+    return {
+      'update-required': allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length,
+      'my-team': allIncidents.filter((i) => i.assignee !== 'Unassigned').length,
+      'critical': allIncidents.filter((i) => i.priority === 'Critical').length,
+      'closed': allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length,
+      'board': allIncidents.length,
+      'dashboard': allIncidents.length,
+    };
+  }, [allIncidents]);
 
   const displayedIncidents = useMemo(() => {
     const byList = filterByList(allIncidents, selectedListId);
@@ -103,6 +116,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const handleAddIncident = (incident: MajorIncident) => {
     setLocalIncidents((prev) => [incident, ...prev]);
     setPage(1);
+    setFeedUnreadCount((c) => c + 1);
   };
 
   const handleAdvanceStage = (incidentId: string) => {
@@ -169,7 +183,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   /* Toggle a named info panel; clicking same icon again closes it */
   const handlePanel = useCallback((panel: NonNullable<PanelType>) => {
-    setOpenPanel((prev) => (prev === panel ? null : panel));
+    setOpenPanel((prev) => {
+      const next = prev === panel ? null : panel;
+      if (next === 'notifications') {
+        setNotifCount(0);
+      }
+      return next;
+    });
     setIsFeedOpen(false);
   }, []);
 
@@ -182,7 +202,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      <MajorIncidentsSidebar onSelectList={setSelectedListId} />
+      <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Role selector strip */}
@@ -234,9 +254,16 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setOpenPanel(null);
             setIsFeedOpen(false);
           }}
-          onToggleFeed={() => { setIsFeedOpen((v) => !v); setOpenPanel(null); }}
-          feedNewCount={MOCK_FEED_ENTRIES.length}
-          notifCount={1}
+          onToggleFeed={() => {
+            setIsFeedOpen((v) => {
+              const next = !v;
+              if (next) setFeedUnreadCount(0);
+              return next;
+            });
+            setOpenPanel(null);
+          }}
+          feedNewCount={isFeedOpen ? 0 : feedUnreadCount}
+          notifCount={notifCount}
           onNew={() => setShowNewModal(true)}
           onNotifications={() => handlePanel('notifications')}
           onTasks={() => handlePanel('tasks')}

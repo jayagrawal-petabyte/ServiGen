@@ -5,6 +5,7 @@ import { SIDEBAR_GROUPS } from '../data/mockData';
 
 interface MajorIncidentsSidebarProps {
   onSelectList?: (id: string) => void;
+  counts?: Record<string, number>;
 }
 
 const getIcon = (iconKey?: string) => {
@@ -56,7 +57,7 @@ const getIcon = (iconKey?: string) => {
   }
 };
 
-const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectList }) => {
+const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectList, counts }) => {
   const [selectedId, setSelectedId]   = useState<string>('update-required');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [listsOpen, setListsOpen]     = useState<boolean>(true);
@@ -159,13 +160,17 @@ const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectL
                         {getIcon(item.iconKey)}
                         <span className="truncate leading-tight">{item.label}</span>
                       </div>
-                      {item.count !== undefined && (
-                        <span className={`ml-2 shrink-0 text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full ${
-                          isActive ? 'bg-white text-cyan-500' : 'bg-cyan-400 text-white'
-                        }`}>
-                          {item.count}
-                        </span>
-                      )}
+                      {(() => {
+                        const countVal = counts && counts[item.id] !== undefined ? counts[item.id] : item.count;
+                        if (countVal === undefined) return null;
+                        return (
+                          <span className={`ml-2 shrink-0 text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full ${
+                            isActive ? 'bg-white text-cyan-500' : 'bg-cyan-400 text-white'
+                          }`}>
+                            {countVal}
+                          </span>
+                        );
+                      })()}
                     </button>
                   );
                 })}
