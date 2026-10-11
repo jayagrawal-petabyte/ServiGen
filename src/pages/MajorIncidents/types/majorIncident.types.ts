@@ -7,6 +7,19 @@ export interface LifecycleStage {
   isCompleted: boolean;
 }
 
+export type UserRole = 'Agent' | 'Manager' | 'Admin';
+
+export interface IncidentUpdate {
+  id: string;
+  timestamp: string;
+  author: string;
+  authorRole: UserRole;
+  type: string;
+  content: string;
+  fromStage?: string;
+  toStage?: string;
+}
+
 export interface MajorIncident {
   id: string;
   title: string;
@@ -16,6 +29,7 @@ export interface MajorIncident {
   responseTarget: string;
   lifecycleStages: LifecycleStage[];
   assignee: string;
+  updates?: IncidentUpdate[];
 }
 
 export type FeedEntryType =

@@ -79,7 +79,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e: React.MouseEvent) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -191,8 +191,8 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

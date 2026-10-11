@@ -5,12 +5,14 @@ import LifecyclePipeline from './LifecyclePipeline';
 
 interface IncidentCardProps {
   incident: MajorIncident;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
 const resolutionTargetStyle = (target: string): string =>
   target.startsWith('-') ? 'text-red-500 font-medium' : 'text-gray-700 font-medium';
 
-const IncidentCard: React.FC<IncidentCardProps> = ({ incident }) => {
+const IncidentCard: React.FC<IncidentCardProps> = ({ incident, isSelected = false, onClick }) => {
   const topBadges = [
     null,
     <PriorityBadge key="priority" priority={incident.priority} />,
@@ -27,7 +29,14 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ incident }) => {
   ];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg px-6 py-4 mb-4 shadow-sm hover:shadow-md transition-shadow">
+    <div
+      onClick={onClick}
+      className={`bg-white border rounded-lg px-6 py-4 mb-4 shadow-sm hover:shadow-md transition-all ${
+        onClick ? 'cursor-pointer' : ''
+      } ${
+        isSelected ? 'border-cyan-500 ring-2 ring-cyan-100' : 'border-gray-200'
+      }`}
+    >
       <div className="flex items-center gap-6">
         <div className="flex flex-col justify-center gap-1.5 w-64 shrink-0">
           <div className="flex items-center gap-2 min-w-0 mb-1">

@@ -179,7 +179,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

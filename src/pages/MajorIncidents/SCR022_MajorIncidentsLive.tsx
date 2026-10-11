@@ -128,7 +128,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           fromStage: STAGE_ORDER[activeIdx],
           toStage: STAGE_ORDER[activeIdx + 1],
         };
-        return { ...inc, lifecycleStages: newStages, updates: [...inc.updates, stageChangeUpdate] };
+        return { ...inc, lifecycleStages: newStages, updates: [...(inc.updates ?? []), stageChangeUpdate] };
       });
 
     setLocalIncidents((prev) => advance(prev));
@@ -145,7 +145,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const handleAddUpdate = (incidentId: string, update: IncidentUpdate) => {
     const inject = (list: MajorIncident[]): MajorIncident[] =>
-      list.map((inc) => inc.id === incidentId ? { ...inc, updates: [...inc.updates, update] } : inc);
+      list.map((inc) => inc.id === incidentId ? { ...inc, updates: [...(inc.updates ?? []), update] } : inc);
 
     const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
     if (isMock) {

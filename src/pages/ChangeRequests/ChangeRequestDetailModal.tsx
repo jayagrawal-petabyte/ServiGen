@@ -140,7 +140,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             Close
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
