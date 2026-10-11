@@ -1,10 +1,15 @@
+
 /**
- * Temporary in-memory data store for the Incidents module.
+ * Data-access layer for the Incidents module.
  *
- * This follows the same repository/model pattern used by the existing
- * modules and can later be replaced with Prisma queries without changing
- * the service/controller responsibilities.
+ * Uses in-memory fixtures only during Jest tests.
+ * Outside the test environment, all incident data comes from Prisma.
+ *
+ * A database failure must propagate to the controller rather than
+ * returning fake incident records.
  */
+
+const db = require('../../config/db');
 
 const incidents = [
   {
@@ -15,6 +20,7 @@ const incidents = [
     priority: 'High',
     status: 'Active',
     organisation: 'Acme Corp',
+    organisationId: 'org-001',
     siteName: 'London HQ',
     requesterId: 'user-001',
     assignedAgentId: 'agent-001',
@@ -22,18 +28,15 @@ const incidents = [
     assignedTeam: '1st Line Support',
     slaTimeLeft: 180,
     timeRecord: 45,
-
     incident: {
       id: 'INC-DETAIL-1001',
       category: 'Network',
       impact: 'Remote users are unable to maintain stable VPN sessions.',
       urgency: 'High',
     },
-
     createdAt: '2026-09-25T08:30:00.000Z',
     updatedAt: '2026-09-25T09:15:00.000Z',
   },
-
   {
     id: 'INC-1002',
     summary: 'Email delivery delayed on EMEA exchange server',
@@ -42,6 +45,7 @@ const incidents = [
     priority: 'Critical',
     status: 'Active',
     organisation: 'Initech',
+    organisationId: 'org-003',
     siteName: 'Frankfurt',
     requesterId: 'user-002',
     assignedAgentId: 'agent-002',
@@ -49,18 +53,15 @@ const incidents = [
     assignedTeam: '2nd Line Support',
     slaTimeLeft: 45,
     timeRecord: 90,
-
     incident: {
       id: 'INC-DETAIL-1002',
       category: 'Software',
       impact: 'Email delivery is delayed for EMEA users.',
       urgency: 'Critical',
     },
-
     createdAt: '2026-09-25T06:00:00.000Z',
     updatedAt: '2026-09-25T09:30:00.000Z',
   },
-
   {
     id: 'INC-1003',
     summary: 'Database connection timeout during batch reporting',
@@ -69,6 +70,7 @@ const incidents = [
     priority: 'Critical',
     status: 'Active',
     organisation: 'Massive Dynamic',
+    organisationId: 'org-004',
     siteName: 'London HQ',
     requesterId: 'user-003',
     assignedAgentId: 'agent-003',
@@ -76,18 +78,15 @@ const incidents = [
     assignedTeam: '1st Line Support',
     slaTimeLeft: 60,
     timeRecord: 60,
-
     incident: {
       id: 'INC-DETAIL-1003',
       category: 'Database',
       impact: 'Reporting jobs are delayed or failing.',
       urgency: 'Critical',
     },
-
     createdAt: '2026-09-25T09:00:00.000Z',
     updatedAt: '2026-09-25T10:00:00.000Z',
   },
-
   {
     id: 'INC-1004',
     summary: 'Office 365 access issue for sales department',
@@ -96,6 +95,7 @@ const incidents = [
     priority: 'Medium',
     status: 'Pending',
     organisation: 'Soylent Corp',
+    organisationId: 'org-005',
     siteName: 'London HQ',
     requesterId: 'user-004',
     assignedAgentId: 'agent-001',
@@ -103,18 +103,15 @@ const incidents = [
     assignedTeam: '1st Line Support',
     slaTimeLeft: 240,
     timeRecord: 15,
-
     incident: {
       id: 'INC-DETAIL-1004',
       category: 'Access & Identity',
       impact: 'Sales users have limited access to Office 365.',
       urgency: 'Medium',
     },
-
     createdAt: '2026-09-25T07:00:00.000Z',
     updatedAt: '2026-09-25T08:00:00.000Z',
   },
-
   {
     id: 'INC-1005',
     summary: 'Payroll application unavailable for finance team',
@@ -123,6 +120,7 @@ const incidents = [
     priority: 'High',
     status: 'Resolved',
     organisation: 'Globex Corp',
+    organisationId: 'org-002',
     siteName: 'New York',
     requesterId: 'user-005',
     assignedAgentId: 'agent-004',
@@ -130,113 +128,143 @@ const incidents = [
     assignedTeam: '2nd Line Support',
     slaTimeLeft: 0,
     timeRecord: 120,
-
     incident: {
       id: 'INC-DETAIL-1005',
       category: 'Software',
       impact: 'Finance users cannot access payroll processing.',
       urgency: 'High',
     },
-
     createdAt: '2026-09-24T09:00:00.000Z',
     updatedAt: '2026-09-25T11:00:00.000Z',
   },
 ];
 
-const db = require('../../config/db');
+/**
+ * Make a test fixture copy so tests cannot accidentally mutate
+ * the original shared fixtures.
+ */
+const copyFixture = (ticket) => ({
+  ...ticket,
+  incident: ticket.incident ? { ...ticket.incident } : null,
+});
 
-const getIncidents = async () => {
-  if (process.env.NODE_ENV !== 'test') {
-    try {
-      const records = await db.ticket.findMany({
-        where: { ticketType: 'Incident' },
-        include: { incident: true, organisation: true },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (records && records.length > 0) {
-        return records.map((t) => ({
-          id: t.id,
-          summary: t.summary,
-          description: t.description,
-          ticketType: t.ticketType,
-          priority: t.priority,
-          status: t.status,
-          organisation: t.organisation?.name || 'Acme Corp',
-          organisationId: t.organisationId || 'org-001',
-          siteName: t.siteName || 'London HQ',
-          requesterId: t.requesterId || 'user-001',
-          assignedAgentId: t.assignedAgentId || 'agent-001',
-          teamId: t.teamId || 'team-001',
-          assignedTeam: t.assignedTeam || '1st Line Support',
-          slaTimeLeft: t.slaTimeLeft,
-          timeRecord: t.timeRecord,
-          incident: {
-            id: t.incident?.id || `INC-DETAIL-${t.id}`,
-            category: t.incident?.category || 'Network',
-            impact: t.incident?.impact || 'Low',
-            urgency: t.incident?.urgency || 'Low',
-          },
-          createdAt: t.createdAt.toISOString(),
-          updatedAt: t.updatedAt.toISOString(),
-        }));
-      }
-    } catch (_err) {
-      // Database connection fallback
-    }
+/**
+ * Convert database dates to ISO strings while safely preserving
+ * missing optional values.
+ */
+const toIsoString = (value) => {
+  if (value === null || value === undefined) {
+    return null;
   }
 
-  return [...incidents];
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
 };
 
-const getIncidentById = async (id) => {
-  if (!id) return null;
+/**
+ * Convert a Prisma Ticket record and its related Incident into
+ * the response shape expected by the Incidents service.
+ */
+const mapTicketToIncident = (ticket) => ({
+  id: ticket.id,
+  summary: ticket.summary,
+  description: ticket.description,
+  ticketType: ticket.ticketType,
+  priority: ticket.priority,
+  status: ticket.status,
 
-  if (process.env.NODE_ENV !== 'test') {
-    try {
-      const t = await db.ticket.findFirst({
-        where: {
-          id: { equals: id, mode: 'insensitive' },
-          ticketType: 'Incident',
-        },
-        include: { incident: true, organisation: true },
-      });
+  organisation: ticket.organisation?.name ?? null,
+  organisationId: ticket.organisationId ?? null,
+  siteName: ticket.siteName ?? null,
 
-      if (t) {
-        return {
-          id: t.id,
-          summary: t.summary,
-          description: t.description,
-          ticketType: t.ticketType,
-          priority: t.priority,
-          status: t.status,
-          organisation: t.organisation?.name || 'Acme Corp',
-          organisationId: t.organisationId || 'org-001',
-          siteName: t.siteName || 'London HQ',
-          requesterId: t.requesterId || 'user-001',
-          assignedAgentId: t.assignedAgentId || 'agent-001',
-          teamId: t.teamId || 'team-001',
-          assignedTeam: t.assignedTeam || '1st Line Support',
-          slaTimeLeft: t.slaTimeLeft,
-          timeRecord: t.timeRecord,
-          incident: {
-            id: t.incident?.id || `INC-DETAIL-${t.id}`,
-            category: t.incident?.category || 'Network',
-            impact: t.incident?.impact || 'Low',
-            urgency: t.incident?.urgency || 'Low',
-          },
-          createdAt: t.createdAt.toISOString(),
-          updatedAt: t.updatedAt.toISOString(),
-        };
+  requesterId: ticket.requesterId ?? null,
+  assignedAgentId: ticket.assignedAgentId ?? null,
+  teamId: ticket.teamId ?? null,
+  assignedTeam: ticket.assignedTeam || ticket.team?.name || null,
+
+  slaTimeLeft: ticket.slaTimeLeft ?? null,
+  timeRecord: ticket.timeRecord ?? 0,
+
+  incident: ticket.incident
+    ? {
+        id: ticket.incident.id,
+        category: ticket.incident.category,
+        impact: ticket.incident.impact,
+        urgency: ticket.incident.urgency,
       }
-    } catch (_err) {
-      // Database connection fallback
-    }
+    : null,
+
+  createdAt: toIsoString(ticket.createdAt),
+  updatedAt: toIsoString(ticket.updatedAt),
+});
+
+/**
+ * Retrieve all incident tickets.
+ *
+ * In tests: use the in-memory fixtures.
+ * Otherwise: query the database and propagate any database errors.
+ *
+ * An empty database result correctly returns an empty array.
+ */
+const getIncidents = async () => {
+  if (process.env.NODE_ENV === 'test') {
+    return incidents.map(copyFixture);
   }
 
-  return incidents.find(
-    (incident) => incident.id.toLowerCase() === id.toLowerCase()
-  ) || null;
+  const records = await db.ticket.findMany({
+    where: {
+      ticketType: 'Incident',
+    },
+    include: {
+      incident: true,
+      organisation: true,
+      team: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return records.map(mapTicketToIncident);
+};
+
+/**
+ * Retrieve one incident by its ticket ID.
+ */
+const getIncidentById = async (id) => {
+  if (typeof id !== 'string' || !id.trim()) {
+    return null;
+  }
+
+  if (process.env.NODE_ENV === 'test') {
+    const ticket = incidents.find(
+      (incident) => incident.id.toLowerCase() === id.trim().toLowerCase()
+    );
+
+    return ticket ? copyFixture(ticket) : null;
+  }
+
+  const ticket = await db.ticket.findFirst({
+    where: {
+      id: {
+        equals: id.trim(),
+        mode: 'insensitive',
+      },
+      ticketType: 'Incident',
+    },
+    include: {
+      incident: true,
+      organisation: true,
+      team: true,
+    },
+  });
+
+  return ticket ? mapTicketToIncident(ticket) : null;
 };
 
 module.exports = {

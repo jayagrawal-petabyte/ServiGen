@@ -85,6 +85,29 @@ describe('Incidents Service', () => {
         expect(incident.assignedTeam).toBe('1st Line Support');
       });
     });
+    test('filters incidents by exact organisation ID', async () => {
+      const result = await listIncidents({
+        organisationId: 'org-001',
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result.incidents).toHaveLength(1);
+      expect(result.incidents[0].id).toBe('INC-1001');
+      expect(result.incidents[0].organisationId).toBe('org-001');
+    });
+
+    test('returns no incidents for an unknown organisation ID', async () => {
+      const result = await listIncidents({
+        organisationId: 'unknown-org',
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result.incidents).toHaveLength(0);
+      expect(result.pagination.total).toBe(0);
+    });
+
 
     test('supports search by incident summary', async () => {
       const result = await listIncidents({
