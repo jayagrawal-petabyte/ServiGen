@@ -81,7 +81,13 @@
   cursor: pointer;
 }
 
+.header-icon-popover-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .header-icon-button {
+  position: relative;
   width: 38px;
   height: 38px;
   display: inline-flex;
@@ -93,10 +99,160 @@
   color: #667386;
   font-size: 16px;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.header-icon-button:hover {
-  background: #f7f9fc;
+.header-icon-button:hover,
+.header-icon-button.active {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.header-icon-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-sizing: border-box;
+}
+
+.header-flyout-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: flyoutFadeIn 0.15s ease-out;
+}
+
+@keyframes flyoutFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-flyout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.header-flyout-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-flyout-action {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0284c7;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.header-flyout-action:hover {
+  text-decoration: underline;
+}
+
+.header-flyout-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-flyout-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+}
+
+.header-flyout-item:last-child {
+  border-bottom: none;
+}
+
+.header-flyout-item:hover {
+  background: #f8fafc;
+}
+
+.header-flyout-item.unread {
+  background: #f0f7ff;
+}
+
+.header-flyout-item.unread:hover {
+  background: #e6f1fe;
+}
+
+.header-flyout-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.header-flyout-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.header-flyout-item-time {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.header-flyout-item-desc {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.header-flyout-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .new-ticket-button {
