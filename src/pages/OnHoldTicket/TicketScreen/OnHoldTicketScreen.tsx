@@ -138,25 +138,49 @@ const OnHoldTicketScreen: React.FC = () => {
     fetchData();
   };
 
-  const handleNewTicket = () => {
-    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000); // Generate 4-digit ID
+  // New Ticket Modal State
+  const [showNewModal, setShowNewModal] = useState<boolean>(false);
+  const [newType, setNewType] = useState<"Incident" | "Service Request">("Incident");
+  const [newSummary, setNewSummary] = useState<string>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newPriority, setNewPriority] = useState<"Critical" | "High" | "Medium" | "Low">("Medium");
+  const [newOrg, setNewOrg] = useState<string>("consultancy/EMEA/Inesh Agarwal");
+  const [newStatus, setNewStatus] = useState<"On H" | "With">("On H");
+
+  const handleOpenNewModal = () => {
+    setShowNewModal(true);
+  };
+
+  const handleCreateNewTicketSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSummary.trim()) return;
+
+    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000);
+    const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
+      Critical: "red",
+      High: "orange",
+      Medium: "yellow",
+      Low: "green",
+    };
+
     const newTicket: Ticket = {
       id: newId,
-      priority: "Medium",
-      priorityColor: "yellow",
-      org: "consultancy/US/Jane Doe",
-      summary: "Newly created mock ticket...",
-      status: "On H",
-      type: "Incident",
+      type: newType,
+      summary: newSummary.trim(),
+      description: newDescription.trim() || newSummary.trim(),
+      priority: newPriority,
+      priorityColor: priorityColorMap[newPriority] || "yellow",
+      org: newOrg.trim() || "consultancy/EMEA/Inesh Agarwal",
+      status: newStatus,
+      createdAt: "Just now",
+      targetSla: "Within 4 hours",
     };
-    
-    // Add to the front of the list
-    setTickets(prev => [newTicket, ...prev]);
-    setCurrentPage(1); // Go to page 1 to see it
-    
-    // Simulate loading for effect
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 400);
+
+    setTickets((prev) => [newTicket, ...prev]);
+    setCurrentPage(1);
+    setShowNewModal(false);
+    setNewSummary("");
+    setNewDescription("");
   };
 
   // 1. Filter Tickets
@@ -238,11 +262,11 @@ const OnHoldTicketScreen: React.FC = () => {
             </span>
           </div>
           <div className="topnav-tab-bar">
-            <span className="tab-plus">+</span>
+            <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>
           </div>
           <div className="topnav-right">
             <button className="btn-get-started" onClick={() => navigate('/dashboard')}>Get started</button>
-            <button className="btn-new-ticket" onClick={handleNewTicket}>
+            <button className="btn-new-ticket" onClick={handleOpenNewModal}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Ticket
             </button>
@@ -281,7 +305,7 @@ const OnHoldTicketScreen: React.FC = () => {
 
           <div className="right-panel">
             <div className="table-toolbar">
-              <button className="tb-add-btn">
+              <button className="tb-add-btn" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <div style={{flex:1}}></div>
@@ -295,7 +319,7 @@ const OnHoldTicketScreen: React.FC = () => {
               <button className="tb-nav-btn" onClick={handleRefresh}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
-              <button className="btn-new-green" onClick={handleNewTicket}>
+              <button className="btn-new-green" onClick={handleOpenNewModal}>
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
               </button>
@@ -443,6 +467,110 @@ const OnHoldTicketScreen: React.FC = () => {
             setSelectedTicket(null);
           }}
         />
+      )}
+
+      {showNewModal && (
+        <div className="onhold-modal-overlay" onClick={() => setShowNewModal(false)}>
+          <div className="onhold-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="onhold-modal-header">
+              <h2>Create New Ticket</h2>
+              <button
+                type="button"
+                className="onhold-modal-close"
+                onClick={() => setShowNewModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTicketSubmit} className="onhold-form">
+              <div className="onhold-form-row">
+                <div className="onhold-form-group">
+                  <label>Ticket Type</label>
+                  <select
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value as "Incident" | "Service Request")}
+                  >
+                    <option value="Incident">Incident</option>
+                    <option value="Service Request">Service Request</option>
+                  </select>
+                </div>
+
+                <div className="onhold-form-group">
+                  <label>Priority</label>
+                  <select
+                    value={newPriority}
+                    onChange={(e) => setNewPriority(e.target.value as "Critical" | "High" | "Medium" | "Low")}
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="onhold-form-group">
+                <label>Summary / Subject *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. VPN gateway disconnects intermittently"
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="onhold-form-group">
+                <label>Description & Technical Details</label>
+                <textarea
+                  rows={4}
+                  placeholder="Provide complete steps, error messages, or workstation details..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="onhold-form-row">
+                <div className="onhold-form-group">
+                  <label>Organisation / User</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. consultancy/EMEA/Inesh Agarwal"
+                    value={newOrg}
+                    onChange={(e) => setNewOrg(e.target.value)}
+                  />
+                </div>
+
+                <div className="onhold-form-group">
+                  <label>Initial Status</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as "On H" | "With")}
+                  >
+                    <option value="On H">On Hold</option>
+                    <option value="With">With User</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="onhold-form-actions">
+                <button
+                  type="button"
+                  className="btn-modal-cancel"
+                  onClick={() => setShowNewModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-modal-submit">
+                  Create Ticket
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
