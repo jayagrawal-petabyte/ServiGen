@@ -1,6 +1,8 @@
 
 import { useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { useAuth } from "../Auth/AuthContext";
+import { usePersistentState } from "../../utils/persistentState";
 
 type TicketStatus = "Active" | "Pending" | "Actioned";
 
@@ -177,11 +179,17 @@ function StatusPill({ status }: StatusPillProps) {
 }
 
 export default function MyWork() {
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [activeTab, setActiveTab] = useState<TicketStatus>("Active");
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [timeLogs, setTimeLogs] = useState<Record<string, TimeLog[]>>(
+  const [tickets, setTickets] = usePersistentState<Ticket[]>(
+    "servigen_my_work_tickets_v1",
+    MOCK_TICKETS
+  );
+  const [timeLogs, setTimeLogs] = usePersistentState<Record<string, TimeLog[]>>(
+    "servigen_my_work_time_logs_v1",
     MOCK_TIME_LOGS
   );
   const [showAddTimeLog, setShowAddTimeLog] = useState(false);
@@ -191,7 +199,7 @@ export default function MyWork() {
   const filteredTickets = useMemo(() => {
     const searchText = query.trim().toLowerCase();
 
-    return MOCK_TICKETS.filter((ticket) => {
+    return tickets.filter((ticket) => {
       const matchesStatus = ticket.status === activeTab;
 
       const matchesPriority =
@@ -327,8 +335,22 @@ export default function MyWork() {
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                   Status
                 </p>
-                <div className="mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <StatusPill status={selectedTicket.status} />
+                  <select
+                    value={selectedTicket.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as TicketStatus;
+                      const updated = { ...selectedTicket, status: newStatus };
+                      setSelectedTicket(updated);
+                      setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+                    }}
+                    className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 outline-none text-slate-700 cursor-pointer"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Actioned">Actioned</option>
+                  </select>
                 </div>
               </div>
 
@@ -460,7 +482,7 @@ export default function MyWork() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Tickets currently assigned to you, sorted by priority.
+              Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Inesh Agarwal'}</span>, sorted by priority.
             </p>
           </div>
 
@@ -472,7 +494,7 @@ export default function MyWork() {
         <div className="mb-4 border-b border-slate-200">
           <div className="flex gap-6">
             {STATUS_TABS.map((status) => {
-              const count = MOCK_TICKETS.filter(
+              const count = tickets.filter(
                 (ticket) => ticket.status === status
               ).length;
 

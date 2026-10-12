@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import TeamIncidentFilters from "./TeamIncidentFilters";
 import SLAIndicator from "./SLAIndicator";
 import PriorityIndicator from "./PriorityIndicator";
+import { useAuth } from "../Auth/AuthContext";
+import { MOCK_ORGANISATION_USERS } from "../Auth/mockAuthData";
+import { usePersistentState } from "../../utils/persistentState";
 import "./TeamIncidents.css";
 
 interface Incident {
@@ -64,19 +68,20 @@ const initialIncidents: Incident[] = [
   },
 ];
 
-const agents = [
-  "Anjali Prasad",
-  "Mohammad Taha Ali",
-  "Monalisa Panda",
-  "Aditya Kumar Singh",
-];
+const agents = MOCK_ORGANISATION_USERS.map((u) => u.fullName);
 
 function TeamIncidentTable({
   team,
   mode,
 }: TeamIncidentTableProps) {
-  const [incidents, setIncidents] =
-    useState<Incident[]>(initialIncidents);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const [incidents, setIncidents] = usePersistentState<Incident[]>(
+    `servigen_team_incidents_${team.toLowerCase().replace(/\s+/g, '_')}`,
+    initialIncidents
+  );
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
@@ -99,7 +104,7 @@ function TeamIncidentTable({
     useState("Network");
 
   const [newAgent, setNewAgent] =
-    useState(agents[0]);
+    useState(user?.fullName || agents[0]);
 
   const [newPriority, setNewPriority] =
     useState("Medium");
@@ -233,7 +238,7 @@ function TeamIncidentTable({
   const openNewIncidentForm = () => {
     setNewSummary("");
     setNewCategory("Network");
-    setNewAgent(agents[0]);
+    setNewAgent(user?.fullName || agents[0]);
     setNewPriority("Medium");
     setCreateError("");
     setShowNewIncidentForm(true);
@@ -242,7 +247,7 @@ function TeamIncidentTable({
   const closeNewIncidentForm = () => {
     setNewSummary("");
     setNewCategory("Network");
-    setNewAgent(agents[0]);
+    setNewAgent(user?.fullName || agents[0]);
     setNewPriority("Medium");
     setCreateError("");
     setShowNewIncidentForm(false);
@@ -289,13 +294,44 @@ function TeamIncidentTable({
     <div className="team-incidents-page">
 
       {/* PAGE HEADER */}
-      <div className="team-incidents-header">
+      <div className="team-incidents-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1>Incidents by Team</h1>
 
           <p>
-            {team} - {mode}
+            {team} — {mode} Mode
           </p>
+        </div>
+
+        <div className="team-view-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {[
+            { label: '1st Line (Live)', path: '/team/1st-line-live' },
+            { label: '1st Line (Design)', path: '/team/1st-line-design' },
+            { label: '2nd Line (Live)', path: '/team/2nd-line-live' },
+            { label: '2nd Line (Design)', path: '/team/2nd-line-design' },
+          ].map((tab) => {
+            const isActive = location.pathname === tab.path;
+            return (
+              <button
+                key={tab.path}
+                type="button"
+                onClick={() => navigate(tab.path)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  background: isActive ? '#003c50' : '#ffffff',
+                  color: isActive ? '#ffffff' : '#334155',
+                  border: isActive ? '1px solid #003c50' : '1px solid #cbd5e1',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -737,6 +773,51 @@ function TeamIncidentTable({
             <strong>Team:</strong>{" "}
             {team}
           </p>
+
+          <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const currentUserName = user?.fullName || 'Inesh Agarwal';
+                const updated = { ...selectedIncident, agent: currentUserName };
+                setSelectedIncident(updated);
+                setIncidents((prev) => prev.map((inc) => (inc.id === updated.id ? updated : inc)));
+              }}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                background: '#00b0f0',
+                color: '#fff',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Assign to Me
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const newStatus = selectedIncident.status === 'Resolved' ? 'In Progress' : 'Resolved';
+                const updated = { ...selectedIncident, status: newStatus };
+                setSelectedIncident(updated);
+                setIncidents((prev) => prev.map((inc) => (inc.id === updated.id ? updated : inc)));
+              }}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                background: selectedIncident.status === 'Resolved' ? '#f59e0b' : '#10b981',
+                color: '#fff',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {selectedIncident.status === 'Resolved' ? 'Reopen Incident' : 'Mark Resolved'}
+            </button>
+          </div>
 
         </div>
       )}
