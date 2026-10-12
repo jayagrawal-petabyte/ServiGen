@@ -113,6 +113,26 @@ const OnHoldTicketScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeView, setActiveView] = useState<string>("My Lists");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Flyouts & Modals State
+  const [activeFlyout, setActiveFlyout] = useState<
+    "search" | "notifications" | "menu" | "history" | "settings" | "profile" | "more" | null
+  >(null);
+  const [unreadNotif, setUnreadNotif] = useState<number>(1);
+  const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
+  const flyoutRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
+        setActiveFlyout(null);
+      }
+    }
+    if (activeFlyout) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeFlyout]);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -291,6 +311,43 @@ const OnHoldTicketScreen: React.FC = () => {
     setSelectedItems([]);
   };
 
+  const handleExportCSV = () => {
+    const headers = ["ID", "Type", "Priority", "Status", "Organisation", "Summary"];
+    const rows = filteredTickets.map((t) => [
+      t.id,
+      t.type,
+      t.priority,
+      t.status === "On H" ? "On Hold" : "With User",
+      `"${t.org}"`,
+      `"${t.summary.replace(/"/g, '""')}"`,
+    ]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `on_hold_tickets_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setActiveFlyout(null);
+  };
+
+  const handleToggleAllGroups = () => {
+    const allGroupKeys = Object.keys(groupedTickets);
+    const areAnyOpen = allGroupKeys.some((k) => !collapsedGroups[k]);
+    const nextCollapsed: Record<string, boolean> = {};
+    allGroupKeys.forEach((k) => {
+      nextCollapsed[k] = areAnyOpen;
+    });
+    setCollapsedGroups(nextCollapsed);
+    setActiveFlyout(null);
+  };
+
   return (
     <div className="app-shell">
       <div className="main-area">
@@ -311,31 +368,227 @@ const OnHoldTicketScreen: React.FC = () => {
             <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>
           </div>
           <div className="topnav-right">
-            <button className="btn-get-started" onClick={() => navigate('/dashboard')}>Get started</button>
+            <button className="btn-get-started" onClick={() => setShowGetStartedModal(true)}>
+              Get started
+            </button>
             <button className="btn-new-ticket" onClick={handleOpenNewModal}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Ticket
             </button>
             <div className="topnav-icons">
-              <button className="tnav-icon-btn" onClick={() => alert("Global Search: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </button>
-              <button className="tnav-icon-btn notif-wrap" onClick={() => alert("Notifications: You have 1 unread alert!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span className="notif-dot">1</span>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("Menu: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("History: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("Settings: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </button>
+              {/* Search Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "search" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "search" ? null : "search")}
+                  title="Search On Hold Tickets"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                {activeFlyout === "search" && (
+                  <div className="onhold-flyout-menu" style={{ width: 280 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Quick Search</span>
+                    </div>
+                    <div className="onhold-search-input-wrap">
+                      <input
+                        type="text"
+                        placeholder="Search ID, summary, user..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notifications Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "notifications" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn notif-wrap"
+                  onClick={() => setActiveFlyout(p => p === "notifications" ? null : "notifications")}
+                  title="Ticket Notifications"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  {unreadNotif > 0 && <span className="notif-dot">{unreadNotif}</span>}
+                </button>
+                {activeFlyout === "notifications" && (
+                  <div className="onhold-flyout-menu">
+                    <div className="onhold-flyout-header">
+                      <span>Notifications ({unreadNotif} unread)</span>
+                      {unreadNotif > 0 && (
+                        <button
+                          type="button"
+                          className="onhold-flyout-action"
+                          onClick={() => setUnreadNotif(0)}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Critical SLA Alert: #0003816</span>
+                          <span style={{ color: "#ef4444", fontSize: 10 }}>URGENT</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Trading desk computer won't boot past BIOS.</span>
+                        <span className="onhold-flyout-item-time">15m ago</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Ticket Status Update: #0003951</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Marked On Hold pending security team audit.</span>
+                        <span className="onhold-flyout-item-time">1h ago</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Queue Assignment</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Assigned 4 tickets to EMEA consultancy queue.</span>
+                        <span className="onhold-flyout-item-time">3h ago</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Menu Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "menu" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "menu" ? null : "menu")}
+                  title="Module Navigation"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                {activeFlyout === "menu" && (
+                  <div className="onhold-flyout-menu" style={{ width: 220 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Module Navigation</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/dashboard'); }}>
+                        <span className="onhold-flyout-item-title">📊 Dashboard</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/incidents'); }}>
+                        <span className="onhold-flyout-item-title">🎫 Incidents Management</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/major-incidents/live'); }}>
+                        <span className="onhold-flyout-item-title">🚨 Major Incidents Live</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/services-catalogue'); }}>
+                        <span className="onhold-flyout-item-title">🛒 Services Catalogue</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/projects'); }}>
+                        <span className="onhold-flyout-item-title">📁 Projects & Tasks</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* History Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "history" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "history" ? null : "history")}
+                  title="Recent Activity Log"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </button>
+                {activeFlyout === "history" && (
+                  <div className="onhold-flyout-menu">
+                    <div className="onhold-flyout-header">
+                      <span>Recent Activity Log</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Batch Status Update</span>
+                        <span className="onhold-flyout-item-desc">3 tickets transitioned to With User</span>
+                        <span className="onhold-flyout-item-time">Today, 14:32</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Priority Escalation</span>
+                        <span className="onhold-flyout-item-desc">#0003816 elevated to Critical priority</span>
+                        <span className="onhold-flyout-item-time">Today, 12:15</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Ticket Registered</span>
+                        <span className="onhold-flyout-item-desc">#0003951 created by EMEA Helpdesk</span>
+                        <span className="onhold-flyout-item-time">Today, 09:00</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Settings Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "settings" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "settings" ? null : "settings")}
+                  title="Queue Preferences"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                {activeFlyout === "settings" && (
+                  <div className="onhold-flyout-menu" style={{ width: 240 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Queue Preferences</span>
+                    </div>
+                    <div className="onhold-flyout-list" style={{ padding: "10px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#334155", cursor: "pointer" }}>
+                        <span>Auto-refresh queue</span>
+                        <input type="checkbox" defaultChecked />
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#334155", cursor: "pointer" }}>
+                        <span>Highlight critical SLA</span>
+                        <input type="checkbox" defaultChecked />
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="user-avatar-circle" onClick={() => alert("User Profile: Coming soon!")} style={{ cursor: 'pointer' }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+
+            {/* Profile Avatar Flyout */}
+            <div className="onhold-flyout-wrap" ref={activeFlyout === "profile" ? flyoutRef : undefined}>
+              <div
+                className="user-avatar-circle"
+                onClick={() => setActiveFlyout(p => p === "profile" ? null : "profile")}
+                style={{ cursor: "pointer" }}
+                title="User Profile: Inesh Agarwal"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+              </div>
+              {activeFlyout === "profile" && (
+                <div className="onhold-flyout-menu" style={{ width: 250 }}>
+                  <div className="onhold-flyout-header">
+                    <span>User Profile</span>
+                  </div>
+                  <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>Inesh Agarwal</div>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>inesh@servigen.tech</div>
+                    <div style={{ fontSize: 10, color: "#0284c7", fontWeight: 600, marginTop: 4 }}>IT Operations Specialist</div>
+                  </div>
+                  <div className="onhold-flyout-list">
+                    <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/my-work'); }}>
+                      <span className="onhold-flyout-item-title">📋 My Work Dashboard</span>
+                    </button>
+                    <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/auth'); }}>
+                      <span className="onhold-flyout-item-title" style={{ color: "#ef4444" }}>🔒 Switch Account</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -369,9 +622,45 @@ const OnHoldTicketScreen: React.FC = () => {
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
               </button>
-              <button className="tb-nav-btn">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-              </button>
+
+              {/* Toolbar More Menu */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "more" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tb-nav-btn"
+                  onClick={() => setActiveFlyout(p => p === "more" ? null : "more")}
+                  title="More Actions"
+                  style={{ cursor: "pointer" }}
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </button>
+                {activeFlyout === "more" && (
+                  <div className="onhold-flyout-menu" style={{ width: 220, right: 0 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Table Actions</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <button type="button" className="onhold-flyout-item" onClick={handleExportCSV}>
+                        <span className="onhold-flyout-item-title">📥 Export as CSV</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={handleToggleAllGroups}>
+                        <span className="onhold-flyout-item-title">↕ Toggle All Groups</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="onhold-flyout-item"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedItems([]);
+                          setActiveFlyout(null);
+                        }}
+                      >
+                        <span className="onhold-flyout-item-title">🔄 Reset Filters</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {selectedItems.length > 0 && (
@@ -686,6 +975,61 @@ const OnHoldTicketScreen: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showGetStartedModal && (
+        <div className="onhold-modal-overlay" onClick={() => setShowGetStartedModal(false)}>
+          <div className="onhold-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="onhold-modal-header">
+              <h2>My On Hold Tickets Guide</h2>
+              <button
+                type="button"
+                className="onhold-modal-close"
+                onClick={() => setShowGetStartedModal(false)}
+                aria-label="Close guide"
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13, color: "#334155", lineHeight: 1.6 }}>
+              <div style={{ padding: "12px 14px", background: "#f0f9ff", borderRadius: 8, border: "1px solid #bae6fd" }}>
+                <strong style={{ color: "#0369a1", display: "block", marginBottom: 4 }}>📌 What is the On Hold Queue?</strong>
+                Tickets placed in "On Hold" state temporarily pause active SLA countdowns while awaiting customer feedback, vendor hardware shipment, or change freeze windows.
+              </div>
+
+              <div>
+                <strong style={{ color: "#0f172a", display: "block", marginBottom: 4 }}>⚡ Key Features Available:</strong>
+                <ul style={{ paddingLeft: 18, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <li><strong>Full Detail View:</strong> Click anywhere on a ticket row or ID to inspect the full request description and specifications.</li>
+                  <li><strong>Bulk Operations:</strong> Select multiple checkboxes to batch reassign agents, change priorities, or update status in one click.</li>
+                  <li><strong>Interactive Ticket Creation:</strong> Use the <code>+ New Ticket</code> or green <code>+ New</code> buttons to record new tickets with custom input.</li>
+                  <li><strong>Export Data:</strong> Access the <code>···</code> toolbar menu to instantly export the current table to CSV format.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="onhold-form-actions" style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                className="btn-modal-cancel"
+                onClick={() => {
+                  setShowGetStartedModal(false);
+                  navigate('/incidents');
+                }}
+              >
+                View Incidents Queue →
+              </button>
+              <button
+                type="button"
+                className="btn-modal-submit"
+                onClick={() => setShowGetStartedModal(false)}
+              >
+                Got It
+              </button>
+            </div>
           </div>
         </div>
       )}
