@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { ChangeRequest, ChangeType, RiskLevel } from '../../types/cmdb';
 import { X, Plus } from 'lucide-react';
+import { useAuth } from '../Auth/AuthContext';
+import { MOCK_ORGANISATION_USERS } from '../Auth/mockAuthData';
 
 interface CreateChangeModalProps {
   isOpen: boolean;
@@ -14,12 +16,13 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
   onClose,
   onCreate,
 }) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<ChangeType>('Normal');
   const [risk, setRisk] = useState<RiskLevel>('Medium');
   const [linkedCiName, setLinkedCiName] = useState('DB-PROD-POSTGRES-01');
-  const [agentName, setAgentName] = useState('Vooka Sai Siddharth');
+  const [agentName, setAgentName] = useState(user?.fullName || 'Inesh Agarwal');
   const [scheduledStart, setScheduledStart] = useState('Sep 25, 2026');
   const [scheduledEnd, setScheduledEnd] = useState('Oct 05, 2026');
   const [targetHours, setTargetHours] = useState(120);
@@ -153,12 +156,17 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
 
             <div>
               <label className="block text-slate-800 font-bold mb-1">Assigned Agent</label>
-              <input
-                type="text"
+              <select
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
-              />
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-[#E87A5D] cursor-pointer"
+              >
+                {MOCK_ORGANISATION_USERS.map((u) => (
+                  <option key={u.id} value={u.fullName}>
+                    {u.fullName} ({u.role})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

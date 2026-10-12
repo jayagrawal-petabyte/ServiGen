@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ServiceCI } from '../../types/cmdb';
 import { mockServiceCis } from '../../data/mockCmdbData';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -10,7 +11,15 @@ interface ServiceCisPageProps {
 }
 
 export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = mockServiceCis }) => {
+  const navigate = useNavigate();
   const items = serviceCis.length > 0 ? serviceCis : mockServiceCis;
+
+  const operationalCount = items.filter((s) => s.healthStatus === 'Operational').length;
+  const supportingCisTotal = items.reduce((sum, s) => sum + s.supportingCisCount, 0);
+  const activeIssuesCount = items.filter((s) => s.healthStatus !== 'Operational').length;
+  const avgSla = items.length > 0
+    ? (items.reduce((sum, s) => sum + s.uptimeSlaPercent, 0) / items.length).toFixed(2)
+    : '100.00';
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
@@ -23,6 +32,21 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
             CMDB: Service CIs (Live) — Real-time service health & SLA monitoring
           </p>
         </div>
+
+        <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+          <button
+            onClick={() => navigate('/cmdb')}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+          >
+            Configuration Items (CIs)
+          </button>
+          <button
+            onClick={() => navigate('/cmdb/services')}
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E87A5D] text-white shadow-2xs cursor-pointer transition-all"
+          >
+            Service CIs (Live Health)
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -32,7 +56,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Operational Services</span>
-            <h3 className="text-2xl font-extrabold text-slate-900">3 / 4</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">{operationalCount} / {items.length}</h3>
           </div>
         </div>
 
@@ -42,7 +66,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Platform SLA</span>
-            <h3 className="text-2xl font-extrabold text-slate-900">99.98%</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">{avgSla}%</h3>
           </div>
         </div>
 
@@ -52,7 +76,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Supporting CIs</span>
-            <h3 className="text-2xl font-extrabold text-slate-900">32</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">{supportingCisTotal}</h3>
           </div>
         </div>
 
@@ -62,7 +86,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Active Maintenance</span>
-            <h3 className="text-2xl font-extrabold text-amber-600">1</h3>
+            <h3 className="text-2xl font-extrabold text-amber-600">{activeIssuesCount}</h3>
           </div>
         </div>
       </div>
@@ -109,9 +133,14 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
               <span className="font-semibold text-slate-700">
                 Owner: <strong className="text-slate-900">{svc.businessOwner}</strong>
               </span>
-              <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg font-bold">
-                {svc.supportingCisCount} Supporting CIs
-              </span>
+              <button
+                type="button"
+                onClick={() => navigate('/cmdb')}
+                title="View supporting Configuration Items in CMDB"
+                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer transition-colors"
+              >
+                {svc.supportingCisCount} Supporting CIs →
+              </button>
             </div>
           </div>
         ))}

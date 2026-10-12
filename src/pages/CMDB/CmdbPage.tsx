@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ConfigurationItem, CiType } from '../../types/cmdb';
 import { mockConfigurationItems } from '../../data/mockCmdbData';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -14,6 +15,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   configurationItems = mockConfigurationItems,
   searchQuery = '',
 }) => {
+  const navigate = useNavigate();
   const items = configurationItems.length > 0 ? configurationItems : mockConfigurationItems;
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
@@ -59,6 +61,21 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           <p className="text-xs text-slate-500 mt-1 font-medium">
             CMDB: Asset registry, infrastructure mapping, site locations, and technical owners
           </p>
+        </div>
+
+        <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+          <button
+            onClick={() => navigate('/cmdb')}
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E87A5D] text-white shadow-2xs cursor-pointer transition-all"
+          >
+            Configuration Items (CIs)
+          </button>
+          <button
+            onClick={() => navigate('/cmdb/services')}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+          >
+            Service CIs (Live Health)
+          </button>
         </div>
       </div>
 
@@ -148,12 +165,22 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px]">
-                  Incidents: {ci.activeIncidentsCount}
-                </span>
-                <span className="px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-200 rounded-md font-bold text-[10px]">
-                  Changes: {ci.linkedChangesCount}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/incidents')}
+                  title={`View incidents for ${ci.name}`}
+                  className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px] cursor-pointer transition-colors"
+                >
+                  Incidents: {ci.activeIncidentsCount} →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/change-requests')}
+                  title={`View change requests for ${ci.name}`}
+                  className="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-md font-bold text-[10px] cursor-pointer transition-colors"
+                >
+                  Changes: {ci.linkedChangesCount} →
+                </button>
               </div>
               <span className="text-[10px] text-slate-400 font-medium">{ci.lastUpdated}</span>
             </div>

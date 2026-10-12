@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import { mockChangeRequests } from '../../data/mockCmdbData';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -21,10 +22,13 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   onOpenCreateModal = () => {},
   onSelectChangeRequest = () => {},
 }) => {
+  const navigate = useNavigate();
   const items = changeRequests.length > 0 ? changeRequests : mockChangeRequests;
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 6;
 
   const filteredRequests = items.filter((cr: ChangeRequest) => {
     const matchesSearch =
@@ -38,6 +42,11 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pagedRequests = filteredRequests.slice(startIndex, startIndex + pageSize);
 
   const getPercentBadgeVariant = (percent: number) => {
     if (percent >= 60) return 'green';
@@ -60,9 +69,15 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
         <div className="flex items-center gap-3">
           <Pagination
-            currentRange={`1-${filteredRequests.length} of ${filteredRequests.length}`}
-            hasPrevious={false}
-            hasNext={false}
+            currentRange={
+              filteredRequests.length === 0
+                ? '0-0 of 0'
+                : `${startIndex + 1}-${Math.min(startIndex + pageSize, filteredRequests.length)} of ${filteredRequests.length}`
+            }
+            hasPrevious={safePage > 1}
+            hasNext={safePage < totalPages}
+            onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           />
 
           <div className="flex items-center bg-white border border-slate-200 rounded-full p-1 shadow-2xs">
@@ -85,6 +100,14 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               <Table className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            onClick={() => navigate('/cmdb')}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-colors flex items-center gap-1.5"
+            title="Inspect infrastructure assets in CMDB"
+          >
+            <TagIcon className="w-3.5 h-3.5 text-[#E87A5D]" /> CMDB Assets
+          </button>
 
           <Button onClick={onOpenCreateModal} icon={<Plus className="w-4 h-4" />}>
             + New
@@ -131,7 +154,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
       {/* Grid View */}
       {viewMode === 'grid' ? (
         <div className="flex flex-col gap-6">
-          {filteredRequests.map((cr: ChangeRequest) => (
+          {pagedRequests.map((cr: ChangeRequest) => (
             <Card
               key={cr.id}
               onClick={() => onSelectChangeRequest(cr)}
@@ -201,9 +224,17 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Subtasks ({cr.subtasks.filter((st: SubTask) => st.completed).length}/{cr.subtasks.length})
                     </span>
-                    <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                      <TagIcon className="w-3.5 h-3.5" /> {cr.linkedCiName}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/cmdb');
+                      }}
+                      title={`Inspect ${cr.linkedCiName} in CMDB`}
+                      className="text-xs text-slate-500 hover:text-[#E87A5D] font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <TagIcon className="w-3.5 h-3.5 text-[#E87A5D]" /> {cr.linkedCiName} →
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -252,7 +283,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {filteredRequests.map((cr: ChangeRequest) => (
+              {pagedRequests.map((cr: ChangeRequest) => (
                 <tr
                   key={cr.id}
                   onClick={() => onSelectChangeRequest(cr)}
@@ -268,7 +299,16 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                   <td className="py-3.5 px-4">
                     <StatusBadge label={cr.status} variant={getChangeStatusVariant(cr.status)} size="sm" />
                   </td>
-                  <td className="py-3.5 px-4 text-slate-600 font-mono">{cr.linkedCiName}</td>
+                  <td
+                    className="py-3.5 px-4 text-[#E87A5D] hover:underline font-mono font-bold cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/cmdb');
+                    }}
+                    title={`Inspect ${cr.linkedCiName} in CMDB`}
+                  >
+                    {cr.linkedCiName}
+                  </td>
                   <td className="py-3.5 px-4">{cr.agentName}</td>
                   <td className="py-3.5 px-4">{cr.scheduledEnd}</td>
                   <td className="py-3.5 px-4 text-right font-bold text-[#E87A5D]">
