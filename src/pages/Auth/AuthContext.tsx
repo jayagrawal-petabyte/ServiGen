@@ -1,18 +1,19 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials } from './types';
-import { MOCK_ORGANISATION_USERS } from './mockAuthData';
+import { MOCK_ORGANISATION_USERS, PRIMARY_USER } from './mockAuthData';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => void;
+  switchUser: (userIdOrFullName: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: false,
-    user: null,
+    isAuthenticated: true,
+    user: PRIMARY_USER,
     loading: false,
     error: null,
   });
@@ -59,8 +60,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
+  const switchUser = (userIdOrFullName: string) => {
+    const found = MOCK_ORGANISATION_USERS.find(
+      (u) =>
+        u.id === userIdOrFullName ||
+        u.fullName.toLowerCase() === userIdOrFullName.toLowerCase() ||
+        u.username.toLowerCase() === userIdOrFullName.toLowerCase()
+    );
+    if (found) {
+      setAuthState({
+        isAuthenticated: true,
+        user: found,
+        loading: false,
+        error: null,
+      });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, switchUser }}>
       {children}
     </AuthContext.Provider>
   );

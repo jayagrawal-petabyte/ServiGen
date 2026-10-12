@@ -17,7 +17,7 @@ export const MOCK_MAJOR_INCIDENTS: MajorIncident[] = [
     product: 'MyFinance PROD',
     resolutionTarget: '0d 5h 5m',
     responseTarget: 'N/A',
-    assignee: 'Demo User',
+    assignee: 'Inesh Agarwal',
     lifecycleStages: [
       { ...STAGES(0)[0], timestamp: '11-02-2025 4:57 PM', isActive: true, isCompleted: false },
       ...STAGES(0).slice(1),
@@ -54,8 +54,8 @@ export const MOCK_MAJOR_INCIDENTS: MajorIncident[] = [
 export const MOCK_FEED_ENTRIES: ActivityFeedEntry[] = [
   {
     id: 'feed-1',
-    avatarLabel: 'DU',
-    actorName: 'Demo User',
+    avatarLabel: 'IA',
+    actorName: 'Inesh Agarwal',
     actorOrg: 'consultation/EMEA',
     ticketRef: '#3995',
     actionLabel: 'New Ticket Logged',
