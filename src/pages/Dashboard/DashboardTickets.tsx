@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/AuthContext";
 import {
   DASHBOARD_TICKETS,
+  type DashboardTicket,
   type DashboardPriority,
 } from "./dashboard.data";
+import { TicketDetailModal, type FullTicket } from "../../components/TicketDetailModal";
+import { usePersistentState } from "../../utils/persistentState";
 
 type DashboardTicketsProps = {
   isLoading?: boolean;
@@ -35,18 +37,23 @@ export default function DashboardTickets({
   isEmpty = false,
   isError = false,
 }: DashboardTicketsProps) {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const currentAgentName = user?.fullName || "Inesh Agarwal";
+
+  const [tickets, setTickets] = usePersistentState<DashboardTicket[]>(
+    "servigen_incidents_new_tickets_v1",
+    DASHBOARD_TICKETS
+  );
+  const [selectedTicket, setSelectedTicket] = useState<DashboardTicket | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pageSize = 4;
 
-  const totalPages = Math.ceil(DASHBOARD_TICKETS.length / pageSize) || 1;
+  const totalPages = Math.ceil(tickets.length / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
-  const pagedTickets = DASHBOARD_TICKETS.slice(startIndex, startIndex + pageSize);
+  const pagedTickets = tickets.slice(startIndex, startIndex + pageSize);
 
   const allVisibleSelected =
     pagedTickets.length > 0 && pagedTickets.every((t) => selectedIds.includes(t.id));
@@ -66,16 +73,33 @@ export default function DashboardTickets({
     );
   };
 
-  const handleTicketClick = (ticket: (typeof DASHBOARD_TICKETS)[number]) => {
-    if (ticket.type === "Major Incident") {
-      navigate("/major-incidents/live");
-    } else if (ticket.type === "Project Task") {
-      navigate("/projects");
-    } else if (ticket.type === "Service Request") {
-      navigate("/services-catalogue");
-    } else {
-      navigate("/incidents");
-    }
+  const handleTicketClick = (ticket: DashboardTicket) => {
+    setSelectedTicket(ticket);
+  };
+
+  const handleModalUpdateTicket = (updated: FullTicket) => {
+    setSelectedTicket(updated);
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.id === updated.id
+          ? {
+              ...t,
+              agent: updated.agent,
+              priority: updated.priority as DashboardPriority,
+              summary: updated.summary,
+              type: updated.type,
+              status: updated.status,
+              description: updated.description,
+              requester: updated.requester,
+              department: updated.department,
+              category: updated.category,
+              createdAt: updated.createdAt,
+              targetSla: updated.targetSla,
+              notes: updated.notes,
+            }
+          : t
+      )
+    );
   };
 
   return (
@@ -96,7 +120,7 @@ export default function DashboardTickets({
             <span>
               {isEmpty
                 ? "0 of 0"
-                : `${startIndex + 1}–${Math.min(startIndex + pageSize, DASHBOARD_TICKETS.length)} of ${DASHBOARD_TICKETS.length}`}
+                : `${startIndex + 1}–${Math.min(startIndex + pageSize, tickets.length)} of ${tickets.length}`}
             </span>
 
             <button
@@ -174,7 +198,7 @@ export default function DashboardTickets({
                   <td
                     className="dashboard-link-cell"
                     onClick={() => handleTicketClick(ticket)}
-                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Incidents"}`}
+                    title="View complete ticket and request details"
                     style={{ cursor: 'pointer', fontWeight: 600 }}
                   >
                     {ticket.id}
@@ -185,7 +209,7 @@ export default function DashboardTickets({
                   <td
                     className="dashboard-link-cell"
                     onClick={() => handleTicketClick(ticket)}
-                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Incidents"}`}
+                    title="View complete ticket and request details"
                     style={{ cursor: 'pointer' }}
                   >
                     {ticket.summary}
@@ -214,6 +238,15 @@ export default function DashboardTickets({
           </table>
         </div>
       ))}
+
+      {selectedTicket && (
+        <TicketDetailModal
+          ticket={selectedTicket}
+          currentUser={currentAgentName}
+          onClose={() => setSelectedTicket(null)}
+          onUpdateTicket={handleModalUpdateTicket}
+        />
+      )}
     </section>
   );
 }

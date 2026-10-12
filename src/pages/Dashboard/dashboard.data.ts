@@ -25,12 +25,27 @@ export type CategoryItem = {
   displayValue: boolean;
 };
 
+export type DashboardTicketNote = {
+  id: string;
+  author: string;
+  time: string;
+  text: string;
+};
+
 export type DashboardTicket = {
   id: string;
   type: string;
   summary: string;
   agent: string;
   priority: DashboardPriority;
+  status?: string;
+  description?: string;
+  requester?: string;
+  department?: string;
+  category?: string;
+  createdAt?: string;
+  targetSla?: string;
+  notes?: DashboardTicketNote[];
 };
 
 export const DASHBOARD_STATS = [
