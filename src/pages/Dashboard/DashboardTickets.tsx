@@ -185,7 +185,14 @@ export default function DashboardTickets({
 
               <tbody>
                 {pagedTickets.map((ticket) => (
-                  <tr key={ticket.id}>
+                  <tr
+                    key={ticket.id}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).tagName === "INPUT") return;
+                      handleTicketClick(ticket);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <td className="dashboard-check-cell">
                       <input
                         type="checkbox"

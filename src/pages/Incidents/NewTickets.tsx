@@ -244,7 +244,15 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
 
             <tbody>
               {pagedTickets.map((ticket) => (
-                <tr key={ticket.id}>
+                <tr
+                  key={ticket.id}
+                  className="incident-row"
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).tagName === "INPUT") return;
+                    handleTicketClick(ticket);
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
                   <td className="ticket-check-column">
                     <input
                       type="checkbox"
