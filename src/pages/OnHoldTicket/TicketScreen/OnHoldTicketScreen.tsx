@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import "./OnHoldTicketScreen.css";
 import MyList from "../mylist/MyList";
 
@@ -41,9 +42,10 @@ interface TicketRowProps {
   ticket: Ticket;
   selectedItems: string[];
   onToggle: (id: string) => void;
+  onNavigate: (id: string) => void;
 }
 
-const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }) => (
+const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, onNavigate }) => (
   <tr className={"ticket-row" + (selectedItems.includes(ticket.id) ? " selected" : "")}>
     <td className="col-type">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#64748b" strokeWidth="1.5">
@@ -58,9 +60,13 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
       <span className="badge-onhold">On Hold</span>
     </td>
     <td className="col-id">
-      <a href={`#ticket/${ticket.id}`} className="ticket-id-link" onClick={(e) => { e.preventDefault(); alert(`Navigating to details for Ticket: ${ticket.id}`); }}>
+      <button 
+        type="button" 
+        className="ticket-id-link text-left bg-transparent border-0 cursor-pointer" 
+        onClick={() => onNavigate(ticket.id)}
+      >
         {ticket.id}
-      </a>
+      </button>
     </td>
     <td className="col-sla">
       <span className="sla-text">On Hold</span>
@@ -82,6 +88,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
 );
 
 const OnHoldTicketScreen: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -215,7 +222,7 @@ const OnHoldTicketScreen: React.FC = () => {
             <span className="tab-plus">+</span>
           </div>
           <div className="topnav-right">
-            <button className="btn-get-started" onClick={() => alert("Get Started: Coming soon!")}>Get started</button>
+            <button className="btn-get-started" onClick={() => navigate('/dashboard')}>Get started</button>
             <button className="btn-new-ticket" onClick={handleNewTicket}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Ticket
@@ -361,6 +368,7 @@ const OnHoldTicketScreen: React.FC = () => {
                               ticket={t} 
                               selectedItems={selectedItems} 
                               onToggle={toggleSelect} 
+                              onNavigate={() => navigate('/incidents')}
                             />
                           ))}
                         </React.Fragment>

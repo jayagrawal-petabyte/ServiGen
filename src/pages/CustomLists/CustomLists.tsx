@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CustomLists.css';
 
 interface FilterCondition {
@@ -9,6 +10,7 @@ interface FilterCondition {
 }
 
 const CustomLists: React.FC = () => {
+  const navigate = useNavigate();
   const [activeModalTab, setActiveModalTab] = useState<'Details' | 'Filters'>('Details');
   
   const [formData, setFormData] = useState({
@@ -91,6 +93,14 @@ const CustomLists: React.FC = () => {
     alert("Link copied to clipboard!");
   };
 
+  const handleClose = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <div className="cl-modal-overlay">
       <div className="cl-modal">
@@ -105,7 +115,7 @@ const CustomLists: React.FC = () => {
           </div>
           <div className="cl-header-right">
             <button className="cl-icon-btn" onClick={handleShare} title="Share"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0ea5e9" strokeWidth="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
-            <button className="cl-icon-btn" title="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#64748b" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <button className="cl-icon-btn" onClick={handleClose} title="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#64748b" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         </div>
 

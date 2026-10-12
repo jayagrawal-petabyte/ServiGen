@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { NewTicket, Priority } from "./incidents.data";
 
 type NewTicketsProps = {
@@ -38,6 +39,14 @@ function TicketAvatar({ agent }: { agent: string }) {
 }
 
 export default function NewTickets({ tickets }: NewTicketsProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
+  const activePage = Math.min(currentPage, totalPages);
+  const start = tickets.length === 0 ? 0 : (activePage - 1) * pageSize + 1;
+  const end = Math.min(activePage * pageSize, tickets.length);
+  const pagedTickets = tickets.slice((activePage - 1) * pageSize, activePage * pageSize);
+
   return (
     <section className="incident-card tickets-card">
       <div className="incident-card-title tickets-card-title">
@@ -47,11 +56,23 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
         </div>
 
         <div className="tickets-pagination">
-          <span>1–10 of 12</span>
-          <button type="button" aria-label="Previous page">
+          <span>{start}–{end} of {tickets.length}</span>
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={activePage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            style={{ opacity: activePage <= 1 ? 0.4 : 1, cursor: activePage <= 1 ? 'default' : 'pointer' }}
+          >
             ‹
           </button>
-          <button type="button" aria-label="Next page">
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={activePage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            style={{ opacity: activePage >= totalPages ? 0.4 : 1, cursor: activePage >= totalPages ? 'default' : 'pointer' }}
+          >
             ›
           </button>
         </div>
@@ -79,7 +100,7 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
             </thead>
 
             <tbody>
-              {tickets.map((ticket) => (
+              {pagedTickets.map((ticket) => (
                 <tr key={ticket.id}>
                   <td className="ticket-check-column">
                     <input

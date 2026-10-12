@@ -18,6 +18,8 @@ import {
   PRIORITY_DATA,
   RECENT_INCIDENTS,
   type RecentIncident,
+  type NewTicket,
+  type Priority,
 } from "./incidents.data";
 
 type IncidentsProps = {
@@ -53,6 +55,12 @@ export default function Incidents({
   const [showNewTicketModal, setShowNewTicketModal] =
     useState(false);
 
+  const [tickets, setTickets] = useState<NewTicket[]>(NEW_TICKETS);
+  const [newTicketType, setNewTicketType] = useState<"Incident" | "Service Request">("Incident");
+  const [newSummary, setNewSummary] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newPriority, setNewPriority] = useState<Priority>("Medium");
+
   const filteredIncidents = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -80,10 +88,10 @@ export default function Incidents({
     const query = search.trim().toLowerCase();
 
     if (!query) {
-      return NEW_TICKETS;
+      return tickets;
     }
 
-    return NEW_TICKETS.filter((ticket) => {
+    return tickets.filter((ticket) => {
       const searchableText = [
         ticket.id,
         ticket.type,
@@ -96,7 +104,7 @@ export default function Incidents({
 
       return searchableText.indexOf(query) !== -1;
     });
-  }, [search]);
+  }, [search, tickets]);
 
   const handleSearchChange = (
     event: ChangeEvent<HTMLInputElement>
@@ -112,6 +120,19 @@ export default function Incidents({
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+    if (!newSummary.trim()) return;
+
+    const newTicket: NewTicket = {
+      id: `#${Math.floor(1000 + Math.random() * 9000)}`,
+      type: newTicketType,
+      summary: newSummary.trim(),
+      agent: "Unassigned",
+      priority: newPriority,
+    };
+
+    setTickets((prev) => [newTicket, ...prev]);
+    setNewSummary("");
+    setNewDescription("");
     setShowNewTicketModal(false);
   };
 
@@ -324,7 +345,10 @@ export default function Incidents({
             >
               <label>
                 Ticket Type
-                <select defaultValue="Incident">
+                <select
+                  value={newTicketType}
+                  onChange={(e) => setNewTicketType(e.target.value as "Incident" | "Service Request")}
+                >
                   <option value="Incident">Incident</option>
                   <option value="Service Request">
                     Service Request
@@ -337,6 +361,8 @@ export default function Incidents({
                 <input
                   type="text"
                   placeholder="Enter ticket summary"
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
                   required
                 />
               </label>
@@ -346,13 +372,18 @@ export default function Incidents({
                 <textarea
                   rows={4}
                   placeholder="Enter ticket description"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
                   required
                 />
               </label>
 
               <label>
                 Priority
-                <select defaultValue="Medium">
+                <select
+                  value={newPriority}
+                  onChange={(e) => setNewPriority(e.target.value as Priority)}
+                >
                   <option value="Critical">Critical</option>
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>

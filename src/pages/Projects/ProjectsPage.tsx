@@ -3,13 +3,21 @@ import { mockProjects, Project } from "./mockProjects";
 import "./projects.css";
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // New project form state
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newOwner, setNewOwner] = useState("Inesh Agarwal");
+  const [newPriority, setNewPriority] = useState<"High" | "Medium" | "Low">("Medium");
 
   const filteredProjects = useMemo(() => {
-    return mockProjects.filter((project) => {
+    return projects.filter((project) => {
       const matchesSearch =
         project.name.toLowerCase().includes(search.toLowerCase()) ||
         project.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -23,7 +31,30 @@ export default function ProjectsPage() {
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [search, statusFilter, priorityFilter]);
+  }, [projects, search, statusFilter, priorityFilter]);
+
+  const handleCreateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+
+    const created: Project = {
+      id: Date.now(),
+      name: newName.trim(),
+      description: newDesc.trim() || "New project workspace",
+      status: "Active",
+      priority: newPriority,
+      owner: newOwner.trim() || "Inesh Agarwal",
+      timeline: "Q4 2026",
+      completedSubtasks: 0,
+      totalSubtasks: 5,
+      timeSpent: "0h",
+    };
+
+    setProjects((prev) => [created, ...prev]);
+    setNewName("");
+    setNewDesc("");
+    setIsCreateOpen(false);
+  };
 
   return (
     <div className="projects-page">
@@ -33,33 +64,38 @@ export default function ProjectsPage() {
           <p>Manage and track all projects</p>
         </div>
 
-        <button className="add-project-btn">+ New Project</button>
+        <button
+          className="add-project-btn"
+          onClick={() => setIsCreateOpen(true)}
+        >
+          + New Project
+        </button>
       </div>
 
       <div className="project-summary">
         <div className="summary-card">
           <span>Total Projects</span>
-          <strong>{mockProjects.length}</strong>
+          <strong>{projects.length}</strong>
         </div>
 
         <div className="summary-card">
           <span>Active</span>
           <strong>
-            {mockProjects.filter((p) => p.status === "Active").length}
+            {projects.filter((p) => p.status === "Active").length}
           </strong>
         </div>
 
         <div className="summary-card">
           <span>Completed</span>
           <strong>
-            {mockProjects.filter((p) => p.status === "Completed").length}
+            {projects.filter((p) => p.status === "Completed").length}
           </strong>
         </div>
 
         <div className="summary-card">
           <span>On Hold</span>
           <strong>
-            {mockProjects.filter((p) => p.status === "On Hold").length}
+            {projects.filter((p) => p.status === "On Hold").length}
           </strong>
         </div>
       </div>
@@ -224,6 +260,103 @@ export default function ProjectsPage() {
                 </strong>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isCreateOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setIsCreateOpen(false)}
+        >
+          <div
+            className="project-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 480 }}
+          >
+            <div className="modal-header">
+              <h2>Create New Project</h2>
+              <button
+                className="close-btn"
+                onClick={() => setIsCreateOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProject} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. ERP Cloud Migration"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Goals, deliverables and scope..."
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                    Owner
+                  </label>
+                  <input
+                    type="text"
+                    value={newOwner}
+                    onChange={(e) => setNewOwner(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                    Priority
+                  </label>
+                  <select
+                    value={newPriority}
+                    onChange={(e) => setNewPriority(e.target.value as "High" | "Medium" | "Low")}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  style={{ padding: '8px 16px', borderRadius: 20, border: 'none', background: '#f1f5f9', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '8px 18px', borderRadius: 20, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+                >
+                  Create Project
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
