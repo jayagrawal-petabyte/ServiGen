@@ -6,7 +6,6 @@ import OpenIncidentsByTeam from "./OpenIncidentsByTeam";
 import DashboardCategory from "./DashboardCategory";
 import DashboardTickets from "./DashboardTickets";
 import DashboardGreeting from "./DashboardGreeting";
-import Sidebar from "../OnHoldTicket/sidebar/Sidebar";
 
 import {
   CATEGORY_DATA,
@@ -22,8 +21,6 @@ export default function Dashboard({
 }: DashboardProps) {
   return (
     <div className="dashboard-layout">
-      <Sidebar />
-
       <main className="dashboard-page">
         <DashboardGreeting />
 

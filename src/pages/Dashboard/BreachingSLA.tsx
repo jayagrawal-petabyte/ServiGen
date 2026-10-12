@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   SLA_INCIDENTS,
   type DashboardPriority,
@@ -27,29 +29,87 @@ function AgentIcon() {
 export default function BreachingSLA({
   isLoading = false,
 }: BreachingSLAProps) {
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const pageSize = 4;
+
+  const totalPages = Math.ceil(SLA_INCIDENTS.length / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedIncidents = SLA_INCIDENTS.slice(startIndex, startIndex + pageSize);
+
+  const allVisibleSelected =
+    pagedIncidents.length > 0 && pagedIncidents.every((inc) => selectedIds.includes(inc.id));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pagedIncidents.some((inc) => inc.id === id)));
+    } else {
+      const visibleIds = pagedIncidents.map((inc) => inc.id);
+      setSelectedIds((prev) => [...new Set([...prev, ...visibleIds])]);
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleIncidentClick = (priority: DashboardPriority) => {
+    if (priority === "Critical") {
+      navigate("/major-incidents/live");
+    } else {
+      navigate("/incidents");
+    }
+  };
+
   return (
     <section className="dashboard-card dashboard-sla-card">
       <div className="dashboard-card-header">
-        <div className="dashboard-card-heading">
+        <div
+          className="dashboard-card-heading"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          style={{ cursor: "pointer", userSelect: "none" }}
+          title={isCollapsed ? "Expand section" : "Collapse section"}
+        >
           <h2>Breaching SLA</h2>
-          <span className="dashboard-card-chevron">⌄</span>
+          <span className="dashboard-card-chevron">{isCollapsed ? "›" : "⌄"}</span>
         </div>
 
-        <div className="dashboard-table-pagination">
-          <span>1–10 of 148</span>
+        {!isCollapsed && (
+          <div className="dashboard-table-pagination">
+            <span>
+              {startIndex + 1}–{Math.min(startIndex + pageSize, SLA_INCIDENTS.length)} of {SLA_INCIDENTS.length}
+            </span>
 
-          <button type="button" aria-label="Previous page">
-            ‹
-          </button>
+            <button
+              type="button"
+              aria-label="Previous page"
+              disabled={currentPage <= 1 || isLoading}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              style={{ cursor: currentPage > 1 ? "pointer" : "default" }}
+            >
+              ‹
+            </button>
 
-          <button type="button" aria-label="Next page">
-            ›
-          </button>
-        </div>
+            <button
+              type="button"
+              aria-label="Next page"
+              disabled={currentPage >= totalPages || isLoading}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              style={{ cursor: currentPage < totalPages ? "pointer" : "default" }}
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="dashboard-loading">
+      {!isCollapsed && (
+        isLoading ? (
+          <div className="dashboard-loading">
           Loading SLA incidents...
         </div>
       ) : SLA_INCIDENTS.length === 0 ? (
@@ -63,7 +123,12 @@ export default function BreachingSLA({
             <thead>
               <tr>
                 <th className="dashboard-check-cell">
-                  <input type="checkbox" aria-label="Select all" />
+                  <input
+                    type="checkbox"
+                    aria-label="Select all"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAll}
+                  />
                 </th>
                 <th>ID</th>
                 <th>Ticket Type</th>
@@ -75,12 +140,14 @@ export default function BreachingSLA({
             </thead>
 
             <tbody>
-              {SLA_INCIDENTS.map((incident) => (
+              {pagedIncidents.map((incident) => (
                 <tr key={incident.id}>
                   <td className="dashboard-check-cell">
                     <input
                       type="checkbox"
                       aria-label={`Select ${incident.id}`}
+                      checked={selectedIds.includes(incident.id)}
+                      onChange={() => toggleSelectOne(incident.id)}
                     />
                   </td>
 
@@ -88,7 +155,12 @@ export default function BreachingSLA({
 
                   <td>{incident.type}</td>
 
-                  <td className="dashboard-link-cell">
+                  <td
+                    className="dashboard-link-cell"
+                    onClick={() => handleIncidentClick(incident.priority)}
+                    title={`View details for ${incident.id}`}
+                    style={{ cursor: 'pointer' }}
+                  >
                     {incident.summary}
                   </td>
 
@@ -120,7 +192,7 @@ export default function BreachingSLA({
             </tbody>
           </table>
         </div>
-      )}
+      ))}
     </section>
   );
 }
