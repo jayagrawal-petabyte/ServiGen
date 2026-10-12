@@ -264,12 +264,30 @@ export default function Incidents({
     event.preventDefault();
     if (!newSummary.trim()) return;
 
+    const now = new Date();
+    const formattedDate = `${now.getDate()} ${now.toLocaleString("en-US", { month: "short" })} ${now.getFullYear()}, ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+
     const newTicket: NewTicket = {
       id: `#${Math.floor(1000 + Math.random() * 9000)}`,
       type: newTicketType,
       summary: newSummary.trim(),
+      description: newDescription.trim(),
       agent: "Unassigned",
       priority: newPriority,
+      status: "Open",
+      requester: "Inesh Agarwal (ServiGen User)",
+      department: "IT Operations",
+      category: newTicketType === "Incident" ? "Incident > General" : "Service Request > General",
+      createdAt: formattedDate,
+      targetSla: "Target SLA: Within 4 hours",
+      notes: [
+        {
+          id: `n-${Date.now()}`,
+          author: "Inesh Agarwal",
+          time: "Just now",
+          text: `Ticket created with summary: "${newSummary.trim()}".`,
+        },
+      ],
     };
 
     setTickets((prev) => [newTicket, ...prev]);
