@@ -245,6 +245,52 @@ const OnHoldTicketScreen: React.FC = () => {
     }));
   };
 
+  const handleBulkAssignToMe = () => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id)
+          ? { ...t, org: "consultancy/EMEA/Inesh Agarwal" }
+          : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkSetPriority = (priority: string) => {
+    const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
+      Critical: "red",
+      High: "orange",
+      Medium: "yellow",
+      Low: "green",
+    };
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id)
+          ? {
+              ...t,
+              priority,
+              priorityColor: priorityColorMap[priority] || "yellow",
+            }
+          : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkSetStatus = (status: "On H" | "With") => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id) ? { ...t, status } : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkDelete = () => {
+    setTickets((prev) => prev.filter((t) => !selectedItems.includes(t.id)));
+    setSelectedItems([]);
+  };
+
   return (
     <div className="app-shell">
       <div className="main-area">
@@ -327,6 +373,77 @@ const OnHoldTicketScreen: React.FC = () => {
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
               </button>
             </div>
+
+            {selectedItems.length > 0 && (
+              <div className="onhold-bulk-bar">
+                <div className="onhold-bulk-count">
+                  <span className="onhold-bulk-badge">{selectedItems.length}</span>
+                  <span>{selectedItems.length} ticket{selectedItems.length > 1 ? "s" : ""} selected</span>
+                </div>
+
+                <div className="onhold-bulk-actions">
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn"
+                    onClick={handleBulkAssignToMe}
+                    title="Assign selected tickets to Inesh Agarwal"
+                  >
+                    Assign to Me
+                  </button>
+
+                  <select
+                    className="onhold-bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetPriority(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Set priority for selected tickets"
+                  >
+                    <option value="" disabled>Set Priority ▾</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+
+                  <select
+                    className="onhold-bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetStatus(e.target.value as "On H" | "With");
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Change status for selected tickets"
+                  >
+                    <option value="" disabled>Change Status ▾</option>
+                    <option value="On H">On Hold</option>
+                    <option value="With">With User</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn onhold-bulk-btn-delete"
+                    onClick={handleBulkDelete}
+                    title="Delete selected tickets"
+                  >
+                    Delete
+                  </button>
+
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn"
+                    onClick={() => setSelectedItems([])}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="table-scroll-wrap">
               {isLoading ? (
