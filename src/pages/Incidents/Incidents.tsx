@@ -194,7 +194,10 @@ export default function Incidents({
     );
   };
 
-  const [tickets, setTickets] = useState<NewTicket[]>(NEW_TICKETS);
+  const [tickets, setTickets] = usePersistentState<NewTicket[]>(
+    "servigen_incidents_new_tickets_v1",
+    NEW_TICKETS
+  );
   const [newTicketType, setNewTicketType] = useState<"Incident" | "Service Request">("Incident");
   const [newSummary, setNewSummary] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -470,7 +473,10 @@ export default function Incidents({
 
           <CategoryChart data={CATEGORY_DATA} />
 
-          <NewTickets tickets={filteredTickets} />
+          <NewTickets
+            tickets={filteredTickets}
+            onUpdateTickets={setTickets}
+          />
         </div>
       )}
 

@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { NewTicket, Priority } from "./incidents.data";
 
 type NewTicketsProps = {
   tickets: NewTicket[];
+  onUpdateTickets?: (updated: NewTicket[]) => void;
 };
 
 const PRIORITY_MARKERS: Record<Priority, string> = {
@@ -38,7 +40,8 @@ function TicketAvatar({ agent }: { agent: string }) {
   );
 }
 
-export default function NewTickets({ tickets }: NewTicketsProps) {
+export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps) {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -65,6 +68,40 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  const handleTicketClick = (ticket: NewTicket) => {
+    if (ticket.type === "Major Incident") {
+      navigate("/major-incidents/live");
+    } else if (ticket.type === "Project Task") {
+      navigate("/projects");
+    } else if (ticket.type === "Service Request") {
+      navigate("/services-catalogue");
+    } else {
+      navigate("/team/1st-line-live");
+    }
+  };
+
+  const handleBulkAssignToMe = () => {
+    const updated = tickets.map((t) =>
+      selectedIds.includes(t.id) ? { ...t, agent: "Inesh Agarwal" } : t
+    );
+    onUpdateTickets?.(updated);
+    setSelectedIds([]);
+  };
+
+  const handleBulkSetPriority = (priority: Priority) => {
+    const updated = tickets.map((t) =>
+      selectedIds.includes(t.id) ? { ...t, priority } : t
+    );
+    onUpdateTickets?.(updated);
+    setSelectedIds([]);
+  };
+
+  const handleBulkDelete = () => {
+    const updated = tickets.filter((t) => !selectedIds.includes(t.id));
+    onUpdateTickets?.(updated);
+    setSelectedIds([]);
   };
 
   return (
@@ -105,6 +142,63 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
         )}
       </div>
 
+      {!isCollapsed && selectedIds.length > 0 && (
+        <div className="tickets-bulk-actions-bar">
+          <div className="bulk-selection-count">
+            <span className="bulk-badge">{selectedIds.length}</span>
+            <span>ticket{selectedIds.length > 1 ? "s" : ""} selected</span>
+          </div>
+
+          <div className="bulk-actions-buttons">
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-assign"
+              onClick={handleBulkAssignToMe}
+              title="Assign selected tickets to Inesh Agarwal"
+            >
+              Assign to Me
+            </button>
+
+            <div className="bulk-priority-dropdown-wrap">
+              <select
+                className="bulk-select"
+                defaultValue=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleBulkSetPriority(e.target.value as Priority);
+                    e.target.value = "";
+                  }
+                }}
+                aria-label="Set priority for selected tickets"
+              >
+                <option value="" disabled>Set Priority ▾</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-delete"
+              onClick={handleBulkDelete}
+              title="Delete selected tickets"
+            >
+              Delete
+            </button>
+
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-clear"
+              onClick={() => setSelectedIds([])}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {!isCollapsed && (
         tickets.length === 0 ? (
           <div className="incident-empty-state">
@@ -143,9 +237,21 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
                       onChange={() => toggleSelectOne(ticket.id)}
                     />
                   </td>
-                  <td>{ticket.id}</td>
+                  <td
+                    className="ticket-id-link"
+                    onClick={() => handleTicketClick(ticket)}
+                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Team Queue"}`}
+                  >
+                    {ticket.id}
+                  </td>
                   <td>{ticket.type}</td>
-                  <td className="ticket-summary">{ticket.summary}</td>
+                  <td
+                    className="ticket-summary"
+                    onClick={() => handleTicketClick(ticket)}
+                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Team Queue"}`}
+                  >
+                    {ticket.summary}
+                  </td>
                   <td>
                     <TicketAvatar agent={ticket.agent} />
                   </td>

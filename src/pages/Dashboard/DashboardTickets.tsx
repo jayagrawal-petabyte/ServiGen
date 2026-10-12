@@ -66,6 +66,18 @@ export default function DashboardTickets({
     );
   };
 
+  const handleTicketClick = (ticket: (typeof DASHBOARD_TICKETS)[number]) => {
+    if (ticket.type === "Major Incident") {
+      navigate("/major-incidents/live");
+    } else if (ticket.type === "Project Task") {
+      navigate("/projects");
+    } else if (ticket.type === "Service Request") {
+      navigate("/services-catalogue");
+    } else {
+      navigate("/incidents");
+    }
+  };
+
   return (
     <section className="dashboard-card dashboard-tickets-card">
       <div className="dashboard-card-header">
@@ -159,14 +171,21 @@ export default function DashboardTickets({
                       />
                     </td>
 
-                  <td>{ticket.id}</td>
+                  <td
+                    className="dashboard-link-cell"
+                    onClick={() => handleTicketClick(ticket)}
+                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Incidents"}`}
+                    style={{ cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    {ticket.id}
+                  </td>
 
                   <td>{ticket.type}</td>
 
                   <td
                     className="dashboard-link-cell"
-                    onClick={() => navigate('/incidents')}
-                    title={`View details for ${ticket.id}`}
+                    onClick={() => handleTicketClick(ticket)}
+                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Incidents"}`}
                     style={{ cursor: 'pointer' }}
                   >
                     {ticket.summary}
