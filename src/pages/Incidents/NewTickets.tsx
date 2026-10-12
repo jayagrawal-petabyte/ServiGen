@@ -40,12 +40,31 @@ function TicketAvatar({ agent }: { agent: string }) {
 
 export default function NewTickets({ tickets }: NewTicketsProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
   const activePage = Math.min(currentPage, totalPages);
   const start = tickets.length === 0 ? 0 : (activePage - 1) * pageSize + 1;
   const end = Math.min(activePage * pageSize, tickets.length);
   const pagedTickets = tickets.slice((activePage - 1) * pageSize, activePage * pageSize);
+
+  const allVisibleSelected =
+    pagedTickets.length > 0 && pagedTickets.every((t) => selectedIds.includes(t.id));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pagedTickets.some((t) => t.id === id)));
+    } else {
+      const visibleIds = pagedTickets.map((t) => t.id);
+      setSelectedIds((prev) => [...new Set([...prev, ...visibleIds])]);
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   return (
     <section className="incident-card tickets-card">
@@ -89,7 +108,12 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
             <thead>
               <tr>
                 <th className="ticket-check-column">
-                  <input type="checkbox" aria-label="Select all tickets" />
+                  <input
+                    type="checkbox"
+                    aria-label="Select all tickets"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAll}
+                  />
                 </th>
                 <th>ID</th>
                 <th>Ticket Type</th>
@@ -106,6 +130,8 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
                     <input
                       type="checkbox"
                       aria-label={`Select ${ticket.id}`}
+                      checked={selectedIds.includes(ticket.id)}
+                      onChange={() => toggleSelectOne(ticket.id)}
                     />
                   </td>
                   <td>{ticket.id}</td>
