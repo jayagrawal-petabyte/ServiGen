@@ -2,8 +2,10 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./OnHoldTicketScreen.css";
 import MyList from "../mylist/MyList";
+import { TicketDetailModal, type FullTicket, type TicketPriority } from "../../../components/TicketDetailModal";
+import { usePersistentState } from "../../../utils/persistentState";
 
-interface Ticket {
+export interface Ticket {
   id: string;
   priority: string;
   priorityColor: "red" | "orange" | "yellow" | "green";
@@ -11,24 +13,29 @@ interface Ticket {
   summary: string;
   status: "On H" | "With";
   type: "Incident" | "Service Request";
+  description?: string;
+  requester?: string;
+  department?: string;
+  createdAt?: string;
+  targetSla?: string;
 }
 
 const ALL_TICKETS: Ticket[] = [
-  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be f...", status: "On H", type: "Incident" },
-  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to ...", status: "With", type: "Incident" },
-  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few second...", status: "With", type: "Incident" },
-  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mans...",summary: "Trading desk computer won't b...", status: "With", type: "Incident" },
-  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to exter...", status: "With", type: "Incident" },
-  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say...", status: "On H", type: "Incident" },
-  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeabl...", status: "With", type: "Incident" },
-  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support ca...", status: "With", type: "Incident" },
-  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly wh...", status: "On H", type: "Incident" },
-  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter neve...", status: "With", type: "Incident" },
-  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner abou...", status: "On H", type: "Incident" },
-  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to a virtual mach...", status: "With", type: "Incident" },
-  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authen...", status: "With", type: "Incident" },
-  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jum...", status: "On H", type: "Incident" },
-  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install p...", status: "With", type: "Service Request" },
+  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be from HR about bonuses...", status: "On H", type: "Incident", description: "Suspicious email received with external phishing links posing as HR compensation review. Account credentials may have been targeted; security quarantine requested." },
+  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to upload client deck...", status: "With", type: "Incident", description: "Upload to SharePoint portal fails with HTTP 413 Payload Too Large. Presentation file is 85MB; requesting quota expansion or alternative transfer link." },
+  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few seconds then drops...", status: "With", type: "Incident", description: "Cisco AnyConnect establishes connection but disconnects within 15 seconds with gateway timeout error. Multiple EMEA consultants reporting identical behavior." },
+  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mansoor", summary: "Trading desk computer won't boot past BIOS...", status: "With", type: "Incident", description: "Workstation workstation-NY-44 powers on but hangs at vendor BIOS screen. No bootable device found error. Urgent priority for market open." },
+  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to external clients failing...", status: "With", type: "Incident", description: "Calendar synchronization failure when generating Teams invite links for external partner domain. Meeting scheduled for 3 PM GMT." },
+  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say my audio echo is severe...", status: "On H", type: "Incident", description: "Poly headset microphone feedback loop during client presentation calls. Driver updates and audio filter configurations required." },
+  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeably slow after Windows update...", status: "With", type: "Incident", description: "System performance degraded after KB5034441 update. High CPU and disk usage observed from Windows Search Indexer service." },
+  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support can access CRM records...", status: "With", type: "Incident", description: "CRM gateway timeout for Sydney support queue. Support team currently unable to log customer inquiries." },
+  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly while roaming...", status: "On H", type: "Incident", description: "Remote access VPN disconnects when user roams between Wi-Fi and mobile tethering in Americas region." },
+  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter never saved in HR portal...", status: "With", type: "Incident", description: "Quarterly review objective entries disappeared upon form submission in SuccessFactors portal." },
+  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner about expiring security token...", status: "On H", type: "Incident", description: "Kerberos token renewal banner appearing in Outlook. User password not due for renewal for 45 days." },
+  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to virtual machine lab environment...", status: "With", type: "Incident", description: "Remote Desktop connection to Azure VM lab timed out. VM status shows running but network security group rules may be blocking port 3389." },
+  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authenticator app inaccessible...", status: "With", type: "Incident", description: "Corporate iPhone screen cracked and touch input unresponsive. Needs temporary MFA bypass code or phone replacement." },
+  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jumps from 90% to 10%...", status: "On H", type: "Incident", description: "Battery hardware failure on ThinkPad T14. Device abruptly powers down during client meetings without charger." },
+  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install Python and VS Code...", status: "With", type: "Service Request", description: "Data analyst requesting development environment installation for local Python ETL scripts and Jupyter notebooks." },
 ];
 
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
@@ -42,11 +49,18 @@ interface TicketRowProps {
   ticket: Ticket;
   selectedItems: string[];
   onToggle: (id: string) => void;
-  onNavigate: (id: string) => void;
+  onSelectTicket: (ticket: Ticket) => void;
 }
 
-const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, onNavigate }) => (
-  <tr className={"ticket-row" + (selectedItems.includes(ticket.id) ? " selected" : "")}>
+const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, onSelectTicket }) => (
+  <tr
+    className={"ticket-row" + (selectedItems.includes(ticket.id) ? " selected" : "")}
+    onClick={(e) => {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      onSelectTicket(ticket);
+    }}
+    style={{ cursor: "pointer" }}
+  >
     <td className="col-type">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#64748b" strokeWidth="1.5">
         <rect x="3" y="3" width="18" height="18" rx="3" />
@@ -63,7 +77,11 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
       <button 
         type="button" 
         className="ticket-id-link text-left bg-transparent border-0 cursor-pointer" 
-        onClick={() => onNavigate(ticket.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectTicket(ticket);
+        }}
+        title="View complete ticket and request details"
       >
         {ticket.id}
       </button>
@@ -90,6 +108,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
 const OnHoldTicketScreen: React.FC = () => {
   const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeView, setActiveView] = useState<string>("My Lists");
@@ -99,7 +118,7 @@ const OnHoldTicketScreen: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
-  const [tickets, setTickets] = useState<Ticket[]>(ALL_TICKETS);
+  const [tickets, setTickets] = usePersistentState<Ticket[]>("servigen_onhold_tickets_v1", ALL_TICKETS);
 
   React.useEffect(() => {
     fetchData();
@@ -368,7 +387,7 @@ const OnHoldTicketScreen: React.FC = () => {
                               ticket={t} 
                               selectedItems={selectedItems} 
                               onToggle={toggleSelect} 
-                              onNavigate={() => navigate('/incidents')}
+                              onSelectTicket={setSelectedTicket}
                             />
                           ))}
                         </React.Fragment>
@@ -381,6 +400,50 @@ const OnHoldTicketScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {selectedTicket && (
+        <TicketDetailModal
+          ticket={{
+            id: selectedTicket.id,
+            type: selectedTicket.type,
+            summary: selectedTicket.summary,
+            priority: (selectedTicket.priority as TicketPriority) || "Medium",
+            status: selectedTicket.status === "On H" ? "On Hold" : "With User",
+            agent: "Inesh Agarwal",
+            description: selectedTicket.description,
+            requester: selectedTicket.org,
+            department: "Consultancy Support",
+            createdAt: selectedTicket.createdAt || "12 Oct 2026",
+            targetSla: "Target: 4 hours remaining",
+          }}
+          currentUser="Inesh Agarwal"
+          onClose={() => setSelectedTicket(null)}
+          onUpdateTicket={(updated) => {
+            setTickets((prev) =>
+              prev.map((t) =>
+                t.id === updated.id
+                  ? {
+                      ...t,
+                      summary: updated.summary,
+                      priority: updated.priority,
+                      priorityColor:
+                        updated.priority === "Critical"
+                          ? "red"
+                          : updated.priority === "High"
+                          ? "orange"
+                          : updated.priority === "Medium"
+                          ? "yellow"
+                          : "green",
+                      status: updated.status === "With User" ? "With" : "On H",
+                      description: updated.description,
+                    }
+                  : t
+              )
+            );
+            setSelectedTicket(null);
+          }}
+        />
+      )}
     </div>
   );
 };
