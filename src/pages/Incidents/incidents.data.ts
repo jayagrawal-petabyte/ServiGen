@@ -22,12 +22,27 @@ export type RecentIncident = {
   organisation: string;
 };
 
+export type TicketNote = {
+  id: string;
+  author: string;
+  time: string;
+  text: string;
+};
+
 export type NewTicket = {
   id: string;
   type: string;
   summary: string;
   agent: string;
   priority: Priority;
+  status?: string;
+  description?: string;
+  requester?: string;
+  department?: string;
+  category?: string;
+  createdAt?: string;
+  targetSla?: string;
+  notes?: TicketNote[];
 };
 
 export type ChartItem = {

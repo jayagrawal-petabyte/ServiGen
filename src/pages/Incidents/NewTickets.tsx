@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import type { NewTicket, Priority } from "./incidents.data";
+import { TicketDetailModal, type FullTicket } from "../../components/TicketDetailModal";
 
 type NewTicketsProps = {
   tickets: NewTicket[];
@@ -41,7 +41,7 @@ function TicketAvatar({ agent }: { agent: string }) {
 }
 
 export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps) {
-  const navigate = useNavigate();
+  const [selectedTicket, setSelectedTicket] = useState<NewTicket | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -71,15 +71,31 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
   };
 
   const handleTicketClick = (ticket: NewTicket) => {
-    if (ticket.type === "Major Incident") {
-      navigate("/major-incidents/live");
-    } else if (ticket.type === "Project Task") {
-      navigate("/projects");
-    } else if (ticket.type === "Service Request") {
-      navigate("/services-catalogue");
-    } else {
-      navigate("/team/1st-line-live");
-    }
+    setSelectedTicket(ticket);
+  };
+
+  const handleModalUpdateTicket = (updated: FullTicket) => {
+    setSelectedTicket(updated);
+    const nextTickets = tickets.map((t) =>
+      t.id === updated.id
+        ? {
+            ...t,
+            agent: updated.agent,
+            priority: updated.priority as Priority,
+            summary: updated.summary,
+            type: updated.type,
+            status: updated.status,
+            description: updated.description,
+            requester: updated.requester,
+            department: updated.department,
+            category: updated.category,
+            createdAt: updated.createdAt,
+            targetSla: updated.targetSla,
+            notes: updated.notes,
+          }
+        : t
+    );
+    onUpdateTickets?.(nextTickets);
   };
 
   const handleBulkAssignToMe = () => {
@@ -240,7 +256,7 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
                   <td
                     className="ticket-id-link"
                     onClick={() => handleTicketClick(ticket)}
-                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Team Queue"}`}
+                    title="View complete ticket and request details"
                   >
                     {ticket.id}
                   </td>
@@ -248,7 +264,7 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
                   <td
                     className="ticket-summary"
                     onClick={() => handleTicketClick(ticket)}
-                    title={`Open in ${ticket.type === "Major Incident" ? "Major Incidents Live" : ticket.type === "Project Task" ? "Projects" : ticket.type === "Service Request" ? "Services Catalogue" : "Team Queue"}`}
+                    title="View complete ticket and request details"
                   >
                     {ticket.summary}
                   </td>
@@ -264,6 +280,14 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
           </table>
         </div>
       ))}
+
+      {selectedTicket && (
+        <TicketDetailModal
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          onUpdateTicket={handleModalUpdateTicket}
+        />
+      )}
     </section>
   );
 }
