@@ -41,6 +41,7 @@ function TicketAvatar({ agent }: { agent: string }) {
 export default function NewTickets({ tickets }: NewTicketsProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
   const activePage = Math.min(currentPage, totalPages);
@@ -69,40 +70,48 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
   return (
     <section className="incident-card tickets-card">
       <div className="incident-card-title tickets-card-title">
-        <div className="tickets-heading">
+        <div
+          className="tickets-heading"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          style={{ cursor: "pointer", userSelect: "none" }}
+          title={isCollapsed ? "Expand section" : "Collapse section"}
+        >
           <h2>My New Tickets</h2>
-          <span className="tickets-heading-arrow">⌄</span>
+          <span className="tickets-heading-arrow">{isCollapsed ? "›" : "⌄"}</span>
         </div>
 
-        <div className="tickets-pagination">
-          <span>{start}–{end} of {tickets.length}</span>
-          <button
-            type="button"
-            aria-label="Previous page"
-            disabled={activePage <= 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            style={{ opacity: activePage <= 1 ? 0.4 : 1, cursor: activePage <= 1 ? 'default' : 'pointer' }}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            aria-label="Next page"
-            disabled={activePage >= totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            style={{ opacity: activePage >= totalPages ? 0.4 : 1, cursor: activePage >= totalPages ? 'default' : 'pointer' }}
-          >
-            ›
-          </button>
-        </div>
+        {!isCollapsed && (
+          <div className="tickets-pagination">
+            <span>{start}–{end} of {tickets.length}</span>
+            <button
+              type="button"
+              aria-label="Previous page"
+              disabled={activePage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              style={{ opacity: activePage <= 1 ? 0.4 : 1, cursor: activePage <= 1 ? 'default' : 'pointer' }}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="Next page"
+              disabled={activePage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              style={{ opacity: activePage >= totalPages ? 0.4 : 1, cursor: activePage >= totalPages ? 'default' : 'pointer' }}
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
 
-      {tickets.length === 0 ? (
-        <div className="incident-empty-state">
-          <h3>No new tickets found</h3>
-          <p>There are no tickets matching the current search.</p>
-        </div>
-      ) : (
+      {!isCollapsed && (
+        tickets.length === 0 ? (
+          <div className="incident-empty-state">
+            <h3>No new tickets found</h3>
+            <p>There are no tickets matching the current search.</p>
+          </div>
+        ) : (
         <div className="ticket-table-scroll">
           <table className="incident-table ticket-table">
             <thead>
@@ -148,7 +157,7 @@ export default function NewTickets({ tickets }: NewTicketsProps) {
             </tbody>
           </table>
         </div>
-      )}
+      ))}
     </section>
   );
 }
