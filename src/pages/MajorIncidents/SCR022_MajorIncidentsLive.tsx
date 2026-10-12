@@ -1,4 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../Auth';
+import { usePersistentState } from '../../utils/persistentState';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
 import ActivityFeed from './components/ActivityFeed';
@@ -98,10 +101,14 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
 };
 
 const SCR022_MajorIncidentsLive: React.FC = () => {
+  const { user } = useAuth();
   const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(false);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
-  const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
+  const [localIncidents, setLocalIncidents] = usePersistentState<MajorIncident[]>(
+    'servigen_major_incidents_live_v1',
+    []
+  );
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
@@ -109,10 +116,20 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [role, setRole]                     = useState<UserRole>('Agent');
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
   const [roleToast, setRoleToast]           = useState<string | null>(null);
-  const [notifications, setNotifications]   = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [tasks, setTasks]                   = useState<TaskItem[]>(INITIAL_TASKS);
+  const [notifications, setNotifications]   = usePersistentState<NotificationItem[]>(
+    'servigen_major_incidents_notifs_v1',
+    INITIAL_NOTIFICATIONS
+  );
+  const [tasks, setTasks]                   = usePersistentState<TaskItem[]>(
+    'servigen_major_incidents_tasks_v1',
+    INITIAL_TASKS
+  );
   const [feedUnreadCount, setFeedUnreadCount] = useState<number>(MOCK_FEED_ENTRIES.length);
   const PAGE_SIZE = 2;
+
+  const activeUserName = user?.fullName || 'Inesh Agarwal';
+  const activeUserEmail = user?.email || 'inesh@servigen.io';
+  const activeUserRole = user?.role || 'Administrator';
 
   const unreadNotifCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
@@ -180,7 +197,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         const stageChangeUpdate: IncidentUpdate = {
           id: `u-${Date.now()}`,
           timestamp: now,
-          author: role === 'Admin' ? 'Admin User' : 'Manager User',
+          author: activeUserName,
           authorRole: role,
           type: 'stage_change',
           content: 'Stage advanced.',
@@ -190,33 +207,26 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         return { ...inc, lifecycleStages: newStages, updates: [...(inc.updates ?? []), stageChangeUpdate] };
       });
 
-    setLocalIncidents((prev) => advance(prev));
-    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
-    if (isMock) {
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
-      setLocalIncidents((prev) => {
-        const alreadyLocal = prev.some((i) => i.id === incidentId);
-        if (alreadyLocal) return advance(prev);
-        return advance([{ ...original }, ...prev]);
-      });
-    }
+    setLocalIncidents((prev) => {
+      const alreadyLocal = prev.some((i) => i.id === incidentId);
+      if (alreadyLocal) return advance(prev);
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
+      if (original) return advance([{ ...original }, ...prev]);
+      return prev;
+    });
   };
 
   const handleAddUpdate = (incidentId: string, update: IncidentUpdate) => {
     const inject = (list: MajorIncident[]): MajorIncident[] =>
       list.map((inc) => inc.id === incidentId ? { ...inc, updates: [...(inc.updates ?? []), update] } : inc);
 
-    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
-    if (isMock) {
-      setLocalIncidents((prev) => {
-        const alreadyLocal = prev.some((i) => i.id === incidentId);
-        if (alreadyLocal) return inject(prev);
-        const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
-        return inject([{ ...original }, ...prev]);
-      });
-    } else {
-      setLocalIncidents((prev) => inject(prev));
-    }
+    setLocalIncidents((prev) => {
+      const alreadyLocal = prev.some((i) => i.id === incidentId);
+      if (alreadyLocal) return inject(prev);
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
+      if (original) return inject([{ ...original }, ...prev]);
+      return prev;
+    });
   };
 
   const handleReassign = (incidentId: string, newAssignee: string) => {
@@ -229,8 +239,8 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         const assignUpdate: IncidentUpdate = {
           id: `u-${Date.now()}`,
           timestamp: now,
-          author: 'Admin User',
-          authorRole: 'Admin',
+          author: activeUserName,
+          authorRole: role,
           type: 'status_change',
           content: `Assignee reassigned to ${newAssignee}`,
         };
@@ -241,16 +251,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         };
       });
 
-    setLocalIncidents((prev) => updateAssignee(prev));
-    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
-    if (isMock) {
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
-      setLocalIncidents((prev) => {
-        const alreadyLocal = prev.some((i) => i.id === incidentId);
-        if (alreadyLocal) return updateAssignee(prev);
-        return updateAssignee([{ ...original }, ...prev]);
-      });
-    }
+    setLocalIncidents((prev) => {
+      const alreadyLocal = prev.some((i) => i.id === incidentId);
+      if (alreadyLocal) return updateAssignee(prev);
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
+      if (original) return updateAssignee([{ ...original }, ...prev]);
+      return prev;
+    });
   };
 
   const handleUpdatePriority = (incidentId: string, newPriority: Priority) => {
@@ -263,24 +270,21 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         const updateLog: IncidentUpdate = {
           id: `u-${Date.now()}`,
           timestamp: now,
-          author: 'Admin User',
-          authorRole: 'Admin',
+          author: activeUserName,
+          authorRole: role,
           type: 'status_change',
           content: `Priority changed to ${newPriority}`,
         };
         return { ...inc, priority: newPriority, updates: [...(inc.updates ?? []), updateLog] };
       });
 
-    setLocalIncidents((prev) => updatePrio(prev));
-    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
-    if (isMock) {
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
-      setLocalIncidents((prev) => {
-        const alreadyLocal = prev.some((i) => i.id === incidentId);
-        if (alreadyLocal) return updatePrio(prev);
-        return updatePrio([{ ...original }, ...prev]);
-      });
-    }
+    setLocalIncidents((prev) => {
+      const alreadyLocal = prev.some((i) => i.id === incidentId);
+      if (alreadyLocal) return updatePrio(prev);
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
+      if (original) return updatePrio([{ ...original }, ...prev]);
+      return prev;
+    });
   };
 
   const handleUpdateProduct = (incidentId: string, newProduct: string) => {
@@ -293,24 +297,21 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         const updateLog: IncidentUpdate = {
           id: `u-${Date.now()}`,
           timestamp: now,
-          author: 'Admin User',
-          authorRole: 'Admin',
+          author: activeUserName,
+          authorRole: role,
           type: 'status_change',
           content: `Product / CI changed to ${newProduct}`,
         };
         return { ...inc, product: newProduct, updates: [...(inc.updates ?? []), updateLog] };
       });
 
-    setLocalIncidents((prev) => updateProd(prev));
-    const isMock = MOCK_MAJOR_INCIDENTS.some((i) => i.id === incidentId);
-    if (isMock) {
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId)!;
-      setLocalIncidents((prev) => {
-        const alreadyLocal = prev.some((i) => i.id === incidentId);
-        if (alreadyLocal) return updateProd(prev);
-        return updateProd([{ ...original }, ...prev]);
-      });
-    }
+    setLocalIncidents((prev) => {
+      const alreadyLocal = prev.some((i) => i.id === incidentId);
+      if (alreadyLocal) return updateProd(prev);
+      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
+      if (original) return updateProd([{ ...original }, ...prev]);
+      return prev;
+    });
   };
 
   /* Search icon → focus the sub-bar search input */
@@ -408,6 +409,45 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           onProfile={() => handlePanel('profile')}
           breadcrumb={BREADCRUMB_LABELS[selectedListId] ?? selectedListId}
         />
+
+        {/* View Switcher Bar */}
+        <div className="flex items-center justify-between px-5 py-2 bg-white border-b border-gray-200 text-xs shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-gray-400 font-semibold mr-1">Views:</span>
+            <Link
+              to="/major-incidents/live"
+              className="px-3 py-1 rounded-full font-semibold transition-all bg-cyan-500 text-white shadow-xs"
+            >
+              Live Cards
+            </Link>
+            <Link
+              to="/major-incidents/list"
+              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+            >
+              List Table
+            </Link>
+            <Link
+              to="/major-incidents/feed"
+              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+            >
+              Live Feed
+            </Link>
+            <Link
+              to="/major-incidents/design"
+              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+            >
+              Design Canvas
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/cmdb"
+              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
+            >
+              Asset CMDB →
+            </Link>
+          </div>
+        </div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main content area */}
@@ -666,6 +706,28 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                         </span>
                       </div>
                     ))}
+                  </div>
+                ) : openPanel === 'profile' ? (
+                  <div className="space-y-3 text-xs text-gray-700">
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                      <div className="w-10 h-10 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                        {activeUserName.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900 text-sm">{activeUserName}</div>
+                        <div className="text-gray-500">{activeUserEmail}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div><span className="text-gray-400">Account Role:</span> <span className="font-semibold text-gray-800">{activeUserRole}</span></div>
+                      <div><span className="text-gray-400">Simulated Role:</span> <span className="font-semibold text-cyan-600">{role}</span></div>
+                      <div><span className="text-gray-400">Department:</span> <span className="font-medium text-gray-800">{user?.department || 'IT Operations'}</span></div>
+                      <div><span className="text-gray-400">Organization:</span> <span className="font-medium text-gray-800">{user?.defaultOrganisation || 'ServiGen Global Tech'}</span></div>
+                      <div><span className="text-gray-400">Status:</span> <span className="inline-flex items-center gap-1 font-medium text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</span></div>
+                    </div>
+                    <p className="text-[11px] text-gray-400 pt-2 border-t border-gray-100">
+                      Switch simulated role using the bar at the top of the screen.
+                    </p>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">

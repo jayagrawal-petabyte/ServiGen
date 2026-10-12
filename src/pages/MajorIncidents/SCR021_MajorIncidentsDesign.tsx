@@ -1,36 +1,21 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
 import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
 import type { MajorIncident } from './types/majorIncident.types';
 
 const SCR021_MajorIncidentsDesign: React.FC = () => {
+  const navigate = useNavigate();
   const [_selectedListId, setSelectedListId] = useState<string>('update-required');
   const displayedIncidents: MajorIncident[] = MOCK_MAJOR_INCIDENTS;
   const totalCount = displayedIncidents.length;
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden font-sans">
-      
-      {/* ── Thin Global Nav (Halo) ── */}
-      <nav className="w-16 bg-[#0f172a] flex flex-col items-center py-4 shrink-0 gap-6 z-20 relative">
-        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center font-bold text-xl">O</div>
-        <div className="flex flex-col gap-4 w-full">
-          {[
-            { icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', label: 'My Work' },
-            { icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', label: 'Incidents' },
-            { icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', label: 'Major Incidents', active: true },
-            { icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4', label: 'Problems' }
-          ].map((item, i) => (
-            <div key={i} className={`flex flex-col items-center gap-1 cursor-pointer w-full py-2 ${item.active ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-white'}`}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={item.icon} /></svg>
-              <span className="text-[9px] text-center px-1 leading-tight">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </nav>
+      {/* ── Main Layout (Sidebar + Header + Content) ── */}
+      <MajorIncidentsSidebar onSelectList={setSelectedListId} />
 
-      {/* ── Main Layout (Header + Content) ── */}
       <div className="flex flex-col flex-1 min-w-0">
         
         {/* Top Navbar */}
@@ -40,16 +25,22 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
             <span className="text-gray-400">&gt;</span>
             <div className="flex items-center gap-1.5 text-gray-900 font-semibold">
               <div className="w-3 h-3 bg-red-500 rounded-sm" />
-              Update Required
+              Update Required (Design Preview)
             </div>
           </div>
           
           <div className="flex items-center gap-4">
             
-            <button className="bg-cyan-400 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors">
-              Get started
+            <button
+              onClick={() => navigate('/major-incidents/live')}
+              className="bg-cyan-400 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors cursor-pointer"
+            >
+              Live Console →
             </button>
-            <button className="bg-cyan-400 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors flex items-center gap-1">
+            <button
+              onClick={() => navigate('/major-incidents/live')}
+              className="bg-cyan-400 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+            >
               <span className="text-lg leading-none">+</span> New Ticket
             </button>
 
@@ -100,10 +91,8 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
           </div>
         </header>
 
-        {/* Workspace Area (Sidebar + List) */}
+        {/* Workspace Area (List) */}
         <div className="flex flex-1 min-h-0">
-          <MajorIncidentsSidebar onSelectList={setSelectedListId} />
-
           <main className="flex-1 flex flex-col min-w-0 bg-gray-50">
             {/* Toolbar */}
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200 shrink-0">

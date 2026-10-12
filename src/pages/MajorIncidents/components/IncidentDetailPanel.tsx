@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types/majorIncident.types';
 import PriorityBadge from './PriorityBadge';
+import { useAuth } from '../../Auth/AuthContext';
 import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
 import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
@@ -27,6 +29,9 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   onUpdatePriority,
   onUpdateProduct,
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentUserName = user?.fullName || 'Inesh Agarwal';
   const [updateText, setUpdateText] = useState('');
   const [isCustomAssignee, setIsCustomAssignee] = useState(false);
   const [customAssigneeInput, setCustomAssigneeInput] = useState('');
@@ -51,7 +56,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
     const newUpdate: IncidentUpdate = {
       id: `u-${Date.now()}`,
       timestamp: now,
-      author: role === 'Admin' ? 'Admin User' : role === 'Manager' ? 'Manager User' : 'Support Agent',
+      author: currentUserName,
       authorRole: role,
       type: 'comment',
       content: updateText.trim(),
@@ -130,7 +135,17 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
                 </optgroup>
               </select>
             ) : (
-              <span className="font-semibold text-gray-700 truncate block mt-0.5">{incident.product}</span>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="font-semibold text-gray-700 truncate">{incident.product}</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/cmdb')}
+                  title="View CI details in CMDB"
+                  className="text-[10px] text-cyan-600 hover:text-cyan-800 font-bold hover:underline shrink-0"
+                >
+                  CMDB →
+                </button>
+              </div>
             )}
           </div>
           <div>
