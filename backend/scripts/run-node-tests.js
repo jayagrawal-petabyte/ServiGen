@@ -9,7 +9,8 @@ const root = path.resolve(__dirname, '..');
 const folders = [
   'src/config', 'src', 'src/shared', 'src/modules/approvals',
   'src/modules/services-catalogue', 'src/modules/ai-core/response',
-  'src/modules/major-incidents',
+  'src/modules/major-incidents', 'src/modules/ai-core/intent',
+  'src/modules/change-requests',
 ];
 const files = folders.flatMap(folder => readdirSync(path.join(root, folder))
   .filter(file => file.endsWith('.test.js')).map(file => path.join(root, folder, file)));

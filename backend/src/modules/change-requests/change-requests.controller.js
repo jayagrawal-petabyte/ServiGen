@@ -23,7 +23,7 @@ const getEffectiveOrgId = (req) => {
     const override = req.query.organisationId.trim();
     if (override) return override;
   }
-  return req.user?.organisationId || req.headers['x-org-id'] || null;
+  return req.user?.organisationId || null;
 };
 
 // ─── Controllers ──────────────────────────────────────────────────────────────

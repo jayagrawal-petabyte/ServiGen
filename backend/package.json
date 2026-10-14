@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node src/server.js",
-    "test:jest": "jest --forceExit src/modules/my-work/my-work.test.js",
+    "test:jest": "jest --forceExit src/modules/my-work src/modules/incidents",
     "test:node": "node scripts/run-node-tests.js",
     "test": "npm run test:jest && npm run test:node",
     "prisma:generate": "prisma generate",

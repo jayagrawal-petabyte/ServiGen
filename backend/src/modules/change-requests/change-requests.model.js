@@ -45,11 +45,26 @@ const mockChangeRequests = [
   },
 ];
 
+// ─── Prisma Query Inclusions ──────────────────────────────────────────────────
+const crInclude = {
+  assignedAgent: {
+    select: { organisationId: true },
+  },
+  configurationItem: {
+    include: {
+      site: {
+        select: { organisationId: true },
+      },
+    },
+  },
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
  * Map a raw Prisma ChangeRequest record to the public shape.
- * `organisationId` is resolved from the DB record directly — never hardcoded.
+ * `organisationId` is resolved from the DB record directly, or via its assigned
+ * agent or configuration item site relation — never hardcoded.
  *
  * @param {object} cr  Raw Prisma record
  * @returns {object}   Public-facing ChangeRequest shape
@@ -64,13 +79,16 @@ const formatRecord = (cr) => ({
   relatedService: cr.relatedService || null,
   startDate: cr.startDate ? cr.startDate.toISOString() : null,
   endDate: cr.endDate ? cr.endDate.toISOString() : null,
-  organisationId: cr.organisationId || null,
+  organisationId:
+    cr.organisationId ||
+    cr.assignedAgent?.organisationId ||
+    cr.configurationItem?.site?.organisationId ||
+    null,
 });
 
 /**
- * Apply tenant isolation. Records with no organisationId are treated as
- * globally accessible (e.g. system-level changes). Records whose tenant
- * does not match the authenticated user's org are excluded.
+ * Apply tenant isolation.
+ * When organisationId is specified, only records matching that tenant are returned.
  *
  * @param {object[]} records  Formatted change-request objects
  * @param {string|null} organisationId  Authenticated caller's org
@@ -78,9 +96,7 @@ const formatRecord = (cr) => ({
  */
 const applyTenantFilter = (records, organisationId) => {
   if (!organisationId) return records;
-  return records.filter(
-    (cr) => !cr.organisationId || cr.organisationId === organisationId
-  );
+  return records.filter((cr) => cr.organisationId === organisationId);
 };
 
 // ─── Model Functions ──────────────────────────────────────────────────────────
@@ -94,14 +110,13 @@ const applyTenantFilter = (records, organisationId) => {
 const getChangeRequests = async (options = {}) => {
   const { organisationId } = options;
 
-  // BUG FIX: Previously the condition `records && records.length > 0` meant
-  // an empty live table would silently fall through to mock seed data.
-  // Now we distinguish "DB is reachable" from "DB is empty": reachable DB
+  // Distinguish "DB is reachable" from "DB is empty": reachable DB
   // data (even an empty array) is always returned; the mock fallback is only
   // used when a connection error is thrown.
   if (process.env.NODE_ENV !== 'test') {
     try {
       const records = await db.changeRequest.findMany({
+        include: crInclude,
         orderBy: { createdAt: 'desc' },
       });
       // `records` is always an array (possibly empty) — return directly.
@@ -124,14 +139,15 @@ const getChangeRequests = async (options = {}) => {
 const getChangeRequestById = async (id, organisationId = null) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
-      const cr = await db.changeRequest.findUnique({ where: { id } });
+      const cr = await db.changeRequest.findUnique({
+        where: { id },
+        include: crInclude,
+      });
       if (!cr) return null;
 
       const formatted = formatRecord(cr);
 
-      // BUG FIX: Tenant isolation now uses the actual `organisationId` from
-      // the DB record (via formatRecord), not the previously hardcoded 'org-001'.
-      if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {
+      if (organisationId && formatted.organisationId !== organisationId) {
         return null;
       }
       return formatted;
@@ -142,7 +158,7 @@ const getChangeRequestById = async (id, organisationId = null) => {
 
   const cr = mockChangeRequests.find((item) => item.id === id);
   if (!cr) return null;
-  if (organisationId && cr.organisationId && cr.organisationId !== organisationId) {
+  if (organisationId && cr.organisationId !== organisationId) {
     return null;
   }
   return cr;
@@ -159,9 +175,9 @@ const getActiveChangeRequests = async (options = {}) => {
 
   if (process.env.NODE_ENV !== 'test') {
     try {
-      // BUG FIX: Same empty-array fix applied here as in getChangeRequests.
       const records = await db.changeRequest.findMany({
         where: { status: 'Active' },
+        include: crInclude,
         orderBy: { createdAt: 'desc' },
       });
       return applyTenantFilter(records.map(formatRecord), organisationId);
@@ -170,10 +186,9 @@ const getActiveChangeRequests = async (options = {}) => {
     }
   }
 
-  return mockChangeRequests.filter(
-    (cr) =>
-      cr.status === 'Active' &&
-      (!organisationId || !cr.organisationId || cr.organisationId === organisationId)
+  return applyTenantFilter(
+    mockChangeRequests.filter((cr) => cr.status === 'Active'),
+    organisationId
   );
 };
 
