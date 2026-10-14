@@ -134,24 +134,22 @@ const getTickets = async (filters = {}) => {
         orderBy: { createdAt: 'desc' },
       });
 
-      if (dbTickets && dbTickets.length > 0) {
-        return dbTickets.map((t) => ({
-          id: t.id,
-          summary: t.summary,
-          priority: t.priority,
-          status: t.status,
-          ticketType: t.ticketType,
-          organisation: t.organisation?.name || 'Acme Corp',
-          site: t.siteName || 'London HQ',
-          assignedAgentId: t.assignedAgentId || 'agent-001',
-          slaTimeLeft: t.slaTimeLeft,
-          timeRecord: t.timeRecord || 0,
-          holdReason: t.holdReason,
-          holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
-          createdAt: t.createdAt.toISOString(),
-          updatedAt: t.updatedAt.toISOString(),
-        }));
-      }
+      return dbTickets.map((t) => ({
+        id: t.id,
+        summary: t.summary,
+        priority: t.priority,
+        status: t.status,
+        ticketType: t.ticketType,
+        organisation: t.organisation?.name || 'Acme Corp',
+        site: t.siteName || 'London HQ',
+        assignedAgentId: t.assignedAgentId || 'agent-001',
+        slaTimeLeft: t.slaTimeLeft,
+        timeRecord: t.timeRecord || 0,
+        holdReason: t.holdReason,
+        holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
+        createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt.toISOString(),
+      }));
     } catch (_err) {
       // Database connection fallback
     }

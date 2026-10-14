@@ -40,18 +40,16 @@ const getPendingApprovals = async () => {
         where: { status: 'Pending' },
         include: { approver: true },
       });
-      if (list && list.length > 0) {
-        return list.map((a) => ({
-          id: a.id,
-          title: a.summary,
-          requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
-          service: a.entityType || 'General',
-          status: a.status,
-          submittedAt: a.createdAt.toISOString(),
-          description: a.comments || a.summary,
-          approverId: a.approverId,
-        }));
-      }
+      return list.map((a) => ({
+        id: a.id,
+        title: a.summary,
+        requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
+        service: a.entityType || 'General',
+        status: a.status,
+        submittedAt: a.createdAt.toISOString(),
+        description: a.comments || a.summary,
+        approverId: a.approverId,
+      }));
     } catch (_err) {
       // Database connection fallback
     }

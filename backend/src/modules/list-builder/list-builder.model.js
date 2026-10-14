@@ -31,25 +31,28 @@ const getLists = async (options = {}) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
       const records = await db.customList.findMany({
+        include: {
+          creator: {
+            select: { organisationId: true },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       });
 
-      if (records && records.length > 0) {
-        const formatted = records.map((l) => ({
-          id: l.id,
-          name: l.name,
-          description: l.description,
-          status: l.status,
-          fields: l.fields || [],
-          createdBy: l.createdBy,
-          organisationId: 'org-001',
-        }));
+      const formatted = records.map((l) => ({
+        id: l.id,
+        name: l.name,
+        description: l.description,
+        status: l.status,
+        fields: l.fields || [],
+        createdBy: l.createdBy,
+        organisationId: l.creator?.organisationId || 'org-001',
+      }));
 
-        if (organisationId) {
-          return formatted.filter((list) => !list.organisationId || list.organisationId === organisationId);
-        }
-        return formatted;
+      if (organisationId) {
+        return formatted.filter((list) => !list.organisationId || list.organisationId === organisationId);
       }
+      return formatted;
     } catch (_err) {
       // Database connection fallback
     }
@@ -66,6 +69,11 @@ const getListById = async (id, organisationId = null) => {
     try {
       const l = await db.customList.findUnique({
         where: { id },
+        include: {
+          creator: {
+            select: { organisationId: true },
+          },
+        },
       });
 
       if (l) {
@@ -76,7 +84,7 @@ const getListById = async (id, organisationId = null) => {
           status: l.status,
           fields: l.fields || [],
           createdBy: l.createdBy,
-          organisationId: 'org-001',
+          organisationId: l.creator?.organisationId || 'org-001',
         };
 
         if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {

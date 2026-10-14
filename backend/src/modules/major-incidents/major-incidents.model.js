@@ -38,26 +38,24 @@ const getMajorIncidents = async (filters = {}) => {
         orderBy: { startedAt: 'desc' },
       });
 
-      if (records && records.length > 0) {
-        return records.map((mi) => ({
-          id: mi.id,
-          title: mi.title,
-          description: mi.description,
-          status: mi.status,
-          priority: mi.priority,
-          impact: mi.impact,
-          affectedServices: mi.affectedServices,
-          commander: mi.commander,
-          startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
-          resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
-          updates: (mi.updates || []).map((u) => ({
-            id: u.id,
-            message: u.message,
-            author: u.author,
-            createdAt: u.timestamp ? u.timestamp.toISOString() : new Date().toISOString(),
-          })),
-        }));
-      }
+      return records.map((mi) => ({
+        id: mi.id,
+        title: mi.title,
+        description: mi.description,
+        status: mi.status,
+        priority: mi.priority,
+        impact: mi.impact,
+        affectedServices: mi.affectedServices,
+        commander: mi.commander,
+        startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
+        resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
+        updates: (mi.updates || []).map((u) => ({
+          id: u.id,
+          message: u.message,
+          author: u.author,
+          createdAt: u.timestamp ? u.timestamp.toISOString() : new Date().toISOString(),
+        })),
+      }));
     } catch (_err) {
       // Database connection fallback
     }
@@ -167,7 +165,9 @@ const addIncidentUpdate = async (id, update) => {
 
   const incident = await getMajorIncidentById(id);
   if (!incident) return null;
-  incident.updates.push(update);
+  if (!incident.updates.some((u) => u.id === update.id)) {
+    incident.updates.push(update);
+  }
   return incident;
 };
 

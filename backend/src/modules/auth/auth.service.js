@@ -64,11 +64,12 @@ const login = async (credentials, password) => {
     throw error;
   }
 
-  // Never return the password to the controller/client.
-  const { password: _, ...safeUser } = user;
+  // Never return the password or passwordHash to the controller/client.
+  const { password: _p, passwordHash: _ph, ...safeUser } = user;
 
   const token = generateToken({
     id: safeUser.id,
+    email: safeUser.email,
     role: safeUser.role,
     organisationId: safeUser.organisationId,
   });
@@ -100,7 +101,7 @@ const getSession = async (userId) => {
     throw error;
   }
 
-  const { password: _, ...safeUser } = user;
+  const { password: _p, passwordHash: _ph, ...safeUser } = user;
 
   return safeUser;
 };

@@ -22,15 +22,13 @@ const getAllServices = async () => {
   if (process.env.NODE_ENV !== 'test') {
     try {
       const items = await db.serviceCatalogueItem.findMany();
-      if (items && items.length > 0) {
-        return items.map((s) => ({
-          id: s.id,
-          name: s.name,
-          category: s.category,
-          description: s.description,
-          status: s.status,
-        }));
-      }
+      return items.map((s) => ({
+        id: s.id,
+        name: s.name,
+        category: s.category,
+        description: s.description,
+        status: s.status,
+      }));
     } catch (_err) {
       // Database connection fallback
     }
@@ -46,9 +44,7 @@ const getAllCategories = async () => {
         select: { category: true },
         distinct: ['category'],
       });
-      if (items && items.length > 0) {
-        return items.map((c, i) => ({ id: `c${i + 1}`, name: c.category }));
-      }
+      return items.map((c, i) => ({ id: `c${i + 1}`, name: c.category }));
     } catch (_err) {
       // Database connection fallback
     }

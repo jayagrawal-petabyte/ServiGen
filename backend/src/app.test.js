@@ -203,17 +203,29 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
 
   // Auth routes: login is public, session requires auth
   assert.equal((await fetch(base + '/api/auth/session')).status, 401);
-  assert.equal((await fetch(base + '/api/auth/session', { headers: org1Staff })).status, 200);
+  const sessionResponse = await fetch(base + '/api/auth/session', { headers: org1Staff });
+  assert.equal(sessionResponse.status, 200);
+  const sessionBody = await sessionResponse.json();
+  assert.equal(sessionBody.data.password, undefined);
+  assert.equal(sessionBody.data.passwordHash, undefined);
+
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 1234, password: 'Password@123' }),
   })).status, 400);
-  assert.equal((await fetch(base + '/api/auth/login', {
+
+  const loginResponse = await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 'agent001@servigen.local', password: 'Password@123' }),
-  })).status, 200);
+  });
+  assert.equal(loginResponse.status, 200);
+  const loginBody = await loginResponse.json();
+  assert.equal(loginBody.data.password, undefined);
+  assert.equal(loginBody.data.passwordHash, undefined);
+  assert.equal(loginBody.data.email, 'agent001@servigen.local');
+
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

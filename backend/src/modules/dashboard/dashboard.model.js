@@ -161,23 +161,23 @@ const getCategoryBreakdown = async () => [...categoryBreakdown];
  * "latest N" tickets could be wrong. The service now sorts all records first,
  * then truncates to the requested limit.
  */
-const getNewTickets = async () => {
+const getNewTickets = async (organisationId = null) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
+      const where = organisationId ? { organisationId } : {};
       const records = await db.ticket.findMany({
+        where,
         include: { organisation: true },
         orderBy: { createdAt: 'desc' },
       });
-      if (records && records.length > 0) {
-        return records.map((t) => ({
-          id: t.id,
-          summary: t.summary,
-          priority: t.priority,
-          ticketType: t.ticketType,
-          organisation: t.organisation?.name || 'Acme Corp',
-          createdAt: t.createdAt.toISOString(),
-        }));
-      }
+      return records.map((t) => ({
+        id: t.id,
+        summary: t.summary,
+        priority: t.priority,
+        ticketType: t.ticketType,
+        organisation: t.organisation?.name || 'Acme Corp',
+        createdAt: t.createdAt.toISOString(),
+      }));
     } catch (_err) {
       // Database connection fallback
     }

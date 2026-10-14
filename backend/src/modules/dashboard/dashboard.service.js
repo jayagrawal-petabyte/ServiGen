@@ -100,9 +100,9 @@ const getIncidentsByCategory = async () => getCategoryBreakdown();
  * BI-7 FIX: Sort the full collection first, then slice \u2014 the model no longer
  * pre-slices, so we always get the true N most-recent tickets.
  */
-const getNewTicketsPanel = async (query = {}) => {
+const getNewTicketsPanel = async (query = {}, organisationId = null) => {
   const limit = Math.min(50, Math.max(1, parseInt(query.limit, 10) || 10));
-  const tickets = await getNewTickets();
+  const tickets = await getNewTickets(organisationId);
   return tickets
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, limit);

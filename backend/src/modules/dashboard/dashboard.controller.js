@@ -108,7 +108,8 @@ const getIncidentsByCategoryHandler = async (req, res) => {
  */
 const getNewTicketsHandler = async (req, res) => {
   try {
-    const data = await getNewTicketsPanel(req.query);
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getNewTicketsPanel(req.query, organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch new tickets panel');

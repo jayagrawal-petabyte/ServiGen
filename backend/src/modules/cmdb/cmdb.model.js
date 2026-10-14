@@ -50,24 +50,28 @@ const getConfigurationItems = async (options = {}) => {
 
   if (process.env.NODE_ENV !== 'test') {
     try {
-      const records = await db.configurationItem.findMany();
-      if (records && records.length > 0) {
-        const formatted = records.map((ci) => ({
-          id: ci.id,
-          name: ci.name,
-          type: ci.type,
-          tag: ci.tag,
-          site: ci.siteName || 'Chennai',
-          status: ci.status,
-          businessOwner: ci.businessOwner || 'Technology',
-          organisationId: 'org-001',
-        }));
+      const records = await db.configurationItem.findMany({
+        include: {
+          site: {
+            select: { organisationId: true },
+          },
+        },
+      });
+      const formatted = records.map((ci) => ({
+        id: ci.id,
+        name: ci.name,
+        type: ci.type,
+        tag: ci.tag,
+        site: ci.siteName || 'Chennai',
+        status: ci.status,
+        businessOwner: ci.businessOwner || 'Technology',
+        organisationId: ci.site?.organisationId || null,
+      }));
 
-        if (organisationId) {
-          return formatted.filter((item) => !item.organisationId || item.organisationId === organisationId);
-        }
-        return formatted;
+      if (organisationId) {
+        return formatted.filter((item) => !item.organisationId || item.organisationId === organisationId);
       }
+      return formatted;
     } catch (_err) {
       // Database connection fallback
     }
@@ -106,6 +110,11 @@ const getConfigurationItemById = async (id, organisationId = null) => {
             { tag: id },
           ],
         },
+        include: {
+          site: {
+            select: { organisationId: true },
+          },
+        },
       });
 
       if (ci) {
@@ -117,7 +126,7 @@ const getConfigurationItemById = async (id, organisationId = null) => {
           site: ci.siteName || 'Chennai',
           status: ci.status,
           businessOwner: ci.businessOwner || 'Technology',
-          organisationId: 'org-001',
+          organisationId: ci.site?.organisationId || null,
         };
 
         if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {

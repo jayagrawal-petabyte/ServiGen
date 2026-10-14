@@ -38,19 +38,17 @@ const getOrganisationUsers = async (organisationId) => {
         orderBy: { createdAt: 'asc' },
       });
 
-      if (records && records.length > 0) {
-        return records.map((u) => ({
-          id: u.id,
-          username: u.username || u.email.split('@')[0],
-          site: u.site?.name || 'Main HQ',
-          email: u.email,
-          phone: u.phoneNumber || '+91-9000000000',
-          networkLogin: u.networkLogin || u.username,
-          role: u.role,
-          organisationId: u.organisationId,
-          active: u.availability !== 'Inactive',
-        }));
-      }
+      return records.map((u) => ({
+        id: u.id,
+        username: u.username || u.email.split('@')[0],
+        site: u.site?.name || 'Main HQ',
+        email: u.email,
+        phone: u.phoneNumber || '+91-9000000000',
+        networkLogin: u.networkLogin || u.username,
+        role: u.role,
+        organisationId: u.organisationId,
+        active: u.availability !== 'Inactive',
+      }));
     } catch (_err) {
       // Database connection fallback
     }

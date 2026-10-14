@@ -78,27 +78,25 @@ const getProjects = async (options = {}) => {
         orderBy: { createdAt: 'desc' },
       });
 
-      if (records && records.length > 0) {
-        const formatted = records.map((p) => ({
-          id: p.id,
-          name: p.name,
-          status: p.status,
-          startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
-          endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
-          timeSpent: p.timeSpent,
-          organisationId: 'org-001',
-          subtasks: (p.subtasks || []).map((st) => ({
-            id: st.id,
-            title: st.title,
-            status: st.status,
-          })),
-        }));
+      const formatted = records.map((p) => ({
+        id: p.id,
+        name: p.name,
+        status: p.status,
+        startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
+        endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
+        timeSpent: p.timeSpent,
+        organisationId: 'org-001',
+        subtasks: (p.subtasks || []).map((st) => ({
+          id: st.id,
+          title: st.title,
+          status: st.status,
+        })),
+      }));
 
-        if (organisationId) {
-          return formatted.filter((p) => !p.organisationId || p.organisationId === organisationId);
-        }
-        return formatted;
+      if (organisationId) {
+        return formatted.filter((p) => !p.organisationId || p.organisationId === organisationId);
       }
+      return formatted;
     } catch (_err) {
       // Database connection fallback
     }
@@ -120,24 +118,22 @@ const getActiveProjects = async (options = {}) => {
         include: { subtasks: true },
       });
 
-      if (records && records.length > 0) {
-        const formatted = records.map((p) => ({
-          id: p.id,
-          name: p.name,
-          status: p.status,
-          startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
-          endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
-          timeSpent: p.timeSpent,
-          organisationId: 'org-001',
-          subtasks: (p.subtasks || []).map((st) => ({
-            id: st.id,
-            title: st.title,
-            status: st.status,
-          })),
-        }));
+      const formatted = records.map((p) => ({
+        id: p.id,
+        name: p.name,
+        status: p.status,
+        startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
+        endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
+        timeSpent: p.timeSpent,
+        organisationId: 'org-001',
+        subtasks: (p.subtasks || []).map((st) => ({
+          id: st.id,
+          title: st.title,
+          status: st.status,
+        })),
+      }));
 
-        return formatted.filter((p) => !organisationId || !p.organisationId || p.organisationId === organisationId);
-      }
+      return formatted.filter((p) => !organisationId || !p.organisationId || p.organisationId === organisationId);
     } catch (_err) {
       // Database connection fallback
     }
