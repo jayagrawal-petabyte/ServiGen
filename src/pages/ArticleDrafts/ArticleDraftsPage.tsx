@@ -170,7 +170,11 @@ export default function ArticleDraftsPage() {
       const updated = await articleDraftsApi.updateDraftStatus(id, newStatus);
       setDrafts((prev) => prev.map((d) => (d.id === id ? updated : d)));
       setSelectedArticle((prev) => (prev && prev.id === id ? updated : prev));
-      showToast(`Article #${id} updated to ${newStatus}`);
+      if (newStatus === 'Awaiting Approval') {
+        showToast(`Article #${id} submitted for approval. It is now queued in My Approvals!`);
+      } else {
+        showToast(`Article #${id} updated to ${newStatus}`);
+      }
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed to update article status');
     } finally {
@@ -185,11 +189,33 @@ export default function ArticleDraftsPage() {
       const updated = await articleDraftsApi.updateDraftContent(id, updates);
       setDrafts((prev) => prev.map((d) => (d.id === id ? updated : d)));
       setSelectedArticle((prev) => (prev && prev.id === id ? updated : prev));
-      showToast(`Saved changes for article #${id}`);
+      if (updated.status === 'Awaiting Approval') {
+        showToast(`Saved changes for article #${id}. The pending request in My Approvals has been updated.`);
+      } else {
+        showToast(`Saved draft changes for article #${id}. Click 'Submit for Approval' to queue for review.`);
+      }
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Validation error saving draft');
     } finally {
       setIsActionLoading(false);
+    }
+  };
+
+  // Delete single article draft
+  const handleDeleteDraft = async (id: string) => {
+    if (window.confirm(`Are you sure you want to delete article draft #${id}?`)) {
+      setIsActionLoading(true);
+      try {
+        await articleDraftsApi.batchDelete([id]);
+        setDrafts((prev) => prev.filter((d) => d.id !== id));
+        setSelectedArticle(null);
+        setSelectedIds((prev) => prev.filter((item) => item !== id));
+        showToast(`Article draft #${id} was deleted successfully.`);
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Failed to delete article draft');
+      } finally {
+        setIsActionLoading(false);
+      }
     }
   };
 
@@ -480,6 +506,7 @@ export default function ArticleDraftsPage() {
           onClose={() => setSelectedArticle(null)}
           onUpdateStatus={handleUpdateStatus}
           onSaveContent={handleSaveContent}
+          onDelete={handleDeleteDraft}
         />
       )}
 

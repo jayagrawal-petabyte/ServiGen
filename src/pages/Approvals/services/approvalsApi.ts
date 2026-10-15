@@ -1,6 +1,8 @@
 import { apiClient, ApiError } from '../../../services/apiClient';
 import { INITIAL_APPROVALS } from '../mockApprovalsData';
 import type { Approval, TicketDetails } from '../ApprovalCard';
+import { articleDraftsApi } from '../../ArticleDrafts/services/articleDraftsApi';
+import type { ArticleDraft } from '../../ArticleDrafts/mockArticleDraftsData';
 
 export interface BackendApproval {
   id: string;
@@ -53,7 +55,6 @@ export function adaptBackendApproval(
   backendItem: BackendApproval | Approval,
   overrideRejectReason?: string
 ): Approval {
-  // If it already matches frontend Approval structure
   if ('ticketNumber' in backendItem && 'authorName' in backendItem) {
     const app = backendItem as Approval;
     return {
@@ -110,6 +111,49 @@ export function adaptBackendApproval(
 }
 
 /**
+ * Adapter: Convert an Article Draft awaiting approval into an Approval record.
+ * Bridges Article Drafts submissions into the My Approvals queue.
+ */
+export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
+  const initials = draft.author
+    ? draft.author
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'KB';
+
+  const ticketNumber = `KB-${draft.id}`;
+
+  return {
+    id: `draft-${draft.id}`,
+    ticketNumber,
+    authorName: draft.author || 'Knowledge Author',
+    authorInitials: initials,
+    authorType: 'user',
+    onBehalfOf: draft.team || undefined,
+    title: draft.summaryTitle || 'Knowledge Base Article Review',
+    timeAgo: draft.date || 'Pending review',
+    createdAt: new Date().toISOString(),
+    description: draft.summarySubtitle
+      ? `${draft.summarySubtitle}\n\nCategory: ${draft.category} | Priority: ${draft.priority} | SLA: ${draft.slaTimeLeft}\n\nDraft Content:\n${draft.body}`
+      : draft.body,
+    status: 'pending',
+    priority: draft.priority || 'Normal',
+    category: draft.category || 'Knowledge Base',
+    urgency: draft.priority || 'Normal',
+    ticketDetails: {
+      ticketId: draft.id,
+      ticketType: 'Knowledge Article Draft',
+      fullName: draft.author,
+      department: draft.team || 'Support Ops',
+      extraInfo: `SLA Time Left: ${draft.slaTimeLeft}`,
+    },
+  };
+}
+
+/**
  * Isolated development/mock storage helper
  */
 function getMockApprovals(): Approval[] {
@@ -161,27 +205,64 @@ function cacheApproval(approval: Approval): void {
  * - GET   /api/approvals/:approvalId
  * - PATCH /api/approvals/:approvalId/approve
  * - PATCH /api/approvals/:approvalId/reject
+ * 
+ * Also bridges submitted Article Drafts awaiting review into the approval queue.
  */
 export const approvalsApi = {
   /**
-   * Fetch pending approvals from GET /api/approvals/pending
-   * Fallback to mock data only if mock mode is explicitly requested.
+   * Return any cached processed (approved / rejected) approvals from current session
+   */
+  getCachedHistory(): Approval[] {
+    const cache = getCachedApprovals();
+    return Object.values(cache);
+  },
+
+  /**
+   * Fetch pending approvals from GET /api/approvals/pending merged with awaiting article drafts.
    */
   async getPendingApprovals(useMockFallback = false): Promise<Approval[]> {
+    let baseApprovals: Approval[] = [];
+    let backendError: Error | null = null;
+
     if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 200));
-      return getMockApprovals().filter((a) => a.status === 'pending');
+      await new Promise((r) => setTimeout(r, 150));
+      baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
+    } else {
+      try {
+        const response = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
+        const backendItems = Array.isArray(response) ? response : [];
+        baseApprovals = backendItems.map((item) => adaptBackendApproval(item));
+      } catch (err) {
+        backendError = err instanceof Error ? err : new Error(String(err));
+      }
     }
 
+    // Always fetch pending article drafts currently awaiting approval
+    let draftApprovals: Approval[] = [];
     try {
-      const response = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
-      const backendItems = Array.isArray(response) ? response : [];
-      const adapted = backendItems.map((item) => adaptBackendApproval(item));
-      return adapted;
-    } catch (err) {
-      // Re-throw so caller can display exact API failure
-      throw err;
+      const allDrafts = await articleDraftsApi.getDrafts();
+      const awaitingDrafts = allDrafts.filter((d) => d.status === 'Awaiting Approval');
+      const cache = getCachedApprovals();
+      draftApprovals = awaitingDrafts
+        .map((d) => adaptArticleDraftToApproval(d))
+        .filter((da) => {
+          const cached = cache[da.id];
+          return !cached || cached.status === 'pending';
+        });
+    } catch {
+      draftApprovals = [];
     }
+
+    // If backend request threw in live mode:
+    if (backendError && !useMockFallback) {
+      if (draftApprovals.length > 0) {
+        console.warn('Backend /api/approvals/pending offline. Showing pending article draft approvals:', backendError.message);
+        return draftApprovals;
+      }
+      throw backendError;
+    }
+
+    return [...draftApprovals, ...baseApprovals];
   },
 
   /**
@@ -190,6 +271,19 @@ export const approvalsApi = {
   async getApprovalById(approvalId: string, useMockFallback = false): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
+    }
+
+    // Check if this approval references an article draft
+    if (approvalId.startsWith('draft-')) {
+      const draftId = approvalId.replace('draft-', '');
+      const draft = await articleDraftsApi.getDraftById(draftId);
+      const adapted = adaptArticleDraftToApproval(draft);
+      const cache = getCachedApprovals();
+      if (cache[approvalId]) {
+        adapted.status = cache[approvalId].status;
+        adapted.rejectReason = cache[approvalId].rejectReason;
+      }
+      return adapted;
     }
 
     if (useMockFallback) {
@@ -215,11 +309,21 @@ export const approvalsApi = {
 
   /**
    * Approve a pending request via PATCH /api/approvals/:approvalId/approve
-   * No request body per backend specification.
+   * If approving an article draft, updates the draft status to 'Published'.
    */
   async approveRequest(approvalId: string, useMockFallback = false): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
+    }
+
+    // Handle Article Draft approval
+    if (approvalId.startsWith('draft-')) {
+      const draftId = approvalId.replace('draft-', '');
+      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Published');
+      const approved = adaptArticleDraftToApproval(updatedDraft);
+      approved.status = 'approved';
+      cacheApproval(approved);
+      return approved;
     }
 
     if (useMockFallback) {
@@ -236,7 +340,6 @@ export const approvalsApi = {
     }
 
     try {
-      // Per backend implementation, PATCH /api/approvals/:approvalId/approve takes no body
       const response = await apiClient.patch<BackendApproval>(
         `/api/approvals/${encodeURIComponent(approvalId)}/approve`
       );
@@ -251,7 +354,7 @@ export const approvalsApi = {
 
   /**
    * Reject a pending request via PATCH /api/approvals/:approvalId/reject
-   * No request body per backend specification; reason is retained in client state.
+   * If rejecting an article draft, returns it to 'Draft' with rejection reason recorded.
    */
   async rejectRequest(
     approvalId: string,
@@ -265,6 +368,17 @@ export const approvalsApi = {
     const trimmedReason = reason?.trim() || '';
     if (!trimmedReason || trimmedReason.length < 5) {
       throw new Error('Validation Error: Rejection reason must be at least 5 characters long.');
+    }
+
+    // Handle Article Draft rejection
+    if (approvalId.startsWith('draft-')) {
+      const draftId = approvalId.replace('draft-', '');
+      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Draft');
+      const rejected = adaptArticleDraftToApproval(updatedDraft);
+      rejected.status = 'rejected';
+      rejected.rejectReason = trimmedReason;
+      cacheApproval(rejected);
+      return rejected;
     }
 
     if (useMockFallback) {
@@ -285,7 +399,6 @@ export const approvalsApi = {
     }
 
     try {
-      // Per backend implementation, PATCH /api/approvals/:approvalId/reject takes no body
       const response = await apiClient.patch<BackendApproval>(
         `/api/approvals/${encodeURIComponent(approvalId)}/reject`
       );
