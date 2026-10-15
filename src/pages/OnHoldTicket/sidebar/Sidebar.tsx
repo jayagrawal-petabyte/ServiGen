@@ -1,4 +1,5 @@
 import React from 'react';
+import BrandLogo from '../../../components/shared/BrandLogo';
 import './Sidebar.css';
 
 interface NavItem {
@@ -15,7 +16,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="left-sidebar">
       <div className="sidebar-logo">
-        <div className="logo-circle">O</div>
+        <BrandLogo size={32} />
       </div>
       <nav className="sidebar-nav">
         {primaryItems.map((item) => (

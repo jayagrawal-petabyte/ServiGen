@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../pages/Auth/AuthContext';
+import BrandLogo from './BrandLogo';
 import './Sidebar.css';
 
 interface NavItemConfig {
@@ -103,9 +104,14 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="figma-left-sidebar select-none">
       <div className="sidebar-logo">
-        <div className="logo-circle" title="Halo AI / ServiGen">
-          O
-        </div>
+        <NavLink
+          to="/dashboard"
+          className="flex items-center justify-center transition-transform hover:scale-105"
+          style={{ textDecoration: 'none' }}
+          title="ServiGen Dashboard"
+        >
+          <BrandLogo size={34} />
+        </NavLink>
       </div>
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => (

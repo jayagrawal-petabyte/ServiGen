@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import BrandLogo from "../../../components/shared/BrandLogo";
 import "./OnHold.css";
 
 /* ─────────────────────────── data ─────────────────────────── */
@@ -44,7 +45,7 @@ const PRIORITY_COLOR: Record<Ticket["priority"], string> = {
 const NavSidebar: React.FC = () => (
   <aside className="oh-sidebar">
     <div className="oh-sidebar-logo">
-      <div className="oh-logo-circle"></div>
+      <BrandLogo size={36} />
     </div>
     <nav className="oh-sidebar-nav">
       {/* Dashboard */}
