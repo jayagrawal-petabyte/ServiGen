@@ -1,21 +1,18 @@
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../Auth/AuthContext";
 import { usePersistentState } from "../../utils/persistentState";
+import {
+  myWorkService,
+  parseDurationToMinutes,
+  type TicketStatus,
+  type MyWorkTicket,
+} from "../../services/myWorkService";
 
-type TicketStatus = "Active" | "Pending" | "Actioned";
+export type Ticket = MyWorkTicket;
 
-type Ticket = {
-  id: string;
-  priority: string;
-  organisation: string;
-  summary: string;
-  timeRecord: string;
-  status: TicketStatus;
-};
-
-type TimeLog = {
+export type TimeLog = {
   id: number;
   date: string;
   duration: string;
@@ -76,6 +73,7 @@ const STATUS_STYLES: Record<TicketStatus, string> = {
   Active: "bg-green-50 text-green-700 border-green-200",
   Pending: "bg-amber-50 text-amber-700 border-amber-200",
   Actioned: "bg-slate-100 text-slate-600 border-slate-300",
+  "On Hold": "bg-purple-50 text-purple-700 border-purple-200",
 };
 
 const PRIORITY_ORDER = [
@@ -89,6 +87,7 @@ const STATUS_TABS: TicketStatus[] = [
   "Active",
   "Pending",
   "Actioned",
+  "On Hold",
 ];
 
 const MOCK_TIME_LOGS: Record<string, TimeLog[]> = {
@@ -188,6 +187,8 @@ export default function MyWork() {
     "servigen_my_work_tickets_v1",
     MOCK_TICKETS
   );
+  const [serverTickets, setServerTickets] = useState<Ticket[]>([]);
+  const [isFetchingTickets, setIsFetchingTickets] = useState(false);
   const [timeLogs, setTimeLogs] = usePersistentState<Record<string, TimeLog[]>>(
     "servigen_my_work_time_logs_v1",
     MOCK_TIME_LOGS
@@ -196,10 +197,34 @@ export default function MyWork() {
   const [newDuration, setNewDuration] = useState("");
   const [newNote, setNewNote] = useState("");
 
+  const loadTickets = useCallback(async () => {
+    setIsFetchingTickets(true);
+    try {
+      const live = await myWorkService.getMyWorkTickets();
+      if (Array.isArray(live) && live.length > 0) {
+        setServerTickets(live);
+      }
+    } finally {
+      setIsFetchingTickets(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  const allTickets = useMemo(() => {
+    const map = new Map<string, Ticket>();
+    MOCK_TICKETS.forEach((t) => map.set(t.id, t));
+    serverTickets.forEach((t) => map.set(t.id, t));
+    tickets.forEach((t) => map.set(t.id, t));
+    return Array.from(map.values());
+  }, [serverTickets, tickets]);
+
   const filteredTickets = useMemo(() => {
     const searchText = query.trim().toLowerCase();
 
-    return tickets.filter((ticket) => {
+    return allTickets.filter((ticket) => {
       const matchesStatus = ticket.status === activeTab;
 
       const matchesPriority =
@@ -218,7 +243,7 @@ export default function MyWork() {
         PRIORITY_ORDER.indexOf(a.priority) -
         PRIORITY_ORDER.indexOf(b.priority)
     );
-  }, [query, priorityFilter, activeTab]);
+  }, [allTickets, query, priorityFilter, activeTab]);
 
   const handleSearchChange = (
     event: ChangeEvent<HTMLInputElement>
@@ -232,7 +257,16 @@ export default function MyWork() {
     setPriorityFilter(event.target.value);
   };
 
-  const handleAddTimeLog = (event: FormEvent<HTMLFormElement>) => {
+  const handleStatusChange = async (newStatus: TicketStatus) => {
+    if (!selectedTicket) return;
+    const updated = { ...selectedTicket, status: newStatus };
+    setSelectedTicket(updated);
+    setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+
+    await myWorkService.updateTicketStatus(selectedTicket.id, newStatus);
+  };
+
+  const handleAddTimeLog = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!selectedTicket) {
@@ -243,6 +277,7 @@ export default function MyWork() {
       return;
     }
 
+    const minutes = parseDurationToMinutes(newDuration);
     const newLog: TimeLog = {
       id: Date.now(),
       date: new Date().toISOString().split("T")[0],
@@ -261,6 +296,13 @@ export default function MyWork() {
     setNewDuration("");
     setNewNote("");
     setShowAddTimeLog(false);
+
+    // Persist to backend and update timeRecord
+    const updatedTicket = await myWorkService.logTime(selectedTicket.id, minutes);
+    if (updatedTicket) {
+      setSelectedTicket((curr) => curr ? { ...curr, timeRecord: updatedTicket.timeRecord } : null);
+      setTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? { ...t, timeRecord: updatedTicket.timeRecord } : t)));
+    }
   };
 
   if (selectedTicket) {
@@ -339,17 +381,13 @@ export default function MyWork() {
                   <StatusPill status={selectedTicket.status} />
                   <select
                     value={selectedTicket.status}
-                    onChange={(e) => {
-                      const newStatus = e.target.value as TicketStatus;
-                      const updated = { ...selectedTicket, status: newStatus };
-                      setSelectedTicket(updated);
-                      setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-                    }}
+                    onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
                     className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 outline-none text-slate-700 cursor-pointer"
                   >
                     <option value="Active">Active</option>
                     <option value="Pending">Pending</option>
                     <option value="Actioned">Actioned</option>
+                    <option value="On Hold">On Hold</option>
                   </select>
                 </div>
               </div>
