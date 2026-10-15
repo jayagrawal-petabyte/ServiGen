@@ -409,6 +409,27 @@
   background-color: #2563EB;
 }
 
+.users-btn-enter-app {
+  background-color: #0F172A;
+  border: none;
+  color: #FFFFFF;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  transition: all 0.15s ease;
+}
+
+.users-btn-enter-app:hover {
+  background-color: #1E293B;
+  transform: translateY(-1px);
+}
+
 .region-tab-bar {
   display: flex;
   gap: 0.5rem;
