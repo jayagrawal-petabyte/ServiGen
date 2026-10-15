@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { User } from './types';
 import { MOCK_ORGANISATION_USERS } from './mockAuthData';
+import { useAuth } from './AuthContext';
+import { usePersistentState } from '../../utils/persistentState';
 
 interface OrganisationUsersScreenProps {
   users?: User[];
@@ -11,7 +13,8 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   users = MOCK_ORGANISATION_USERS,
   onAddUserClick,
 }) => {
-  const [userList, setUserList] = useState<User[]>(users);
+  const { user: currentUser, switchUser, updateUserRole } = useAuth();
+  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v1', users);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSite, setSelectedSite] = useState<string>('ALL');
   const [selectedOrganisation, setSelectedOrganisation] = useState<string>('ALL');
@@ -19,6 +22,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Extract unique sites for filter dropdown
   const sites = useMemo(() => {
@@ -57,6 +61,22 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     setTimeout(() => {
       setIsLoading(false);
     }, 600);
+  };
+
+  const handleRoleChange = (userId: string, newRole: User['role']) => {
+    setUserList((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+    updateUserRole(userId, newRole);
+    const target = userList.find((u) => u.id === userId);
+    setToastMessage(`Updated ${target?.fullName || 'User'}'s role to ${newRole}`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleSwitchUser = (targetUser: User) => {
+    switchUser(targetUser);
+    setToastMessage(`Switched active session to ${targetUser.fullName} (${targetUser.role})`);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   return (
@@ -179,6 +199,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                 <tr>
                   <th>Username / Name</th>
                   <th>First Name</th>
+                  <th>Role / Permissions</th>
                   <th>Default Organisation</th>
                   <th>Default Site</th>
                   <th>Email Address</th>
@@ -186,6 +207,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                   <th>Network Login</th>
                   <th>Region</th>
                   <th>Status</th>
+                  <th>Session</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,6 +226,22 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                       </div>
                     </td>
                     <td>{user.firstName}</td>
+                    <td>
+                      <div className="role-selector-cell">
+                        <select
+                          className={`user-role-select role-${user.role.toLowerCase().replace(/\s+/g, '-')}`}
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as User['role'])}
+                          title={`Change role / permissions for ${user.fullName}`}
+                        >
+                          <option value="Administrator">👑 Administrator</option>
+                          <option value="System Manager">⚙️ System Manager</option>
+                          <option value="Team Lead">👔 Team Lead</option>
+                          <option value="Support Agent">🎧 Support Agent</option>
+                          <option value="End User">👤 End User</option>
+                        </select>
+                      </div>
+                    </td>
                     <td>{user.defaultOrganisation}</td>
                     <td>{user.defaultSite}</td>
                     <td>{user.email}</td>
@@ -219,6 +257,22 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                         {user.status}
                       </span>
                     </td>
+                    <td>
+                      {currentUser?.id === user.id ? (
+                        <span className="current-user-pill">
+                          ● You
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="switch-user-btn"
+                          onClick={() => handleSwitchUser(user)}
+                          title={`Switch active session to ${user.fullName}`}
+                        >
+                          Login As
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -226,6 +280,13 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
           </div>
         )}
       </div>
+
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="users-toast-banner">
+          <span>✨ {toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };

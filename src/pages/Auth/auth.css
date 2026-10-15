@@ -602,3 +602,118 @@
   padding: 3rem 1.5rem;
   color: #64748B;
 }
+
+/* --- Role Select and Badges in Organisation Users Table --- */
+.role-selector-cell {
+  display: inline-flex;
+  align-items: center;
+}
+
+.user-role-select {
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.user-role-select:focus {
+  box-shadow: 0 0 0 2px rgba(0, 212, 187, 0.35);
+}
+
+.user-role-select.role-administrator {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.user-role-select.role-system-manager {
+  background-color: #EEF2FF;
+  color: #4F46E5;
+  border-color: #C7D2FE;
+}
+
+.user-role-select.role-team-lead {
+  background-color: #FAF5FF;
+  color: #9333EA;
+  border-color: #E9D5FF;
+}
+
+.user-role-select.role-support-agent {
+  background-color: #F0FDFA;
+  color: #0D9488;
+  border-color: #99F6E4;
+}
+
+.user-role-select.role-end-user {
+  background-color: #F8FAFC;
+  color: #475569;
+  border-color: #E2E8F0;
+}
+
+.current-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #E0F2FE;
+  color: #0284C7;
+  border: 1px solid #BAE6FD;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.switch-user-btn {
+  background-color: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid #CBD5E1;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.switch-user-btn:hover {
+  background-color: #00D4BB;
+  color: #FFFFFF;
+  border-color: #00D4BB;
+  box-shadow: 0 2px 6px rgba(0, 212, 187, 0.3);
+}
+
+.users-toast-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #0F172A;
+  color: #FFFFFF;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideUpFade 0.25s ease-out;
+  border: 1px solid #334155;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
