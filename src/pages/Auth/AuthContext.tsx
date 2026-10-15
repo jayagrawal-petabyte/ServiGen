@@ -8,7 +8,8 @@ interface AuthContextType extends AuthState {
   backendConnected: boolean;
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => void;
-  switchUser: (userIdOrFullName: string) => void;
+  switchUser: (userOrId: string | User) => void;
+  updateUserRole: (userId: string, newRole: User['role']) => void;
   checkBackendHealth: () => Promise<boolean>;
 }
 
@@ -142,12 +143,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const switchUser = (userIdOrFullName: string) => {
+  const switchUser = (userOrId: string | User) => {
+    if (typeof userOrId === 'object' && userOrId !== null) {
+      setStoredUser(userOrId);
+      setAuthState({
+        isAuthenticated: true,
+        user: userOrId,
+        loading: false,
+        error: null,
+      });
+      return;
+    }
     const found = MOCK_ORGANISATION_USERS.find(
       (u) =>
-        u.id === userIdOrFullName ||
-        u.fullName.toLowerCase() === userIdOrFullName.toLowerCase() ||
-        u.username.toLowerCase() === userIdOrFullName.toLowerCase()
+        u.id === userOrId ||
+        u.fullName.toLowerCase() === userOrId.toLowerCase() ||
+        u.username.toLowerCase() === userOrId.toLowerCase()
     );
     if (found) {
       setStoredUser(found);
@@ -160,6 +171,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUserRole = (userId: string, newRole: User['role']) => {
+    if (authState.user && (authState.user.id === userId || authState.user.username === userId)) {
+      const updatedUser = { ...authState.user, role: newRole };
+      setStoredUser(updatedUser);
+      setAuthState((prev) => ({
+        ...prev,
+        user: updatedUser,
+      }));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -169,6 +191,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         switchUser,
+        updateUserRole,
         checkBackendHealth,
       }}
     >
