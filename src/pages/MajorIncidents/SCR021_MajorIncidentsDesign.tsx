@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
-import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
+import { majorIncidentsService } from '../../services/majorIncidentsService';
 import type { MajorIncident } from './types/majorIncident.types';
 
 const SCR021_MajorIncidentsDesign: React.FC = () => {
   const navigate = useNavigate();
   const [_selectedListId, setSelectedListId] = useState<string>('update-required');
-  const displayedIncidents: MajorIncident[] = MOCK_MAJOR_INCIDENTS;
+  const [displayedIncidents, setDisplayedIncidents] = useState<MajorIncident[]>([]);
+
+  useEffect(() => {
+    majorIncidentsService.getMajorIncidents().then((live) => {
+      if (Array.isArray(live)) {
+        setDisplayedIncidents(live);
+      }
+    });
+  }, []);
   const totalCount = displayedIncidents.length;
 
   return (

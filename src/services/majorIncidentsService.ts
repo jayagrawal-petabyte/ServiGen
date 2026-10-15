@@ -12,7 +12,6 @@ import type {
   LifecycleStage,
   UserRole,
 } from '../pages/MajorIncidents/types/majorIncident.types';
-import { MOCK_MAJOR_INCIDENTS } from '../pages/MajorIncidents/data/mockData';
 
 export interface BackendMajorIncidentUpdate {
   id: string;
@@ -169,7 +168,7 @@ export const majorIncidentsService = {
       // Backend unavailable or offline fallback
     }
 
-    return MOCK_MAJOR_INCIDENTS;
+    return [];
   },
 
   /**
@@ -185,7 +184,7 @@ export const majorIncidentsService = {
       // Fallback
     }
 
-    return MOCK_MAJOR_INCIDENTS.find((i) => i.id === id) || null;
+    return null;
   },
 
   /**

@@ -10,8 +10,7 @@ import NewIncidentModal from './components/NewIncidentModal';
 import GetStartedModal from './components/GetStartedModal';
 import PriorityBadge from './components/PriorityBadge';
 import IncidentDetailPanel from './components/IncidentDetailPanel';
-import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
-import type { MajorIncident, UserRole, IncidentUpdate, Priority } from './types/majorIncident.types';
+import type { MajorIncident, UserRole, IncidentUpdate, Priority, ActivityFeedEntry } from './types/majorIncident.types';
 import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
 
 const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
@@ -155,7 +154,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     'servigen_major_incidents_tasks_v1',
     INITIAL_TASKS
   );
-  const [feedUnreadCount, setFeedUnreadCount] = useState<number>(MOCK_FEED_ENTRIES.length);
+  const [feedUnreadCount, setFeedUnreadCount] = useState<number>(0);
   const PAGE_SIZE = 4;
 
   const activeUserName = user?.fullName || 'Inesh Agarwal';
@@ -179,16 +178,42 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery]);
 
   const allIncidents = useMemo(() => {
-    // When live server incidents or user-created incidents exist, ONLY display them (no mock records)!
-    if (serverIncidents.length > 0 || localIncidents.length > 0) {
-      const map = new Map<string, MajorIncident>();
-      serverIncidents.forEach((inc) => map.set(inc.id, inc));
-      localIncidents.forEach((inc) => map.set(inc.id, inc));
-      return Array.from(map.values());
-    }
-    // Only fall back to mock data if backend returned 0 records and no local incidents exist
-    return MOCK_MAJOR_INCIDENTS;
+    const map = new Map<string, MajorIncident>();
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
+
+  const liveFeedEntries = useMemo<ActivityFeedEntry[]>(() => {
+    const entries: ActivityFeedEntry[] = [];
+    allIncidents.forEach((inc) => {
+      (inc.updates || []).forEach((u) => {
+        entries.push({
+          id: `feed-${inc.id}-${u.id}`,
+          avatarLabel: (u.author || 'Commander').slice(0, 2).toUpperCase(),
+          actorName: u.author || 'Commander',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: u.type === 'stage_change' ? 'Stage Advanced' : 'Incident Update',
+          message: u.content,
+          timeAgo: u.timestamp || 'just now',
+          type: u.type === 'stage_change' ? 'status_change' : 'comment_added',
+        });
+      });
+      entries.push({
+        id: `feed-${inc.id}-decl`,
+        avatarLabel: (inc.assignee || 'MI').slice(0, 2).toUpperCase(),
+        actorName: inc.assignee !== 'Unassigned' ? inc.assignee : 'Commander',
+        actorOrg: inc.product,
+        ticketRef: `#${inc.id}`,
+        actionLabel: 'Major Incident Declared',
+        message: inc.title,
+        timeAgo: 'Live',
+        type: 'new_ticket',
+      });
+    });
+    return entries;
+  }, [allIncidents]);
 
   const sidebarCounts = useMemo(() => {
     return {
@@ -883,7 +908,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
           {/* ── Activity Feed (··· button only) ── */}
           {!selectedIncident && !openPanel && isFeedOpen && (
-            <ActivityFeed entries={MOCK_FEED_ENTRIES} onClose={() => setIsFeedOpen(false)} />
+            <ActivityFeed entries={liveFeedEntries} onClose={() => setIsFeedOpen(false)} />
           )}
         </div>
       </main>

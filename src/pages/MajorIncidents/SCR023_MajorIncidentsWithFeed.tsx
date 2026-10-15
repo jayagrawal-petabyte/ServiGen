@@ -7,7 +7,6 @@ import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
 import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
 import { majorIncidentsService } from '../../services/majorIncidentsService';
-import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
 import type { MajorIncident, ActivityFeedEntry, FeedEntryType } from './types/majorIncident.types';
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
@@ -24,50 +23,6 @@ const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident
       return incidents;
   }
 };
-
-const LIVE_EVENTS: Array<Omit<ActivityFeedEntry, 'id'>> = [
-  {
-    avatarLabel: 'SA',
-    actorName: 'Sanjay Arora',
-    actorOrg: 'Ops/APAC',
-    ticketRef: '#3996',
-    actionLabel: 'Status Change',
-    message: 'Escalated to Major Incident — all on-call engineers notified.',
-    timeAgo: 'just now',
-    type: 'status_change' as FeedEntryType,
-  },
-  {
-    avatarLabel: 'KP',
-    actorName: 'Kavya Pillai',
-    actorOrg: 'SRE/EMEA',
-    ticketRef: '#3995',
-    actionLabel: 'Comment Added',
-    message: 'Root cause identified: misconfigured load balancer rule on prod-lb-02.',
-    timeAgo: 'just now',
-    type: 'comment_added' as FeedEntryType,
-  },
-  {
-    avatarLabel: '7',
-    actorName: '',
-    ticketRef: '#3997',
-    actionLabel: 'New Ticket Logged',
-    message: 'API gateway returning 503 for all /payments endpoints.',
-    timeAgo: 'just now',
-    type: 'new_ticket' as FeedEntryType,
-  },
-  {
-    avatarLabel: 'IA',
-    actorName: 'Inesh Agarwal',
-    actorOrg: 'consultation/EMEA',
-    ticketRef: '#3995',
-    actionLabel: 'User Update',
-    message: 'Customer impact confirmed — approx. 400 users affected.',
-    timeAgo: 'just now',
-    type: 'user_update' as FeedEntryType,
-  },
-];
-
-let liveEventIndex = 0;
 
 const LiveDot: React.FC<{ active: boolean }> = ({ active }) => (
   <span className="relative flex items-center gap-1.5">
@@ -92,9 +47,8 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<MajorIncident | null>(null);
-  const [feedEntries, setFeedEntries]       = useState<ActivityFeedEntry[]>(MOCK_FEED_ENTRIES);
+  const [feedEntries, setFeedEntries]       = useState<ActivityFeedEntry[]>([]);
   const [newCount, setNewCount]             = useState<number>(0);
-  const intervalRef                         = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadLiveIncidents = useCallback(async () => {
     try {
@@ -114,43 +68,48 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
     loadLiveIncidents();
   }, [loadLiveIncidents]);
 
-  useEffect(() => {
-    if (!isLive) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    intervalRef.current = setInterval(() => {
-      const template = LIVE_EVENTS[liveEventIndex % LIVE_EVENTS.length];
-      liveEventIndex += 1;
-      const newEntry: ActivityFeedEntry = {
-        ...template,
-        id: `live-${Date.now()}`,
-        timeAgo: 'just now',
-      };
-      setFeedEntries((prev) => [newEntry, ...prev]);
-      setNewCount((prev) => prev + 1);
-    }, 8000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isLive]);
-
   const handleFeedOpen = () => {
     setIsFeedOpen(true);
     setNewCount(0);
   };
 
   const allIncidents = useMemo(() => {
-    // When live server incidents or local incidents exist, strictly display live records (no mock data)
-    if (serverIncidents.length > 0 || localIncidents.length > 0) {
-      const map = new Map<string, MajorIncident>();
-      serverIncidents.forEach((inc) => map.set(inc.id, inc));
-      localIncidents.forEach((inc) => map.set(inc.id, inc));
-      return Array.from(map.values());
-    }
-    // Only fall back to mock data if backend returned 0 records and no local incidents exist
-    return MOCK_MAJOR_INCIDENTS;
+    const map = new Map<string, MajorIncident>();
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
+
+  useEffect(() => {
+    const entries: ActivityFeedEntry[] = [];
+    allIncidents.forEach((inc) => {
+      (inc.updates || []).forEach((u) => {
+        entries.push({
+          id: `feed-${inc.id}-${u.id}`,
+          avatarLabel: (u.author || 'Commander').slice(0, 2).toUpperCase(),
+          actorName: u.author || 'Commander',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: u.type === 'stage_change' ? 'Stage Advanced' : 'Incident Update',
+          message: u.content,
+          timeAgo: u.timestamp || 'just now',
+          type: u.type === 'stage_change' ? 'status_change' : 'comment_added',
+        });
+      });
+      entries.push({
+        id: `feed-${inc.id}-decl`,
+        avatarLabel: (inc.assignee || 'MI').slice(0, 2).toUpperCase(),
+        actorName: inc.assignee !== 'Unassigned' ? inc.assignee : 'Commander',
+        actorOrg: inc.product,
+        ticketRef: `#${inc.id}`,
+        actionLabel: 'Major Incident Declared',
+        message: inc.title,
+        timeAgo: 'Live',
+        type: 'new_ticket',
+      });
+    });
+    setFeedEntries(entries);
+  }, [allIncidents]);
 
   const sidebarCounts = useMemo(() => {
     return {

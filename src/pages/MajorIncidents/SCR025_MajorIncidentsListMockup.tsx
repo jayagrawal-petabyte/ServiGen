@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
-import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
 import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
@@ -167,15 +166,10 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery, sortDir]);
 
   const allIncidents = useMemo(() => {
-    // When live server incidents or local incidents exist, strictly display live records
-    if (serverIncidents.length > 0 || localIncidents.length > 0) {
-      const map = new Map<string, MajorIncident>();
-      serverIncidents.forEach((inc) => map.set(inc.id, inc));
-      localIncidents.forEach((inc) => map.set(inc.id, inc));
-      return Array.from(map.values());
-    }
-    // Only fall back to mock data if backend returned 0 records and no local incidents exist
-    return MOCK_MAJOR_INCIDENTS;
+    const map = new Map<string, MajorIncident>();
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
 
   const sidebarCounts = useMemo(() => {
