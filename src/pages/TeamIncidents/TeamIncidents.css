@@ -379,6 +379,44 @@
   font-size: 12px;
 }
 
+.viewing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.viewing-badge.viewing-active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
+}
+
+.viewing-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.viewing-dash {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 14px;
+  display: inline-block;
+  padding-left: 6px;
+}
+
+.incident-table tbody tr.row-viewing-active {
+  background-color: #f0f7ff !important;
+}
+
 /* ================================
    SLA INDICATOR
 ================================ */

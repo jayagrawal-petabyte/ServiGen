@@ -593,6 +593,7 @@ function TeamIncidentTable({
                 (incident) => (
                   <tr
                     key={incident.id}
+                    className={selectedIncident?.id === incident.id ? "row-viewing-active" : ""}
                     onClick={() =>
                       setSelectedIncident(
                         incident
@@ -625,12 +626,19 @@ function TeamIncidentTable({
 
                     {/* VIEWING */}
                     <td>
-                      <span
-                        className="viewing-indicator"
-                        aria-label="Currently viewing"
-                      >
-                        ●
-                      </span>
+                      {selectedIncident?.id === incident.id ? (
+                        <span
+                          className="viewing-badge viewing-active"
+                          title="Currently open in details view"
+                        >
+                          <span className="viewing-icon">👁</span>
+                          <span>You</span>
+                        </span>
+                      ) : (
+                        <span className="viewing-dash" title="Not currently open in details view">
+                          —
+                        </span>
+                      )}
                     </td>
 
                     {/* ID */}
