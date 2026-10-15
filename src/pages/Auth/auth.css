@@ -339,8 +339,8 @@
 .figma-users-page {
   min-height: 100vh;
   width: 100%;
-  background-color: #0F172A;
-  color: #F8FAFC;
+  background-color: #F8F9FD;
+  color: #1E293B;
   padding: 2rem;
   box-sizing: border-box;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -359,11 +359,11 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 0.25rem 0;
-  color: #FFFFFF;
+  color: #0F172A;
 }
 
 .users-title-section p {
-  color: #94A3B8;
+  color: #64748B;
   font-size: 0.875rem;
   margin: 0;
 }
@@ -374,19 +374,22 @@
 }
 
 .users-btn-secondary {
-  background-color: #1E293B;
-  border: 1px solid #334155;
-  color: #F8FAFC;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #475569;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
 }
 
 .users-btn-secondary:hover {
-  background-color: #334155;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  border-color: #CBD5E1;
 }
 
 .users-btn-primary {
@@ -398,6 +401,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
   transition: background-color 0.15s ease;
 }
 
@@ -412,26 +416,28 @@
 }
 
 .region-tab-btn {
-  background-color: #1E293B;
-  border: 1px solid #334155;
-  color: #94A3B8;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
   padding: 0.4rem 1rem;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
 }
 
 .region-tab-btn:hover {
-  color: #FFFFFF;
-  background-color: #334155;
+  color: #0F172A;
+  background-color: #F8FAFC;
 }
 
 .region-tab-btn.active {
   background-color: #3B82F6;
   color: #FFFFFF;
   border-color: #3B82F6;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
 }
 
 .users-filter-bar {
@@ -448,14 +454,16 @@
 
 .users-search-input {
   width: 100%;
-  background-color: #1E293B;
-  border: 1px solid #334155;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 8px;
   padding: 0.6rem 1rem;
-  color: #FFFFFF;
+  color: #0F172A;
   font-size: 0.875rem;
   outline: none;
   box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease;
 }
 
 .users-search-input:focus {
@@ -463,22 +471,27 @@
 }
 
 .users-filter-select {
-  background-color: #1E293B;
-  border: 1px solid #334155;
-  color: #FFFFFF;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #1E293B;
   padding: 0.6rem 1rem;
   border-radius: 8px;
   font-size: 0.875rem;
   outline: none;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.users-filter-select:focus {
+  border-color: #3B82F6;
 }
 
 .users-table-card {
-  background-color: #1E293B;
-  border: 1px solid #334155;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .table-responsive-wrapper {
@@ -493,25 +506,25 @@
 }
 
 .users-table th {
-  background-color: #0F172A;
+  background-color: #F8FAFC;
   padding: 0.85rem 1rem;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #94A3B8;
-  border-bottom: 1px solid #334155;
+  color: #64748B;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .users-table td {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid #F1F5F9;
   font-size: 0.875rem;
-  color: #E2E8F0;
+  color: #334155;
 }
 
 .users-table tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: #F8FAFC;
 }
 
 .user-cell-name {
@@ -535,30 +548,31 @@
 
 .user-full-name {
   font-weight: 600;
-  color: #FFFFFF;
+  color: #0F172A;
 }
 
 .user-username-handle {
   font-size: 0.75rem;
-  color: #94A3B8;
+  color: #64748B;
 }
 
 .network-login-code {
-  background-color: #0F172A;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
-  color: #E2E8F0;
+  color: #475569;
 }
 
 .region-badge {
   font-size: 0.8rem;
-  color: #93C5FD;
-  font-weight: 500;
+  color: #2563EB;
+  font-weight: 600;
 }
 
 .status-badge {
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -566,25 +580,25 @@
 }
 
 .status-badge.status-active {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #34D399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background-color: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
 }
 
 .status-badge.status-inactive {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #FCA5A5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
 }
 
 .status-badge.status-pending {
-  background-color: rgba(245, 158, 11, 0.15);
-  color: #FBBF24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background-color: #FFFBEB;
+  color: #D97706;
+  border: 1px solid #FDE68A;
 }
 
 .users-empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
-  color: #94A3B8;
+  color: #64748B;
 }
