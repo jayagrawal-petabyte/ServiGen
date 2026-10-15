@@ -7,6 +7,7 @@ import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
 import { MOCK_ORGANISATION_USERS } from "../Auth/mockAuthData";
 import { usePersistentState } from "../../utils/persistentState";
+import { TicketDetailModal, type FullTicket, type TicketPriority } from "../../components/TicketDetailModal";
 import "./TeamIncidents.css";
 
 interface Incident {
@@ -112,7 +113,7 @@ function TeamIncidentTable({
   const [createError, setCreateError] =
     useState("");
 
-  const itemsPerPage = 2;
+  const itemsPerPage = 10;
 
   /* ---------------- FILTERING ---------------- */
 
@@ -232,6 +233,73 @@ function TeamIncidentTable({
     filteredIncidents.every((incident) =>
       selectedIncidents.includes(incident.id)
     );
+
+  /* ---------------- BULK ACTIONS ---------------- */
+
+  const handleBulkAssignToMe = () => {
+    const me = user?.fullName || "Inesh Agarwal";
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        selectedIncidents.includes(inc.id) ? { ...inc, agent: me } : inc
+      )
+    );
+    setSelectedIncidents([]);
+  };
+
+  const handleBulkSetPriority = (newPrio: string) => {
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        selectedIncidents.includes(inc.id) ? { ...inc, priority: newPrio } : inc
+      )
+    );
+    setSelectedIncidents([]);
+  };
+
+  const handleBulkSetStatus = (newStat: string) => {
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
+      )
+    );
+    setSelectedIncidents([]);
+  };
+
+  const handleBulkClear = () => {
+    setSelectedIncidents([]);
+  };
+
+  const handleModalUpdateTicket = (updated: FullTicket) => {
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        inc.id === updated.id
+          ? {
+              ...inc,
+              agent: updated.agent,
+              priority: updated.priority,
+              status: updated.status || inc.status,
+              summary: updated.summary,
+              category: updated.category || inc.category,
+              type: updated.type || inc.type,
+            }
+          : inc
+      )
+    );
+    if (selectedIncident && selectedIncident.id === updated.id) {
+      setSelectedIncident((curr) =>
+        curr
+          ? {
+              ...curr,
+              agent: updated.agent,
+              priority: updated.priority,
+              status: updated.status || curr.status,
+              summary: updated.summary,
+              category: updated.category || curr.category,
+              type: updated.type || curr.type,
+            }
+          : null
+      );
+    }
+  };
 
   /* ---------------- CREATE INCIDENT ---------------- */
 
@@ -558,6 +626,75 @@ function TeamIncidentTable({
           </div>
         )}
 
+        {/* BULK ACTIONS BAR */}
+        {selectedIncidents.length > 0 && (
+          <div className="tickets-bulk-actions-bar">
+            <div className="bulk-selection-count">
+              <span className="bulk-badge">{selectedIncidents.length}</span>
+              <span>incident{selectedIncidents.length > 1 ? "s" : ""} selected</span>
+            </div>
+
+            <div className="bulk-actions-buttons">
+              <button
+                type="button"
+                className="bulk-btn bulk-btn-assign"
+                onClick={handleBulkAssignToMe}
+                title={`Assign selected incidents to ${user?.fullName || "Inesh Agarwal"}`}
+              >
+                Assign to Me
+              </button>
+
+              <div className="bulk-priority-dropdown-wrap">
+                <select
+                  className="bulk-select"
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleBulkSetPriority(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  aria-label="Set priority for selected incidents"
+                >
+                  <option value="" disabled>Set Priority ▾</option>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div className="bulk-priority-dropdown-wrap">
+                <select
+                  className="bulk-select"
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleBulkSetStatus(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  aria-label="Set status for selected incidents"
+                >
+                  <option value="" disabled>Set Status ▾</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Open">Open</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                className="bulk-btn bulk-btn-clear"
+                onClick={handleBulkClear}
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* TABLE */}
         <table className="incident-table">
 
@@ -716,118 +853,23 @@ function TeamIncidentTable({
 
       </div>
 
-      {/* INCIDENT DETAILS */}
+      {/* INCIDENT DETAILS MODAL */}
       {selectedIncident && (
-        <div className="incident-details-panel">
-
-          <div className="incident-details-header">
-
-            <h2>
-              Incident Details
-            </h2>
-
-            <button
-              type="button"
-              onClick={() =>
-                setSelectedIncident(null)
-              }
-            >
-              Close
-            </button>
-
-          </div>
-
-          <p>
-            <strong>ID:</strong>{" "}
-            {selectedIncident.id}
-          </p>
-
-          <p>
-            <strong>Summary:</strong>{" "}
-            {selectedIncident.summary}
-          </p>
-
-          <p>
-            <strong>Category:</strong>{" "}
-            {selectedIncident.category}
-          </p>
-
-          <p>
-            <strong>Agent:</strong>{" "}
-            {selectedIncident.agent}
-          </p>
-
-          <p>
-            <strong>Priority:</strong>{" "}
-            {selectedIncident.priority}
-          </p>
-
-          <p>
-            <strong>Status:</strong>{" "}
-            {selectedIncident.status}
-          </p>
-
-          <p>
-            <strong>SLA Time:</strong>{" "}
-            {selectedIncident.sla}
-          </p>
-
-          <p>
-            <strong>Type:</strong>{" "}
-            {selectedIncident.type}
-          </p>
-
-          <p>
-            <strong>Team:</strong>{" "}
-            {team}
-          </p>
-
-          <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => {
-                const currentUserName = user?.fullName || 'Inesh Agarwal';
-                const updated = { ...selectedIncident, agent: currentUserName };
-                setSelectedIncident(updated);
-                setIncidents((prev) => prev.map((inc) => (inc.id === updated.id ? updated : inc)));
-              }}
-              style={{
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: '#00b0f0',
-                color: '#fff',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Assign to Me
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const newStatus = selectedIncident.status === 'Resolved' ? 'In Progress' : 'Resolved';
-                const updated = { ...selectedIncident, status: newStatus };
-                setSelectedIncident(updated);
-                setIncidents((prev) => prev.map((inc) => (inc.id === updated.id ? updated : inc)));
-              }}
-              style={{
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: selectedIncident.status === 'Resolved' ? '#f59e0b' : '#10b981',
-                color: '#fff',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {selectedIncident.status === 'Resolved' ? 'Reopen Incident' : 'Mark Resolved'}
-            </button>
-          </div>
-
-        </div>
+        <TicketDetailModal
+          ticket={{
+            id: selectedIncident.id,
+            type: selectedIncident.type,
+            summary: selectedIncident.summary,
+            agent: selectedIncident.agent,
+            priority: (selectedIncident.priority as TicketPriority) || "Medium",
+            status: selectedIncident.status,
+            category: selectedIncident.category,
+            targetSla: `Target SLA: ${selectedIncident.sla}`,
+          }}
+          currentUser={user?.fullName || "Inesh Agarwal"}
+          onClose={() => setSelectedIncident(null)}
+          onUpdateTicket={handleModalUpdateTicket}
+        />
       )}
 
     </div>

@@ -48,11 +48,7 @@ export interface NotificationItem {
   priority: 'high' | 'medium' | 'low';
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  { id: 'n1', title: 'Major Incident #0002671 is OVERDUE — no update posted in 4 h. SLA breach imminent.', time: '10m ago', isRead: false, priority: 'high' },
-  { id: 'n2', title: 'War-room bridge initiated for #0002672.', time: '45m ago', isRead: false, priority: 'medium' },
-  { id: 'n3', title: 'Stakeholder update published by Ravi M. on #0002673.', time: '2h ago', isRead: true, priority: 'low' },
-];
+const INITIAL_NOTIFICATIONS: NotificationItem[] = [];
 
 export interface TaskItem {
   id: string;
@@ -60,12 +56,7 @@ export interface TaskItem {
   done: boolean;
 }
 
-const INITIAL_TASKS: TaskItem[] = [
-  { id: 't1', label: 'Escalate #0002671 to L3 support', done: false },
-  { id: 't2', label: 'Post stakeholder update for #0002673 (due in 12 min)', done: false },
-  { id: 't3', label: 'Close war-room bridge for #0002672', done: false },
-  { id: 't4', label: 'Review RCA draft for #0002670', done: true },
-];
+const INITIAL_TASKS: TaskItem[] = [];
 
 const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   notifications: {
@@ -78,15 +69,15 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   },
   performance: {
     title: '📊 SLA Performance',
-    body: 'Last 30 days:\n\nResponse SLA    94% on-time\nResolution SLA  78% on-time\nMTTR            3 h 42 m\nOpen P1s        2\nOpen P2s        1\nMean updates/inc  6.4',
+    body: '',
   },
   status: {
     title: '📡 System / Service Health',
-    body: '● API Gateway      Operational\n● Auth Service      Operational\n● Payments          Degraded ⚠\n● Database Cluster  Operational\n● CDN               Operational\n● Email Relay       Operational\n\nLast checked: just now',
+    body: '',
   },
   history: {
     title: '🕐 Audit Log',
-    body: 'Recent changes (this session):\n\n09:42  Stage advanced → Escalated  (#0002673)\n09:38  Comment added by Priya K.    (#0002671)\n09:31  Incident created              (#0002673)\n09:15  Assignment changed → Ravi M. (#0002672)\n09:03  Stage advanced → Diagnosed   (#0002671)',
+    body: '',
   },
   help: {
     title: '❓ Major Incident Process',
@@ -147,11 +138,11 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
   const [notifications, setNotifications]   = usePersistentState<NotificationItem[]>(
-    'servigen_major_incidents_notifs_v1',
+    'servigen_major_incidents_notifs_v2',
     INITIAL_NOTIFICATIONS
   );
   const [tasks, setTasks]                   = usePersistentState<TaskItem[]>(
-    'servigen_major_incidents_tasks_v1',
+    'servigen_major_incidents_tasks_v2',
     INITIAL_TASKS
   );
   const [feedUnreadCount, setFeedUnreadCount] = useState<number>(0);
@@ -183,6 +174,45 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     localIncidents.forEach((inc) => map.set(inc.id, inc));
     return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
+
+  useEffect(() => {
+    if (allIncidents.length > 0) {
+      setNotifications((prev) => {
+        const hasMock = prev.some((n) => n.title.includes('000267'));
+        if (prev.length === 0 || hasMock) {
+          return allIncidents.slice(0, 4).map((inc) => ({
+            id: `notif-${inc.id}`,
+            title: `Major Incident #${inc.id} (${inc.title}) is under active ITSM management.`,
+            time: 'Live',
+            isRead: false,
+            priority: inc.priority === 'Critical' ? 'high' : 'medium',
+          }));
+        }
+        return prev;
+      });
+
+      setTasks((prev) => {
+        const hasMock = prev.some((t) => t.label.includes('000267'));
+        if (prev.length === 0 || hasMock) {
+          const freshTasks: TaskItem[] = [];
+          allIncidents.slice(0, 3).forEach((inc) => {
+            freshTasks.push({
+              id: `task-${inc.id}-review`,
+              label: `Verify incident diagnosis and mitigation path for #${inc.id}`,
+              done: false,
+            });
+            freshTasks.push({
+              id: `task-${inc.id}-stakeholder`,
+              label: `Post real-time stakeholder update for #${inc.id}`,
+              done: false,
+            });
+          });
+          return freshTasks;
+        }
+        return prev;
+      });
+    }
+  }, [allIncidents, setNotifications, setTasks]);
 
   const liveFeedEntries = useMemo<ActivityFeedEntry[]>(() => {
     const entries: ActivityFeedEntry[] = [];
@@ -881,6 +911,88 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                       <div><span className="text-gray-400">Department:</span> <span className="font-medium text-gray-800">{user?.department || 'IT Operations'}</span></div>
                       <div><span className="text-gray-400">Organization:</span> <span className="font-medium text-gray-800">{user?.defaultOrganisation || 'ServiGen Global Tech'}</span></div>
                       <div><span className="text-gray-400">Status:</span> <span className="inline-flex items-center gap-1 font-medium text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</span></div>
+                    </div>
+                  </div>
+                ) : openPanel === 'history' ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-gray-500 pb-2 border-b border-gray-100">
+                      Audit Log & Live Session History ({liveFeedEntries.length} events)
+                    </p>
+                    {liveFeedEntries.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-4">No audit log entries recorded this session.</p>
+                    ) : (
+                      liveFeedEntries.slice(0, 10).map((entry) => (
+                        <div key={entry.id} className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-2xs text-xs space-y-1">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-mono font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200">
+                              {entry.ticketRef}
+                            </span>
+                            <span className="text-gray-400">{entry.timeAgo}</span>
+                          </div>
+                          <div className="font-semibold text-gray-800">{entry.actionLabel}</div>
+                          <p className="text-gray-600 leading-snug">{entry.message}</p>
+                          <div className="text-[10px] text-gray-400">By {entry.actorName} • {entry.actorOrg}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : openPanel === 'performance' ? (
+                  <div className="space-y-3 text-xs text-gray-700">
+                    <p className="font-semibold text-gray-900 border-b border-gray-100 pb-2">Major Incident SLA Metrics</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <div className="text-[10px] text-emerald-600 uppercase font-bold">Response SLA</div>
+                        <div className="text-lg font-bold text-emerald-700">96.4%</div>
+                        <div className="text-[10px] text-emerald-500">On-time (target: 95%)</div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-cyan-50 border border-cyan-100">
+                        <div className="text-[10px] text-cyan-600 uppercase font-bold">Resolution SLA</div>
+                        <div className="text-lg font-bold text-cyan-700">88.2%</div>
+                        <div className="text-[10px] text-cyan-500">On-time (target: 85%)</div>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-white border border-gray-200 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Active P1 Incidents:</span>
+                        <span className="font-bold text-red-600">{allIncidents.filter((i) => i.priority === 'Critical' && !i.lifecycleStages[5]?.isCompleted).length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Active P2 Incidents:</span>
+                        <span className="font-bold text-orange-600">{allIncidents.filter((i) => i.priority === 'High' && !i.lifecycleStages[5]?.isCompleted).length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Total In-Progress:</span>
+                        <span className="font-bold text-cyan-700">{allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Resolved Incidents:</span>
+                        <span className="font-bold text-emerald-600">{allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : openPanel === 'status' ? (
+                  <div className="space-y-3 text-xs text-gray-700">
+                    <p className="font-semibold text-gray-900 border-b border-gray-100 pb-2">System & Service Health</p>
+                    <div className="space-y-2">
+                      {['API Gateway', 'Auth Service', 'Payment Processing', 'Database Cluster', 'CDN Edge', 'Email Relay'].map((svc) => {
+                        const isAffected = allIncidents.some(
+                          (inc) =>
+                            !inc.lifecycleStages[5]?.isCompleted &&
+                            ((inc.product || '').toLowerCase().includes(svc.toLowerCase()) ||
+                             (inc.title || '').toLowerCase().includes(svc.toLowerCase()))
+                        );
+                        return (
+                          <div key={svc} className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-200">
+                            <span className="font-medium text-gray-800">{svc}</span>
+                            <span className={`inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full ${
+                              isAffected ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${isAffected ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                              {isAffected ? 'Degraded ⚠' : 'Operational'}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (

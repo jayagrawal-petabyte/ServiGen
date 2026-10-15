@@ -29,6 +29,100 @@ export type FullTicket = {
 };
 
 export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
+  "0003910": {
+    type: "Incident",
+    summary: "Screen share button does not work",
+    priority: "Medium",
+    status: "In Progress",
+    agent: "Anjali Prasad",
+    requester: "Devon Vance (Field Operations)",
+    department: "Corporate IT Support",
+    category: "Office Applications > Collaboration",
+    createdAt: "15 Oct 2026, 14:20 PM",
+    targetSla: "SLA remaining: -18:53 (Breached)",
+    description:
+      "User reports the screen share button in the unified conferencing client becomes unresponsive when attempting to present multi-display setups. Audio continues uninterrupted but video frame remains blank for remote attendees. Initial cache clear did not resolve.",
+    notes: [
+      {
+        id: "n-3910-1",
+        author: "Anjali Prasad",
+        time: "15 Oct 2026, 14:35 PM",
+        text: "Requested client debug logs from user workstation. GPU hardware acceleration toggle tested.",
+      },
+      {
+        id: "n-3910-2",
+        author: "Devon Vance",
+        time: "15 Oct 2026, 15:10 PM",
+        text: "Sent logs via secure portal. Issue only reproduces on external 4K monitor.",
+      },
+    ],
+  },
+  "0003576": {
+    type: "Incident",
+    summary: "Audio echo looping when two people join",
+    priority: "Low",
+    status: "In Progress",
+    agent: "Mohammad Taha Ali",
+    requester: "Sarah Jenkins (Human Resources)",
+    department: "Talent Acquisition",
+    category: "Collaboration Tools > Audio/Video",
+    createdAt: "15 Oct 2026, 11:05 AM",
+    targetSla: "SLA remaining: -42:54 (Breached)",
+    description:
+      "Acoustic echo cancellation feedback loop occurs whenever two or more users join conference room B-10 meeting link simultaneously from laptops while room microphone bar is engaged. Requires DSP audio profile reset.",
+    notes: [
+      {
+        id: "n-3576-1",
+        author: "Mohammad Taha Ali",
+        time: "15 Oct 2026, 11:40 AM",
+        text: "Checked room hardware firmware. Polycom studio bar requires pending audio profile patch.",
+      },
+    ],
+  },
+  "0003357": {
+    type: "Incident",
+    summary: "Account locked while working from home",
+    priority: "Medium",
+    status: "In Progress",
+    agent: "Monalisa Panda",
+    requester: "Carlos Mendez (Finance)",
+    department: "Financial Operations",
+    category: "Security > Identity & Access",
+    createdAt: "15 Oct 2026, 15:45 PM",
+    targetSla: "Target SLA: 05:05 remaining",
+    description:
+      "User active directory domain account was automatically locked out after 5 consecutive bad password attempts originating from a background credential sync daemon on secondary iOS mobile device. Verification via SMS OTP completed.",
+    notes: [
+      {
+        id: "n-3357-1",
+        author: "Monalisa Panda",
+        time: "15 Oct 2026, 16:00 PM",
+        text: "Identity verified via corporate mobile authenticator. Reset lockout counter in Azure AD.",
+      },
+    ],
+  },
+  "0003269": {
+    type: "Incident",
+    summary: "VPN worked yesterday, now says unavailable",
+    priority: "Medium",
+    status: "In Progress",
+    agent: "Aditya Kumar Singh",
+    requester: "Mei Lin (Engineering)",
+    department: "Core Platform",
+    category: "Network > Remote Access VPN",
+    createdAt: "15 Oct 2026, 15:50 PM",
+    targetSla: "Target SLA: 05:05 remaining",
+    description:
+      "Client VPN gateway handshake fails with TLS certificate authority error code 741. IPsec tunnel establishes but DNS resolution to internal development cluster times out. Certificate CRL cache invalidation recommended.",
+    notes: [
+      {
+        id: "n-3269-1",
+        author: "Aditya Kumar Singh",
+        time: "15 Oct 2026, 16:15 PM",
+        text: "Examined VPN gateway radius logs. User client version 3.2.1 requires update to 3.2.4.",
+      },
+    ],
+  },
   "0003132-C": {
     type: "Project Task",
     summary: "Deployment and Implementation of Production Hotfix 4.2",
