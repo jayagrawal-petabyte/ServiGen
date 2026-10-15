@@ -286,6 +286,20 @@ export default function ArticleDraftsPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '3px 9px',
+                borderRadius: '999px',
+                backgroundColor: '#fff7ed',
+                color: '#c2410c',
+                border: '1px solid #fed7aa',
+              }}
+              title="Article Drafts API endpoints are not yet defined in ServiGen API V1.0. Operating with isolated typed dev store."
+            >
+              Isolated Dev Store (API Spec Pending)
+            </span>
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
