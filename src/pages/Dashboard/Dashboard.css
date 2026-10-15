@@ -911,3 +911,105 @@
     0 0 0 3px rgba(0, 176, 240, 0.35),
     0 6px 14px rgba(0, 0, 0, 0.15);
 }
+
+/* Bulk Actions Bar for Dashboard Tables */
+.tickets-bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  animation: dashboardFadeIn 0.15s ease-out;
+}
+
+@keyframes dashboardFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-selection-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.bulk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.bulk-btn-assign {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.bulk-btn-assign:hover {
+  background: #0369a1;
+}
+
+.bulk-btn-delete {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.bulk-btn-delete:hover {
+  background: #fca5a5;
+  color: #991b1b;
+}
+
+.bulk-btn-clear {
+  background: transparent;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.bulk-btn-clear:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.bulk-priority-dropdown-wrap .bulk-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}

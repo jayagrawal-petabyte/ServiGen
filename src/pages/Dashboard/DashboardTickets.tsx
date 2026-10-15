@@ -115,6 +115,29 @@ export default function DashboardTickets({
     );
   };
 
+  const handleBulkAssignToMe = () => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedIds.includes(t.id) ? { ...t, agent: currentAgentName } : t
+      )
+    );
+    setSelectedIds([]);
+  };
+
+  const handleBulkSetPriority = (priority: DashboardPriority) => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedIds.includes(t.id) ? { ...t, priority } : t
+      )
+    );
+    setSelectedIds([]);
+  };
+
+  const handleBulkDelete = () => {
+    setTickets((prev) => prev.filter((t) => !selectedIds.includes(t.id)));
+    setSelectedIds([]);
+  };
+
   return (
     <section className="dashboard-card dashboard-tickets-card">
       <div className="dashboard-card-header">
@@ -158,6 +181,63 @@ export default function DashboardTickets({
           </div>
         )}
       </div>
+
+      {!isCollapsed && selectedIds.length > 0 && (
+        <div className="tickets-bulk-actions-bar" style={{ margin: "10px 20px" }}>
+          <div className="bulk-selection-count">
+            <span className="bulk-badge">{selectedIds.length}</span>
+            <span>ticket{selectedIds.length > 1 ? "s" : ""} selected</span>
+          </div>
+
+          <div className="bulk-actions-buttons">
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-assign"
+              onClick={handleBulkAssignToMe}
+              title={`Assign selected tickets to ${currentAgentName}`}
+            >
+              Assign to Me
+            </button>
+
+            <div className="bulk-priority-dropdown-wrap">
+              <select
+                className="bulk-select"
+                defaultValue=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleBulkSetPriority(e.target.value as DashboardPriority);
+                    e.target.value = "";
+                  }
+                }}
+                aria-label="Set priority for selected tickets"
+              >
+                <option value="" disabled>Set Priority ▾</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-delete"
+              onClick={handleBulkDelete}
+              title="Delete selected tickets"
+            >
+              Delete
+            </button>
+
+            <button
+              type="button"
+              className="bulk-btn bulk-btn-clear"
+              onClick={() => setSelectedIds([])}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {!isCollapsed && (
         isLoading ? (

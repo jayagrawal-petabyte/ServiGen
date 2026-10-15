@@ -239,6 +239,160 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
       },
     ],
   },
+  "0003988": {
+    type: "Service Request",
+    summary: "Would like my desk phone extension routed to softphone client",
+    priority: "Low",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Pooja Hegde (Customer Service)",
+    department: "Telecom & Voice Ops",
+    category: "Telephony > Softphone Routing",
+    createdAt: "14 Oct 2026, 09:15 AM",
+    targetSla: "SLA Breached (-32:01 remaining)",
+    description:
+      "Agent needs corporate desk phone extension routed to WebRTC softphone on their laptop for hybrid remote shift. Requires telephony profile update in Asterisk / Cisco CallManager.",
+    notes: [
+      {
+        id: "n-sla-1",
+        author: "System",
+        time: "32 mins ago",
+        text: "Response SLA breached (-32:01). Escalated to voice ops queue.",
+      },
+    ],
+  },
+  "0003987": {
+    type: "Incident",
+    summary: "Desktop shows a blue screen with CRITICAL_PROCESS_DIED on reboot",
+    priority: "High",
+    status: "In Progress",
+    agent: "Unassigned",
+    requester: "Karthik Nair (Engineering)",
+    department: "Workplace Technology",
+    category: "Hardware > OS Crash > BSOD",
+    createdAt: "14 Oct 2026, 08:30 AM",
+    targetSla: "SLA Breached (-88:01 remaining)",
+    description:
+      "Workstation Dell OptiPlex encountering recurrent Blue Screen of Death (STOP code: CRITICAL_PROCESS_DIED) following security agent update. Memory dump analysis required.",
+    notes: [
+      {
+        id: "n-sla-2",
+        author: "System",
+        time: "1h 28m ago",
+        text: "Response SLA breached (-88:01). Priority: High.",
+      },
+    ],
+  },
+  "0003986": {
+    type: "Incident",
+    summary: "New phone is stuck on 'applying security policy' loop",
+    priority: "Medium",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Sunita Rao (Sales Executive)",
+    department: "Mobile Device Management",
+    category: "Mobile > MDM Enrollment",
+    createdAt: "14 Oct 2026, 08:50 AM",
+    targetSla: "SLA Breached (-64:00 remaining)",
+    description:
+      "Corporate iPhone 15 stuck in continuous MDM enrollment profile loop after initial setup assistant. Needs Intune device certificate re-issued.",
+    notes: [
+      {
+        id: "n-sla-3",
+        author: "System",
+        time: "1h 04m ago",
+        text: "SLA breached (-64:00). Awaiting MDM administrator triage.",
+      },
+    ],
+  },
+  "0003985": {
+    type: "Incident",
+    summary: "My camera shows as available but screen is completely black in Zoom/Teams",
+    priority: "Medium",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Rohan Varma (Product Manager)",
+    department: "Collaboration Tools",
+    category: "Software > Video Conferencing",
+    createdAt: "14 Oct 2026, 09:10 AM",
+    targetSla: "SLA Breached (-40:01 remaining)",
+    description:
+      "Integrated web camera LED turns green indicating active capture, but video feeds in Zoom and Microsoft Teams render a pitch-black frame. Camera privacy slider is confirmed open and privacy permissions verified.",
+    notes: [
+      {
+        id: "n-sla-4",
+        author: "System",
+        time: "40 mins ago",
+        text: "SLA breach warning. Ticket unassigned for > 2 hours.",
+      },
+    ],
+  },
+  "0003984": {
+    type: "Incident",
+    summary: "Network shared drive mapped to Z: inaccessible after subnet migration",
+    priority: "High",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Anita Desai (Finance Operations)",
+    department: "Network Infrastructure",
+    category: "Network > File Shares > SMB",
+    createdAt: "14 Oct 2026, 08:45 AM",
+    targetSla: "SLA Breached (-72:15 remaining)",
+    description:
+      "Finance department users reporting SMB file share '\\\\fs01.corp\\finance' fails with network path not found (0x80070035) following overnight firewall routing migration.",
+    notes: [
+      {
+        id: "n-sla-5",
+        author: "System",
+        time: "1h 12m ago",
+        text: "Critical SLA warning for Finance team shared drive.",
+      },
+    ],
+  },
+  "0003980": {
+    type: "Service Request",
+    summary: "Toner is running low on the printer in Finance bay",
+    priority: "Low",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Suresh Menon (Accounts)",
+    department: "Facilities & Operations",
+    category: "Hardware > Printer Consumables",
+    createdAt: "14 Oct 2026, 09:25 AM",
+    targetSla: "SLA Breached (-40:01 remaining)",
+    description:
+      "Black toner cartridge below 5% warning on Floor 3 HP LaserJet Enterprise. Replacement cartridge needed from supply inventory.",
+    notes: [
+      {
+        id: "n-sla-6",
+        author: "System",
+        time: "40 mins ago",
+        text: "Automated alert from printer management console.",
+      },
+    ],
+  },
+  "0003979": {
+    type: "Incident",
+    summary: "Can't see my direct reports' timesheets in HR portal",
+    priority: "Medium",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Geeta Patel (Engineering Manager)",
+    department: "Human Resources IT",
+    category: "Business Applications > Workday",
+    createdAt: "14 Oct 2026, 08:40 AM",
+    targetSla: "SLA Breached (-88:01 remaining)",
+    description:
+      "Line manager cannot view or approve weekly timesheets for newly transferred team members in Workday portal. Security group mapping needs audit.",
+    notes: [
+      {
+        id: "n-sla-7",
+        author: "System",
+        time: "1h 28m ago",
+        text: "Response SLA breached (-88:01). Requires Workday security administrator.",
+      },
+    ],
+  },
 };
 
 export const AVAILABLE_AGENTS = [
