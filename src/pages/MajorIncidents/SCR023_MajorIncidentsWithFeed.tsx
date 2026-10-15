@@ -90,6 +90,7 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
+  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<MajorIncident | null>(null);
   const [feedEntries, setFeedEntries]       = useState<ActivityFeedEntry[]>(MOCK_FEED_ENTRIES);
   const [newCount, setNewCount]             = useState<number>(0);
@@ -100,9 +101,12 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live) && live.length > 0) {
         setServerIncidents(live);
+        setIsLiveConnected(true);
+      } else {
+        setIsLiveConnected(false);
       }
     } catch {
-      // Offline fallback
+      setIsLiveConnected(false);
     }
   }, []);
 
@@ -137,17 +141,15 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
   };
 
   const allIncidents = useMemo(() => {
-    const map = new Map<string, MajorIncident>();
-    serverIncidents.forEach((inc) => map.set(inc.id, inc));
-    localIncidents.forEach((inc) => map.set(inc.id, inc));
-    if (serverIncidents.length === 0 && localIncidents.length === 0) {
-      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
-    } else {
-      MOCK_MAJOR_INCIDENTS.forEach((inc) => {
-        if (!map.has(inc.id)) map.set(inc.id, inc);
-      });
+    // When live server incidents or local incidents exist, strictly display live records (no mock data)
+    if (serverIncidents.length > 0 || localIncidents.length > 0) {
+      const map = new Map<string, MajorIncident>();
+      serverIncidents.forEach((inc) => map.set(inc.id, inc));
+      localIncidents.forEach((inc) => map.set(inc.id, inc));
+      return Array.from(map.values());
     }
-    return Array.from(map.values());
+    // Only fall back to mock data if backend returned 0 records and no local incidents exist
+    return MOCK_MAJOR_INCIDENTS;
   }, [serverIncidents, localIncidents]);
 
   const sidebarCounts = useMemo(() => {
@@ -221,9 +223,15 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
                 <span className="font-semibold text-gray-800 text-sm">Major Incidents + Feed</span>
                 <span className="text-gray-300">·</span>
                 <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-[11px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Live API Connected</span>
+                <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium ${
+                  isLiveConnected 
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                  }`} />
+                  <span>{isLiveConnected ? 'Live API Connected' : 'Connecting to API...'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
