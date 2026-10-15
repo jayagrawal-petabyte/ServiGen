@@ -12,6 +12,7 @@ import PriorityBadge from './components/PriorityBadge';
 import IncidentDetailPanel from './components/IncidentDetailPanel';
 import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority } from './types/majorIncident.types';
+import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
 
 const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
 
@@ -107,10 +108,27 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     'servigen_major_incidents_live_v1',
     []
   );
+  const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
+  const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(true);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+
+  const loadLiveIncidents = useCallback(async () => {
+    try {
+      const live = await majorIncidentsService.getMajorIncidents();
+      if (Array.isArray(live) && live.length > 0) {
+        setServerIncidents(live);
+      }
+    } finally {
+      setIsFetchingLive(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveIncidents();
+  }, [loadLiveIncidents]);
 
   // Dynamically derive permissions from the authenticated user's role
   const role: UserRole = useMemo(() => {
@@ -153,7 +171,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery]);
 
-  const allIncidents = useMemo(() => [...localIncidents, ...MOCK_MAJOR_INCIDENTS], [localIncidents]);
+  const allIncidents = useMemo(() => {
+    const map = new Map<string, MajorIncident>();
+    MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    return Array.from(map.values());
+  }, [serverIncidents, localIncidents]);
 
   const sidebarCounts = useMemo(() => {
     return {
@@ -185,14 +209,28 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => [incident, ...prev]);
     setPage(1);
     setFeedUnreadCount((c) => c + 1);
+
+    majorIncidentsService.createMajorIncident({
+      title: incident.title,
+      priority: incident.priority,
+      product: incident.product,
+      assignee: incident.assignee,
+    }).then((created) => {
+      if (created) {
+        setLocalIncidents((prev) => prev.map((i) => i.id === incident.id ? created : i));
+        setServerIncidents((prev) => [created, ...prev.filter((i) => i.id !== created.id)]);
+      }
+    }).catch(() => {});
   };
 
   const handleAdvanceStage = (incidentId: string) => {
+    let nextStageIdx = -1;
     const advance = (list: MajorIncident[]): MajorIncident[] =>
       list.map((inc) => {
         if (inc.id !== incidentId) return inc;
         const activeIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
         if (activeIdx === -1 || activeIdx >= STAGE_ORDER.length - 1) return inc;
+        nextStageIdx = activeIdx + 1;
         const now = new Date().toLocaleString('en-GB', { hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newStages = inc.lifecycleStages.map((s, i) => ({
           ...s,
@@ -206,7 +244,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           author: activeUserName,
           authorRole: role,
           type: 'stage_change',
-          content: 'Stage advanced.',
+          content: `Stage advanced to ${STAGE_ORDER[activeIdx + 1]}`,
           fromStage: STAGE_ORDER[activeIdx],
           toStage: STAGE_ORDER[activeIdx + 1],
         };
@@ -216,10 +254,19 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
       if (alreadyLocal) return advance(prev);
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
-      if (original) return advance([{ ...original }, ...prev]);
+      const existing = allIncidents.find((i) => i.id === incidentId);
+      if (existing) return advance([{ ...existing }, ...prev]);
       return prev;
     });
+
+    if (nextStageIdx !== -1) {
+      const backendStatus = mapStageToBackendStatus(nextStageIdx);
+      majorIncidentsService.updateMajorIncident(incidentId, { status: backendStatus }).catch(() => {});
+      majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+        message: `Lifecycle stage advanced to ${STAGE_ORDER[nextStageIdx]}`,
+        author: activeUserName,
+      }).catch(() => {});
+    }
   };
 
   const handleAddUpdate = (incidentId: string, update: IncidentUpdate) => {
@@ -229,10 +276,15 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
       if (alreadyLocal) return inject(prev);
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
-      if (original) return inject([{ ...original }, ...prev]);
+      const existing = allIncidents.find((i) => i.id === incidentId);
+      if (existing) return inject([{ ...existing }, ...prev]);
       return prev;
     });
+
+    majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+      message: update.content,
+      author: update.author || activeUserName,
+    }).catch(() => {});
   };
 
   const handleReassign = (incidentId: string, newAssignee: string) => {
@@ -260,10 +312,16 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
       if (alreadyLocal) return updateAssignee(prev);
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
-      if (original) return updateAssignee([{ ...original }, ...prev]);
+      const existing = allIncidents.find((i) => i.id === incidentId);
+      if (existing) return updateAssignee([{ ...existing }, ...prev]);
       return prev;
     });
+
+    majorIncidentsService.updateMajorIncident(incidentId, { commander: newAssignee }).catch(() => {});
+    majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+      message: `Assignee reassigned to ${newAssignee}`,
+      author: activeUserName,
+    }).catch(() => {});
   };
 
   const handleUpdatePriority = (incidentId: string, newPriority: Priority) => {
@@ -287,10 +345,18 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
       if (alreadyLocal) return updatePrio(prev);
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
-      if (original) return updatePrio([{ ...original }, ...prev]);
+      const existing = allIncidents.find((i) => i.id === incidentId);
+      if (existing) return updatePrio([{ ...existing }, ...prev]);
       return prev;
     });
+
+    majorIncidentsService.updateMajorIncident(incidentId, {
+      priority: newPriority === 'Critical' ? 'P1' : 'P2',
+    }).catch(() => {});
+    majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+      message: `Priority changed to ${newPriority}`,
+      author: activeUserName,
+    }).catch(() => {});
   };
 
   const handleUpdateProduct = (incidentId: string, newProduct: string) => {
@@ -314,10 +380,18 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
       if (alreadyLocal) return updateProd(prev);
-      const original = MOCK_MAJOR_INCIDENTS.find((i) => i.id === incidentId);
-      if (original) return updateProd([{ ...original }, ...prev]);
+      const existing = allIncidents.find((i) => i.id === incidentId);
+      if (existing) return updateProd([{ ...existing }, ...prev]);
       return prev;
     });
+
+    majorIncidentsService.updateMajorIncident(incidentId, {
+      affectedServices: [newProduct],
+    }).catch(() => {});
+    majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+      message: `Product / CI changed to ${newProduct}`,
+      author: activeUserName,
+    }).catch(() => {});
   };
 
   /* Search icon → focus the sub-bar search input */
@@ -362,6 +436,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setSelectedIncidentId(null);
             setOpenPanel(null);
             setIsFeedOpen(false);
+            loadLiveIncidents();
           }}
           onToggleFeed={() => {
             setIsFeedOpen((v) => {
