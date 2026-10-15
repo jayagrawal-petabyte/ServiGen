@@ -45,7 +45,7 @@ const PRIORITY_COLOR: Record<Ticket["priority"], string> = {
 const NavSidebar: React.FC = () => (
   <aside className="oh-sidebar">
     <div className="oh-sidebar-logo">
-      <BrandLogo size={36} />
+      <BrandLogo size={32} />
     </div>
     <nav className="oh-sidebar-nav">
       {/* Dashboard */}

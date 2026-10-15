@@ -110,7 +110,7 @@ export const Sidebar: React.FC = () => {
           style={{ textDecoration: 'none' }}
           title="ServiGen Dashboard"
         >
-          <BrandLogo size={34} />
+          <BrandLogo size={32} />
         </NavLink>
       </div>
       <nav className="sidebar-nav">
