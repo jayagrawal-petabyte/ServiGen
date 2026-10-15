@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import "./Dashboard.css";
 
 import MoodCheckIn from "./MoodCheckIn";
@@ -10,7 +11,9 @@ import DashboardGreeting from "./DashboardGreeting";
 import {
   CATEGORY_DATA,
   DASHBOARD_STATS,
+  type CategoryItem,
 } from "./dashboard.data";
+import dashboardService, { DashboardKpis } from "../../services/dashboardService";
 
 type DashboardProps = {
   isLoading?: boolean;
@@ -19,6 +22,38 @@ type DashboardProps = {
 export default function Dashboard({
   isLoading = false,
 }: DashboardProps) {
+  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
+  const [categories, setCategories] = useState<CategoryItem[]>(CATEGORY_DATA);
+
+  useEffect(() => {
+    let mounted = true;
+    dashboardService.getKpis().then((data) => {
+      if (mounted && data) {
+        setKpis(data);
+      }
+    });
+    dashboardService.getIncidentsByCategory().then((data) => {
+      if (mounted && data?.length) {
+        setCategories(data);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats = DASHBOARD_STATS.map((stat) => {
+    if (!kpis) return stat;
+    if (stat.label === "Open Incidents") {
+      return { ...stat, value: String(kpis.openIncidents) };
+    }
+    if (stat.label === "Average Resolution Time") {
+      const hours = (kpis.avgResolutionTimeMinutes / 60).toFixed(2);
+      return { ...stat, value: hours };
+    }
+    return stat;
+  });
+
   return (
     <div className="dashboard-layout">
       <main className="dashboard-page">
@@ -28,7 +63,7 @@ export default function Dashboard({
 
         <section className="dashboard-main-grid">
           <div className="dashboard-stats-grid">
-            {DASHBOARD_STATS.map((stat) => (
+            {stats.map((stat) => (
               <article
                 key={stat.label}
                 className={`dashboard-stat-card dashboard-stat-${stat.type}`}
@@ -51,7 +86,7 @@ export default function Dashboard({
         </section>
 
         <section className="dashboard-lower-grid">
-          <DashboardCategory data={CATEGORY_DATA} />
+          <DashboardCategory data={categories} />
 
           <DashboardTickets isLoading={isLoading} />
         </section>

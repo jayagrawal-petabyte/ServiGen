@@ -1,9 +1,24 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { TEAM_INCIDENTS } from "./dashboard.data";
+import { TEAM_INCIDENTS, type TeamIncident } from "./dashboard.data";
+import dashboardService from "../../services/dashboardService";
 
 export default function OpenIncidentsByTeam() {
   const navigate = useNavigate();
+  const [teamData, setTeamData] = useState<TeamIncident[]>(TEAM_INCIDENTS);
   const maxValue = 90;
+
+  useEffect(() => {
+    let mounted = true;
+    dashboardService.getIncidentsByTeam().then((data) => {
+      if (mounted && data?.length) {
+        setTeamData(data);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleTeamClick = (label: string) => {
     if (label.toLowerCase().includes('2nd')) {
@@ -58,7 +73,7 @@ export default function OpenIncidentsByTeam() {
           </div>
 
           <div className="team-bars">
-            {TEAM_INCIDENTS.map((team) => (
+            {teamData.map((team) => (
               <div
                 key={team.label}
                 className="team-bar-column"

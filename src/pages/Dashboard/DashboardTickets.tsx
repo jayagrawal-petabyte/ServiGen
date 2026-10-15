@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../Auth/AuthContext";
 import {
   DASHBOARD_TICKETS,
@@ -7,6 +7,7 @@ import {
 } from "./dashboard.data";
 import { TicketDetailModal, type FullTicket } from "../../components/TicketDetailModal";
 import { usePersistentState } from "../../utils/persistentState";
+import dashboardService from "../../services/dashboardService";
 
 type DashboardTicketsProps = {
   isLoading?: boolean;
@@ -45,6 +46,18 @@ export default function DashboardTickets({
     DASHBOARD_TICKETS
   );
   const [selectedTicket, setSelectedTicket] = useState<DashboardTicket | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    dashboardService.getNewTickets().then((data) => {
+      if (mounted && data?.length) {
+        setTickets(data);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
