@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
+import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
+import { majorIncidentsService } from '../../services/majorIncidentsService';
 import type { MajorIncident, Priority } from './types/majorIncident.types';
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
@@ -60,18 +62,23 @@ const activeStageLabel = (incident: MajorIncident): string => {
   return active?.label ?? 'Unknown';
 };
 
-const ListRow: React.FC<{ incident: MajorIncident; index: number; onSelect: (id: string) => void }> = ({ incident, index, onSelect }) => (
+const ListRow: React.FC<{
+  incident: MajorIncident;
+  index: number;
+  onSelect: (inc: MajorIncident) => void;
+  onOpenLive: (id: string) => void;
+}> = ({ incident, index, onSelect, onOpenLive }) => (
   <tr 
-    onClick={() => onSelect(incident.id)}
-    className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors group cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+    onClick={() => onSelect(incident)}
+    className={`border-b border-gray-100 hover:bg-cyan-50/40 transition-colors group cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
   >
     <td className="px-4 py-3 whitespace-nowrap">
-      <span className="text-[11px] font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-2 py-0.5">
+      <span className="text-[11px] font-mono font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-2 py-0.5 hover:bg-cyan-100 transition-colors">
         #{incident.id}
       </span>
     </td>
     <td className="px-4 py-3">
-      <span className="text-sm font-medium text-gray-800 group-hover:text-blue-700 transition-colors line-clamp-1">
+      <span className="text-sm font-medium text-gray-800 group-hover:text-cyan-700 transition-colors line-clamp-1">
         {incident.title}
       </span>
     </td>
@@ -97,7 +104,7 @@ const ListRow: React.FC<{ incident: MajorIncident; index: number; onSelect: (id:
         <span className="text-[11px] text-gray-400 italic">Unassigned</span>
       ) : (
         <div className="flex items-center gap-1.5">
-          <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+          <span className="w-5 h-5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
             {incident.assignee.split(' ').map((n) => n[0]).join('').slice(0, 2)}
           </span>
           <span className="text-[11px] text-gray-700 truncate max-w-[90px]">{incident.assignee}</span>
@@ -105,13 +112,23 @@ const ListRow: React.FC<{ incident: MajorIncident; index: number; onSelect: (id:
       )}
     </td>
     <td className="px-4 py-3 text-right">
-      <button 
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onSelect(incident.id); }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px] text-blue-600 hover:text-blue-800 font-medium"
-      >
-        View →
-      </button>
+      <div className="flex items-center justify-end gap-2">
+        <button 
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onSelect(incident); }}
+          className="text-[11px] text-cyan-600 hover:text-cyan-800 font-semibold px-2 py-0.5 rounded hover:bg-cyan-50 transition-colors"
+        >
+          Details
+        </button>
+        <button 
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpenLive(incident.id); }}
+          className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-0.5 rounded hover:bg-gray-100 transition-colors"
+          title="Open in Live Board"
+        >
+          Board →
+        </button>
+      </div>
     </td>
   </tr>
 );
@@ -120,18 +137,55 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
   const navigate = useNavigate();
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
+  const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
+  const [selectedTicketForModal, setSelectedTicketForModal] = useState<MajorIncident | null>(null);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [sortDir, setSortDir]               = useState<'asc' | 'desc'>('desc');
   const [page, setPage]                     = useState<number>(1);
   const PAGE_SIZE = 5;
 
+  const loadLiveIncidents = useCallback(async () => {
+    try {
+      const live = await majorIncidentsService.getMajorIncidents();
+      if (Array.isArray(live) && live.length > 0) {
+        setServerIncidents(live);
+      }
+    } catch {
+      // Offline fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveIncidents();
+  }, [loadLiveIncidents]);
+
   useEffect(() => { setPage(1); }, [selectedListId, searchQuery, sortDir]);
 
-  const allIncidents = useMemo(
-    () => [...localIncidents, ...MOCK_MAJOR_INCIDENTS],
-    [localIncidents]
-  );
+  const allIncidents = useMemo(() => {
+    const map = new Map<string, MajorIncident>();
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    if (serverIncidents.length === 0 && localIncidents.length === 0) {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    } else {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => {
+        if (!map.has(inc.id)) map.set(inc.id, inc);
+      });
+    }
+    return Array.from(map.values());
+  }, [serverIncidents, localIncidents]);
+
+  const sidebarCounts = useMemo(() => {
+    return {
+      'update-required': allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length,
+      'my-team': allIncidents.filter((i) => i.assignee !== 'Unassigned').length,
+      'critical': allIncidents.filter((i) => i.priority === 'Critical').length,
+      'closed': allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length,
+      'board': allIncidents.length,
+      'dashboard': allIncidents.length,
+    };
+  }, [allIncidents]);
 
   const incidents = useMemo(() => {
     let list = filterByList(allIncidents, selectedListId);
@@ -154,11 +208,23 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
   const handleAddIncident = (incident: MajorIncident) => {
     setLocalIncidents((prev) => [incident, ...prev]);
     setPage(1);
+
+    majorIncidentsService.createMajorIncident({
+      title: incident.title,
+      priority: incident.priority,
+      product: incident.product,
+      assignee: incident.assignee,
+    }).then((created) => {
+      if (created) {
+        setLocalIncidents((prev) => prev.map((i) => i.id === incident.id ? created : i));
+        setServerIncidents((prev) => [created, ...prev.filter((i) => i.id !== created.id)]);
+      }
+    }).catch(() => {});
   };
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      <MajorIncidentsSidebar onSelectList={setSelectedListId} />
+      <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PageHeader
@@ -171,26 +237,38 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
           nextDisabled={page >= totalPages}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onRefresh={() => { setSearchQuery(''); setSortDir('desc'); setPage(1); }}
+          onRefresh={() => { setSearchQuery(''); setSortDir('desc'); setPage(1); loadLiveIncidents(); }}
           onNew={() => setShowNewModal(true)}
           breadcrumb="List View"
         />
 
         <div className="flex-1 overflow-auto px-5 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className="font-medium text-gray-700">Major Incidents</span>
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span className="font-semibold text-gray-800 text-sm">Major Incidents Register</span>
               <span className="text-gray-300">·</span>
-              <span>{incidents.length} results</span>
+              <span>{incidents.length} records</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live API Connected</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-gray-400">
-              <span>Sort:</span>
-              <button
-                onClick={() => setSortDir((d) => d === 'desc' ? 'asc' : 'desc')}
-                className="text-gray-600 font-medium hover:text-gray-800 transition-colors"
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                <span>Sort:</span>
+                <button
+                  onClick={() => setSortDir((d) => d === 'desc' ? 'asc' : 'desc')}
+                  className="text-gray-600 font-medium hover:text-gray-800 transition-colors"
+                >
+                  Priority {sortDir === 'desc' ? '↓' : '↑'}
+                </button>
+              </div>
+              <Link
+                to="/major-incidents/live"
+                className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
               >
-                Priority {sortDir === 'desc' ? '↓' : '↑'}
-              </button>
+                Live Pipeline Board →
+              </Link>
             </div>
           </div>
 
@@ -205,7 +283,7 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[160px]">Lifecycle</th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Resolution Target</th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Assignee</th>
-                  <th className="px-4 py-2.5" />
+                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,7 +292,8 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
                     key={incident.id} 
                     incident={incident} 
                     index={i} 
-                    onSelect={() => navigate('/major-incidents/live')}
+                    onSelect={(inc) => setSelectedTicketForModal(inc)}
+                    onOpenLive={() => navigate('/major-incidents/live')}
                   />
                 ))}
               </tbody>
@@ -232,7 +311,7 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-40">‹ Prev</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setPage(p)} className={`px-2 py-1 rounded font-medium ${p === page ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}>{p}</button>
+                <button key={p} onClick={() => setPage(p)} className={`px-2 py-1 rounded font-medium ${p === page ? 'bg-cyan-50 text-cyan-600' : 'hover:bg-gray-100'}`}>{p}</button>
               ))}
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-40">Next ›</button>
             </div>
@@ -244,6 +323,29 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
         <NewIncidentModal
           onClose={() => setShowNewModal(false)}
           onSubmit={handleAddIncident}
+        />
+      )}
+
+      {selectedTicketForModal && (
+        <TicketDetailModal
+          ticket={{
+            id: selectedTicketForModal.id,
+            type: 'Major Incident',
+            summary: selectedTicketForModal.title,
+            agent: selectedTicketForModal.assignee,
+            priority: selectedTicketForModal.priority === 'Critical' ? 'Critical' : 'High',
+            status: activeStageLabel(selectedTicketForModal),
+            department: selectedTicketForModal.product,
+            category: 'Major Incident Investigation',
+            targetSla: selectedTicketForModal.resolutionTarget,
+            notes: (selectedTicketForModal.updates || []).map((u) => ({
+              id: u.id,
+              author: u.author || 'Commander',
+              time: u.timestamp || 'Just now',
+              text: u.content,
+            })),
+          }}
+          onClose={() => setSelectedTicketForModal(null)}
         />
       )}
     </div>

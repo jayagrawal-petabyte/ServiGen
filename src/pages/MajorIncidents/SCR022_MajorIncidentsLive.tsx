@@ -149,7 +149,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     INITIAL_TASKS
   );
   const [feedUnreadCount, setFeedUnreadCount] = useState<number>(MOCK_FEED_ENTRIES.length);
-  const PAGE_SIZE = 2;
+  const PAGE_SIZE = 4;
 
   const activeUserName = user?.fullName || 'Inesh Agarwal';
   const activeUserEmail = user?.email || 'inesh@servigen.io';
@@ -173,9 +173,16 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    // Prioritize live server incidents from backend at the top of the queue
     serverIncidents.forEach((inc) => map.set(inc.id, inc));
     localIncidents.forEach((inc) => map.set(inc.id, inc));
+    if (serverIncidents.length === 0 && localIncidents.length === 0) {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    } else {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => {
+        if (!map.has(inc.id)) map.set(inc.id, inc);
+      });
+    }
     return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
 
@@ -261,11 +268,23 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
     if (nextStageIdx !== -1) {
       const backendStatus = mapStageToBackendStatus(nextStageIdx);
-      majorIncidentsService.updateMajorIncident(incidentId, { status: backendStatus }).catch(() => {});
+      majorIncidentsService.updateMajorIncident(incidentId, { status: backendStatus })
+        .then((updated) => {
+          if (updated) {
+            setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+          }
+        })
+        .catch(() => {});
       majorIncidentsService.addMajorIncidentUpdate(incidentId, {
         message: `Lifecycle stage advanced to ${STAGE_ORDER[nextStageIdx]}`,
         author: activeUserName,
-      }).catch(() => {});
+      })
+        .then((updated) => {
+          if (updated) {
+            setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+          }
+        })
+        .catch(() => {});
     }
   };
 
@@ -284,7 +303,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     majorIncidentsService.addMajorIncidentUpdate(incidentId, {
       message: update.content,
       author: update.author || activeUserName,
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
   };
 
   const handleReassign = (incidentId: string, newAssignee: string) => {
@@ -317,11 +342,23 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       return prev;
     });
 
-    majorIncidentsService.updateMajorIncident(incidentId, { commander: newAssignee }).catch(() => {});
+    majorIncidentsService.updateMajorIncident(incidentId, { commander: newAssignee })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
     majorIncidentsService.addMajorIncidentUpdate(incidentId, {
       message: `Assignee reassigned to ${newAssignee}`,
       author: activeUserName,
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
   };
 
   const handleUpdatePriority = (incidentId: string, newPriority: Priority) => {
@@ -352,11 +389,23 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
     majorIncidentsService.updateMajorIncident(incidentId, {
       priority: newPriority === 'Critical' ? 'P1' : 'P2',
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
     majorIncidentsService.addMajorIncidentUpdate(incidentId, {
       message: `Priority changed to ${newPriority}`,
       author: activeUserName,
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
   };
 
   const handleUpdateProduct = (incidentId: string, newProduct: string) => {
@@ -387,11 +436,23 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
     majorIncidentsService.updateMajorIncident(incidentId, {
       affectedServices: [newProduct],
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
     majorIncidentsService.addMajorIncidentUpdate(incidentId, {
       message: `Product / CI changed to ${newProduct}`,
       author: activeUserName,
-    }).catch(() => {});
+    })
+      .then((updated) => {
+        if (updated) {
+          setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+        }
+      })
+      .catch(() => {});
   };
 
   /* Search icon → focus the sub-bar search input */
@@ -489,10 +550,21 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               Design Canvas
             </Link>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live API Connected</span>
+            </div>
+            <button
+              onClick={() => loadLiveIncidents()}
+              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+              title="Refresh incidents from backend"
+            >
+              <span>↻</span> Refresh
+            </button>
             <Link
               to="/cmdb"
-              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
+              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-0.5 rounded-full transition-colors"
             >
               Asset CMDB →
             </Link>

@@ -1,9 +1,12 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
 import ActivityFeed from './components/ActivityFeed';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
+import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
+import { majorIncidentsService } from '../../services/majorIncidentsService';
 import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
 import type { MajorIncident, ActivityFeedEntry, FeedEntryType } from './types/majorIncident.types';
 
@@ -79,15 +82,33 @@ const LiveDot: React.FC<{ active: boolean }> = ({ active }) => (
 );
 
 const SCR023_MajorIncidentsWithFeed: React.FC = () => {
+  const navigate = useNavigate();
   const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(true);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [isLive, setIsLive]                 = useState<boolean>(true);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
+  const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
+  const [selectedTicketForModal, setSelectedTicketForModal] = useState<MajorIncident | null>(null);
   const [feedEntries, setFeedEntries]       = useState<ActivityFeedEntry[]>(MOCK_FEED_ENTRIES);
   const [newCount, setNewCount]             = useState<number>(0);
   const intervalRef                         = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const loadLiveIncidents = useCallback(async () => {
+    try {
+      const live = await majorIncidentsService.getMajorIncidents();
+      if (Array.isArray(live) && live.length > 0) {
+        setServerIncidents(live);
+      }
+    } catch {
+      // Offline fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveIncidents();
+  }, [loadLiveIncidents]);
 
   useEffect(() => {
     if (!isLive) {
@@ -115,10 +136,30 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
     setNewCount(0);
   };
 
-  const allIncidents = useMemo(
-    () => [...localIncidents, ...MOCK_MAJOR_INCIDENTS],
-    [localIncidents]
-  );
+  const allIncidents = useMemo(() => {
+    const map = new Map<string, MajorIncident>();
+    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    if (serverIncidents.length === 0 && localIncidents.length === 0) {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    } else {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => {
+        if (!map.has(inc.id)) map.set(inc.id, inc);
+      });
+    }
+    return Array.from(map.values());
+  }, [serverIncidents, localIncidents]);
+
+  const sidebarCounts = useMemo(() => {
+    return {
+      'update-required': allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length,
+      'my-team': allIncidents.filter((i) => i.assignee !== 'Unassigned').length,
+      'critical': allIncidents.filter((i) => i.priority === 'Critical').length,
+      'closed': allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length,
+      'board': allIncidents.length,
+      'dashboard': allIncidents.length,
+    };
+  }, [allIncidents]);
 
   const displayedIncidents = useMemo(() => {
     const byList = filterByList(allIncidents, selectedListId);
@@ -143,17 +184,30 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
     };
     setFeedEntries((prev) => [feedEntry, ...prev]);
     if (!isFeedOpen) setNewCount((c) => c + 1);
+
+    majorIncidentsService.createMajorIncident({
+      title: incident.title,
+      priority: incident.priority,
+      product: incident.product,
+      assignee: incident.assignee,
+    }).then((created) => {
+      if (created) {
+        setLocalIncidents((prev) => prev.map((i) => i.id === incident.id ? created : i));
+        setServerIncidents((prev) => [created, ...prev.filter((i) => i.id !== created.id)]);
+      }
+    }).catch(() => {});
   };
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      <MajorIncidentsSidebar onSelectList={setSelectedListId} />
+      <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PageHeader
           totalCount={displayedIncidents.length}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onRefresh={() => { setSearchQuery(''); loadLiveIncidents(); }}
           onToggleFeed={isFeedOpen ? () => setIsFeedOpen(false) : handleFeedOpen}
           feedNewCount={newCount}
           onNew={() => setShowNewModal(true)}
@@ -162,10 +216,31 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
 
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-5 py-4">
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
-              <span className="font-medium text-gray-700">Major Incidents + Feed</span>
-              <span className="text-gray-300">·</span>
-              <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <span className="font-semibold text-gray-800 text-sm">Major Incidents + Feed</span>
+                <span className="text-gray-300">·</span>
+                <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-[11px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Live API Connected</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => loadLiveIncidents()}
+                  className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Refresh incidents from backend"
+                >
+                  <span>↻</span> Refresh
+                </button>
+                <Link
+                  to="/major-incidents/live"
+                  className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
+                >
+                  Live Pipeline Board →
+                </Link>
+              </div>
             </div>
 
             {displayedIncidents.length === 0 ? (
@@ -174,7 +249,11 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
               </div>
             ) : (
               displayedIncidents.map((incident) => (
-                <IncidentCard key={incident.id} incident={incident} />
+                <IncidentCard
+                  key={incident.id}
+                  incident={incident}
+                  onClick={() => setSelectedTicketForModal(incident)}
+                />
               ))
             )}
           </div>
@@ -194,6 +273,29 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
         <NewIncidentModal
           onClose={() => setShowNewModal(false)}
           onSubmit={handleAddIncident}
+        />
+      )}
+
+      {selectedTicketForModal && (
+        <TicketDetailModal
+          ticket={{
+            id: selectedTicketForModal.id,
+            type: 'Major Incident',
+            summary: selectedTicketForModal.title,
+            agent: selectedTicketForModal.assignee,
+            priority: selectedTicketForModal.priority === 'Critical' ? 'Critical' : 'High',
+            status: selectedTicketForModal.lifecycleStages.find((s) => s.isActive)?.label ?? 'Active',
+            department: selectedTicketForModal.product,
+            category: 'Major Incident Feed View',
+            targetSla: selectedTicketForModal.resolutionTarget,
+            notes: (selectedTicketForModal.updates || []).map((u) => ({
+              id: u.id,
+              author: u.author || 'Commander',
+              time: u.timestamp || 'Just now',
+              text: u.content,
+            })),
+          }}
+          onClose={() => setSelectedTicketForModal(null)}
         />
       )}
     </div>
