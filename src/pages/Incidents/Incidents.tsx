@@ -14,6 +14,7 @@ import CategoryChart from "./CategoryChart";
 import RecentIncidents from "./RecentIncidents";
 import NewTickets from "./NewTickets";
 import StatisticsCards from "./StatisticsCards";
+import AllIncidentsModal from "./AllIncidentsModal";
 
 import {
   CATEGORY_DATA,
@@ -152,6 +153,8 @@ export default function Incidents({
   const [selectedIncident, setSelectedIncident] =
     useState<RecentIncident | null>(null);
   const [showNewTicketModal, setShowNewTicketModal] =
+    useState(false);
+  const [showAllIncidentsModal, setShowAllIncidentsModal] =
     useState(false);
 
   const [activeFlyout, setActiveFlyout] = useState<"notifications" | "activity" | null>(null);
@@ -487,6 +490,7 @@ export default function Incidents({
           <RecentIncidents
             incidents={filteredIncidents}
             onSelectIncident={setSelectedIncident}
+            onViewAll={() => setShowAllIncidentsModal(true)}
           />
 
           <CategoryChart data={CATEGORY_DATA} />
@@ -668,6 +672,16 @@ export default function Incidents({
           </div>
         </div>
       )}
+
+      {/* All Incidents Expanded Paginated Modal */}
+      <AllIncidentsModal
+        isOpen={showAllIncidentsModal}
+        onClose={() => setShowAllIncidentsModal(false)}
+        incidents={RECENT_INCIDENTS}
+        onSelectIncident={(incident) => {
+          setSelectedIncident(incident);
+        }}
+      />
     </main>
   );
 }

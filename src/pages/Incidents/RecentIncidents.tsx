@@ -6,11 +6,13 @@ type RecentIncidentsProps = {
   onSelectIncident: (
     incident: RecentIncident
   ) => void;
+  onViewAll?: () => void;
 };
 
 export default function RecentIncidents({
   incidents,
   onSelectIncident,
+  onViewAll,
 }: RecentIncidentsProps) {
   return (
     <section className="incident-card recent-card">
@@ -20,12 +22,7 @@ export default function RecentIncidents({
         <button
           type="button"
           className="view-all-button"
-          onClick={() => {
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-          }}
+          onClick={onViewAll}
         >
           View All
         </button>
@@ -52,7 +49,7 @@ export default function RecentIncidents({
             </thead>
 
             <tbody>
-              {incidents.map((incident) => (
+              {incidents.slice(0, 5).map((incident) => (
                 <tr
                   key={incident.id}
                   onClick={() =>

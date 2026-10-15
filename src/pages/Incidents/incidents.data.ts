@@ -137,7 +137,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     date: "17 Sep 2026",
     description:
       "Monthly reporting query is taking longer than expected to complete.",
-    assignedTo: "Unassigned",
+    assignedTo: "Anjali Prasad",
     organisation: "ServiGen Global Tech",
   },
   {
@@ -159,7 +159,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     date: "16 Sep 2026",
     description:
       "The printer toner is running low and needs replacement.",
-    assignedTo: "Unassigned",
+    assignedTo: "Durgesh Kumar",
     organisation: "ServiGen Global Tech",
   },
   {
@@ -170,7 +170,95 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     date: "16 Sep 2026",
     description:
       "The user cannot access timesheet information for direct reports.",
-    assignedTo: "Unassigned",
+    assignedTo: "Inesh Agarwal",
+    organisation: "ServiGen Global Tech",
+  },
+  {
+    id: "0003978",
+    subject: "Core payment gateway 504 timeout during checkout",
+    priority: "Critical",
+    status: "In Progress",
+    date: "15 Sep 2026",
+    description:
+      "Checkout service intermittently timing out when charging European credit cards.",
+    assignedTo: "Inesh Agarwal",
+    organisation: "Meridian Foods Ltd",
+  },
+  {
+    id: "0003977",
+    subject: "Workstation BitLocker recovery key request",
+    priority: "High",
+    status: "Resolved",
+    date: "15 Sep 2026",
+    description:
+      "User rebooted after firmware update and requires BitLocker recovery key to boot.",
+    assignedTo: "Aditya Kumar Singh",
+    organisation: "Northbridge Logistics",
+  },
+  {
+    id: "0003976",
+    subject: "Active Directory password expiry sync lag",
+    priority: "Medium",
+    status: "Resolved",
+    date: "14 Sep 2026",
+    description:
+      "Password reset through portal did not replicate to on-prem domain controllers within SLA.",
+    assignedTo: "Mohammad Taha Ali",
+    organisation: "Solace Retail Group",
+  },
+  {
+    id: "0003975",
+    subject: "Docking station dual display flickering on USB-C",
+    priority: "Low",
+    status: "On Hold",
+    date: "14 Sep 2026",
+    description:
+      "Display flickering intermittently when laptop is connected via Thunderbolt 4 dock. Awaiting vendor firmware update.",
+    assignedTo: "Monalisa Panda",
+    organisation: "Aurelia Health",
+  },
+  {
+    id: "0003974",
+    subject: "ERP production database high CPU alert (>95%)",
+    priority: "Critical",
+    status: "Resolved",
+    date: "13 Sep 2026",
+    description:
+      "Automated batch query pegged database CPU at 98% causing API timeouts. Query optimized and index added.",
+    assignedTo: "Inesh Agarwal",
+    organisation: "Meridian Foods Ltd",
+  },
+  {
+    id: "0003973",
+    subject: "Zoom Room audio conference mic muted hardware glitch",
+    priority: "Medium",
+    status: "Resolved",
+    date: "13 Sep 2026",
+    description:
+      "Meeting room 4B ceiling microphone array failed to initialize upon meeting join.",
+    assignedTo: "Anjali Prasad",
+    organisation: "ServiGen Global Tech",
+  },
+  {
+    id: "0003972",
+    subject: "Salesforce CRM integration sync failure for UK leads",
+    priority: "High",
+    status: "On Hold",
+    date: "12 Sep 2026",
+    description:
+      "OAuth token expired on Salesforce web hook. Awaiting authorization approval from IT Security.",
+    assignedTo: "Durgesh Kumar",
+    organisation: "Solace Retail Group",
+  },
+  {
+    id: "0003971",
+    subject: "Request developer admin privilege on local Docker environment",
+    priority: "Low",
+    status: "Resolved",
+    date: "12 Sep 2026",
+    description:
+      "Software engineer needs local admin permission to build and run containerized microservices.",
+    assignedTo: "Aditya Kumar Singh",
     organisation: "ServiGen Global Tech",
   },
 ];
