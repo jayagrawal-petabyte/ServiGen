@@ -4,16 +4,23 @@ import LoginScreen from './LoginScreen';
 import SplashScreen from './SplashScreen';
 import OrganisationUsersScreen from './OrganisationUsersScreen';
 import { AuthTab, LoginCredentials } from './types';
+import { useAuth } from './AuthContext';
 import './auth.css';
 
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [currentTab, setCurrentTab] = useState<AuthTab>('login');
   const [loggedInUser, setLoggedInUser] = useState<string>('Demo');
 
-  const handleLoginSubmit = (credentials: LoginCredentials) => {
-    setLoggedInUser(credentials.username || 'Demo');
-    setCurrentTab('splash');
+  const handleLoginSubmit = async (credentials: LoginCredentials): Promise<boolean> => {
+    const success = await login(credentials);
+    if (success) {
+      setLoggedInUser(credentials.username || 'Demo');
+      setCurrentTab('splash');
+      return true;
+    }
+    return false;
   };
 
   return (

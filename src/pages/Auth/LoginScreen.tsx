@@ -3,7 +3,7 @@ import { LoginCredentials } from './types';
 import './auth.css';
 
 export interface LoginScreenProps {
-  onLoginSubmit?: (credentials: LoginCredentials) => void;
+  onLoginSubmit?: (credentials: LoginCredentials) => Promise<boolean> | void;
   onForgotPasswordClick?: () => void;
 }
 
@@ -28,7 +28,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Field validation - SG-10 compliant (no console.log of passwords or credentials)
@@ -40,9 +40,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setLoading(true);
 
     if (onLoginSubmit) {
-      onLoginSubmit(credentials);
+      const result = await onLoginSubmit(credentials);
+      if (result === false) {
+        setErrorMessage('Invalid username or password.');
+      }
+      setLoading(false);
     } else {
-      // SG-10 compliant: No fake alert() or credential logging
       setTimeout(() => {
         setLoading(false);
       }, 600);
