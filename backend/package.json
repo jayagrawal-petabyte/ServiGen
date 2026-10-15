@@ -1,0 +1,43 @@
+{
+  "name": "servigen-backend",
+  "version": "1.0.0",
+  "description": "ServiGen backend API — Node.js / Express",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test:jest": "jest --forceExit src/modules/my-work src/modules/incidents",
+    "test:node": "node scripts/run-node-tests.js",
+    "test": "npm run test:jest && npm run test:node",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "seed": "node prisma/seed.js",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:validate": "prisma validate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "prisma": "^5.19.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.js"
+    ]
+  }
+}
