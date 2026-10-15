@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { User } from './types';
 import { MOCK_ORGANISATION_USERS } from './mockAuthData';
 import { useAuth } from './AuthContext';
@@ -14,7 +13,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   users = MOCK_ORGANISATION_USERS,
   onAddUserClick,
 }) => {
-  const navigate = useNavigate();
   const { user: currentUser, switchUser, updateUserRole } = useAuth();
   const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v1', users);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -103,12 +101,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
             }}
           >
             + Add User
-          </button>
-          <button
-            className="users-btn-enter-app"
-            onClick={() => navigate('/dashboard')}
-          >
-            ➔ Enter App
           </button>
         </div>
       </div>
