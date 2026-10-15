@@ -25,8 +25,6 @@ const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident
   }
 };
 
-const ROLES: UserRole[] = ['Agent', 'Manager', 'Admin'];
-
 const BREADCRUMB_LABELS: Record<string, string> = {
   'update-required': 'Update Required',
   'my-team':         'My Team',
@@ -96,7 +94,7 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   },
   profile: {
     title: '👤 Your Profile',
-    body: 'Inesh Agarwal\nEmail: inesh@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online\n\nSwitch simulated role using the bar at the top of the screen.',
+    body: 'Inesh Agarwal\nEmail: inesh@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online',
   },
 };
 
@@ -113,9 +111,17 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
-  const [role, setRole]                     = useState<UserRole>('Agent');
+
+  // Dynamically derive permissions from the authenticated user's role
+  const role: UserRole = useMemo(() => {
+    if (!user) return 'Admin';
+    const r = (user.role || '').toLowerCase();
+    if (r.includes('admin') || r.includes('manager')) return 'Admin';
+    if (r.includes('lead') || r.includes('approv')) return 'Manager';
+    return 'Agent';
+  }, [user]);
+
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
-  const [roleToast, setRoleToast]           = useState<string | null>(null);
   const [notifications, setNotifications]   = usePersistentState<NotificationItem[]>(
     'servigen_major_incidents_notifs_v1',
     INITIAL_NOTIFICATIONS
@@ -339,37 +345,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Role selector strip */}
-        <div className="flex items-center gap-2 px-4 py-1.5 bg-gray-800 text-xs shrink-0">
-          <span className="text-gray-400 font-medium">Role:</span>
-          {ROLES.map((r) => (
-            <button
-              key={r}
-              onClick={() => {
-                if (role === r) return;
-                setRole(r);
-                const desc: Record<string, string> = {
-                  Agent:   'view & comment only',
-                  Manager: 'can advance lifecycle stages',
-                  Admin:   'full access & assignments',
-                };
-                setRoleToast(desc[r] ?? '');
-                setTimeout(() => setRoleToast(null), 2800);
-              }}
-              className={`px-2.5 py-0.5 rounded-full font-semibold transition-colors ${
-                role === r
-                  ? r === 'Admin'   ? 'bg-red-500 text-white'
-                  : r === 'Manager' ? 'bg-purple-500 text-white'
-                  :                   'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-          <span className="ml-auto text-gray-500 text-[10px]">Active: <span className={`font-semibold ${role === 'Admin' ? 'text-red-400' : role === 'Manager' ? 'text-purple-400' : 'text-blue-400'}`}>{role}</span> — affects stage advancement &amp; actions</span>
-        </div>
-
         <PageHeader
           totalCount={totalCount}
           pageStart={pageStart}
@@ -720,14 +695,11 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                     </div>
                     <div className="space-y-1.5 text-xs">
                       <div><span className="text-gray-400">Account Role:</span> <span className="font-semibold text-gray-800">{activeUserRole}</span></div>
-                      <div><span className="text-gray-400">Simulated Role:</span> <span className="font-semibold text-cyan-600">{role}</span></div>
+                      <div><span className="text-gray-400">Effective Permissions:</span> <span className="font-semibold text-cyan-600">{role}</span></div>
                       <div><span className="text-gray-400">Department:</span> <span className="font-medium text-gray-800">{user?.department || 'IT Operations'}</span></div>
                       <div><span className="text-gray-400">Organization:</span> <span className="font-medium text-gray-800">{user?.defaultOrganisation || 'ServiGen Global Tech'}</span></div>
                       <div><span className="text-gray-400">Status:</span> <span className="inline-flex items-center gap-1 font-medium text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</span></div>
                     </div>
-                    <p className="text-[11px] text-gray-400 pt-2 border-t border-gray-100">
-                      Switch simulated role using the bar at the top of the screen.
-                    </p>
                   </div>
                 ) : (
                   <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">
@@ -757,15 +729,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             <ActivityFeed entries={MOCK_FEED_ENTRIES} onClose={() => setIsFeedOpen(false)} />
           )}
         </div>
-        {/* Role-switch confirmation toast */}
-        {roleToast && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center z-50">
-            <div className="flex items-center gap-2 bg-gray-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-2xl border border-gray-700">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${role === 'Admin' ? 'bg-red-400' : role === 'Manager' ? 'bg-purple-400' : 'bg-blue-400'}`} />
-              Switched to <strong className="font-bold">{role}</strong> — {roleToast}
-            </div>
-          </div>
-        )}
       </main>
 
       {showNewModal && (
