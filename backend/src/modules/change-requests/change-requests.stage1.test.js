@@ -2,6 +2,8 @@
 // Stage 1 — Change Requests Domain Verification Tests
 // Covers: tenant isolation, empty-org guard (IDOR), Active filter, missing record handling
 // Run via scripts/run-node-tests.js (NODE_ENV=test injected automatically)
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-at-least-32-characters-long!';
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
