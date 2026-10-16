@@ -55,54 +55,93 @@ import { ServiceCisPage } from './pages/CMDB/ServiceCisPage'
 import { ChangeRequestsPage } from './pages/ChangeRequests/ChangeRequestsPage'
 import { ChangeRequestDetailModal } from './pages/ChangeRequests/ChangeRequestDetailModal'
 import { CreateChangeModal } from './pages/ChangeRequests/CreateChangeModal'
-import { mockChangeRequests } from './data/mockCmdbData'
-import type { ChangeRequest } from './types/cmdb'
-import { usePersistentState } from './utils/persistentState'
+import type { ChangeRequest, ChangeStatus } from './types/cmdb'
+import {
+  fetchChangeRequests,
+  fetchChangeRequestById,
+  createChangeRequest,
+  updateChangeRequestStatus,
+  toggleSubtaskCompletion,
+} from './services/changeRequestsService'
 
-// Change Requests wrapper (manages modal state locally)
+// Change Requests wrapper (manages live data synchronization with service layer)
 function ChangeRequestsWrapper() {
-  const [changeRequests, setChangeRequests] = usePersistentState<ChangeRequest[]>(
-    'servigen_change_requests_v1',
-    mockChangeRequests
-  )
+  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([])
   const [selectedCR, setSelectedCR] = useState<ChangeRequest | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
-  const handleToggleSubtask = (subtaskId: string) => {
-    if (!selectedCR) return
-    const updatedSubtasks = selectedCR.subtasks.map((st) =>
-      st.id === subtaskId ? { ...st, completed: !st.completed } : st
-    )
-    const completedCount = updatedSubtasks.filter((st) => st.completed).length
-    const completionPercent = Math.round((completedCount / (updatedSubtasks.length || 1)) * 100)
-    const updatedCR: ChangeRequest = {
-      ...selectedCR,
-      subtasks: updatedSubtasks,
-      completionPercent,
+  const loadRequests = async () => {
+    try {
+      const res = await fetchChangeRequests()
+      setChangeRequests(res.data)
+    } catch (err) {
+      console.error('[ChangeRequestsWrapper] Failed to fetch:', err)
     }
-    setSelectedCR(updatedCR)
-    setChangeRequests((prev) => prev.map((cr) => (cr.id === updatedCR.id ? updatedCR : cr)))
+  }
+
+  React.useEffect(() => {
+    loadRequests()
+  }, [])
+
+  const handleSelectCR = async (cr: ChangeRequest) => {
+    try {
+      const res = await fetchChangeRequestById(cr.id)
+      setSelectedCR(res.data)
+    } catch {
+      setSelectedCR(cr)
+    }
+  }
+
+  const handleCreateCR = async (newChange: Partial<ChangeRequest> & { title: string }) => {
+    const res = await createChangeRequest(newChange)
+    setChangeRequests((prev) => [res.data, ...prev])
+    setCreateOpen(false)
+  }
+
+  const handleToggleSubtask = async (subtaskId: string) => {
+    if (!selectedCR) return
+    try {
+      const res = await toggleSubtaskCompletion(selectedCR.id, subtaskId)
+      setSelectedCR(res.data)
+      setChangeRequests((prev) =>
+        prev.map((item) => (item.id === res.data.id ? res.data : item))
+      )
+    } catch (err) {
+      console.error('Error toggling subtask:', err)
+    }
+  }
+
+  const handleStatusChange = async (newStatus: ChangeStatus) => {
+    if (!selectedCR) return
+    try {
+      const res = await updateChangeRequestStatus(selectedCR.id, newStatus)
+      setSelectedCR(res.data)
+      setChangeRequests((prev) =>
+        prev.map((item) => (item.id === res.data.id ? res.data : item))
+      )
+    } catch (err) {
+      console.error('Error updating status:', err)
+    }
   }
 
   return (
     <>
       <ChangeRequestsPage
         changeRequests={changeRequests}
-        onSelectChangeRequest={(cr) => setSelectedCR(cr)}
+        onSelectChangeRequest={handleSelectCR}
         onOpenCreateModal={() => setCreateOpen(true)}
+        onRefreshData={loadRequests}
       />
       <ChangeRequestDetailModal
         changeRequest={selectedCR}
         onClose={() => setSelectedCR(null)}
         onToggleSubtask={handleToggleSubtask}
+        onChangeStatus={handleStatusChange}
       />
       <CreateChangeModal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreate={(newChange) => {
-          setChangeRequests((prev) => [newChange, ...prev])
-          setCreateOpen(false)
-        }}
+        onCreate={handleCreateCR}
       />
     </>
   )

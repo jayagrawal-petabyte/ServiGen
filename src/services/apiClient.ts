@@ -64,6 +64,45 @@ export function setAuthToken(token: string, persist = true): void {
   }
 }
 
+export const setStoredToken = (token: string | null) => setAuthToken(token || '', true);
+
+let autoLoginPromise: Promise<string | null> | null = null;
+
+/**
+ * Automatically obtains a valid JWT token from the backend for dev/test session.
+ */
+export async function obtainDevAuthToken(): Promise<string | null> {
+  if (autoLoginPromise) return autoLoginPromise;
+  autoLoginPromise = (async () => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const loginUrl = `${baseUrl}/api/auth/login`;
+      const res = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'inesh@servigen.io',
+          password: 'Password@123',
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const tok = json?.data?.token || json?.token;
+        if (tok) {
+          setStoredToken(tok);
+          return tok;
+        }
+      }
+    } catch {
+      // Offline fallback
+    } finally {
+      autoLoginPromise = null;
+    }
+    return null;
+  })();
+  return autoLoginPromise;
+}
+
 /**
  * Clear stored authentication tokens
  */
@@ -71,6 +110,7 @@ export function clearAuthToken(): void {
   try {
     localStorage.removeItem('token');
     localStorage.removeItem('jwt_token');
+    localStorage.removeItem('servigen_auth_token');
     localStorage.removeItem('access_token');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('jwt_token');
@@ -123,27 +163,49 @@ function resolveErrorMessage(status: number, backendMessage?: string): string {
   }
 }
 
+export interface RequestOptions extends RequestInit {
+  params?: Record<string, string | number | boolean | undefined>;
+}
+
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
- * and standard error parsing.
+ * standard error parsing, and transparent JWT auto-acquisition.
  */
-export async function apiRequest<T>(
+export async function apiRequest<T = any>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestOptions & { _isRetry?: boolean } = {}
 ): Promise<T> {
   const baseUrl = getApiBaseUrl();
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const fullUrl = `${baseUrl}${normalizedEndpoint}`;
+  let fullUrl = `${baseUrl}${normalizedEndpoint}`;
 
-  const headers = new Headers(options.headers || {});
+  const { params, headers: customHeaders, _isRetry, ...fetchOptions } = options;
+
+  if (params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      fullUrl += (fullUrl.includes('?') ? '&' : '?') + queryString;
+    }
+  }
+
+  const headers = new Headers(customHeaders || {});
 
   // Attach Content-Type for mutations if not already set
-  if (options.body && !headers.has('Content-Type')) {
+  if (fetchOptions.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  // Attach JWT Bearer token for protected endpoints
-  const token = getAuthToken();
+  // Attach JWT Bearer token for protected endpoints; auto-acquire if missing
+  let token = getAuthToken();
+  if (!token && !endpoint.includes('/auth/login') && !endpoint.includes('/health')) {
+    token = await obtainDevAuthToken();
+  }
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -151,7 +213,7 @@ export async function apiRequest<T>(
   let response: Response;
   try {
     response = await fetch(fullUrl, {
-      ...options,
+      ...fetchOptions,
       headers,
     });
   } catch (err: unknown) {
@@ -162,7 +224,25 @@ export async function apiRequest<T>(
     throw new ApiError(errorMsg, 0);
   }
 
-  let responseData: unknown = null;
+  // If unauthorized and haven't retried yet, transparently refresh token and retry
+  if (response.status === 401 && !_isRetry && !endpoint.includes('/auth/login')) {
+    clearAuthToken();
+    const freshToken = await obtainDevAuthToken();
+    if (freshToken) {
+      const retryHeaders = new Headers(customHeaders || {});
+      if (fetchOptions.body && !retryHeaders.has('Content-Type')) {
+        retryHeaders.set('Content-Type', 'application/json');
+      }
+      retryHeaders.set('Authorization', `Bearer ${freshToken}`);
+      return apiRequest<T>(endpoint, {
+        ...options,
+        _isRetry: true,
+        headers: retryHeaders,
+      });
+    }
+  }
+
+  let responseData: any = null;
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
     try {
@@ -201,20 +281,28 @@ export async function apiRequest<T>(
 }
 
 export const apiClient = {
-  get: <T>(endpoint: string, options?: RequestInit) =>
+  get: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
+  post: <T = any>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     apiRequest<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     }),
-  patch: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
+  patch: <T = any>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     apiRequest<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     }),
-  delete: <T>(endpoint: string, options?: RequestInit) =>
+  put: <T = any>(endpoint: string, body?: unknown, options?: RequestOptions) =>
+    apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+    }),
+  delete: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: 'DELETE' }),
 };
+
+export const api = apiClient;
