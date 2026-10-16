@@ -26,6 +26,10 @@ const authRouter = require('./modules/auth/auth.routes');
 const intentRouter = require('./modules/ai-core/intent/intent.routes');
 const retrievalRouter = require('./modules/ai-core/retrieval/retrieval.routes');
 const escalationRouter = require('./modules/ai-core/escalation/escalation.routes');
+const calendarRouter = require('./modules/calendar/calendar.routes');
+const knowledgeRouter = require('./modules/knowledge/knowledge.routes');
+const ticketsRouter = require('./modules/tickets/tickets.routes');
+const usersRouter = require('./modules/users/users.routes');
 
 const app = express();
 app.disable('x-powered-by');
@@ -132,6 +136,10 @@ app.use('/api/projects', restrictTo(...PERMISSIONS.STAFF));
 app.use('/api', projectsRouter);
 app.use('/api/cmdb', restrictTo(...PERMISSIONS.STAFF), cmdbRouter);
 app.use('/api/list-builder', restrictTo(...PERMISSIONS.STAFF), listsRouter);
+app.use('/api/calendar', restrictTo(...PERMISSIONS.STAFF), calendarRouter);
+app.use('/api/articles', restrictTo(...PERMISSIONS.STAFF), knowledgeRouter);
+app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);
+app.use('/api/users', restrictTo(...PERMISSIONS.STAFF), usersRouter);
 app.use('/api/ai-core/intent', intentRouter);
 app.use('/api/ai-core', escalationRouter);
 

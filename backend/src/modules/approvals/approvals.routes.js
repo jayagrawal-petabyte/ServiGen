@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const approvalsController = require('./approvals.controller');
 
-// GET /approvals/pending - Pending approvals endpoint
+// GET /approvals or /approvals/pending - Pending approvals endpoint
+router.get('/', approvalsController.getPendingApprovals);
 router.get('/pending', approvalsController.getPendingApprovals);
 
 // GET /approvals/:approvalId - Approval-request detail endpoint
