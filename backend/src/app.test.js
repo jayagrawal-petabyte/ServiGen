@@ -212,13 +212,13 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email: 1234, password: 'Password@123' }),
+    body: JSON.stringify({ email: 1234, password: 'Ag3nt*8mP4!wR9t' }),
   })).status, 400);
 
   const loginResponse = await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email: 'agent001@servigen.local', password: 'Password@123' }),
+    body: JSON.stringify({ email: 'agent001@servigen.local', password: 'Ag3nt*8mP4!wR9t' }),
   });
   assert.equal(loginResponse.status, 200);
   const loginBody = await loginResponse.json();
@@ -229,12 +229,12 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'agent001', password: 'Password@123' }),
+    body: JSON.stringify({ username: 'agent001', password: 'Ag3nt*8mP4!wR9t' }),
   })).status, 200);
   assert.equal((await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'agent001', email: 'agent001@servigen.local', password: 'Password@123' }),
+    body: JSON.stringify({ username: 'agent001', email: 'agent001@servigen.local', password: 'Ag3nt*8mP4!wR9t' }),
   })).status, 200);
 });
 
