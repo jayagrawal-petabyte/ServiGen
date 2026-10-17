@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CustomList.css';
+import { saveCustomList } from '../services/customListsApi';
 
 const CustomList: React.FC = () => {
   const navigate = useNavigate();
@@ -15,11 +16,13 @@ const CustomList: React.FC = () => {
     displayType: 'Default',
     showChangeFreeze: false,
     showByTeam: false,
+    haloApi: false,
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -31,7 +34,7 @@ const CustomList: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.listName.trim()) newErrors.listName = 'List Name is required';
     if (!formData.use.trim()) newErrors.use = 'Use is required';
@@ -47,11 +50,18 @@ const CustomList: React.FC = () => {
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setStatusMessage('');
 
-    setTimeout(() => {
+    try {
+      const created = await saveCustomList(formData, []);
       setIsSubmitting(false);
       setSubmitStatus('success');
-    }, 800);
+      setStatusMessage(`List "${created.name}" saved successfully! (ID: ${created.id})`);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      setStatusMessage(err?.message || 'Failed to save list to backend.');
+    }
   };
 
   const handleCancel = () => {
@@ -65,9 +75,11 @@ const CustomList: React.FC = () => {
       displayType: 'Default',
       showChangeFreeze: false,
       showByTeam: false,
+      haloApi: false,
     });
     setErrors({});
     setSubmitStatus('idle');
+    setStatusMessage('');
   };
 
   return (
@@ -107,10 +119,10 @@ const CustomList: React.FC = () => {
           {/* Action Row */}
           <div className="cl-action-header">
             {submitStatus === 'success' && (
-              <span className="cl-status-msg success">List saved successfully!</span>
+              <span className="cl-status-msg success">{statusMessage || 'List saved successfully!'}</span>
             )}
             {submitStatus === 'error' && (
-              <span className="cl-status-msg error">Failed to save list.</span>
+              <span className="cl-status-msg error">{statusMessage || 'Failed to save list.'}</span>
             )}
             <div className="cl-btn-group">
               <button className="cl-btn-save" onClick={handleSave} disabled={isSubmitting}>
@@ -118,7 +130,7 @@ const CustomList: React.FC = () => {
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                {isSubmitting ? 'Saving...' : 'Save'}
+                {isSubmitting ? 'Saving to Backend...' : 'Save'}
               </button>
               <button className="cl-btn-cancel" onClick={handleCancel}>
                 Cancel

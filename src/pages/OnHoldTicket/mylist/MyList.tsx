@@ -1,5 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './MyList.css';
+import {
+  fetchTicketQueueCounts,
+  fetchCustomListsSummary,
+  type CustomListSummary,
+  type QueueCounts,
+} from '../services/onHoldTicketsApi';
 
 export interface MyListItem {
   id: string;
@@ -9,7 +16,7 @@ export interface MyListItem {
   category: 'Active' | 'Pending' | 'Actioned' | 'Views';
 }
 
-const LIST_ITEMS: MyListItem[] = [
+const DEFAULT_LIST_ITEMS: MyListItem[] = [
   {
     id: 'my-new-tickets',
     label: 'My New Tickets',
@@ -44,6 +51,7 @@ interface MyListProps {
   setSearchQuery: (query: string) => void;
   activeView: string;
   setActiveView: (view: string) => void;
+  onCreateNewList?: () => void;
 }
 
 const MyList: React.FC<MyListProps> = ({
@@ -51,13 +59,78 @@ const MyList: React.FC<MyListProps> = ({
   setSearchQuery,
   activeView,
   setActiveView,
+  onCreateNewList,
 }) => {
+  const navigate = useNavigate();
+  const [counts, setCounts] = useState<QueueCounts | null>(null);
+  const [customLists, setCustomLists] = useState<CustomListSummary[]>([]);
+
+  // Fetch live backend counts & custom lists on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadBackendData() {
+      try {
+        const [liveCounts, liveCustomLists] = await Promise.all([
+          fetchTicketQueueCounts(),
+          fetchCustomListsSummary(),
+        ]);
+        if (isMounted) {
+          if (liveCounts) setCounts(liveCounts);
+          if (liveCustomLists) setCustomLists(liveCustomLists);
+        }
+      } catch (err) {
+        console.warn('[MyList] Error loading backend queue data:', err);
+      }
+    }
+
+    loadBackendData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const categories: Array<'Active' | 'Pending' | 'Actioned' | 'Views'> = [
     'Active',
     'Pending',
     'Actioned',
     'Views',
   ];
+
+  // Merge static list items with live counts
+  const items: MyListItem[] = DEFAULT_LIST_ITEMS.map((item) => {
+    if (counts) {
+      if (item.id === 'my-new-tickets') {
+        return { ...item, badge: counts.active };
+      }
+      if (item.id === 'my-on-hold-tickets') {
+        return { ...item, badge: counts.onHold || counts.pending };
+      }
+      if (item.id === 'my-closed-tickets') {
+        return { ...item, badge: counts.actioned };
+      }
+    }
+    return item;
+  });
+
+  // Append any user-created lists from backend list-builder under "Views"
+  const userCustomItems: MyListItem[] = customLists.map((cl) => ({
+    id: `custom-list-${cl.id}`,
+    label: cl.name,
+    icon: '📑',
+    category: 'Views',
+  }));
+
+  const allItems = [...items, ...userCustomItems];
+
+  const handleCreateListClick = () => {
+    if (onCreateNewList) {
+      onCreateNewList();
+    } else {
+      // Seamlessly navigate to the Custom Lists / List Builder page
+      navigate('/custom-lists');
+    }
+  };
 
   return (
     <div className="left-panel">
@@ -90,13 +163,13 @@ const MyList: React.FC<MyListProps> = ({
       {/* Categories & Items */}
       <div className="my-lists-scroll">
         {categories.map((cat) => {
-          const items = LIST_ITEMS.filter((i) => i.category === cat);
-          if (items.length === 0) return null;
+          const groupItems = allItems.filter((i) => i.category === cat);
+          if (groupItems.length === 0) return null;
           return (
             <div key={cat} className="my-lists-group">
               <h4 className="my-lists-category-title">{cat}</h4>
               <div className="my-lists-items-wrap">
-                {items.map((item) => {
+                {groupItems.map((item) => {
                   const isActive = activeView === item.label;
 
                   return (
@@ -128,7 +201,8 @@ const MyList: React.FC<MyListProps> = ({
           <button
             type="button"
             className="my-lists-create-btn"
-            onClick={() => alert('Create custom ticket view list')}
+            onClick={handleCreateListClick}
+            title="Create a new custom ticket view list"
           >
             <span className="create-plus-icon">⊕</span>
             <span>Create a new List</span>

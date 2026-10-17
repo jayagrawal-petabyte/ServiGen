@@ -5,6 +5,17 @@ import MyList from "../mylist/MyList";
 import { TicketDetailModal, type TicketPriority } from "../../../components/TicketDetailModal";
 import { usePersistentState } from "../../../utils/persistentState";
 import { GlobalNavbarActions } from "../../../components/shared/GlobalNavbarActions";
+import {
+  fetchOnHoldTickets,
+  fetchActiveTickets,
+  fetchClosedTickets,
+  updateOnHoldTicketStatus,
+  bulkUpdateTicketStatus,
+  createNewTicket,
+  bulkUpdateTicketPriority,
+  bulkAssignTickets,
+  bulkDeleteTickets,
+} from "../services/onHoldTicketsApi";
 
 export interface Ticket {
   id: string;
@@ -12,7 +23,7 @@ export interface Ticket {
   priorityColor: "red" | "orange" | "yellow" | "green";
   org: string;
   summary: string;
-  status: "On H" | "With" | "New";
+  status: "On H" | "With" | "New" | "Actioned";
   type: "Incident" | "Service Request";
   description?: string;
   requester?: string;
@@ -101,7 +112,11 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
     <td className="col-viewing">
       {ticket.status === "On H" ? (
         <span className="badge-onhold">On Hold</span>
-      ) : ticket.status === "New" ? null : (
+      ) : ticket.status === "Actioned" ? (
+        <span className="badge-onhold" style={{ background: "#f1f5f9", color: "#475569", borderColor: "#cbd5e1" }}>Closed</span>
+      ) : ticket.status === "With" ? (
+        <span className="badge-onhold" style={{ background: "#fef3c7", color: "#b45309", borderColor: "#fde68a" }}>Pending</span>
+      ) : (
         <span className="badge-onhold" style={{ background: "#f0fdf4", color: "#16a34a", borderColor: "#bbf7d0" }}>Active</span>
       )}
     </td>
@@ -134,12 +149,14 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
     </td>
     <td className="col-summary">{ticket.summary}</td>
     <td className="col-status">
-      {ticket.status === "New" ? (
-        <span className="status-badge status-new">New</span>
+      {ticket.status === "Actioned" ? (
+        <span className="status-badge" style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" }}>Closed</span>
+      ) : ticket.status === "On H" ? (
+        <span className="status-badge status-cyan">On Hold</span>
+      ) : ticket.status === "With" ? (
+        <span className="status-badge status-teal">With User</span>
       ) : (
-        <span className={"status-badge " + (ticket.status === "On H" ? "status-cyan" : "status-teal")}>
-          {ticket.status === "On H" ? "On Hold" : "With User"}
-        </span>
+        <span className="status-badge status-new">Active</span>
       )}
     </td>
   </tr>
@@ -182,20 +199,33 @@ const OnHoldTicketScreen: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
-  const [tickets, setTickets] = usePersistentState<Ticket[]>("servigen_onhold_tickets_v1", ALL_TICKETS);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
   React.useEffect(() => {
     fetchData();
-  }, [activeView]); // Refetch on view change just to simulate loading
+  }, [activeView]);
 
-  const fetchData = () => {
+  const fetchData = async () => {
     setIsLoading(true);
     setCurrentPage(1);
     setSelectedItems([]);
-    const timer = setTimeout(() => {
+    try {
+      let liveTickets: Ticket[] = [];
+      if (activeView === "My New Tickets") {
+        liveTickets = await fetchActiveTickets(NEW_TICKETS_DATA);
+      } else if (activeView === "My Closed Tickets") {
+        liveTickets = await fetchClosedTickets([]);
+      } else if (activeView === "My Followed Tickets") {
+        liveTickets = [];
+      } else {
+        liveTickets = await fetchOnHoldTickets(ALL_TICKETS);
+      }
+      setTickets(liveTickets);
+    } catch (err) {
+      console.warn("Failed to fetch tickets from backend:", err);
+    } finally {
       setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    }
   };
 
   const handleRefresh = () => {
@@ -209,17 +239,18 @@ const OnHoldTicketScreen: React.FC = () => {
   const [newDescription, setNewDescription] = useState<string>("");
   const [newPriority, setNewPriority] = useState<"Critical" | "High" | "Medium" | "Low">("Medium");
   const [newOrg, setNewOrg] = useState<string>("consultancy/EMEA/Inesh Agarwal");
-  const [newStatus, setNewStatus] = useState<"On H" | "With">("On H");
+  const [newStatus, setNewStatus] = useState<"New" | "On H" | "With">("New");
 
   const handleOpenNewModal = () => {
+    setNewStatus(activeView === "My On Hold Tickets" ? "On H" : "New");
     setShowNewModal(true);
   };
 
-  const handleCreateNewTicketSubmit = (e: React.FormEvent) => {
+  const handleCreateNewTicketSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSummary.trim()) return;
 
-    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000);
+    const newId = "TICK-" + (Math.floor(Math.random() * 9000) + 1000);
     const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
       Critical: "red",
       High: "orange",
@@ -227,7 +258,7 @@ const OnHoldTicketScreen: React.FC = () => {
       Low: "green",
     };
 
-    const newTicket: Ticket = {
+    const draftTicket: Ticket = {
       id: newId,
       type: newType,
       summary: newSummary.trim(),
@@ -237,10 +268,22 @@ const OnHoldTicketScreen: React.FC = () => {
       org: newOrg.trim() || "consultancy/EMEA/Inesh Agarwal",
       status: newStatus,
       createdAt: "Just now",
-      targetSla: "Within 4 hours",
+      targetSla: newStatus === "On H" ? "On Hold" : "Within 4 hours",
     };
 
-    setTickets((prev) => [newTicket, ...prev]);
+    try {
+      const persisted = await createNewTicket(draftTicket);
+      setTickets((prev) => [persisted, ...prev]);
+    } catch {
+      setTickets((prev) => [draftTicket, ...prev]);
+    }
+
+    if (newStatus === "New" && activeView === "My On Hold Tickets") {
+      setActiveView("My New Tickets");
+    } else if (newStatus === "On H" && activeView === "My New Tickets") {
+      setActiveView("My On Hold Tickets");
+    }
+
     setCurrentPage(1);
     setShowNewModal(false);
     setNewSummary("");
@@ -249,13 +292,12 @@ const OnHoldTicketScreen: React.FC = () => {
 
   // 1. Filter Tickets
   const filteredTickets = useMemo(() => {
-    const source = activeView === "My New Tickets" ? NEW_TICKETS_DATA : tickets;
-    return source.filter(t => 
+    return tickets.filter(t => 
       t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.org.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.summary.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, tickets, activeView]);
+  }, [searchQuery, tickets]);
 
   // 2. Pagination
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
@@ -264,8 +306,14 @@ const OnHoldTicketScreen: React.FC = () => {
     return filteredTickets.slice(startIndex, startIndex + pageSize);
   }, [filteredTickets, currentPage]);
 
-  const goToNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
-  const goToPrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
+  const goToNextPage = () => {
+    setCurrentPage(p => Math.min(p + 1, totalPages));
+    setSelectedItems([]);
+  };
+  const goToPrevPage = () => {
+    setCurrentPage(p => Math.max(p - 1, 1));
+    setSelectedItems([]);
+  };
 
   const countStart = filteredTickets.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const countEnd = Math.min(currentPage * pageSize, filteredTickets.length);
@@ -274,17 +322,17 @@ const OnHoldTicketScreen: React.FC = () => {
   const groupedTickets = useMemo(() => {
     const groups: Record<string, Ticket[]> = {};
     paginatedTickets.forEach(ticket => {
-      let groupKey = "Other";
-      if (activeView === "My Lists" || activeView === "Tickets by Type") {
-        groupKey = ticket.type;
-      } else if (activeView === "Tickets by Status") {
-        groupKey = ticket.status === "On H" ? "On Hold" : "With User";
+      let groupKey: string = ticket.type || "Incident";
+      if (activeView === "Tickets by Status") {
+        groupKey = ticket.status === "On H" ? "On Hold" : ticket.status === "Actioned" ? "Closed" : ticket.status === "With" ? "With User" : "Active";
       } else if (activeView === "Tickets by Team") {
         const parts = ticket.org.split("/");
         groupKey = parts.length > 1 ? `${parts[0]}/${parts[1]}` : ticket.org;
       } else if (activeView === "Tickets by Agent") {
         const parts = ticket.org.split("/");
         groupKey = parts.length > 2 ? parts[2] : ticket.org;
+      } else {
+        groupKey = ticket.type || "Incident";
       }
 
       if (!groups[groupKey]) groups[groupKey] = [];
@@ -310,27 +358,30 @@ const OnHoldTicketScreen: React.FC = () => {
     }));
   };
 
-  const handleBulkAssignToMe = () => {
+  const handleBulkAssignToMe = async () => {
+    const affectedIds = [...selectedItems];
     setTickets((prev) =>
       prev.map((t) =>
-        selectedItems.includes(t.id)
+        affectedIds.includes(t.id)
           ? { ...t, org: "consultancy/EMEA/Inesh Agarwal" }
           : t
       )
     );
     setSelectedItems([]);
+    await bulkAssignTickets(affectedIds, "agent-001");
   };
 
-  const handleBulkSetPriority = (priority: string) => {
+  const handleBulkSetPriority = async (priority: string) => {
     const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
       Critical: "red",
       High: "orange",
       Medium: "yellow",
       Low: "green",
     };
+    const affectedIds = [...selectedItems];
     setTickets((prev) =>
       prev.map((t) =>
-        selectedItems.includes(t.id)
+        affectedIds.includes(t.id)
           ? {
               ...t,
               priority,
@@ -340,20 +391,28 @@ const OnHoldTicketScreen: React.FC = () => {
       )
     );
     setSelectedItems([]);
+    await bulkUpdateTicketPriority(affectedIds, priority);
   };
 
-  const handleBulkSetStatus = (status: "On H" | "With") => {
+  const handleBulkSetStatus = async (status: "On H" | "With") => {
+    const backendStatus = status === "On H" ? "On Hold" : "Pending";
+    const affectedIds = [...selectedItems];
+
     setTickets((prev) =>
       prev.map((t) =>
-        selectedItems.includes(t.id) ? { ...t, status } : t
+        affectedIds.includes(t.id) ? { ...t, status } : t
       )
     );
     setSelectedItems([]);
+
+    await bulkUpdateTicketStatus(affectedIds, backendStatus);
   };
 
-  const handleBulkDelete = () => {
-    setTickets((prev) => prev.filter((t) => !selectedItems.includes(t.id)));
+  const handleBulkDelete = async () => {
+    const affectedIds = [...selectedItems];
+    setTickets((prev) => prev.filter((t) => !affectedIds.includes(t.id)));
     setSelectedItems([]);
+    await bulkDeleteTickets(affectedIds);
   };
 
   const handleExportCSV = () => {
@@ -610,7 +669,7 @@ const OnHoldTicketScreen: React.FC = () => {
                 <div className="empty-state">
                   <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="empty-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <h3>No tickets found</h3>
-                  <p>We couldn't find any on-hold tickets matching your criteria.</p>
+                  <p>We couldn't find any {activeView.toLowerCase()} matching your criteria.</p>
                   {searchQuery && (
                     <button className="btn-clear-search" onClick={() => setSearchQuery("")}>
                       Clear Search
@@ -641,7 +700,7 @@ const OnHoldTicketScreen: React.FC = () => {
                   <tbody>
                     {activeView === "My New Tickets" ? (
                       <>
-                        {paginatedTickets.slice(0, 9).map((t) => (
+                        {paginatedTickets.map((t) => (
                           <TicketRow 
                             key={t.id} 
                             ticket={t} 
@@ -650,61 +709,65 @@ const OnHoldTicketScreen: React.FC = () => {
                             onSelectTicket={setSelectedTicket}
                           />
                         ))}
-                        <tr
-                          className="major-incident-group-row"
-                          onClick={() => setMajorIncidentCollapsed(!majorIncidentCollapsed)}
-                        >
-                          <td colSpan={9}>
-                            <span className="group-toggle" style={{ marginRight: 6 }}>
-                              {majorIncidentCollapsed ? "▶" : "▼"}
-                            </span>
-                            Major Incident (1)
-                          </td>
-                        </tr>
-                        {!majorIncidentCollapsed && (
-                          <tr
-                            className="ticket-row major-incident-ticket-row"
-                            onClick={() => navigate('/major-incidents/live?incident=0002673')}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <td className="col-type">
-                              <span className="mi-arrow-icon">▶</span>
-                            </td>
-                            <td className="col-check" onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                checked={selectedItems.includes(MAJOR_INCIDENT_ROW.id)}
-                                onChange={() => toggleSelect(MAJOR_INCIDENT_ROW.id)}
-                              />
-                            </td>
-                            <td className="col-viewing"></td>
-                            <td className="col-id">
-                              <button
-                                type="button"
-                                className="ticket-id-link text-left bg-transparent border-0 cursor-pointer font-bold text-gray-900"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate('/major-incidents/live?incident=0002673');
-                                }}
+                        {currentPage === 1 && (
+                          <>
+                            <tr
+                              className="major-incident-group-row"
+                              onClick={() => setMajorIncidentCollapsed(!majorIncidentCollapsed)}
+                            >
+                              <td colSpan={9}>
+                                <span className="group-toggle" style={{ marginRight: 6 }}>
+                                  {majorIncidentCollapsed ? "▶" : "▼"}
+                                </span>
+                                Major Incident (1)
+                              </td>
+                            </tr>
+                            {!majorIncidentCollapsed && (
+                              <tr
+                                className="ticket-row major-incident-ticket-row"
+                                onClick={() => navigate('/major-incidents/live?incident=0002673')}
+                                style={{ cursor: "pointer" }}
                               >
-                                {MAJOR_INCIDENT_ROW.id}
-                              </button>
-                            </td>
-                            <td className="col-sla">
-                              <span className="sla-bar-red">{MAJOR_INCIDENT_ROW.targetSla}</span>
-                            </td>
-                            <td className="col-priority">
-                              <span className="priority-dot" style={{ backgroundColor: "#ef4444" }}></span>
-                              <span className="priority-label">{MAJOR_INCIDENT_ROW.priority}</span>
-                            </td>
-                            <td className="col-org">
-                              <span className="org-link">{MAJOR_INCIDENT_ROW.org}</span>
-                            </td>
-                            <td className="col-summary">{MAJOR_INCIDENT_ROW.summary}</td>
-                            <td className="col-status">
-                              <span className="status-badge status-new">New</span>
-                            </td>
-                          </tr>
+                                <td className="col-type">
+                                  <span className="mi-arrow-icon">▶</span>
+                                </td>
+                                <td className="col-check" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedItems.includes(MAJOR_INCIDENT_ROW.id)}
+                                    onChange={() => toggleSelect(MAJOR_INCIDENT_ROW.id)}
+                                  />
+                                </td>
+                                <td className="col-viewing"></td>
+                                <td className="col-id">
+                                  <button
+                                    type="button"
+                                    className="ticket-id-link text-left bg-transparent border-0 cursor-pointer font-bold text-gray-900"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate('/major-incidents/live?incident=0002673');
+                                    }}
+                                  >
+                                    {MAJOR_INCIDENT_ROW.id}
+                                  </button>
+                                </td>
+                                <td className="col-sla">
+                                  <span className="sla-bar-red">{MAJOR_INCIDENT_ROW.targetSla}</span>
+                                </td>
+                                <td className="col-priority">
+                                  <span className="priority-dot" style={{ backgroundColor: "#ef4444" }}></span>
+                                  <span className="priority-label">{MAJOR_INCIDENT_ROW.priority}</span>
+                                </td>
+                                <td className="col-org">
+                                  <span className="org-link">{MAJOR_INCIDENT_ROW.org}</span>
+                                </td>
+                                <td className="col-summary">{MAJOR_INCIDENT_ROW.summary}</td>
+                                <td className="col-status">
+                                  <span className="status-badge status-new">New</span>
+                                </td>
+                              </tr>
+                            )}
+                          </>
                         )}
                       </>
                     ) : (
@@ -746,17 +809,43 @@ const OnHoldTicketScreen: React.FC = () => {
             type: selectedTicket.type,
             summary: selectedTicket.summary,
             priority: (selectedTicket.priority as TicketPriority) || "Medium",
-            status: selectedTicket.status === "On H" ? "On Hold" : "With User",
-            agent: "Inesh Agarwal",
+            status:
+              selectedTicket.status === "On H"
+                ? "On Hold"
+                : selectedTicket.status === "Actioned"
+                ? "Closed"
+                : selectedTicket.status === "With"
+                ? "With User"
+                : "Active",
+            agent: selectedTicket.org.split("/")[2] || "Inesh Agarwal",
             description: selectedTicket.description,
             requester: selectedTicket.org,
             department: "Consultancy Support",
             createdAt: selectedTicket.createdAt || "12 Oct 2026",
-            targetSla: "Target: 4 hours remaining",
+            targetSla: selectedTicket.targetSla || "Target: 4 hours remaining",
           }}
           currentUser="Inesh Agarwal"
           onClose={() => setSelectedTicket(null)}
-          onUpdateTicket={(updated) => {
+          onUpdateTicket={async (updated) => {
+            const norm = (updated.status || "").toLowerCase();
+            let backendStatus: 'On Hold' | 'Active' | 'Pending' | 'Actioned' = 'On Hold';
+            let uiStatus: 'On H' | 'With' | 'New' | 'Actioned' = 'On H';
+
+            if (norm.includes('closed') || norm.includes('actioned') || norm.includes('resolved')) {
+              backendStatus = 'Actioned';
+              uiStatus = 'Actioned';
+            } else if (norm.includes('with') || norm.includes('pending')) {
+              backendStatus = 'Pending';
+              uiStatus = 'With';
+            } else if (norm.includes('active') || norm.includes('progress') || norm.includes('new')) {
+              backendStatus = 'Active';
+              uiStatus = 'New';
+            } else {
+              backendStatus = 'On Hold';
+              uiStatus = 'On H';
+            }
+
+            await updateOnHoldTicketStatus(updated.id, backendStatus, updated.description);
             setTickets((prev) =>
               prev.map((t) =>
                 t.id === updated.id
@@ -772,7 +861,7 @@ const OnHoldTicketScreen: React.FC = () => {
                           : updated.priority === "Medium"
                           ? "yellow"
                           : "green",
-                      status: updated.status === "With User" ? "With" : "On H",
+                      status: uiStatus,
                       description: updated.description,
                     }
                   : t
@@ -862,10 +951,11 @@ const OnHoldTicketScreen: React.FC = () => {
                   <label>Initial Status</label>
                   <select
                     value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as "On H" | "With")}
+                    onChange={(e) => setNewStatus(e.target.value as "New" | "On H" | "With")}
                   >
+                    <option value="New">Active (My New Tickets)</option>
                     <option value="On H">On Hold</option>
-                    <option value="With">With User</option>
+                    <option value="With">With User (Pending)</option>
                   </select>
                 </div>
               </div>

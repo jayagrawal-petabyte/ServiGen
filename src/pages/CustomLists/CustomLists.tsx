@@ -2,19 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './CustomLists.css';
-
-interface FilterCondition {
-  id: string;
-  field: string;
-  operator: string;
-  value: string;
-}
+import {
+  saveCustomList,
+  FilterCondition,
+  CustomListFormData,
+} from './services/customListsApi';
 
 const CustomLists: React.FC = () => {
   const navigate = useNavigate();
   const [activeModalTab, setActiveModalTab] = useState<'Details' | 'Filters'>('Details');
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CustomListFormData>({
     listName: '',
     use: 'Tickets (All Areas)',
     listGroup: '',
@@ -30,6 +28,7 @@ const CustomLists: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   // Filter states
   const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([
@@ -47,7 +46,7 @@ const CustomLists: React.FC = () => {
     }
   };
 
-  const handleSaveModal = () => {
+  const handleSaveModal = async () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.listName.trim()) newErrors.listName = 'List Name is required';
     if (!formData.use.trim()) newErrors.use = 'Use is required';
@@ -61,14 +60,18 @@ const CustomLists: React.FC = () => {
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setStatusMessage('');
 
-    setTimeout(() => {
+    try {
+      const created = await saveCustomList(formData, filterConditions);
       setIsSubmitting(false);
       setSubmitStatus('success');
-      
-      // Optionally reset the form here
-      // setTimeout(() => setSubmitStatus('idle'), 3000);
-    }, 1000);
+      setStatusMessage(`List "${created.name}" created successfully! (ID: ${created.id})`);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      setStatusMessage(err?.message || 'Failed to create list on backend.');
+    }
   };
 
   // Handlers for Filters
@@ -115,10 +118,10 @@ const CustomLists: React.FC = () => {
           <div className="cl-header-left">
             <button className="cl-btn-save" onClick={handleSaveModal} disabled={isSubmitting}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? 'Saving to Backend...' : 'Save'}
             </button>
-            {submitStatus === 'success' && <span className="cl-status-msg success">List created successfully!</span>}
-            {submitStatus === 'error' && <span className="cl-status-msg error">Failed to create list.</span>}
+            {submitStatus === 'success' && <span className="cl-status-msg success">{statusMessage || 'List created successfully!'}</span>}
+            {submitStatus === 'error' && <span className="cl-status-msg error">{statusMessage || 'Failed to create list.'}</span>}
           </div>
           <div className="cl-header-right">
             <button className="cl-icon-btn" onClick={handleShare} title="Share"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0ea5e9" strokeWidth="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
