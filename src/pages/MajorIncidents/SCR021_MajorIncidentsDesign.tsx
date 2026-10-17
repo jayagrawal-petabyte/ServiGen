@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
 import NewIncidentModal from './components/NewIncidentModal';
-import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
-import { FeedPopover } from '../../components/shared/FeedPopover';
-import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { majorIncidentsService } from '../../services/majorIncidentsService';
 import type { MajorIncident } from './types/majorIncident.types';
 
@@ -18,12 +16,6 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState<boolean>(false);
-  const [showNotifPopover, setShowNotifPopover] = useState<boolean>(false);
-  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
-  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
-  const [isKpiDrawerOpen, setIsKpiDrawerOpen] = useState<boolean>(false);
-  const [isFeedPopoverOpen, setIsFeedPopoverOpen] = useState<boolean>(false);
-  const [isTimesheetOpen, setIsTimesheetOpen] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const PAGE_SIZE = 4;
 
@@ -156,184 +148,9 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
               <span className="text-lg leading-none">+</span> New Ticket
             </button>
 
-            {/* Icon Group */}
-            <div className="flex items-center gap-1.5 ml-1">
-              {/* Search Toggle */}
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen((prev) => !prev)}
-                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer transition-colors ${
-                  isSearchOpen ? 'border-cyan-400 text-cyan-500' : ''
-                }`}
-                title="Search Major Incidents"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-
-              {/* Bell with badge */}
-              <button
-                type="button"
-                onClick={() => setShowNotifPopover((p) => !p)}
-                className="relative w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer"
-                title="Active Alerts & Notifications"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  1
-                </div>
-              </button>
-
-              {/* Clipboard (My Work Queue) */}
-              <button
-                type="button"
-                onClick={() => navigate('/my-work')}
-                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer"
-                title="My Work Tasks & Queue"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </button>
-
-              {/* Speedometer -> Timesheet */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFeedPopoverOpen(false);
-                  setIsKpiDrawerOpen(false);
-                  setIsTimesheetOpen((t) => !t);
-                }}
-                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer ${isTimesheetOpen ? 'bg-cyan-50 border-cyan-400 text-cyan-600' : ''}`}
-                title="Timesheet & Logged Hours"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="9" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 12l3.5-3.5" />
-                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                </svg>
-              </button>
-
-              {/* RSS/Wifi -> Agent KPI Dashboard (Image 1) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFeedPopoverOpen(false);
-                  setIsTimesheetOpen(false);
-                  setIsKpiDrawerOpen((k) => !k);
-                }}
-                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer ${isKpiDrawerOpen ? 'bg-cyan-50 border-cyan-400 text-cyan-600' : ''}`}
-                title="Agent KPI Dashboard"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                  <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-                </svg>
-              </button>
-
-              {/* Clock -> Live Activity Feed (Image 2) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsTimesheetOpen(false);
-                  setIsKpiDrawerOpen(false);
-                  setIsFeedPopoverOpen((p) => !p);
-                }}
-                className={`w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer ${isFeedPopoverOpen ? 'bg-cyan-50 border-cyan-400 text-cyan-600' : ''}`}
-                title="Live Activity Feed"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" strokeLinecap="round" />
-                </svg>
-              </button>
-
-              {/* Question (Help) */}
-              <button
-                type="button"
-                onClick={() => setShowHelpModal(true)}
-                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 bg-white shadow-sm cursor-pointer"
-                title="Help & Shortcuts"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-
-              {/* Profile Avatar */}
-              <button
-                type="button"
-                onClick={() => setShowProfileModal(true)}
-                className="relative w-8 h-8 rounded-full bg-cyan-400 flex items-center justify-center text-white ml-1 cursor-pointer hover:bg-cyan-500 transition-colors"
-                title="User Profile & Settings"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 5.92 2 10.75c0 2.76 1.49 5.2 3.8 6.78V21.5a.5.5 0 00.78.41l3.52-2.3c1.23.25 2.53.39 3.9.39 5.52 0 10-3.92 10-8.75S17.52 2 12 2z" />
-                </svg>
-                <div className="absolute bottom-0 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-              </button>
-            </div>
+            <GlobalNavbarActions />
           </div>
         </header>
-
-        {/* Notifications Popover */}
-        {showNotifPopover && (
-          <div className="absolute right-6 top-14 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-xl p-4">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <span className="font-semibold text-gray-800 text-sm">Active Notifications</span>
-              <button
-                type="button"
-                onClick={() => setShowNotifPopover(false)}
-                className="text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="py-3 flex flex-col gap-2.5">
-              <div
-                onClick={() => {
-                  setShowNotifPopover(false);
-                  navigate('/major-incidents/live?incident=0002673');
-                }}
-                className="p-2.5 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:bg-red-100/70 transition-colors"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-red-800">
-                  <span>Critical Escalation</span>
-                  <span className="text-[10px] text-red-600">Now</span>
-                </div>
-                <p className="text-xs text-red-700 mt-1">Incident #0002673: SLA target at 82% threshold</p>
-              </div>
-              <div
-                onClick={() => {
-                  setShowNotifPopover(false);
-                  navigate('/change-requests');
-                }}
-                className="p-2.5 bg-cyan-50 border border-cyan-200 rounded-lg cursor-pointer hover:bg-cyan-100/70 transition-colors"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-cyan-800">
-                  <span>Change Request</span>
-                  <span className="text-[10px] text-cyan-600">10m ago</span>
-                </div>
-                <p className="text-xs text-cyan-700 mt-1">Emergency change RFC-000412 pending approval</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setShowNotifPopover(false);
-                navigate('/major-incidents/live');
-              }}
-              className="w-full mt-2 py-1.5 text-xs text-center text-cyan-700 font-semibold bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-            >
-              Open Full Notification Center →
-            </button>
-          </div>
-        )}
 
         {/* Workspace Area (List) */}
         <div className="flex flex-1 min-h-0">
@@ -524,91 +341,6 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
           onClose={() => setShowNewModal(false)}
           onSubmit={handleCreateTicket}
         />
-      )}
-
-      {isKpiDrawerOpen && (
-        <AgentKpiDrawer
-          onClose={() => setIsKpiDrawerOpen(false)}
-          onOpenTicket={(id) => {
-            setIsKpiDrawerOpen(false);
-            navigate(`/major-incidents/live?incident=${id}`);
-          }}
-        />
-      )}
-
-      {isFeedPopoverOpen && (
-        <FeedPopover
-          onClose={() => setIsFeedPopoverOpen(false)}
-          onOpenTicket={(id) => {
-            setIsFeedPopoverOpen(false);
-            navigate(`/major-incidents/live?incident=${id}`);
-          }}
-        />
-      )}
-
-      {isTimesheetOpen && (
-        <TimesheetPopover onClose={() => setIsTimesheetOpen(false)} />
-      )}
-
-      {/* Help Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900 text-base">Major Incident Console Help</h3>
-              <button
-                type="button"
-                onClick={() => setShowHelpModal(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="py-4 text-xs text-gray-600 space-y-3">
-              <p>
-                <strong>Navigation:</strong> Click any incident card to jump directly into the full war room console with stage tracking, technical checklists, and impact assessments.
-              </p>
-              <p>
-                <strong>Connected Modules:</strong> Use the ••• menu to reach CMDB Services, Change Requests, Calendar, and the Category Report.
-              </p>
-              <p>
-                <strong>Shortcuts:</strong> Press <code className="bg-gray-100 px-1 py-0.5 rounded">Esc</code> to close active dialogs.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowHelpModal(false)}
-              className="w-full py-2 bg-cyan-400 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Profile Modal */}
-      {showProfileModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <div className="w-14 h-14 bg-cyan-500 text-white font-bold text-xl rounded-full flex items-center justify-center mx-auto mb-3">
-              IA
-            </div>
-            <h3 className="font-bold text-gray-900 text-base">Inesh Agarwal</h3>
-            <p className="text-xs text-gray-500">Major Incident Commander (Admin)</p>
-            <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-left space-y-2 text-gray-600">
-              <div><strong>Email:</strong> inesh@servigen.io</div>
-              <div><strong>Role:</strong> Administrator</div>
-              <div><strong>Primary Site:</strong> Site 2 (EMEA Core)</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowProfileModal(false)}
-              className="w-full mt-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

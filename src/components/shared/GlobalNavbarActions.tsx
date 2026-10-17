@@ -1,0 +1,617 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../pages/Auth/AuthContext';
+import { TimesheetPopover } from './TimesheetPopover';
+import { AgentKpiDrawer } from './AgentKpiDrawer';
+import { FeedPopover } from './FeedPopover';
+import { fetchAllTeamIncidents } from '../../services/teamIncidentsService';
+import './GlobalNavbarActions.css';
+
+export interface GlobalNavbarActionsProps {
+  className?: string;
+  onOpenTicket?: (ticketId: string) => void;
+}
+
+interface QuickSearchItem {
+  id: string;
+  summary: string;
+  category?: string;
+  priority?: string;
+  status?: string;
+}
+
+interface NotificationItem {
+  id: string;
+  ticketId: string;
+  title: string;
+  desc: string;
+  time: string;
+  isSla?: boolean;
+  slaTime?: string;
+  unread: boolean;
+}
+
+export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
+  className = '',
+  onOpenTicket,
+}) => {
+  const navigate = useNavigate();
+  const authContext = useAuth();
+  const user = authContext?.user;
+  const logout = authContext?.logout;
+
+  // Active flyout state (mutually exclusive)
+  type FlyoutType = 'search' | 'notifications' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
+  const [activeFlyout, setActiveFlyout] = useState<FlyoutType>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // User presence status
+  const [presence, setPresence] = useState<'available' | 'away' | 'busy' | 'offline'>('available');
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [ticketList, setTicketList] = useState<QuickSearchItem[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
+    {
+      id: 'notif-1',
+      ticketId: '0003987',
+      title: 'Critical SLA Breach Alert',
+      desc: 'Desktop shows a blue screen with CRITICAL_PROCESS_DIED',
+      time: '12m ago',
+      isSla: true,
+      slaTime: '-88:01',
+      unread: true,
+    },
+    {
+      id: 'notif-2',
+      ticketId: '0003986',
+      title: 'SLA Warning Alert',
+      desc: 'New phone is stuck on applying enterprise policy',
+      time: '24m ago',
+      isSla: true,
+      slaTime: '-64:00',
+      unread: true,
+    },
+    {
+      id: 'notif-3',
+      ticketId: '0003982',
+      title: 'Database Query Performance Alert',
+      desc: 'Monthly reporting query has been timing out',
+      time: '1h ago',
+      isSla: true,
+      slaTime: '-64:00',
+      unread: true,
+    },
+    {
+      id: 'notif-4',
+      ticketId: '0003977',
+      title: 'Ticket Status Update',
+      desc: 'Wifi keeps dropping marked In Progress by Jennifer Williams',
+      time: '2h ago',
+      unread: false,
+    },
+  ]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close flyouts on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setActiveFlyout(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Auto focus search input when search flyout opens
+  useEffect(() => {
+    if (activeFlyout === 'search') {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [activeFlyout]);
+
+  // Load live tickets for quick search index
+  useEffect(() => {
+    fetchAllTeamIncidents()
+      .then((res) => {
+        if (res.incidents && res.incidents.length > 0) {
+          setTicketList(
+            res.incidents.map((inc) => ({
+              id: inc.id,
+              summary: inc.summary,
+              category: inc.category,
+              priority: inc.priority,
+              status: inc.status,
+            }))
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn('[GlobalNavbarActions] Fallback search index:', err);
+      });
+  }, []);
+
+  const toggleFlyout = (flyout: FlyoutType) => {
+    setActiveFlyout((prev) => (prev === flyout ? null : flyout));
+  };
+
+  const handleTicketClick = (ticketId: string) => {
+    setActiveFlyout(null);
+    if (onOpenTicket) {
+      onOpenTicket(ticketId);
+    } else {
+      navigate(`/incidents`);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
+  // Filtered search results
+  const filteredSearch = searchQuery.trim()
+    ? ticketList.filter(
+        (t) =>
+          t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (t.category && t.category.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : ticketList.slice(0, 8);
+
+  return (
+    <div className={`global-nav-actions-wrap ${className}`} ref={containerRef}>
+      {/* 1. Search Icon */}
+      <button
+        type="button"
+        className={`global-nav-icon-btn ${activeFlyout === 'search' ? 'is-active' : ''}`}
+        title="Search tickets & incidents"
+        onClick={() => toggleFlyout('search')}
+        aria-label="Search"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+
+      {/* 2. Notifications Bell */}
+      <button
+        type="button"
+        className={`global-nav-icon-btn ${activeFlyout === 'notifications' ? 'is-active' : ''}`}
+        title={`Notifications (${unreadCount} unread)`}
+        onClick={() => toggleFlyout('notifications')}
+        aria-label="Notifications"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        {unreadCount > 0 && <span className="global-nav-badge" />}
+      </button>
+
+      {/* 3. Tasks / Clipboard */}
+      <button
+        type="button"
+        className="global-nav-icon-btn"
+        title="My Tasks & Checklist"
+        onClick={() => {
+          setActiveFlyout(null);
+          navigate('/my-work');
+        }}
+        aria-label="Tasks"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+          <rect x="9" y="3" width="6" height="4" rx="1" />
+          <path d="M9 12h6M9 16h4" />
+        </svg>
+      </button>
+
+      {/* 4. Speedometer / Gauge -> Timesheet & Hours */}
+      <button
+        type="button"
+        className={`global-nav-icon-btn ${activeFlyout === 'timesheet' ? 'is-active' : ''}`}
+        title="Timesheet & Hours Log"
+        onClick={() => toggleFlyout('timesheet')}
+        aria-label="Timesheet"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2a10 10 0 1 0 10 10" />
+          <path d="M12 12 18 6" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+      </button>
+
+      {/* 5. Broadcast Waves -> Agent KPI Dashboard */}
+      <button
+        type="button"
+        className={`global-nav-icon-btn ${activeFlyout === 'kpi' ? 'is-active' : ''}`}
+        title="Agent KPI Dashboard"
+        onClick={() => toggleFlyout('kpi')}
+        aria-label="Agent KPI Dashboard"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+          <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+
+      {/* 6. Clock -> Live Activity Feed */}
+      <button
+        type="button"
+        className={`global-nav-icon-btn ${activeFlyout === 'feed' ? 'is-active' : ''}`}
+        title="Live Activity Feed"
+        onClick={() => toggleFlyout('feed')}
+        aria-label="Live Activity Feed"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {/* 7. Help / Guide */}
+      <button
+        type="button"
+        className="global-nav-icon-btn"
+        title="Help & System Guide"
+        onClick={() => {
+          setActiveFlyout(null);
+          setShowHelpModal(true);
+        }}
+        aria-label="Help"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+          <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+        </svg>
+      </button>
+
+      {/* 8. Avatar & User Presence Button */}
+      <button
+        type="button"
+        className="global-nav-avatar-btn"
+        title={`Signed in as ${user?.fullName || 'Agent'} (${presence})`}
+        onClick={() => toggleFlyout('profile')}
+        aria-label="User Profile"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
+        </svg>
+        <span className={`global-nav-presence-dot ${presence}`} />
+      </button>
+
+      {/* ─── FLYOUT 1: QUICK SEARCH ─── */}
+      {activeFlyout === 'search' && (
+        <div className="global-flyout-dropdown global-search-flyout">
+          <div className="global-flyout-header">
+            <span className="global-flyout-title">Quick Search</span>
+            <button
+              type="button"
+              className="global-flyout-action-btn"
+              onClick={() => setActiveFlyout(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="global-search-input-wrap">
+            <svg
+              className="global-search-icon-inside"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="global-search-input"
+              placeholder="Search by ID, summary, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="global-search-clear-btn"
+                onClick={() => setSearchQuery('')}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="global-search-results-list">
+            {filteredSearch.length > 0 ? (
+              filteredSearch.map((item) => (
+                <div
+                  key={item.id}
+                  className="global-search-item"
+                  onClick={() => handleTicketClick(item.id)}
+                >
+                  <div className="flex flex-col">
+                    <span className="global-search-item-id">{item.id}</span>
+                    <span className="global-search-item-summary" title={item.summary}>
+                      {item.summary}
+                    </span>
+                  </div>
+                  {item.priority && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background:
+                          item.priority === 'Critical'
+                            ? '#fee2e2'
+                            : item.priority === 'High'
+                            ? '#ffedd5'
+                            : '#f1f5f9',
+                        color:
+                          item.priority === 'Critical'
+                            ? '#dc2626'
+                            : item.priority === 'High'
+                            ? '#c2410c'
+                            : '#475569',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.priority}
+                    </span>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="global-search-empty">No matching tickets found</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── FLYOUT 2: NOTIFICATIONS ─── */}
+      {activeFlyout === 'notifications' && (
+        <div className="global-flyout-dropdown global-notifications-flyout">
+          <div className="global-flyout-header">
+            <span className="global-flyout-title">
+              Notifications {unreadCount > 0 ? `(${unreadCount} unread)` : ''}
+            </span>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                className="global-flyout-action-btn"
+                onClick={handleMarkAllRead}
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
+          <div className="global-notifications-list">
+            {notifications.map((item) => (
+              <div
+                key={item.id}
+                className={`global-notif-item ${item.unread ? 'is-unread' : ''} ${
+                  item.isSla ? 'is-sla' : ''
+                }`}
+                onClick={() => handleTicketClick(item.ticketId)}
+              >
+                <div
+                  className="global-notif-icon"
+                  style={{
+                    background: item.isSla ? '#fee2e2' : '#e0f2fe',
+                    color: item.isSla ? '#ef4444' : '#0284c7',
+                  }}
+                >
+                  {item.isSla ? '⏰' : '🔔'}
+                </div>
+                <div className="global-notif-content">
+                  <div className="global-notif-header">
+                    <span className="global-notif-title">{item.title}</span>
+                    {item.slaTime && (
+                      <span className="global-notif-badge-pill global-notif-badge-sla">
+                        {item.slaTime}
+                      </span>
+                    )}
+                  </div>
+                  <div className="global-notif-desc" title={item.desc}>
+                    #{item.ticketId}: {item.desc}
+                  </div>
+                  <span className="global-notif-time">{item.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── FLYOUT 3: TIMESHEET POPOVER ─── */}
+      {activeFlyout === 'timesheet' && (
+        <TimesheetPopover
+          onClose={() => setActiveFlyout(null)}
+          userName={user?.fullName || 'Agent'}
+        />
+      )}
+
+      {/* ─── FLYOUT 4: AGENT KPI DRAWER ─── */}
+      {activeFlyout === 'kpi' && (
+        <AgentKpiDrawer
+          onClose={() => setActiveFlyout(null)}
+          onOpenTicket={handleTicketClick}
+        />
+      )}
+
+      {/* ─── FLYOUT 5: LIVE FEED POPOVER ─── */}
+      {activeFlyout === 'feed' && (
+        <FeedPopover
+          onClose={() => setActiveFlyout(null)}
+          onOpenTicket={handleTicketClick}
+        />
+      )}
+
+      {/* ─── FLYOUT 6: USER PROFILE & PRESENCE MENU ─── */}
+      {activeFlyout === 'profile' && (
+        <div className="global-flyout-dropdown global-profile-flyout">
+          <div className="global-profile-header-card">
+            <div className="global-profile-name">{user?.fullName || 'Inesh Agarwal'}</div>
+            <div className="global-profile-email">{user?.email || 'inesh@servigen.io'}</div>
+            <span className="global-profile-role-tag">{user?.role || 'Support Lead'}</span>
+          </div>
+
+          <div className="global-presence-section">
+            <span className="global-presence-label">Agent Status</span>
+            <div className="global-presence-options">
+              <button
+                type="button"
+                className={`global-presence-opt-btn ${presence === 'available' ? 'is-selected' : ''}`}
+                onClick={() => setPresence('available')}
+              >
+                <span className="global-nav-presence-dot" style={{ position: 'static' }} />
+                <span>Available</span>
+              </button>
+              <button
+                type="button"
+                className={`global-presence-opt-btn ${presence === 'away' ? 'is-selected' : ''}`}
+                onClick={() => setPresence('away')}
+              >
+                <span className="global-nav-presence-dot away" style={{ position: 'static' }} />
+                <span>Away</span>
+              </button>
+              <button
+                type="button"
+                className={`global-presence-opt-btn ${presence === 'busy' ? 'is-selected' : ''}`}
+                onClick={() => setPresence('busy')}
+              >
+                <span className="global-nav-presence-dot busy" style={{ position: 'static' }} />
+                <span>In Meeting / Busy</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="global-profile-menu-links">
+            <button
+              type="button"
+              className="global-profile-link-item"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/my-work');
+              }}
+            >
+              <span>📋</span>
+              <span>My Work & Tasks</span>
+            </button>
+            <button
+              type="button"
+              className="global-profile-link-item"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/organisations');
+              }}
+            >
+              <span>🏢</span>
+              <span>Organisation & Sites</span>
+            </button>
+            <button
+              type="button"
+              className="global-profile-link-item logout"
+              onClick={() => {
+                setActiveFlyout(null);
+                if (logout) logout();
+                navigate('/login');
+              }}
+            >
+              <span>🚪</span>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: HELP & GUIDE ─── */}
+      {showHelpModal && (
+        <div className="global-help-modal-overlay" onClick={() => setShowHelpModal(false)}>
+          <div className="global-help-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="global-help-modal-header">
+              <h3>
+                <span>ℹ️</span>
+                <span>ServiGen Halo AI • System & SLA Guide</span>
+              </h3>
+              <button
+                type="button"
+                className="global-help-modal-close"
+                onClick={() => setShowHelpModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="global-help-modal-body">
+              <div className="global-help-section-title">SLA Status Color Codes</div>
+              <div className="global-help-sla-legend">
+                <div className="global-help-sla-pill breached">
+                  <span>●</span> Breached SLA (Negative Target)
+                </div>
+                <div className="global-help-sla-pill warning">
+                  <span>●</span> Warning (&lt; 2 Hours Remaining)
+                </div>
+                <div className="global-help-sla-pill ontime">
+                  <span>●</span> On Target (Healthy)
+                </div>
+              </div>
+
+              <div className="global-help-section-title">Global Header Navigation</div>
+              <table className="global-help-key-table">
+                <tbody>
+                  <tr>
+                    <td><strong>🔍 Search:</strong></td>
+                    <td>Instant multi-module ticket query across all systems.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>🔔 Notifications:</strong></td>
+                    <td>Live feed of critical SLA alerts and queue assignments.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>📋 Tasks:</strong></td>
+                    <td>Direct jump to My Work, assigned tickets, and checklist.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>⏱️ Speedometer:</strong></td>
+                    <td>Daily and weekly time tracker / logged hours popover.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>📶 Broadcast:</strong></td>
+                    <td>Agent KPI analytics drawer (FCR, resolution rate, CSAT).</td>
+                  </tr>
+                  <tr>
+                    <td><strong>🕒 Clock:</strong></td>
+                    <td>Live activity audit log across support lines.</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="global-help-section-title">Keyboard Navigation</div>
+              <p style={{ margin: '4px 0' }}>
+                Press <span className="global-help-kbd">Esc</span> to dismiss any open popover or modal.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GlobalNavbarActions;

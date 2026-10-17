@@ -2,9 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
-import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
-import { FeedPopover } from '../../components/shared/FeedPopover';
-import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './RequestsPage.css';
 
 export interface RequestItem {
@@ -580,103 +578,14 @@ export const RequestsPage: React.FC = () => {
 
           <div className="header-icon-divider" />
 
-          {/* Quick utility icons matching Halo ITSM (media_1792151243234_fe133929.png & media_1792151274598_a792a70c.png) */}
-          {/* 1. Search */}
-          <button type="button" className="header-tool-icon" title="Search Everything">
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </button>
-
-          {/* 2. Notifications (Bell) */}
-          <button type="button" className="header-tool-icon" title="Notifications">
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-            </svg>
-          </button>
-
-          {/* 3. Tasks / Clipboard */}
-          <button type="button" className="header-tool-icon" title="My Tasks & To-Do List">
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </button>
-
-          {/* 4. Speedometer / Gauge -> Timesheet Popover */}
-          <button
-            type="button"
-            className={`header-tool-icon ${showTimesheetPopover ? 'tool-active' : ''}`}
-            title="Timesheet & Hours"
-            onClick={() => {
-              setShowTimesheetPopover(!showTimesheetPopover);
-              setShowFeedPopover(false);
-              setShowKpiDrawer(false);
+          <GlobalNavbarActions
+            onOpenTicket={(id) => {
+              const found = requestsList.find((r) => r.id === id);
+              if (found) setSelectedTicketForModal(found);
             }}
-          >
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="9" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 12l3.5-3.5" />
-              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-            </svg>
-          </button>
-
-          {/* 5. Broadcast Waves -> Agent KPI Dashboard (Image 1) */}
-          <button
-            type="button"
-            className={`header-tool-icon ${showKpiDrawer ? 'tool-active' : ''}`}
-            title="Agent KPI Dashboard"
-            onClick={() => {
-              setShowKpiDrawer(!showKpiDrawer);
-              setShowFeedPopover(false);
-              setShowTimesheetPopover(false);
-            }}
-          >
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-              <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-            </svg>
-          </button>
-
-          {/* 6. Clock -> Activity Feed (Image 2) */}
-          <button
-            type="button"
-            className={`header-tool-icon ${showFeedPopover ? 'tool-active' : ''}`}
-            title="Live Activity Feed"
-            onClick={() => {
-              setShowFeedPopover(!showFeedPopover);
-              setShowKpiDrawer(false);
-              setShowTimesheetPopover(false);
-            }}
-          >
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" strokeLinecap="round" />
-            </svg>
-          </button>
-
-          {/* 7. Help */}
-          <button type="button" className="header-tool-icon" title="Help & Documentation">
-            <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
-              <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-            </svg>
-          </button>
-
-          {/* 8. Speech bubble profile avatar */}
-          <div className="header-profile-avatar" title={`Logged in as ${user?.fullName || 'Demo User'}`}>
-            <span className="profile-initials">DU</span>
-            <span className="profile-online-dot" />
-          </div>
+          />
         </div>
       </header>
-
-      {/* Drawers & Popovers */}
-      {showKpiDrawer && <AgentKpiDrawer onClose={() => setShowKpiDrawer(false)} />}
-      {showFeedPopover && <FeedPopover onClose={() => setShowFeedPopover(false)} />}
-      {showTimesheetPopover && <TimesheetPopover onClose={() => setShowTimesheetPopover(false)} />}
 
       {/* ── Two Column Viewport: Team Tree + Main Requests Table ── */}
       <div className="requests-body-container">

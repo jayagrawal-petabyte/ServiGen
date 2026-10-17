@@ -4,9 +4,7 @@ import Pagination from "../../components/shared/Pagination";
 import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
 import { TicketDetailModal, type TicketPriority } from "../../components/TicketDetailModal";
-import { AgentKpiDrawer } from "../../components/shared/AgentKpiDrawer";
-import { FeedPopover } from "../../components/shared/FeedPopover";
-import { TimesheetPopover } from "../../components/shared/TimesheetPopover";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./TeamIncidents.css";
 import {
   fetchAllTeamIncidents,
@@ -324,151 +322,14 @@ function TeamIncidentTable({
             <span>New Ticket</span>
           </button>
 
-          <div className="team-icon-buttons-group">
-            {/* Search */}
-            <button
-              type="button"
-              className="team-header-icon-btn"
-              title="Search"
-              onClick={() => {
-                const el = document.getElementById("team-sidebar-search-input");
-                el?.focus();
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </button>
-
-            {/* Notifications */}
-            <button
-              type="button"
-              className="team-header-icon-btn"
-              title="Notifications"
-              onClick={() => alert("Live SLA Alert: " + countBreachingSLA + " tickets currently breaching SLA.")}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
-
-            {/* Tasks / Clipboard */}
-            <button
-              type="button"
-              className="team-header-icon-btn"
-              title="Tasks"
-              onClick={() => navigate('/my-work')}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                <rect x="9" y="3" width="6" height="4" rx="1" />
-                <path d="M9 12h6M9 16h4" />
-              </svg>
-            </button>
-
-            {/* Compass / Performance */}
-            <button
-              type="button"
-              className="team-header-icon-btn"
-              title="Team SLA Performance"
-              onClick={() => navigate('/reporting/incidents-by-category')}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-              </svg>
-            </button>
-
-            {/* Broadcast Waves (Signal) -> Agent KPI Dashboard */}
-            <button
-              type="button"
-              className={`team-header-icon-btn ${showKpiDrawer ? 'team-header-icon-active' : ''}`}
-              title="Agent KPI Dashboard"
-              onClick={() => {
-                setShowTimesheetPopover(false);
-                setShowFeedPopover(false);
-                setShowKpiDrawer((p) => !p);
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-              </svg>
-            </button>
-
-            {/* Feed (Clock) Popover */}
-            <button
-              type="button"
-              className={`team-header-icon-btn ${showFeedPopover ? 'team-header-icon-active' : ''}`}
-              title="Live Activity Feed"
-              onClick={() => {
-                setShowTimesheetPopover(false);
-                setShowKpiDrawer(false);
-                setShowFeedPopover((p) => !p);
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            {/* Help */}
-            <button
-              type="button"
-              className="team-header-icon-btn"
-              title={`${team} Guide & Help`}
-              onClick={() => setShowGetStartedModal(true)}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
-                <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-              </svg>
-            </button>
-
-            {/* User Avatar */}
-            <button
-              type="button"
-              className="team-avatar-speech-btn"
-              title={`Logged in as ${user?.fullName || "Agent"}`}
-              onClick={() => navigate('/my-work')}
-            >
-              <div className="team-avatar-speech-inner" />
-              <span className="team-presence-green-dot" />
-            </button>
-          </div>
+          <GlobalNavbarActions
+            onOpenTicket={(id) => {
+              const found = incidents.find((i) => i.id === id);
+              if (found) setSelectedIncident(found);
+            }}
+          />
         </div>
       </header>
-
-      {/* Floating Drawers & Popovers */}
-      {showKpiDrawer && (
-        <AgentKpiDrawer
-          onClose={() => setShowKpiDrawer(false)}
-          onOpenTicket={(id) => {
-            const found = incidents.find((i) => i.id === id);
-            if (found) setSelectedIncident(found);
-            setShowKpiDrawer(false);
-          }}
-        />
-      )}
-
-      {showFeedPopover && (
-        <FeedPopover
-          onClose={() => setShowFeedPopover(false)}
-          onOpenTicket={(id) => {
-            const found = incidents.find((i) => i.id === id);
-            if (found) setSelectedIncident(found);
-            setShowFeedPopover(false);
-          }}
-        />
-      )}
-
-      {showTimesheetPopover && (
-        <TimesheetPopover onClose={() => setShowTimesheetPopover(false)} />
-      )}
 
       {/* Two-Column Body */}
       <div className="team-body-row">
@@ -830,6 +691,15 @@ function TeamIncidentTable({
               >
                 <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
                 <span>New</span>
+              </button>
+
+              <button
+                type="button"
+                className="tb-nav-btn"
+                title="Table actions"
+                onClick={() => alert("Table View Options: Column configuration, export data")}
+              >
+                <span style={{ fontSize: 16, lineHeight: 1, letterSpacing: '2px', color: '#64748b' }}>···</span>
               </button>
             </div>
           </div>

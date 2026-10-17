@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GlobalNavbarActions } from '../../../components/shared/GlobalNavbarActions';
 
 interface PageHeaderProps {
   onToggleFeed?: () => void;
@@ -103,64 +104,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-0.5">
-          <IconBtn label="Search" onClick={onSearchFocus}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Notifications" badge={notifCount} onClick={onNotifications}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Tasks" onClick={onTasks}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-              <rect x="9" y="3" width="6" height="4" rx="1" />
-              <path d="M9 12h6M9 16h4" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Timesheet & Hours" onClick={onPerformance}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2a10 10 0 1 0 10 10" />
-              <path d="M12 12 18 6" strokeLinecap="round" />
-              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Agent KPI Dashboard" onClick={onStatus}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-              <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Live Activity Feed" onClick={onHistory}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" strokeLinecap="round" />
-            </svg>
-          </IconBtn>
-          <IconBtn label="Help" onClick={onHelp}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
-              <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-            </svg>
-          </IconBtn>
-          <button
-            aria-label="Profile"
-            onClick={onProfile}
-            className="relative w-8 h-8 flex items-center justify-center rounded-full bg-cyan-400 text-white shrink-0 hover:bg-cyan-500 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
-            </svg>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full" />
-          </button>
-        </div>
+        <GlobalNavbarActions />
       </div>
 
       <div className="flex items-center justify-between px-4 py-1.5">
