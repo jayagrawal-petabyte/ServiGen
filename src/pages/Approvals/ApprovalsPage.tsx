@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './approvals.css';
 
 interface Toast {
@@ -187,43 +188,9 @@ export default function ApprovalsPage() {
 
   return (
     <div className="approvals-page-wrapper">
-      {/* Top Application Navbar exactly matching UI/UX design */}
+      {/* Top Application Navbar matching UI/UX design */}
       <header className="approvals-top-navbar">
-        <div className="approvals-top-navbar-right">
-          <button type="button" className="btn-top-coral" title="Get started guide">
-            Get started
-          </button>
-          <button type="button" className="btn-top-coral" title="Create a new ticket">
-            + New Ticket
-          </button>
-
-          <div className="top-navbar-bells">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <button
-                key={i}
-                type="button"
-                className="top-navbar-bell-btn"
-                title={`Notification alert ${i}`}
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              </button>
-            ))}
-          </div>
-
-          <div className="top-navbar-avatar" title="Logged in user profile" />
-        </div>
+        <GlobalNavbarActions />
       </header>
 
       {/* Main Page Content */}

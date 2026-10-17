@@ -13,7 +13,7 @@ const mockUsers = [
     id: 'USR-000',
     email: 'inesh@servigen.io',
     username: 'inesh.a',
-    password: 'Adm!n#9vK2$7xLq',
+    password: 'Password@123',
     passwordHash: '$2a$10$xyz',
     firstName: 'Inesh',
     lastName: 'Agarwal',

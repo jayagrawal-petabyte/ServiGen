@@ -59,6 +59,7 @@ async function main() {
 
   // 3. Seed Users with distinct secure passwords
   const adminPasswordHash = await bcrypt.hash('Adm!n#9vK2$7xLq', 10);
+  const ineshPasswordHash = await bcrypt.hash('Password@123', 10);
   const agentPasswordHash = await bcrypt.hash('Ag3nt*8mP4!wR9t', 10);
   const approverPasswordHash = await bcrypt.hash('Appr0v#5zY1$kE3s', 10);
   const userPasswordHash = await bcrypt.hash('Us3r@4bT7&mQ6wV', 10);
@@ -90,7 +91,7 @@ async function main() {
     where: { email: 'inesh@servigen.io' },
     update: {
       username: 'inesh.a',
-      passwordHash: adminPasswordHash,
+      passwordHash: ineshPasswordHash,
       role: 'Admin',
       organisationId: acme.id,
       siteId: londonSite.id,
@@ -99,7 +100,7 @@ async function main() {
       id: 'USR-000',
       email: 'inesh@servigen.io',
       username: 'inesh.a',
-      passwordHash: adminPasswordHash,
+      passwordHash: ineshPasswordHash,
       firstName: 'Inesh',
       lastName: 'Agarwal',
       role: 'Admin',
