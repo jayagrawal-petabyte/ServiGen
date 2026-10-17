@@ -176,14 +176,9 @@ export default function ServiceCatalogue() {
               <strong>{filteredServices.length}</strong>
               <span>services</span>
             </div>
-            <button
-              type="button"
-              className="new-button"
-              onClick={() => openRequest(servicesList[0])}
-            >
-              <span>+</span> New Request
-            </button>
-            <GlobalNavbarActions />
+            <GlobalNavbarActions
+              onNewTicket={() => openRequest(servicesList[0])}
+            />
           </div>
         </header>
 

@@ -10,6 +10,9 @@ import './GlobalNavbarActions.css';
 export interface GlobalNavbarActionsProps {
   className?: string;
   onOpenTicket?: (ticketId: string) => void;
+  onGetStarted?: () => void;
+  onNewTicket?: () => void;
+  hidePills?: boolean;
 }
 
 interface QuickSearchItem {
@@ -41,6 +44,9 @@ interface TodoItem {
 export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   className = '',
   onOpenTicket,
+  onGetStarted,
+  onNewTicket,
+  hidePills = false,
 }) => {
   const navigate = useNavigate();
   const authContext = useAuth();
@@ -51,6 +57,12 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   type FlyoutType = 'search' | 'notifications' | 'todo' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
   const [activeFlyout, setActiveFlyout] = useState<FlyoutType>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showQuickTicketModal, setShowQuickTicketModal] = useState(false);
+  const [quickSummary, setQuickSummary] = useState('');
+  const [quickCategory, setQuickCategory] = useState('Standard Applications');
+  const [quickPriority, setQuickPriority] = useState('Medium');
+  const [quickDesc, setQuickDesc] = useState('');
+  const [ticketSuccessNotice, setTicketSuccessNotice] = useState<string | null>(null);
 
   // User presence status
   const [presence, setPresence] = useState<'available' | 'away' | 'busy' | 'offline'>('available');
@@ -232,21 +244,80 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       )
     : ticketList.slice(0, 8);
 
+  const handleQuickCreateTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickSummary.trim()) return;
+    const newId = `INC-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newTicketItem: QuickSearchItem = {
+      id: newId,
+      summary: quickSummary.trim(),
+      category: quickCategory,
+      priority: quickPriority,
+      status: 'Open',
+    };
+    setTicketList((prev) => [newTicketItem, ...prev]);
+    setTicketSuccessNotice(`Ticket #${newId} created successfully!`);
+    setTimeout(() => {
+      setTicketSuccessNotice(null);
+      setShowQuickTicketModal(false);
+      setQuickSummary('');
+      setQuickDesc('');
+    }, 1800);
+  };
+
   return (
     <div className={`global-nav-actions-wrap ${className}`} ref={containerRef}>
-      {/* 1. Search Icon */}
-      <button
-        type="button"
-        className={`global-nav-icon-btn ${activeFlyout === 'search' ? 'is-active' : ''}`}
-        title="Search tickets & incidents"
-        onClick={() => toggleFlyout('search')}
-        aria-label="Search"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-      </button>
+      {/* ─── LEADING IMAGE COMPONENTS (FIGMA SPECIFICATION) ─── */}
+      {!hidePills && (
+        <div className="global-nav-leading-actions">
+          <button
+            type="button"
+            className="global-nav-pill-btn global-nav-get-started-btn"
+            onClick={() => {
+              if (onGetStarted) {
+                onGetStarted();
+              } else {
+                setShowHelpModal(true);
+              }
+            }}
+            title="Get Started Guide"
+          >
+            Get started
+          </button>
+
+          <button
+            type="button"
+            className="global-nav-pill-btn global-nav-new-ticket-btn"
+            onClick={() => {
+              if (onNewTicket) {
+                onNewTicket();
+              } else {
+                setShowQuickTicketModal(true);
+              }
+            }}
+            title="Create New Ticket"
+          >
+            <span className="global-nav-plus-sign">+</span>
+            <span>New Ticket</span>
+          </button>
+        </div>
+      )}
+
+      {/* ─── 8 UNIFIED CIRCULAR ACTION BUTTONS (FIGMA SPECIFICATION) ─── */}
+      <div className="global-nav-icons-group">
+        {/* 1. Search Icon */}
+        <button
+          type="button"
+          className={`global-nav-icon-btn ${activeFlyout === 'search' ? 'is-active' : ''}`}
+          title="Search tickets & incidents"
+          onClick={() => toggleFlyout('search')}
+          aria-label="Search"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
 
       {/* 2. Notifications Bell */}
       <button
@@ -354,6 +425,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
         </svg>
         <span className={`global-nav-presence-dot ${presence}`} />
       </button>
+      </div>
 
       {/* ─── FLYOUT 1: QUICK SEARCH ─── */}
       {activeFlyout === 'search' && (
@@ -802,6 +874,113 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
                 Press <span className="global-help-kbd">Esc</span> to dismiss any open popover or modal.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: QUICK TICKET CREATION ─── */}
+      {showQuickTicketModal && (
+        <div className="global-help-modal-overlay" onClick={() => setShowQuickTicketModal(false)}>
+          <div className="global-help-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="global-help-modal-header">
+              <h3>
+                <span>🎫</span>
+                <span>Create New Ticket</span>
+              </h3>
+              <button
+                type="button"
+                className="global-help-modal-close"
+                onClick={() => setShowQuickTicketModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            {ticketSuccessNotice ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>
+                <span style={{ fontSize: '28px', display: 'block', marginBottom: '8px' }}>✅</span>
+                {ticketSuccessNotice}
+              </div>
+            ) : (
+              <form onSubmit={handleQuickCreateTicket} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                    Summary / Issue Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. VPN gateway drops connection intermittently"
+                    value={quickSummary}
+                    onChange={(e) => setQuickSummary(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                    autoFocus
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Category
+                    </label>
+                    <select
+                      value={quickCategory}
+                      onChange={(e) => setQuickCategory(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12.5px', background: '#ffffff', boxSizing: 'border-box' }}
+                    >
+                      <option value="Standard Applications">Standard Applications</option>
+                      <option value="Hardware">Hardware</option>
+                      <option value="Network">Network / VPN</option>
+                      <option value="Account Administration">Account Administration</option>
+                      <option value="Security">Security & Access</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Priority
+                    </label>
+                    <select
+                      value={quickPriority}
+                      onChange={(e) => setQuickPriority(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12.5px', background: '#ffffff', boxSizing: 'border-box' }}
+                    >
+                      <option value="Critical">P1 - Critical</option>
+                      <option value="High">P2 - High</option>
+                      <option value="Medium">P3 - Medium</option>
+                      <option value="Low">P4 - Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                    Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide additional details or error messages..."
+                    value={quickDesc}
+                    onChange={(e) => setQuickDesc(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12.5px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickTicketModal(false)}
+                    style={{ padding: '7px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{ padding: '7px 20px', borderRadius: '8px', border: 'none', background: '#00c0f3', color: '#ffffff', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0, 192, 243, 0.4)' }}
+                  >
+                    Create Ticket
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

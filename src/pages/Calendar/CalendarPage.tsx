@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { mockCalendarEvents, CalendarEvent } from "./mockCalendar";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./calendar.css";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -109,6 +110,7 @@ export default function CalendarPage() {
             <option value="meeting">Meeting</option>
             <option value="reminder">Reminder</option>
           </select>
+          <GlobalNavbarActions />
         </div>
       </div>
 

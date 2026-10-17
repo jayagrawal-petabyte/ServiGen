@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { mockProjects, Project } from "./mockProjects";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./projects.css";
 
 export default function ProjectsPage() {
@@ -64,12 +65,15 @@ export default function ProjectsPage() {
           <p>Manage and track all projects</p>
         </div>
 
-        <button
-          className="add-project-btn"
-          onClick={() => setIsCreateOpen(true)}
-        >
-          + New Project
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            className="add-project-btn"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            + New Project
+          </button>
+          <GlobalNavbarActions />
+        </div>
       </div>
 
       <div className="project-summary">

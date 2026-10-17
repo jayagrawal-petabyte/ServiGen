@@ -306,23 +306,14 @@ export default function IncidentsByCategoryReport() {
 
         {/* Right utility items from Image 2 */}
         <div className="reporting-top-right-tools">
-          <button 
-            type="button" 
-            className="get-started-btn cursor-pointer"
-            onClick={() => navigate('/dashboard')}
-            title="Return to Primary ITSM Dashboard"
-          >
-            Get started
-          </button>
-          <button
-            type="button"
-            className="new-ticket-btn cursor-pointer"
-            onClick={() => navigate('/incidents')}
-          >
-            + New Ticket
-          </button>
-
-          <GlobalNavbarActions onOpenTicket={(id) => { const found = tickets.find((t) => t.id === id); if (found) setSelectedTicket(found); }} />
+          <GlobalNavbarActions
+            onGetStarted={() => navigate('/dashboard')}
+            onNewTicket={() => navigate('/incidents')}
+            onOpenTicket={(id) => {
+              const found = tickets.find((t) => t.id === id);
+              if (found) setSelectedTicket(found);
+            }}
+          />
         </div>
       </div>
 

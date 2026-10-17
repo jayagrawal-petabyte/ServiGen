@@ -22,6 +22,7 @@ import {
   LayoutGrid,
   AlertCircle,
 } from 'lucide-react';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
 interface CmdbPageProps {
   configurationItems?: ConfigurationItem[];
@@ -234,6 +235,8 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
             Refresh
           </button>
+
+          <GlobalNavbarActions />
         </div>
       </div>
 

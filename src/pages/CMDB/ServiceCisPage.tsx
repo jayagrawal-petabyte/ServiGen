@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
 interface ServiceCisPageProps {
   serviceCis?: ServiceCI[];
@@ -90,6 +91,8 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
             Refresh Live Health
           </button>
+
+          <GlobalNavbarActions />
         </div>
       </div>
 

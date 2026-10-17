@@ -9,6 +9,7 @@ import {
   type TicketStatus,
   type MyWorkTicket,
 } from "../../services/myWorkService";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 
 export type Ticket = MyWorkTicket;
 
@@ -311,13 +312,21 @@ export default function MyWork() {
     return (
       <div className="min-h-full bg-slate-50 px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          <button
-            type="button"
-            onClick={() => setSelectedTicket(null)}
-            className="mb-4 text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            ← Back to My Work
-          </button>
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setSelectedTicket(null)}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              ← Back to My Work
+            </button>
+            <GlobalNavbarActions
+              onOpenTicket={(id) => {
+                const match = tickets.find((t) => t.id === id);
+                if (match) setSelectedTicket(match);
+              }}
+            />
+          </div>
 
           <div className="mb-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -513,7 +522,7 @@ export default function MyWork() {
   return (
     <div className="min-h-full bg-slate-50 px-6 py-6">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-6 flex items-end justify-between gap-4">
+        <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">
               My Work
@@ -524,8 +533,16 @@ export default function MyWork() {
             </p>
           </div>
 
-          <div className="text-sm text-slate-500">
-            {filteredTickets.length} tickets
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-slate-500 hidden sm:block">
+              {filteredTickets.length} tickets
+            </div>
+            <GlobalNavbarActions
+              onOpenTicket={(id) => {
+                const match = tickets.find((t) => t.id === id);
+                if (match) setSelectedTicket(match);
+              }}
+            />
           </div>
         </header>
 

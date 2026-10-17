@@ -11,6 +11,7 @@ import ArticleDraftsDesignView from './ArticleDraftsDesignView';
 import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
 import CreateArticleDraftModal from './CreateArticleDraftModal';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './articleDrafts.css';
 
 type ViewMode = 'design' | 'live';
@@ -364,6 +365,8 @@ export default function ArticleDraftsPage() {
             >
               Reset Data
             </button>
+
+            <GlobalNavbarActions />
           </div>
         </div>
 

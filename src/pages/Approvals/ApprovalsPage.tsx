@@ -3,6 +3,7 @@ import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
 import { ApiError } from '../../services/apiClient';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './approvals.css';
 
 type ApprovalTab = 'pending' | 'approved' | 'rejected' | 'all';
@@ -384,6 +385,8 @@ export default function ApprovalsPage() {
           >
             {isDemoMode ? 'Use Live API' : 'Use Demo Mode'}
           </button>
+
+          <GlobalNavbarActions />
         </div>
       </div>
 

@@ -556,29 +556,12 @@ export const RequestsPage: React.FC = () => {
         </div>
 
         <div className="requests-header-right-actions">
-          <button
-            type="button"
-            className="requests-get-started-btn"
-            onClick={() => {
+          <GlobalNavbarActions
+            onGetStarted={() => {
               setStatusMessage('Onboarding tour initiated for Requests workspace');
               setTimeout(() => setStatusMessage(null), 2500);
             }}
-          >
-            Get started
-          </button>
-
-          <button
-            type="button"
-            className="requests-new-ticket-btn"
-            onClick={() => setIsNewRequestModalOpen(true)}
-          >
-            <span className="text-base font-bold">+</span>
-            <span>New Ticket</span>
-          </button>
-
-          <div className="header-icon-divider" />
-
-          <GlobalNavbarActions
+            onNewTicket={() => setIsNewRequestModalOpen(true)}
             onOpenTicket={(id) => {
               const found = requestsList.find((r) => r.id === id);
               if (found) setSelectedTicketForModal(found);

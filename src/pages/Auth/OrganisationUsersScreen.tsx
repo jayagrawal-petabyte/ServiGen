@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User } from './types';
 import { MOCK_ORGANISATION_USERS } from './mockAuthData';
 import { usePersistentState } from '../../utils/persistentState';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './OrganisationUsersScreen.css';
 
 interface OrganisationUsersScreenProps {
@@ -134,6 +135,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
               <span>+</span>
               <span>Add User</span>
             </button>
+            <GlobalNavbarActions />
           </div>
         </div>
       </div>

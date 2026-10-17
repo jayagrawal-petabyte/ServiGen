@@ -89,22 +89,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     <header className="shrink-0 bg-white border-b border-gray-200 relative">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <button
-            onClick={onGetStarted ?? handleNew}
-            className="bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-5 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-sm"
-          >
-            Get started
-          </button>
-          <button
-            onClick={handleNew}
-            className="flex items-center gap-1 bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-sm ring-2 ring-offset-1 ring-cyan-300"
-          >
-            <span className="text-base leading-none font-light">+</span>
-            New Ticket
-          </button>
+          {/* Breadcrumb or title context handled below */}
         </div>
 
-        <GlobalNavbarActions />
+        <GlobalNavbarActions
+          onGetStarted={onGetStarted ?? handleNew}
+          onNewTicket={handleNew}
+        />
       </div>
 
       <div className="flex items-center justify-between px-4 py-1.5">

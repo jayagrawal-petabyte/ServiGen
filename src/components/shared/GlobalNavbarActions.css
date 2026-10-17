@@ -7,7 +7,51 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+/* Leading Image Components: Get Started & + New Ticket */
+.global-nav-leading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.global-nav-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  background: #00c0f3;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 192, 243, 0.35);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.global-nav-pill-btn:hover {
+  background: #0096c7;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 192, 243, 0.45);
+}
+
+.global-nav-plus-sign {
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.global-nav-icons-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .global-nav-icon-btn {
@@ -15,25 +59,28 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: #64748b;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
   padding: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .global-nav-icon-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .global-nav-icon-btn.is-active {
   background: #e0f2fe;
   color: #0284c7;
+  border-color: #7dd3fc;
 }
 
 /* Red Notification Badge */

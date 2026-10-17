@@ -22,6 +22,7 @@ import {
   ListFilter,
   Layers,
 } from 'lucide-react';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
@@ -150,6 +151,8 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             <Plus className="w-4 h-4" />
             New Change Request
           </Button>
+
+          <GlobalNavbarActions />
         </div>
       </div>
 

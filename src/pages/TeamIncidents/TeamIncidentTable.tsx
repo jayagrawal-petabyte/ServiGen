@@ -305,24 +305,9 @@ function TeamIncidentTable({
         </div>
 
         <div className="team-header-actions">
-          <button
-            type="button"
-            className="team-btn-get-started"
-            onClick={() => setShowGetStartedModal(true)}
-            title={`Get started with ${team} guide`}
-          >
-            Get started
-          </button>
-          <button
-            type="button"
-            className="team-btn-new-ticket"
-            onClick={() => setShowNewIncidentModal(true)}
-          >
-            <span style={{ fontSize: 15, lineHeight: 1 }}>+</span>
-            <span>New Ticket</span>
-          </button>
-
           <GlobalNavbarActions
+            onGetStarted={() => setShowGetStartedModal(true)}
+            onNewTicket={() => setShowNewIncidentModal(true)}
             onOpenTicket={(id) => {
               const found = incidents.find((i) => i.id === id);
               if (found) setSelectedIncident(found);

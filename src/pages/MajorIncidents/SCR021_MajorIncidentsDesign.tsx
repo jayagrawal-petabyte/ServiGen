@@ -140,15 +140,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setShowNewModal(true)}
-              className="bg-cyan-400 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
-            >
-              <span className="text-lg leading-none">+</span> New Ticket
-            </button>
-
-            <GlobalNavbarActions />
+            <GlobalNavbarActions onNewTicket={() => setShowNewModal(true)} />
           </div>
         </header>
 

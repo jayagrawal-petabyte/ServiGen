@@ -422,14 +422,9 @@ const OnHoldTicketScreen: React.FC = () => {
             <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>
           </div>
           <div className="topnav-right">
-            <button className="btn-get-started" onClick={() => setShowGetStartedModal(true)}>
-              Get started
-            </button>
-            <button className="btn-new-ticket" onClick={handleOpenNewModal}>
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New Ticket
-            </button>
-            <GlobalNavbarActions onOpenTicket={(id) => {
+            <GlobalNavbarActions
+              onGetStarted={() => setShowGetStartedModal(true)}
+              onNewTicket={handleOpenNewModal} onOpenTicket={(id) => {
               const match = NEW_TICKETS_DATA.find((t) => t.id === id) || tickets.find((t) => t.id === id);
               if (match) setSelectedTicket(match);
             }} /></div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './CustomLists.css';
 
 interface FilterCondition {
@@ -102,7 +103,13 @@ const CustomLists: React.FC = () => {
   };
 
   return (
-    <div className="cl-modal-overlay">
+    <div className="cl-modal-overlay flex flex-col">
+      <div className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 shadow-xs">
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+          Custom Lists Designer • Halo AI
+        </span>
+        <GlobalNavbarActions />
+      </div>
       <div className="cl-modal">
         <div className="cl-header-bar">
           <div className="cl-header-left">
