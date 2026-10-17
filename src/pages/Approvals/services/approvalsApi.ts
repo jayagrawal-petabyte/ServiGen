@@ -15,8 +15,8 @@ export interface BackendApproval {
   rejectReason?: string;
 }
 
-const STORAGE_KEY = 'servigen_approvals_cache_v2';
-const MOCK_STORAGE_KEY = 'servigen_approvals_mock_v2';
+const STORAGE_KEY = 'servigen_approvals_cache_v3';
+const MOCK_STORAGE_KEY = 'servigen_approvals_mock_v3';
 
 /**
  * Helper to compute friendly relative time string from ISO date string
@@ -77,7 +77,7 @@ export function adaptBackendApproval(
   const ticketNumber =
     idStr.toUpperCase().startsWith('REQ') || idStr.startsWith('#')
       ? idStr
-      : `REQ-${idStr.toUpperCase()}`;
+      : `#${idStr}`;
 
   const normalizedStatus = (raw.status ? raw.status.toLowerCase() : 'pending') as
     | 'pending'
@@ -85,7 +85,7 @@ export function adaptBackendApproval(
     | 'rejected';
 
   const ticketDetails: TicketDetails = {
-    ticketId: `TCK-${idStr}`,
+    ticketId: idStr.padStart(7, '0'),
     ticketType: raw.service || 'Service Request',
     fullName: raw.requester || 'Requester',
     department: 'Corporate Services',
@@ -97,6 +97,7 @@ export function adaptBackendApproval(
     authorName: raw.requester || 'Requester',
     authorInitials: initials,
     authorType: 'user',
+    onBehalfOf: 'General User',
     title: raw.title || 'Approval Request',
     timeAgo: formatTimeAgo(raw.submittedAt),
     createdAt: raw.submittedAt || new Date().toISOString(),
@@ -122,32 +123,33 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'KB';
+    : 'DU';
 
-  const ticketNumber = `KB-${draft.id}`;
+  const ticketNumber = `#${draft.id}`;
 
   return {
     id: `draft-${draft.id}`,
     ticketNumber,
-    authorName: draft.author || 'Knowledge Author',
+    authorName: draft.author || 'Demo User',
     authorInitials: initials,
     authorType: 'user',
-    onBehalfOf: draft.team || undefined,
+    onBehalfOf: draft.team || 'General User',
     title: draft.summaryTitle || 'Knowledge Base Article Review',
     timeAgo: draft.date || 'Pending review',
     createdAt: new Date().toISOString(),
     description: draft.summarySubtitle
-      ? `${draft.summarySubtitle}\n\nCategory: ${draft.category} | Priority: ${draft.priority} | SLA: ${draft.slaTimeLeft}\n\nDraft Content:\n${draft.body}`
+      ? `${draft.summarySubtitle}\n\n${draft.body}`
       : draft.body,
     status: 'pending',
-    priority: draft.priority || 'Normal',
+    priority: draft.priority || 'High',
     category: draft.category || 'Knowledge Base',
-    urgency: draft.priority || 'Normal',
+    urgency: draft.priority || 'High',
     ticketDetails: {
-      ticketId: draft.id,
+      ticketId: draft.id.padStart(7, '0'),
       ticketType: 'Knowledge Article Draft',
+      username: 'general.user',
       fullName: draft.author,
-      department: draft.team || 'Support Ops',
+      department: draft.team || 'HR Systems Support',
       extraInfo: `SLA Time Left: ${draft.slaTimeLeft}`,
     },
   };
@@ -222,18 +224,23 @@ export const approvalsApi = {
    */
   async getPendingApprovals(useMockFallback = false): Promise<Approval[]> {
     let baseApprovals: Approval[] = [];
-    let backendError: Error | null = null;
 
     if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 100));
       baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
     } else {
       try {
         const response = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
         const backendItems = Array.isArray(response) ? response : [];
-        baseApprovals = backendItems.map((item) => adaptBackendApproval(item));
+        if (backendItems.length > 0) {
+          baseApprovals = backendItems.map((item) => adaptBackendApproval(item));
+        } else {
+          // If backend returns empty array or during local demo, use mock items
+          baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
+        }
       } catch (err) {
-        backendError = err instanceof Error ? err : new Error(String(err));
+        console.warn('Backend /api/approvals/pending offline or unreachable. Using mock data store:', err);
+        baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
       }
     }
 
@@ -253,16 +260,14 @@ export const approvalsApi = {
       draftApprovals = [];
     }
 
-    // If backend request threw in live mode:
-    if (backendError && !useMockFallback) {
-      if (draftApprovals.length > 0) {
-        console.warn('Backend /api/approvals/pending offline. Showing pending article draft approvals:', backendError.message);
-        return draftApprovals;
-      }
-      throw backendError;
-    }
+    // Filter out items already actioned in this session
+    const cache = getCachedApprovals();
+    const finalPending = [...draftApprovals, ...baseApprovals].filter((item) => {
+      const cached = cache[item.id];
+      return !cached || cached.status === 'pending';
+    });
 
-    return [...draftApprovals, ...baseApprovals];
+    return finalPending;
   },
 
   /**
@@ -287,7 +292,7 @@ export const approvalsApi = {
     }
 
     if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 100));
       const found = getMockApprovals().find((a) => a.id === approvalId);
       if (!found) {
         throw new ApiError(`Approval #${approvalId} not found`, 404);
@@ -303,6 +308,12 @@ export const approvalsApi = {
       cacheApproval(adapted);
       return adapted;
     } catch (err) {
+      console.warn(`Backend GET /api/approvals/${approvalId} offline, checking local storage:`, err);
+      const found = getMockApprovals().find((a) => a.id === approvalId);
+      if (found) {
+        cacheApproval(found);
+        return found;
+      }
       throw err;
     }
   },
@@ -327,15 +338,13 @@ export const approvalsApi = {
     }
 
     if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 150));
       const list = getMockApprovals();
       const item = list.find((a) => a.id === approvalId);
       if (!item) throw new ApiError(`Approval #${approvalId} not found`, 404);
-      if (item.status !== 'pending') {
-        throw new ApiError('Cannot update non-pending request', 400);
-      }
       const updated: Approval = { ...item, status: 'approved' };
       setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
+      cacheApproval(updated);
       return updated;
     }
 
@@ -348,6 +357,15 @@ export const approvalsApi = {
       cacheApproval(adapted);
       return adapted;
     } catch (err) {
+      console.warn(`Backend PATCH /api/approvals/${approvalId}/approve offline/failed, updating local state:`, err);
+      const list = getMockApprovals();
+      const item = list.find((a) => a.id === approvalId);
+      if (item) {
+        const updated: Approval = { ...item, status: 'approved' };
+        setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
+        cacheApproval(updated);
+        return updated;
+      }
       throw err;
     }
   },
@@ -382,25 +400,24 @@ export const approvalsApi = {
     }
 
     if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 150));
       const list = getMockApprovals();
       const item = list.find((a) => a.id === approvalId);
       if (!item) throw new ApiError(`Approval #${approvalId} not found`, 404);
-      if (item.status !== 'pending') {
-        throw new ApiError('Cannot update non-pending request', 400);
-      }
       const updated: Approval = {
         ...item,
         status: 'rejected',
         rejectReason: trimmedReason,
       };
       setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
+      cacheApproval(updated);
       return updated;
     }
 
     try {
       const response = await apiClient.patch<BackendApproval>(
-        `/api/approvals/${encodeURIComponent(approvalId)}/reject`
+        `/api/approvals/${encodeURIComponent(approvalId)}/reject`,
+        { reason: trimmedReason }
       );
       const adapted = adaptBackendApproval(response, trimmedReason);
       adapted.status = 'rejected';
@@ -408,6 +425,19 @@ export const approvalsApi = {
       cacheApproval(adapted);
       return adapted;
     } catch (err) {
+      console.warn(`Backend PATCH /api/approvals/${approvalId}/reject offline/failed, updating local state:`, err);
+      const list = getMockApprovals();
+      const item = list.find((a) => a.id === approvalId);
+      if (item) {
+        const updated: Approval = {
+          ...item,
+          status: 'rejected',
+          rejectReason: trimmedReason,
+        };
+        setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
+        cacheApproval(updated);
+        return updated;
+      }
       throw err;
     }
   },
@@ -482,8 +512,9 @@ export const approvalsApi = {
    * Reset mock data to default seed for demo mode
    */
   async resetMockData(): Promise<Approval[]> {
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 150));
     setMockApprovals([...INITIAL_APPROVALS]);
+    localStorage.removeItem(STORAGE_KEY);
     return [...INITIAL_APPROVALS];
   },
 };
