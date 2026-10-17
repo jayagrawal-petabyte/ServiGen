@@ -34,29 +34,28 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M 200 0 C 170 250, 100 650, 0 1000 L 475 1000 Q 500 1000 500 975 L 500 0 Z"
+          d="M 230 0 C 190 280, 110 650, 0 1000 L 500 1000 L 500 0 Z"
           fill="#00D4BB"
         />
       </svg>
 
       {/* Center Content Area */}
       <div className="splash-content-wrapper">
-        {/* Welcome Message formatted as "Hello, (Name)!" */}
-        <h1 className="splash-welcome-heading">Hello, {userName}!</h1>
+        {/* Welcome Message formatted as "Hello Demo" without comma or exclamation */}
+        <h1 className="splash-welcome-heading">Hello {userName}</h1>
 
         {/* Brand Icon with Orbiting Dots */}
         <div className="splash-logo-container">
           {/* Main Cyan Chat Bubble Badge */}
-          <BrandLogo size={88} />
+          <BrandLogo size={94} />
 
           {/* Rotating Orbiting Dots */}
           <svg className="splash-loader-orbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="28" cy="92" r="5" fill="#00D4BB" />
-            <circle cx="45" cy="104" r="4" fill="#00D4BB" />
-            <circle cx="64" cy="107" r="3.5" fill="#00D4BB" />
-            <circle cx="82" cy="102" r="2.8" fill="#00D4BB" />
-            <circle cx="97" cy="90" r="2.2" fill="#00D4BB" />
-            <circle cx="106" cy="74" r="1.6" fill="#00D4BB" />
+            <circle cx="20" cy="84" r="5" fill="#00D4BB" />
+            <circle cx="34" cy="99" r="4.2" fill="#00D4BB" />
+            <circle cx="60" cy="107" r="3.4" fill="#00D4BB" />
+            <circle cx="86" cy="99" r="2.5" fill="#00D4BB" />
+            <circle cx="101" cy="84" r="1.7" fill="#00D4BB" />
           </svg>
         </div>
 
