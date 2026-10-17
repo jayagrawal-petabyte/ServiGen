@@ -31,6 +31,13 @@ interface NotificationItem {
   unread: boolean;
 }
 
+interface TodoItem {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: number;
+}
+
 export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   className = '',
   onOpenTicket,
@@ -41,12 +48,70 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const logout = authContext?.logout;
 
   // Active flyout state (mutually exclusive)
-  type FlyoutType = 'search' | 'notifications' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
+  type FlyoutType = 'search' | 'notifications' | 'todo' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
   const [activeFlyout, setActiveFlyout] = useState<FlyoutType>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   // User presence status
   const [presence, setPresence] = useState<'available' | 'away' | 'busy' | 'offline'>('available');
+
+  // To-Do list state (matching Figma design)
+  const [todoDate, setTodoDate] = useState(() => {
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  });
+  const [todoItems, setTodoItems] = useState<TodoItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_global_todos_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to parse todos from localStorage:', e);
+    }
+    return [];
+  });
+  const [isAddingTodo, setIsAddingTodo] = useState(false);
+  const [newTodoText, setNewTodoText] = useState('');
+  const todoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('servigen_global_todos_v1', JSON.stringify(todoItems));
+    } catch (e) {
+      console.warn('Failed to save todos to localStorage:', e);
+    }
+  }, [todoItems]);
+
+  useEffect(() => {
+    if (isAddingTodo) {
+      setTimeout(() => todoInputRef.current?.focus(), 50);
+    }
+  }, [isAddingTodo]);
+
+  const handleAddTodo = () => {
+    if (!newTodoText.trim()) return;
+    const newItem: TodoItem = {
+      id: 'todo-' + Date.now(),
+      text: newTodoText.trim(),
+      done: false,
+      createdAt: Date.now(),
+    };
+    setTodoItems((prev) => [newItem, ...prev]);
+    setNewTodoText('');
+    setIsAddingTodo(false);
+  };
+
+  const handleToggleTodo = (id: string) => {
+    setTodoItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
+    );
+  };
+
+  const handleDeleteTodo = (id: string) => {
+    setTodoItems((prev) => prev.filter((item) => item.id !== id));
+  };
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,16 +263,13 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
         {unreadCount > 0 && <span className="global-nav-badge" />}
       </button>
 
-      {/* 3. Tasks / Clipboard */}
+      {/* 3. Tasks / Clipboard -> To-Do Popover */}
       <button
         type="button"
-        className="global-nav-icon-btn"
-        title="My Tasks & Checklist"
-        onClick={() => {
-          setActiveFlyout(null);
-          navigate('/my-work');
-        }}
-        aria-label="Tasks"
+        className={`global-nav-icon-btn ${activeFlyout === 'todo' ? 'is-active is-todo-active' : ''}`}
+        title="To-Do List & Quick Tasks"
+        onClick={() => toggleFlyout('todo')}
+        aria-label="To-Do"
       >
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
@@ -435,6 +497,139 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── FLYOUT: TO-DO POPOVER (MATCHING FIGMA SPECIFICATION) ─── */}
+      {activeFlyout === 'todo' && (
+        <div className="global-flyout-dropdown global-todo-flyout" role="dialog" aria-label="To-Do List">
+          <div className="global-todo-header">
+            <h3 className="global-todo-title">To-Do</h3>
+            <button
+              type="button"
+              className="global-todo-close-btn"
+              onClick={() => setActiveFlyout(null)}
+              title="Close"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="global-todo-date-row">
+            <input
+              type="text"
+              className="global-todo-date-input"
+              value={todoDate}
+              onChange={(e) => setTodoDate(e.target.value)}
+              placeholder="DD/MM/YYYY"
+            />
+          </div>
+
+          <div className="global-todo-content">
+            {todoItems.length === 0 ? (
+              <div className="global-todo-empty-text">Nothing to do at the moment</div>
+            ) : (
+              <div className="global-todo-list">
+                {todoItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`global-todo-item ${item.done ? 'is-done' : ''}`}
+                  >
+                    <label className="global-todo-item-label">
+                      <input
+                        type="checkbox"
+                        className="global-todo-checkbox"
+                        checked={item.done}
+                        onChange={() => handleToggleTodo(item.id)}
+                      />
+                      <span className="global-todo-item-text">{item.text}</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="global-todo-item-del-btn"
+                      onClick={() => handleDeleteTodo(item.id)}
+                      title="Remove task"
+                      aria-label="Remove task"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isAddingTodo ? (
+              <form
+                className="global-todo-add-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddTodo();
+                }}
+              >
+                <input
+                  ref={todoInputRef}
+                  type="text"
+                  className="global-todo-input-field"
+                  placeholder="What needs to be done?"
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  autoFocus
+                />
+                <div className="global-todo-form-actions">
+                  <button type="submit" className="global-todo-btn-save">
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    className="global-todo-btn-cancel"
+                    onClick={() => {
+                      setIsAddingTodo(false);
+                      setNewTodoText('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="global-todo-add-pill-btn"
+                onClick={() => setIsAddingTodo(true)}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="15"
+                  height="15"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                <span>Add</span>
+              </button>
+            )}
+          </div>
+
+          <div className="global-todo-footer">
+            <button
+              type="button"
+              className="global-todo-mywork-link"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/my-work');
+              }}
+            >
+              <span>Go to My Work full checklist</span>
+              <span>→</span>
+            </button>
           </div>
         </div>
       )}
