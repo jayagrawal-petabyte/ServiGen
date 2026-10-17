@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginScreen from './LoginScreen';
 import SplashScreen from './SplashScreen';
 import OrganisationUsersScreen from './OrganisationUsersScreen';
@@ -6,6 +7,7 @@ import { AuthTab, LoginCredentials } from './types';
 import './auth.css';
 
 export const AuthPage: React.FC = () => {
+  const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState<AuthTab>('login');
   const [loggedInUser, setLoggedInUser] = useState<string>('Demo');
 
@@ -77,6 +79,21 @@ export const AuthPage: React.FC = () => {
           onClick={() => setCurrentTab('users')}
         >
           SCR-020: Users List
+        </button>
+        <button
+          style={{
+            background: '#10B981',
+            color: '#FFFFFF',
+            border: 'none',
+            padding: '4px 10px',
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+          onClick={() => navigate('/dashboard')}
+        >
+          ➔ Enter App
         </button>
       </div>
 

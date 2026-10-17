@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { useAuth } from "../Auth";
+import { usePersistentState } from "../../utils/persistentState";
+
 function getGreeting(): string {
   const hour = new Date().getHours();
 
@@ -6,25 +10,31 @@ function getGreeting(): string {
   return "Good Evening";
 }
 
-function HaloAvatar() {
+function HaloAvatar({ initials }: { initials: string }) {
   return (
-    <span className="greeting-avatar">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="32" fill="#12dff9" />
-        <path
-          d="M32 14c-9.4 0-17 6.6-17 14.8 0 4.4 2.2 8.4 5.8 11.1-.3 2.6-1.4 5-3.3 7 3.9-.2 7.3-1.6 9.9-3.7 1.4.3 2.8.4 4.6.4 9.4 0 17-6.6 17-14.8S41.4 14 32 14z"
-          fill="#ffffff"
-        />
-        <circle cx="32" cy="28.5" r="8" fill="#12dff9" />
-      </svg>
-
+    <span className="greeting-avatar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#0ea5e9', color: '#ffffff', fontWeight: 700, fontSize: '18px', width: '48px', height: '48px', borderRadius: '50%', position: 'relative' }}>
+      {initials}
       <span className="greeting-avatar-trophy">🏆</span>
       <span className="greeting-avatar-dot" />
     </span>
   );
 }
 
+const STATUS_OPTIONS = [
+  { label: "Available", dotColor: "#10b981" },
+  { label: "Busy", dotColor: "#ef4444" },
+  { label: "Away", dotColor: "#f59e0b" },
+  { label: "In a Meeting", dotColor: "#8b5cf6" },
+  { label: "Offline", dotColor: "#64748b" },
+];
+
 export default function DashboardGreeting() {
+  const { user } = useAuth();
+  const [presenceStatus, setPresenceStatus] = usePersistentState<string>("servigen_agent_presence_status", "Available");
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+
+  const currentOption = STATUS_OPTIONS.find((s) => s.label === presenceStatus) || STATUS_OPTIONS[0];
+
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -32,27 +42,92 @@ export default function DashboardGreeting() {
     year: "numeric",
   });
 
+  const displayName = user?.fullName || "Inesh Agarwal";
+  const firstName = user?.firstName || displayName.split(" ")[0] || "Inesh";
+  const email = user?.email || "inesh@servigen.io";
+  const role = user?.role || "Administrator";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <section className="dashboard-greeting">
       <div>
-        <h1 className="greeting-title">{getGreeting()} Demo</h1>
+        <h1 className="greeting-title">{getGreeting()} {firstName}</h1>
 
         <div className="greeting-profile">
-          <HaloAvatar />
+          <HaloAvatar initials={initials} />
 
           <div className="greeting-profile-text">
             <div className="greeting-profile-line">
-              <span className="greeting-name">Demo User</span>
-              <span className="greeting-email">demo.user@example.com</span>
+              <span className="greeting-name">{displayName}</span>
+              <span className="greeting-email">{email}</span>
             </div>
 
             <div className="greeting-profile-line">
-              <span className="greeting-role">IT Manager</span>
+              <span className="greeting-role">{role}</span>
 
-              <span className="greeting-status">
-                <span className="greeting-status-dot" />
-                Available ▾
-              </span>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <button
+                  type="button"
+                  className="greeting-status"
+                  onClick={() => setIsStatusOpen(!isStatusOpen)}
+                  style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  title="Click to change your presence status"
+                >
+                  <span className="greeting-status-dot" style={{ backgroundColor: currentOption.dotColor }} />
+                  {presenceStatus} ▾
+                </button>
+
+                {isStatusOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '4px',
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 60,
+                      minWidth: '130px',
+                      padding: '4px 0',
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          setPresenceStatus(opt.label);
+                          setIsStatusOpen(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '6px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '12px',
+                          fontWeight: opt.label === presenceStatus ? 700 : 500,
+                          color: '#334155',
+                          background: opt.label === presenceStatus ? '#f1f5f9' : 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: opt.dotColor }} />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

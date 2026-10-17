@@ -40,9 +40,9 @@ export const INITIAL_ARTICLE_DRAFTS: ArticleDraft[] = [
     status: 'Draft',
     type: 'Article Draft',
     date: '01-Nov-2026',
-    author: 'Demo User',
+    author: 'Inesh Agarwal',
     team: 'Tier 2 Messaging Ops',
-    agent: 'Demo User',
+    agent: 'Inesh Agarwal',
     body: `## Symptoms
 Users report that outbound messages remain indefinitely in the Outlook Outbox queue following hybrid Exchange mailbox move requests.
 
@@ -89,7 +89,7 @@ This guide explains how employees can submit annual leave and personal day reque
     date: '17-Oct-2026',
     author: 'General User',
     team: 'HR Systems Support',
-    agent: 'Demo User',
+    agent: 'Inesh Agarwal',
     body: `## Problem Description
 Managers encountering error code 403 Forbidden when approving pending time-off requests submitted via mobile web view.
 
@@ -129,9 +129,9 @@ Adopt standard ISO-8601 formatting prior to submitting API payload.`,
     status: 'Rejected',
     type: 'Article Draft',
     date: '17-Oct-2026',
-    author: 'Demo User',
+    author: 'Inesh Agarwal',
     team: 'Floor Ops',
-    agent: 'Demo User',
+    agent: 'Inesh Agarwal',
     body: `## Description
 Instructions for desk technicians on handling stuck spool jobs without power cycling the floor printer.
 

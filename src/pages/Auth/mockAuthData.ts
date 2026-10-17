@@ -1,6 +1,25 @@
 import { User } from './types';
 
+export const PRIMARY_USER: User = {
+  id: 'USR-000',
+  username: 'inesh.a',
+  firstName: 'Inesh',
+  lastName: 'Agarwal',
+  fullName: 'Inesh Agarwal',
+  email: 'inesh@servigen.io',
+  phone: '+91 98765 43200',
+  networkLogin: 'CORP\\inesh.a',
+  defaultSite: 'Bangalore HQ',
+  defaultOrganisation: 'ServiGen Global Tech',
+  region: 'APAC',
+  role: 'Administrator',
+  status: 'Active',
+  lastLogin: 'Just now',
+  department: 'IT Operations',
+};
+
 export const MOCK_ORGANISATION_USERS: User[] = [
+  PRIMARY_USER,
   {
     id: 'USR-001',
     username: 'anjali.prasad',
@@ -136,5 +155,22 @@ export const MOCK_ORGANISATION_USERS: User[] = [
     status: 'Pending',
     lastLogin: 'Never',
     department: 'Service Desk'
+  },
+  {
+    id: 'USR-009',
+    username: 'vooka.s',
+    firstName: 'Vooka',
+    lastName: 'Sai Siddharth',
+    fullName: 'Vooka Sai Siddharth',
+    email: 'vooka.s@servigen.io',
+    phone: '+91 98765 43218',
+    networkLogin: 'CORP\\vooka.s',
+    defaultSite: 'Hyderabad Hub',
+    defaultOrganisation: 'Halo AI Enterprise',
+    region: 'APAC',
+    role: 'Team Lead',
+    status: 'Active',
+    lastLogin: '2026-10-05 11:30 AM',
+    department: 'Cloud & CMDB Platform'
   }
 ];

@@ -15,7 +15,17 @@ interface PageHeaderProps {
   onSearchChange?: (q: string) => void;
   onRefresh?: () => void;
   onNew?: () => void;
+  onGetStarted?: () => void;
   breadcrumb?: string;
+  onSearchFocus?: () => void;
+  notifCount?: number;
+  onNotifications?: () => void;
+  onTasks?: () => void;
+  onPerformance?: () => void;
+  onStatus?: () => void;
+  onHistory?: () => void;
+  onHelp?: () => void;
+  onProfile?: () => void;
 }
 
 const IconBtn: React.FC<{ children: React.ReactNode; label: string; badge?: number; onClick?: () => void }> = ({ children, label, badge, onClick }) => (
@@ -47,7 +57,17 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   onSearchChange,
   onRefresh,
   onNew,
+  onGetStarted,
   breadcrumb = 'Update Required',
+  onSearchFocus,
+  notifCount = 0,
+  onNotifications,
+  onTasks,
+  onPerformance,
+  onStatus,
+  onHistory,
+  onHelp,
+  onProfile,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -69,7 +89,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <button
-            onClick={handleNew}
+            onClick={onGetStarted ?? handleNew}
             className="bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-5 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-sm"
           >
             Get started
@@ -84,32 +104,32 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-0.5">
-          <IconBtn label="Search">
+          <IconBtn label="Search" onClick={onSearchFocus}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
           </IconBtn>
-          <IconBtn label="Notifications" badge={1}>
+          <IconBtn label="Notifications" badge={notifCount} onClick={onNotifications}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </IconBtn>
-          <IconBtn label="Tasks">
+          <IconBtn label="Tasks" onClick={onTasks}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
               <rect x="9" y="3" width="6" height="4" rx="1" />
               <path d="M9 12h6M9 16h4" />
             </svg>
           </IconBtn>
-          <IconBtn label="Performance">
+          <IconBtn label="Performance" onClick={onPerformance}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2a10 10 0 1 0 10 10" />
               <path d="M12 12 18 6" strokeLinecap="round" />
               <circle cx="12" cy="12" r="1.5" fill="currentColor" />
             </svg>
           </IconBtn>
-          <IconBtn label="Signal">
+          <IconBtn label="Signal" onClick={onStatus}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12.55a11 11 0 0 1 14.08 0" />
               <path d="M1.42 9a16 16 0 0 1 21.16 0" />
@@ -117,20 +137,24 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
             </svg>
           </IconBtn>
-          <IconBtn label="History">
+          <IconBtn label="History" onClick={onHistory}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" strokeLinecap="round" />
             </svg>
           </IconBtn>
-          <IconBtn label="Help">
+          <IconBtn label="Help" onClick={onHelp}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
               <circle cx="12" cy="17" r="0.5" fill="currentColor" />
             </svg>
           </IconBtn>
-          <button aria-label="Profile" className="relative w-8 h-8 flex items-center justify-center rounded-full bg-cyan-400 text-white shrink-0 hover:bg-cyan-500 transition-colors">
+          <button
+            aria-label="Profile"
+            onClick={onProfile}
+            className="relative w-8 h-8 flex items-center justify-center rounded-full bg-cyan-400 text-white shrink-0 hover:bg-cyan-500 transition-colors"
+          >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
             </svg>

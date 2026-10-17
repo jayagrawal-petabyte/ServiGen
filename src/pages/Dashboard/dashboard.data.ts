@@ -25,12 +25,27 @@ export type CategoryItem = {
   displayValue: boolean;
 };
 
+export type DashboardTicketNote = {
+  id: string;
+  author: string;
+  time: string;
+  text: string;
+};
+
 export type DashboardTicket = {
   id: string;
   type: string;
   summary: string;
   agent: string;
   priority: DashboardPriority;
+  status?: string;
+  description?: string;
+  requester?: string;
+  department?: string;
+  category?: string;
+  createdAt?: string;
+  targetSla?: string;
+  notes?: DashboardTicketNote[];
 };
 
 export const DASHBOARD_STATS = [
@@ -232,63 +247,63 @@ export const DASHBOARD_TICKETS: DashboardTicket[] = [
     id: "0003132-C",
     type: "Project Task",
     summary: "Deployment and Implementati...",
-    agent: "Demo User",
+    agent: "Inesh Agarwal",
     priority: "Low",
   },
   {
     id: "0003013",
     type: "Service Request",
     summary: "Update email display name",
-    agent: "Demo User",
+    agent: "Anjali Prasad",
     priority: "Medium",
   },
   {
     id: "0003012",
     type: "Service Request",
     summary: "Request external monitor",
-    agent: "Demo User",
+    agent: "Durgesh Kumar",
     priority: "High",
   },
   {
     id: "0003011",
     type: "Service Request",
     summary: "Install Adobe Acrobat Pro",
-    agent: "Demo User",
+    agent: "Nainesh Patel",
     priority: "Low",
   },
   {
     id: "0003010",
     type: "Service Request",
     summary: "Access request for shared folder",
-    agent: "Demo User",
+    agent: "Monalisa Panda",
     priority: "Medium",
   },
   {
     id: "0003009",
     type: "Service Request",
     summary: "Request new laptop for new sta...",
-    agent: "Demo User",
+    agent: "Mohammad Taha Ali",
     priority: "High",
   },
   {
     id: "0002673-P",
     type: "Major Incident",
     summary: "System Login Failure",
-    agent: "Demo User",
+    agent: "Inesh Agarwal",
     priority: "Critical",
   },
   {
     id: "0002237",
     type: "Service Request",
     summary: "Request Addition of New Printer ...",
-    agent: "Demo User",
+    agent: "Aditya Kumar Singh",
     priority: "Low",
   },
   {
     id: "0002236",
     type: "Service Request",
     summary: "Request Printer Maintenance Se...",
-    agent: "Demo User",
+    agent: "Voona Sarayu",
     priority: "Low",
   },
 ];

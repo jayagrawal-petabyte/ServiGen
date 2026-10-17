@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import "./OnHoldTicketScreen.css";
 import MyList from "../mylist/MyList";
+import { TicketDetailModal, type FullTicket, type TicketPriority } from "../../../components/TicketDetailModal";
+import { usePersistentState } from "../../../utils/persistentState";
 
-interface Ticket {
+export interface Ticket {
   id: string;
   priority: string;
   priorityColor: "red" | "orange" | "yellow" | "green";
@@ -10,24 +13,29 @@ interface Ticket {
   summary: string;
   status: "On H" | "With";
   type: "Incident" | "Service Request";
+  description?: string;
+  requester?: string;
+  department?: string;
+  createdAt?: string;
+  targetSla?: string;
 }
 
 const ALL_TICKETS: Ticket[] = [
-  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be f...", status: "On H", type: "Incident" },
-  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to ...", status: "With", type: "Incident" },
-  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few second...", status: "With", type: "Incident" },
-  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mans...",summary: "Trading desk computer won't b...", status: "With", type: "Incident" },
-  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to exter...", status: "With", type: "Incident" },
-  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say...", status: "On H", type: "Incident" },
-  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeabl...", status: "With", type: "Incident" },
-  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support ca...", status: "With", type: "Incident" },
-  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly wh...", status: "On H", type: "Incident" },
-  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter neve...", status: "With", type: "Incident" },
-  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner abou...", status: "On H", type: "Incident" },
-  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to a virtual mach...", status: "With", type: "Incident" },
-  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authen...", status: "With", type: "Incident" },
-  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jum...", status: "On H", type: "Incident" },
-  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install p...", status: "With", type: "Service Request" },
+  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be from HR about bonuses...", status: "On H", type: "Incident", description: "Suspicious email received with external phishing links posing as HR compensation review. Account credentials may have been targeted; security quarantine requested." },
+  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to upload client deck...", status: "With", type: "Incident", description: "Upload to SharePoint portal fails with HTTP 413 Payload Too Large. Presentation file is 85MB; requesting quota expansion or alternative transfer link." },
+  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few seconds then drops...", status: "With", type: "Incident", description: "Cisco AnyConnect establishes connection but disconnects within 15 seconds with gateway timeout error. Multiple EMEA consultants reporting identical behavior." },
+  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mansoor", summary: "Trading desk computer won't boot past BIOS...", status: "With", type: "Incident", description: "Workstation workstation-NY-44 powers on but hangs at vendor BIOS screen. No bootable device found error. Urgent priority for market open." },
+  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to external clients failing...", status: "With", type: "Incident", description: "Calendar synchronization failure when generating Teams invite links for external partner domain. Meeting scheduled for 3 PM GMT." },
+  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say my audio echo is severe...", status: "On H", type: "Incident", description: "Poly headset microphone feedback loop during client presentation calls. Driver updates and audio filter configurations required." },
+  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeably slow after Windows update...", status: "With", type: "Incident", description: "System performance degraded after KB5034441 update. High CPU and disk usage observed from Windows Search Indexer service." },
+  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support can access CRM records...", status: "With", type: "Incident", description: "CRM gateway timeout for Sydney support queue. Support team currently unable to log customer inquiries." },
+  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly while roaming...", status: "On H", type: "Incident", description: "Remote access VPN disconnects when user roams between Wi-Fi and mobile tethering in Americas region." },
+  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter never saved in HR portal...", status: "With", type: "Incident", description: "Quarterly review objective entries disappeared upon form submission in SuccessFactors portal." },
+  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner about expiring security token...", status: "On H", type: "Incident", description: "Kerberos token renewal banner appearing in Outlook. User password not due for renewal for 45 days." },
+  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to virtual machine lab environment...", status: "With", type: "Incident", description: "Remote Desktop connection to Azure VM lab timed out. VM status shows running but network security group rules may be blocking port 3389." },
+  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authenticator app inaccessible...", status: "With", type: "Incident", description: "Corporate iPhone screen cracked and touch input unresponsive. Needs temporary MFA bypass code or phone replacement." },
+  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jumps from 90% to 10%...", status: "On H", type: "Incident", description: "Battery hardware failure on ThinkPad T14. Device abruptly powers down during client meetings without charger." },
+  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install Python and VS Code...", status: "With", type: "Service Request", description: "Data analyst requesting development environment installation for local Python ETL scripts and Jupyter notebooks." },
 ];
 
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
@@ -41,10 +49,18 @@ interface TicketRowProps {
   ticket: Ticket;
   selectedItems: string[];
   onToggle: (id: string) => void;
+  onSelectTicket: (ticket: Ticket) => void;
 }
 
-const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }) => (
-  <tr className={"ticket-row" + (selectedItems.includes(ticket.id) ? " selected" : "")}>
+const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, onSelectTicket }) => (
+  <tr
+    className={"ticket-row" + (selectedItems.includes(ticket.id) ? " selected" : "")}
+    onClick={(e) => {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      onSelectTicket(ticket);
+    }}
+    style={{ cursor: "pointer" }}
+  >
     <td className="col-type">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#64748b" strokeWidth="1.5">
         <rect x="3" y="3" width="18" height="18" rx="3" />
@@ -58,9 +74,17 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
       <span className="badge-onhold">On Hold</span>
     </td>
     <td className="col-id">
-      <a href={`#ticket/${ticket.id}`} className="ticket-id-link" onClick={(e) => { e.preventDefault(); alert(`Navigating to details for Ticket: ${ticket.id}`); }}>
+      <button 
+        type="button" 
+        className="ticket-id-link text-left bg-transparent border-0 cursor-pointer" 
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectTicket(ticket);
+        }}
+        title="View complete ticket and request details"
+      >
         {ticket.id}
-      </a>
+      </button>
     </td>
     <td className="col-sla">
       <span className="sla-text">On Hold</span>
@@ -82,17 +106,39 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle }
 );
 
 const OnHoldTicketScreen: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeView, setActiveView] = useState<string>("My Lists");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Flyouts & Modals State
+  const [activeFlyout, setActiveFlyout] = useState<
+    "search" | "notifications" | "menu" | "history" | "settings" | "profile" | "more" | null
+  >(null);
+  const [unreadNotif, setUnreadNotif] = useState<number>(1);
+  const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
+  const flyoutRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (flyoutRef.current && !flyoutRef.current.contains(e.target as Node)) {
+        setActiveFlyout(null);
+      }
+    }
+    if (activeFlyout) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeFlyout]);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
-  const [tickets, setTickets] = useState<Ticket[]>(ALL_TICKETS);
+  const [tickets, setTickets] = usePersistentState<Ticket[]>("servigen_onhold_tickets_v1", ALL_TICKETS);
 
   React.useEffect(() => {
     fetchData();
@@ -112,25 +158,49 @@ const OnHoldTicketScreen: React.FC = () => {
     fetchData();
   };
 
-  const handleNewTicket = () => {
-    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000); // Generate 4-digit ID
+  // New Ticket Modal State
+  const [showNewModal, setShowNewModal] = useState<boolean>(false);
+  const [newType, setNewType] = useState<"Incident" | "Service Request">("Incident");
+  const [newSummary, setNewSummary] = useState<string>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newPriority, setNewPriority] = useState<"Critical" | "High" | "Medium" | "Low">("Medium");
+  const [newOrg, setNewOrg] = useState<string>("consultancy/EMEA/Inesh Agarwal");
+  const [newStatus, setNewStatus] = useState<"On H" | "With">("On H");
+
+  const handleOpenNewModal = () => {
+    setShowNewModal(true);
+  };
+
+  const handleCreateNewTicketSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSummary.trim()) return;
+
+    const newId = "000" + (Math.floor(Math.random() * 9000) + 1000);
+    const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
+      Critical: "red",
+      High: "orange",
+      Medium: "yellow",
+      Low: "green",
+    };
+
     const newTicket: Ticket = {
       id: newId,
-      priority: "Medium",
-      priorityColor: "yellow",
-      org: "consultancy/US/Jane Doe",
-      summary: "Newly created mock ticket...",
-      status: "On H",
-      type: "Incident",
+      type: newType,
+      summary: newSummary.trim(),
+      description: newDescription.trim() || newSummary.trim(),
+      priority: newPriority,
+      priorityColor: priorityColorMap[newPriority] || "yellow",
+      org: newOrg.trim() || "consultancy/EMEA/Inesh Agarwal",
+      status: newStatus,
+      createdAt: "Just now",
+      targetSla: "Within 4 hours",
     };
-    
-    // Add to the front of the list
-    setTickets(prev => [newTicket, ...prev]);
-    setCurrentPage(1); // Go to page 1 to see it
-    
-    // Simulate loading for effect
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 400);
+
+    setTickets((prev) => [newTicket, ...prev]);
+    setCurrentPage(1);
+    setShowNewModal(false);
+    setNewSummary("");
+    setNewDescription("");
   };
 
   // 1. Filter Tickets
@@ -195,6 +265,89 @@ const OnHoldTicketScreen: React.FC = () => {
     }));
   };
 
+  const handleBulkAssignToMe = () => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id)
+          ? { ...t, org: "consultancy/EMEA/Inesh Agarwal" }
+          : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkSetPriority = (priority: string) => {
+    const priorityColorMap: Record<string, "red" | "orange" | "yellow" | "green"> = {
+      Critical: "red",
+      High: "orange",
+      Medium: "yellow",
+      Low: "green",
+    };
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id)
+          ? {
+              ...t,
+              priority,
+              priorityColor: priorityColorMap[priority] || "yellow",
+            }
+          : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkSetStatus = (status: "On H" | "With") => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        selectedItems.includes(t.id) ? { ...t, status } : t
+      )
+    );
+    setSelectedItems([]);
+  };
+
+  const handleBulkDelete = () => {
+    setTickets((prev) => prev.filter((t) => !selectedItems.includes(t.id)));
+    setSelectedItems([]);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ["ID", "Type", "Priority", "Status", "Organisation", "Summary"];
+    const rows = filteredTickets.map((t) => [
+      t.id,
+      t.type,
+      t.priority,
+      t.status === "On H" ? "On Hold" : "With User",
+      `"${t.org}"`,
+      `"${t.summary.replace(/"/g, '""')}"`,
+    ]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `on_hold_tickets_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setActiveFlyout(null);
+  };
+
+  const handleToggleAllGroups = () => {
+    const allGroupKeys = Object.keys(groupedTickets);
+    const areAnyOpen = allGroupKeys.some((k) => !collapsedGroups[k]);
+    const nextCollapsed: Record<string, boolean> = {};
+    allGroupKeys.forEach((k) => {
+      nextCollapsed[k] = areAnyOpen;
+    });
+    setCollapsedGroups(nextCollapsed);
+    setActiveFlyout(null);
+  };
+
   return (
     <div className="app-shell">
       <div className="main-area">
@@ -212,34 +365,230 @@ const OnHoldTicketScreen: React.FC = () => {
             </span>
           </div>
           <div className="topnav-tab-bar">
-            <span className="tab-plus">+</span>
+            <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>
           </div>
           <div className="topnav-right">
-            <button className="btn-get-started" onClick={() => alert("Get Started: Coming soon!")}>Get started</button>
-            <button className="btn-new-ticket" onClick={handleNewTicket}>
+            <button className="btn-get-started" onClick={() => setShowGetStartedModal(true)}>
+              Get started
+            </button>
+            <button className="btn-new-ticket" onClick={handleOpenNewModal}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New Ticket
             </button>
             <div className="topnav-icons">
-              <button className="tnav-icon-btn" onClick={() => alert("Global Search: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </button>
-              <button className="tnav-icon-btn notif-wrap" onClick={() => alert("Notifications: You have 1 unread alert!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span className="notif-dot">1</span>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("Menu: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("History: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </button>
-              <button className="tnav-icon-btn" onClick={() => alert("Settings: Coming soon!")}>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </button>
+              {/* Search Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "search" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "search" ? null : "search")}
+                  title="Search On Hold Tickets"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                {activeFlyout === "search" && (
+                  <div className="onhold-flyout-menu" style={{ width: 280 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Quick Search</span>
+                    </div>
+                    <div className="onhold-search-input-wrap">
+                      <input
+                        type="text"
+                        placeholder="Search ID, summary, user..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notifications Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "notifications" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn notif-wrap"
+                  onClick={() => setActiveFlyout(p => p === "notifications" ? null : "notifications")}
+                  title="Ticket Notifications"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  {unreadNotif > 0 && <span className="notif-dot">{unreadNotif}</span>}
+                </button>
+                {activeFlyout === "notifications" && (
+                  <div className="onhold-flyout-menu">
+                    <div className="onhold-flyout-header">
+                      <span>Notifications ({unreadNotif} unread)</span>
+                      {unreadNotif > 0 && (
+                        <button
+                          type="button"
+                          className="onhold-flyout-action"
+                          onClick={() => setUnreadNotif(0)}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Critical SLA Alert: #0003816</span>
+                          <span style={{ color: "#ef4444", fontSize: 10 }}>URGENT</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Trading desk computer won't boot past BIOS.</span>
+                        <span className="onhold-flyout-item-time">15m ago</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Ticket Status Update: #0003951</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Marked On Hold pending security team audit.</span>
+                        <span className="onhold-flyout-item-time">1h ago</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <div className="onhold-flyout-item-title">
+                          <span>Queue Assignment</span>
+                        </div>
+                        <span className="onhold-flyout-item-desc">Assigned 4 tickets to EMEA consultancy queue.</span>
+                        <span className="onhold-flyout-item-time">3h ago</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Menu Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "menu" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "menu" ? null : "menu")}
+                  title="Module Navigation"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                {activeFlyout === "menu" && (
+                  <div className="onhold-flyout-menu" style={{ width: 220 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Module Navigation</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/dashboard'); }}>
+                        <span className="onhold-flyout-item-title">📊 Dashboard</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/incidents'); }}>
+                        <span className="onhold-flyout-item-title">🎫 Incidents Management</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/major-incidents/live'); }}>
+                        <span className="onhold-flyout-item-title">🚨 Major Incidents Live</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/services-catalogue'); }}>
+                        <span className="onhold-flyout-item-title">🛒 Services Catalogue</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/projects'); }}>
+                        <span className="onhold-flyout-item-title">📁 Projects & Tasks</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* History Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "history" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "history" ? null : "history")}
+                  title="Recent Activity Log"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </button>
+                {activeFlyout === "history" && (
+                  <div className="onhold-flyout-menu">
+                    <div className="onhold-flyout-header">
+                      <span>Recent Activity Log</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Batch Status Update</span>
+                        <span className="onhold-flyout-item-desc">3 tickets transitioned to With User</span>
+                        <span className="onhold-flyout-item-time">Today, 14:32</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Priority Escalation</span>
+                        <span className="onhold-flyout-item-desc">#0003816 elevated to Critical priority</span>
+                        <span className="onhold-flyout-item-time">Today, 12:15</span>
+                      </div>
+                      <div className="onhold-flyout-item">
+                        <span className="onhold-flyout-item-title">Ticket Registered</span>
+                        <span className="onhold-flyout-item-desc">#0003951 created by EMEA Helpdesk</span>
+                        <span className="onhold-flyout-item-time">Today, 09:00</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Settings Flyout */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "settings" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tnav-icon-btn"
+                  onClick={() => setActiveFlyout(p => p === "settings" ? null : "settings")}
+                  title="Queue Preferences"
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                {activeFlyout === "settings" && (
+                  <div className="onhold-flyout-menu" style={{ width: 240 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Queue Preferences</span>
+                    </div>
+                    <div className="onhold-flyout-list" style={{ padding: "10px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#334155", cursor: "pointer" }}>
+                        <span>Auto-refresh queue</span>
+                        <input type="checkbox" defaultChecked />
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#334155", cursor: "pointer" }}>
+                        <span>Highlight critical SLA</span>
+                        <input type="checkbox" defaultChecked />
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="user-avatar-circle" onClick={() => alert("User Profile: Coming soon!")} style={{ cursor: 'pointer' }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+
+            {/* Profile Avatar Flyout */}
+            <div className="onhold-flyout-wrap" ref={activeFlyout === "profile" ? flyoutRef : undefined}>
+              <div
+                className="user-avatar-circle"
+                onClick={() => setActiveFlyout(p => p === "profile" ? null : "profile")}
+                style={{ cursor: "pointer" }}
+                title="User Profile: Inesh Agarwal"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+              </div>
+              {activeFlyout === "profile" && (
+                <div className="onhold-flyout-menu" style={{ width: 250 }}>
+                  <div className="onhold-flyout-header">
+                    <span>User Profile</span>
+                  </div>
+                  <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>Inesh Agarwal</div>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>inesh@servigen.tech</div>
+                    <div style={{ fontSize: 10, color: "#0284c7", fontWeight: 600, marginTop: 4 }}>IT Operations Specialist</div>
+                  </div>
+                  <div className="onhold-flyout-list">
+                    <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/my-work'); }}>
+                      <span className="onhold-flyout-item-title">📋 My Work Dashboard</span>
+                    </button>
+                    <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/auth'); }}>
+                      <span className="onhold-flyout-item-title" style={{ color: "#ef4444" }}>🔒 Switch Account</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -255,7 +604,7 @@ const OnHoldTicketScreen: React.FC = () => {
 
           <div className="right-panel">
             <div className="table-toolbar">
-              <button className="tb-add-btn">
+              <button className="tb-add-btn" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <div style={{flex:1}}></div>
@@ -269,14 +618,121 @@ const OnHoldTicketScreen: React.FC = () => {
               <button className="tb-nav-btn" onClick={handleRefresh}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
-              <button className="btn-new-green" onClick={handleNewTicket}>
+              <button className="btn-new-green" onClick={handleOpenNewModal}>
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
               </button>
-              <button className="tb-nav-btn">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-              </button>
+
+              {/* Toolbar More Menu */}
+              <div className="onhold-flyout-wrap" ref={activeFlyout === "more" ? flyoutRef : undefined}>
+                <button
+                  type="button"
+                  className="tb-nav-btn"
+                  onClick={() => setActiveFlyout(p => p === "more" ? null : "more")}
+                  title="More Actions"
+                  style={{ cursor: "pointer" }}
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </button>
+                {activeFlyout === "more" && (
+                  <div className="onhold-flyout-menu" style={{ width: 220, right: 0 }}>
+                    <div className="onhold-flyout-header">
+                      <span>Table Actions</span>
+                    </div>
+                    <div className="onhold-flyout-list">
+                      <button type="button" className="onhold-flyout-item" onClick={handleExportCSV}>
+                        <span className="onhold-flyout-item-title">📥 Export as CSV</span>
+                      </button>
+                      <button type="button" className="onhold-flyout-item" onClick={handleToggleAllGroups}>
+                        <span className="onhold-flyout-item-title">↕ Toggle All Groups</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="onhold-flyout-item"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedItems([]);
+                          setActiveFlyout(null);
+                        }}
+                      >
+                        <span className="onhold-flyout-item-title">🔄 Reset Filters</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {selectedItems.length > 0 && (
+              <div className="onhold-bulk-bar">
+                <div className="onhold-bulk-count">
+                  <span className="onhold-bulk-badge">{selectedItems.length}</span>
+                  <span>{selectedItems.length} ticket{selectedItems.length > 1 ? "s" : ""} selected</span>
+                </div>
+
+                <div className="onhold-bulk-actions">
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn"
+                    onClick={handleBulkAssignToMe}
+                    title="Assign selected tickets to Inesh Agarwal"
+                  >
+                    Assign to Me
+                  </button>
+
+                  <select
+                    className="onhold-bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetPriority(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Set priority for selected tickets"
+                  >
+                    <option value="" disabled>Set Priority ▾</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+
+                  <select
+                    className="onhold-bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetStatus(e.target.value as "On H" | "With");
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Change status for selected tickets"
+                  >
+                    <option value="" disabled>Change Status ▾</option>
+                    <option value="On H">On Hold</option>
+                    <option value="With">With User</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn onhold-bulk-btn-delete"
+                    onClick={handleBulkDelete}
+                    title="Delete selected tickets"
+                  >
+                    Delete
+                  </button>
+
+                  <button
+                    type="button"
+                    className="onhold-bulk-btn"
+                    onClick={() => setSelectedItems([])}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="table-scroll-wrap">
               {isLoading ? (
@@ -361,6 +817,7 @@ const OnHoldTicketScreen: React.FC = () => {
                               ticket={t} 
                               selectedItems={selectedItems} 
                               onToggle={toggleSelect} 
+                              onSelectTicket={setSelectedTicket}
                             />
                           ))}
                         </React.Fragment>
@@ -373,6 +830,209 @@ const OnHoldTicketScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {selectedTicket && (
+        <TicketDetailModal
+          ticket={{
+            id: selectedTicket.id,
+            type: selectedTicket.type,
+            summary: selectedTicket.summary,
+            priority: (selectedTicket.priority as TicketPriority) || "Medium",
+            status: selectedTicket.status === "On H" ? "On Hold" : "With User",
+            agent: "Inesh Agarwal",
+            description: selectedTicket.description,
+            requester: selectedTicket.org,
+            department: "Consultancy Support",
+            createdAt: selectedTicket.createdAt || "12 Oct 2026",
+            targetSla: "Target: 4 hours remaining",
+          }}
+          currentUser="Inesh Agarwal"
+          onClose={() => setSelectedTicket(null)}
+          onUpdateTicket={(updated) => {
+            setTickets((prev) =>
+              prev.map((t) =>
+                t.id === updated.id
+                  ? {
+                      ...t,
+                      summary: updated.summary,
+                      priority: updated.priority,
+                      priorityColor:
+                        updated.priority === "Critical"
+                          ? "red"
+                          : updated.priority === "High"
+                          ? "orange"
+                          : updated.priority === "Medium"
+                          ? "yellow"
+                          : "green",
+                      status: updated.status === "With User" ? "With" : "On H",
+                      description: updated.description,
+                    }
+                  : t
+              )
+            );
+            setSelectedTicket(null);
+          }}
+        />
+      )}
+
+      {showNewModal && (
+        <div className="onhold-modal-overlay" onClick={() => setShowNewModal(false)}>
+          <div className="onhold-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="onhold-modal-header">
+              <h2>Create New Ticket</h2>
+              <button
+                type="button"
+                className="onhold-modal-close"
+                onClick={() => setShowNewModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTicketSubmit} className="onhold-form">
+              <div className="onhold-form-row">
+                <div className="onhold-form-group">
+                  <label>Ticket Type</label>
+                  <select
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value as "Incident" | "Service Request")}
+                  >
+                    <option value="Incident">Incident</option>
+                    <option value="Service Request">Service Request</option>
+                  </select>
+                </div>
+
+                <div className="onhold-form-group">
+                  <label>Priority</label>
+                  <select
+                    value={newPriority}
+                    onChange={(e) => setNewPriority(e.target.value as "Critical" | "High" | "Medium" | "Low")}
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="onhold-form-group">
+                <label>Summary / Subject *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. VPN gateway disconnects intermittently"
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="onhold-form-group">
+                <label>Description & Technical Details</label>
+                <textarea
+                  rows={4}
+                  placeholder="Provide complete steps, error messages, or workstation details..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="onhold-form-row">
+                <div className="onhold-form-group">
+                  <label>Organisation / User</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. consultancy/EMEA/Inesh Agarwal"
+                    value={newOrg}
+                    onChange={(e) => setNewOrg(e.target.value)}
+                  />
+                </div>
+
+                <div className="onhold-form-group">
+                  <label>Initial Status</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as "On H" | "With")}
+                  >
+                    <option value="On H">On Hold</option>
+                    <option value="With">With User</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="onhold-form-actions">
+                <button
+                  type="button"
+                  className="btn-modal-cancel"
+                  onClick={() => setShowNewModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-modal-submit">
+                  Create Ticket
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showGetStartedModal && (
+        <div className="onhold-modal-overlay" onClick={() => setShowGetStartedModal(false)}>
+          <div className="onhold-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="onhold-modal-header">
+              <h2>My On Hold Tickets Guide</h2>
+              <button
+                type="button"
+                className="onhold-modal-close"
+                onClick={() => setShowGetStartedModal(false)}
+                aria-label="Close guide"
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13, color: "#334155", lineHeight: 1.6 }}>
+              <div style={{ padding: "12px 14px", background: "#f0f9ff", borderRadius: 8, border: "1px solid #bae6fd" }}>
+                <strong style={{ color: "#0369a1", display: "block", marginBottom: 4 }}>📌 What is the On Hold Queue?</strong>
+                Tickets placed in "On Hold" state temporarily pause active SLA countdowns while awaiting customer feedback, vendor hardware shipment, or change freeze windows.
+              </div>
+
+              <div>
+                <strong style={{ color: "#0f172a", display: "block", marginBottom: 4 }}>⚡ Key Features Available:</strong>
+                <ul style={{ paddingLeft: 18, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <li><strong>Full Detail View:</strong> Click anywhere on a ticket row or ID to inspect the full request description and specifications.</li>
+                  <li><strong>Bulk Operations:</strong> Select multiple checkboxes to batch reassign agents, change priorities, or update status in one click.</li>
+                  <li><strong>Interactive Ticket Creation:</strong> Use the <code>+ New Ticket</code> or green <code>+ New</code> buttons to record new tickets with custom input.</li>
+                  <li><strong>Export Data:</strong> Access the <code>···</code> toolbar menu to instantly export the current table to CSV format.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="onhold-form-actions" style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                className="btn-modal-cancel"
+                onClick={() => {
+                  setShowGetStartedModal(false);
+                  navigate('/incidents');
+                }}
+              >
+                View Incidents Queue →
+              </button>
+              <button
+                type="button"
+                className="btn-modal-submit"
+                onClick={() => setShowGetStartedModal(false)}
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

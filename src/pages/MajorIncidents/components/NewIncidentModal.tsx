@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { MajorIncident, Priority } from '../types/majorIncident.types';
+import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
+import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
 interface NewIncidentModalProps {
   onClose: () => void;
@@ -79,7 +81,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e: React.MouseEvent) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -151,15 +153,21 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
           {/* Product */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              Product / Service
+              Product / CI Service
             </label>
             <input
               type="text"
+              list="cmdb-products-list"
               value={product}
               onChange={(e) => setProduct(e.target.value)}
-              placeholder="e.g. API Gateway, Payments, Auth…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-300"
+              placeholder="Select or enter CI Service (e.g. Database, API Gateway)…"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
             />
+            <datalist id="cmdb-products-list">
+              {mockConfigurationItems.map((ci) => (
+                <option key={ci.id} value={ci.name} />
+              ))}
+            </datalist>
           </div>
 
           {/* Assignee */}
@@ -167,11 +175,18 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             <label className="block text-xs font-medium text-gray-600 mb-1">Assignee</label>
             <input
               type="text"
+              list="org-users-list"
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Name or team…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-300"
+              placeholder="Select or type team member…"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
             />
+            <datalist id="org-users-list">
+              {MOCK_ORGANISATION_USERS.map((u) => (
+                <option key={u.id} value={u.fullName} label={u.role} />
+              ))}
+              <option value="Unassigned" />
+            </datalist>
           </div>
 
           {/* Footer */}
@@ -191,8 +206,8 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -22,12 +22,27 @@ export type RecentIncident = {
   organisation: string;
 };
 
+export type TicketNote = {
+  id: string;
+  author: string;
+  time: string;
+  text: string;
+};
+
 export type NewTicket = {
   id: string;
   type: string;
   summary: string;
   agent: string;
   priority: Priority;
+  status?: string;
+  description?: string;
+  requester?: string;
+  department?: string;
+  category?: string;
+  createdAt?: string;
+  targetSla?: string;
+  notes?: TicketNote[];
 };
 
 export type ChartItem = {
@@ -112,7 +127,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     description:
       "External keyboard and mouse are not responding on the user's workstation.",
     assignedTo: "Unassigned",
-    organisation: "Demo Organisation",
+    organisation: "ServiGen Global Tech",
   },
   {
     id: "0003982",
@@ -123,7 +138,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     description:
       "Monthly reporting query is taking longer than expected to complete.",
     assignedTo: "Unassigned",
-    organisation: "Demo Organisation",
+    organisation: "ServiGen Global Tech",
   },
   {
     id: "0003981",
@@ -134,7 +149,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     description:
       "User requires access to the shared team calendar.",
     assignedTo: "Unassigned",
-    organisation: "Demo Organisation",
+    organisation: "ServiGen Global Tech",
   },
   {
     id: "0003980",
@@ -145,7 +160,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     description:
       "The printer toner is running low and needs replacement.",
     assignedTo: "Unassigned",
-    organisation: "Demo Organisation",
+    organisation: "ServiGen Global Tech",
   },
   {
     id: "0003979",
@@ -156,7 +171,7 @@ export const RECENT_INCIDENTS: RecentIncident[] = [
     description:
       "The user cannot access timesheet information for direct reports.",
     assignedTo: "Unassigned",
-    organisation: "Demo Organisation",
+    organisation: "ServiGen Global Tech",
   },
 ];
 
@@ -165,63 +180,63 @@ export const NEW_TICKETS: NewTicket[] = [
     id: "0003132-C",
     type: "Project Task",
     summary: "Deployment and Implementation...",
-    agent: "Demo User",
+    agent: "Inesh Agarwal",
     priority: "Low",
   },
   {
     id: "0003013",
     type: "Service Request",
     summary: "Update email display name",
-    agent: "Demo User",
+    agent: "Anjali Prasad",
     priority: "Medium",
   },
   {
     id: "0003012",
     type: "Service Request",
     summary: "Request external monitor",
-    agent: "Demo User",
+    agent: "Durgesh Kumar",
     priority: "High",
   },
   {
     id: "0003011",
     type: "Service Request",
     summary: "Install Adobe Acrobat Pro",
-    agent: "Demo User",
+    agent: "Nainesh Patel",
     priority: "Low",
   },
   {
     id: "0003010",
     type: "Service Request",
     summary: "Access request for shared folder",
-    agent: "Demo User",
+    agent: "Monalisa Panda",
     priority: "Medium",
   },
   {
     id: "0003009",
     type: "Service Request",
     summary: "Request new laptop for new sta...",
-    agent: "Demo User",
+    agent: "Mohammad Taha Ali",
     priority: "High",
   },
   {
     id: "0002673-P",
     type: "Major Incident",
     summary: "System Login Failure",
-    agent: "Demo User",
+    agent: "Inesh Agarwal",
     priority: "Critical",
   },
   {
     id: "0002237",
     type: "Service Request",
     summary: "Request Addition of New Printer ...",
-    agent: "Demo User",
+    agent: "Aditya Kumar Singh",
     priority: "Low",
   },
   {
     id: "0002236",
     type: "Service Request",
     summary: "Request Printer Maintenance Se...",
-    agent: "Demo User",
+    agent: "Voona Sarayu",
     priority: "Low",
   },
 ];

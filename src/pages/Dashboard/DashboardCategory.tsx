@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { CategoryItem } from "./dashboard.data";
 
 type DashboardCategoryProps = {
@@ -61,6 +62,7 @@ function slicePath(start: number, end: number) {
 export default function DashboardCategory({
   data,
 }: DashboardCategoryProps) {
+  const navigate = useNavigate();
   if (data.length === 0) {
     return (
       <section className="dashboard-card dashboard-category-card">
@@ -134,6 +136,9 @@ export default function DashboardCategory({
           type="button"
           className="dashboard-round-action"
           aria-label="Open category details"
+          onClick={() => navigate('/incidents')}
+          title="Open Incidents by Category"
+          style={{ cursor: 'pointer' }}
         >
           →
         </button>

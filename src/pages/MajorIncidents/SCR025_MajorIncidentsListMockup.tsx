@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
 import PageHeader from './components/PageHeader';
@@ -59,15 +60,18 @@ const activeStageLabel = (incident: MajorIncident): string => {
   return active?.label ?? 'Unknown';
 };
 
-const ListRow: React.FC<{ incident: MajorIncident; index: number }> = ({ incident, index }) => (
-  <tr className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+const ListRow: React.FC<{ incident: MajorIncident; index: number; onSelect: (id: string) => void }> = ({ incident, index, onSelect }) => (
+  <tr 
+    onClick={() => onSelect(incident.id)}
+    className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors group cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+  >
     <td className="px-4 py-3 whitespace-nowrap">
       <span className="text-[11px] font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-2 py-0.5">
         #{incident.id}
       </span>
     </td>
     <td className="px-4 py-3">
-      <span className="text-sm font-medium text-gray-800 group-hover:text-blue-700 transition-colors cursor-pointer line-clamp-1">
+      <span className="text-sm font-medium text-gray-800 group-hover:text-blue-700 transition-colors line-clamp-1">
         {incident.title}
       </span>
     </td>
@@ -101,7 +105,11 @@ const ListRow: React.FC<{ incident: MajorIncident; index: number }> = ({ inciden
       )}
     </td>
     <td className="px-4 py-3 text-right">
-      <button className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px] text-blue-600 hover:text-blue-800 font-medium">
+      <button 
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onSelect(incident.id); }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px] text-blue-600 hover:text-blue-800 font-medium"
+      >
         View →
       </button>
     </td>
@@ -109,6 +117,7 @@ const ListRow: React.FC<{ incident: MajorIncident; index: number }> = ({ inciden
 );
 
 const SCR025_MajorIncidentsListMockup: React.FC = () => {
+  const navigate = useNavigate();
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
@@ -201,7 +210,12 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
               </thead>
               <tbody>
                 {pagedIncidents.map((incident, i) => (
-                  <ListRow key={incident.id} incident={incident} index={i} />
+                  <ListRow 
+                    key={incident.id} 
+                    incident={incident} 
+                    index={i} 
+                    onSelect={() => navigate('/major-incidents/live')}
+                  />
                 ))}
               </tbody>
             </table>

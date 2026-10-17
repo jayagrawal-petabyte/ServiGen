@@ -50,6 +50,8 @@ export interface ConfigurationItem {
   lastUpdated?: string;
 }
 
+export type GroupedConfigurationItems = Record<string, ConfigurationItem[]>;
+
 export type ServiceHealthStatus = 'Operational' | 'Degraded' | 'Maintenance' | 'Outage';
 export type HealthStatus = ServiceHealthStatus;
 

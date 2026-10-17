@@ -53,8 +53,8 @@ const LIVE_EVENTS: Array<Omit<ActivityFeedEntry, 'id'>> = [
     type: 'new_ticket' as FeedEntryType,
   },
   {
-    avatarLabel: 'DU',
-    actorName: 'Demo User',
+    avatarLabel: 'IA',
+    actorName: 'Inesh Agarwal',
     actorOrg: 'consultation/EMEA',
     ticketRef: '#3995',
     actionLabel: 'User Update',

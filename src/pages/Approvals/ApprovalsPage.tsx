@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
+import { ApiError } from '../../services/apiClient';
 import './approvals.css';
 
 type ApprovalTab = 'pending' | 'approved' | 'rejected' | 'all';
@@ -13,7 +14,8 @@ interface ToastAction {
 
 interface Toast {
   message: string;
-  lastAction: ToastAction | null;
+  type?: 'success' | 'error' | 'info';
+  lastAction?: ToastAction | null;
 }
 
 export default function ApprovalsPage() {
@@ -24,35 +26,55 @@ export default function ApprovalsPage() {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [isBatchLoading, setIsBatchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatusCode, setErrorStatusCode] = useState<number | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [modalRejectMode, setModalRejectMode] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  // Load approvals from API on mount
-  useEffect(() => {
-    let isMounted = true;
-    async function loadData() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await approvalsApi.getApprovals();
-        if (isMounted) {
-          setApprovals(data);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
+  const showToast = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'info', lastAction: ToastAction | null = null) => {
+      setToast({ message, type, lastAction });
+      setTimeout(() => {
+        setToast((current) => (current?.message === message ? null : current));
+      }, 5000);
+    },
+    []
+  );
+
+  // Load approvals from API (GET /api/approvals/pending)
+  const loadData = useCallback(async (demoModeOverride?: boolean) => {
+    const demo = demoModeOverride !== undefined ? demoModeOverride : isDemoMode;
+    setIsLoading(true);
+    setError(null);
+    setErrorStatusCode(null);
+    try {
+      const pendingData = await approvalsApi.getPendingApprovals(demo);
+      const cached = approvalsApi.getCachedHistory();
+      const combined = [...pendingData];
+      cached.forEach((item) => {
+        if (!combined.some((a) => a.id === item.id)) {
+          combined.push(item);
         }
-      } catch (err: unknown) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load approvals');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+      });
+      setApprovals(combined);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setErrorStatusCode(err.statusCode);
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred while communicating with the backend API.');
       }
+    } finally {
+      setIsLoading(false);
     }
+  }, [isDemoMode]);
+
+  useEffect(() => {
     loadData();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }, [loadData]);
 
   // Filter approvals based on tab and search query
   const filteredApprovals = useMemo(() => {
@@ -80,151 +102,216 @@ export default function ApprovalsPage() {
   const approvedCount = approvals.filter((a) => a.status === 'approved').length;
   const rejectedCount = approvals.filter((a) => a.status === 'rejected').length;
 
-  const showToast = (message: string, lastAction: ToastAction | null = null) => {
-    setToast({ message, lastAction });
-    setTimeout(() => {
-      setToast(null);
-    }, 4500);
-  };
-
+  /**
+   * Approve a single approval request via PATCH /api/approvals/:approvalId/approve
+   */
   const handleApprove = async (id: string) => {
+    if (actionLoadingId) return; // Prevent duplicate submission
     const item = approvals.find((a) => a.id === id);
     const prevStatus = item ? item.status : 'pending';
 
     setActionLoadingId(id);
     try {
-      const updated = await approvalsApi.approveRequest(id);
+      const updated = await approvalsApi.approveRequest(id, isDemoMode);
       setApprovals((prev) => prev.map((a) => (a.id === id ? updated : a)));
-      showToast(`Request ${item?.ticketNumber || id} approved`, { id, prevStatus });
+      showToast(`Request ${item?.ticketNumber || id} approved successfully.`, 'success', {
+        id,
+        prevStatus,
+      });
+      // Refresh pending list after approval
+      if (!isDemoMode) {
+        loadData();
+      }
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Failed to approve request');
+      const msg = err instanceof Error ? err.message : 'Failed to approve request.';
+      showToast(msg, 'error');
     } finally {
       setActionLoadingId(null);
     }
   };
 
+  /**
+   * Reject a single approval request via PATCH /api/approvals/:approvalId/reject
+   */
   const handleReject = async (id: string, reason = 'Rejected by approver') => {
+    if (actionLoadingId) return; // Prevent duplicate submission
     const item = approvals.find((a) => a.id === id);
     const prevStatus = item ? item.status : 'pending';
 
     setActionLoadingId(id);
     try {
-      const updated = await approvalsApi.rejectRequest(id, reason);
+      const updated = await approvalsApi.rejectRequest(id, reason, isDemoMode);
       setApprovals((prev) => prev.map((a) => (a.id === id ? updated : a)));
-      showToast(`Request ${item?.ticketNumber || id} rejected`, { id, prevStatus });
+      showToast(`Request ${item?.ticketNumber || id} rejected.`, 'info', {
+        id,
+        prevStatus,
+      });
+      // Refresh pending list after rejection
+      if (!isDemoMode) {
+        loadData();
+      }
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Failed to reject request');
+      const msg = err instanceof Error ? err.message : 'Failed to reject request.';
+      showToast(msg, 'error');
     } finally {
       setActionLoadingId(null);
     }
   };
 
+  /**
+   * Batch approve pending requests
+   */
   const handleAcceptAll = async () => {
+    if (isBatchLoading) return;
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
-      showToast('No pending approvals to accept');
+      showToast('No pending approvals to accept.', 'info');
       return;
     }
 
     setIsBatchLoading(true);
     try {
       const pendingIds = pendingItems.map((a) => a.id);
-      await approvalsApi.batchApprove(pendingIds);
+      await approvalsApi.batchApprove(pendingIds, isDemoMode);
       setApprovals((prev) =>
         prev.map((app) => (app.status === 'pending' ? { ...app, status: 'approved' } : app))
       );
-      showToast(`Approved all ${pendingItems.length} pending request(s)`);
+      showToast(`Approved all ${pendingItems.length} pending request(s).`, 'success');
+      if (!isDemoMode) {
+        loadData();
+      }
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Batch approve failed');
+      showToast(err instanceof Error ? err.message : 'Batch approve failed.', 'error');
     } finally {
       setIsBatchLoading(false);
     }
   };
 
+  /**
+   * Batch reject pending requests
+   */
   const handleRejectAll = async () => {
+    if (isBatchLoading) return;
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
-      showToast('No pending approvals to reject');
+      showToast('No pending approvals to reject.', 'info');
       return;
     }
 
     setIsBatchLoading(true);
     try {
       const pendingIds = pendingItems.map((a) => a.id);
-      await approvalsApi.batchReject(pendingIds, 'Bulk rejection by user');
+      await approvalsApi.batchReject(pendingIds, 'Bulk rejection by user', isDemoMode);
       setApprovals((prev) =>
         prev.map((app) => (app.status === 'pending' ? { ...app, status: 'rejected' } : app))
       );
-      showToast(`Rejected all ${pendingItems.length} pending request(s)`);
+      showToast(`Rejected all ${pendingItems.length} pending request(s).`, 'info');
+      if (!isDemoMode) {
+        loadData();
+      }
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Batch reject failed');
+      showToast(err instanceof Error ? err.message : 'Batch reject failed.', 'error');
     } finally {
       setIsBatchLoading(false);
     }
   };
 
   const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await approvalsApi.getApprovals();
-      setApprovals(data);
-      showToast('Approvals list refreshed');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh approvals');
-    } finally {
-      setIsLoading(false);
-    }
+    await loadData();
+    showToast('Approvals list refreshed.', 'info');
   };
 
   const handleResetData = async () => {
     setIsLoading(true);
     try {
-      const data = await approvalsApi.resetData();
+      const data = await approvalsApi.resetMockData();
       setApprovals(data);
       setCurrentTab('pending');
       setSearchQuery('');
-      showToast('Reset to initial sample approvals');
+      showToast('Reset sample data in local demo store.', 'info');
     } catch {
-      showToast('Failed to reset approvals');
+      showToast('Failed to reset sample data.', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleUndo = async () => {
-    if (!toast?.lastAction) return;
-    const { id, prevStatus } = toast.lastAction;
-    try {
-      const reverted = await approvalsApi.undoStatus(id, prevStatus);
-      setApprovals((prev) => prev.map((app) => (app.id === id ? reverted : app)));
-      setToast(null);
-    } catch {
-      showToast('Undo failed');
-    }
+  const handleToggleDemoMode = () => {
+    const nextMode = !isDemoMode;
+    setIsDemoMode(nextMode);
+    loadData(nextMode);
+    showToast(
+      nextMode
+        ? 'Switched to Demo Mode (Local Mock Data)'
+        : 'Switched to Live API Mode (/api/approvals)',
+      'info'
+    );
   };
 
-  const handleOpenDetails = (approval: Approval, defaultRejectMode = false) => {
+  /**
+   * Open Approval Details Modal
+   * Loads specific approval details from GET /api/approvals/:approvalId
+   */
+  const handleOpenDetails = async (approval: Approval, defaultRejectMode = false) => {
     setSelectedApproval(approval);
     setModalRejectMode(defaultRejectMode);
+
+    // Call GET /api/approvals/:approvalId to fetch fresh backend details
+    try {
+      const fresh = await approvalsApi.getApprovalById(approval.id, isDemoMode);
+      setSelectedApproval(fresh);
+    } catch {
+      // Retain existing card details if individual fetch fails
+    }
   };
 
   return (
     <div className="approvals-page">
       <div className="approvals-header">
         <div className="approvals-title-group">
-          <h1>My Approvals</h1>
-          <p>Review and manage requests awaiting your approval</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1>My Approvals</h1>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '999px',
+                backgroundColor: isDemoMode ? '#fef3c7' : '#dcfce7',
+                color: isDemoMode ? '#b45309' : '#15803d',
+                border: `1px solid ${isDemoMode ? '#fde68a' : '#bbf7d0'}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title={
+                isDemoMode
+                  ? 'Currently rendering isolated mock data for demonstration'
+                  : 'Currently connected to documented backend endpoints (/api/approvals/*)'
+              }
+            >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: isDemoMode ? '#d97706' : '#16a34a',
+                }}
+              />
+              {isDemoMode ? 'Demo Mode' : 'Live API (Backend)'}
+            </span>
+          </div>
+          <p>Review and manage requests awaiting your approval per ServiGen API V1.0</p>
         </div>
 
         <div className="approvals-actions">
           <button
             className="btn-approval-action accept-all"
             type="button"
-            disabled={isBatchLoading || isLoading}
+            disabled={isBatchLoading || isLoading || pendingCount === 0}
             onClick={handleAcceptAll}
             title="Accept all pending approval requests"
-            style={{ opacity: isBatchLoading ? 0.6 : 1 }}
+            style={{ opacity: isBatchLoading || pendingCount === 0 ? 0.6 : 1 }}
           >
             <svg
               width="15"
@@ -242,10 +329,10 @@ export default function ApprovalsPage() {
           <button
             className="btn-approval-action reject-all"
             type="button"
-            disabled={isBatchLoading || isLoading}
+            disabled={isBatchLoading || isLoading || pendingCount === 0}
             onClick={handleRejectAll}
             title="Reject all pending approval requests"
-            style={{ opacity: isBatchLoading ? 0.6 : 1 }}
+            style={{ opacity: isBatchLoading || pendingCount === 0 ? 0.6 : 1 }}
           >
             <svg
               width="14"
@@ -282,6 +369,20 @@ export default function ApprovalsPage() {
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
             <span>Refresh</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-approval-action"
+            onClick={handleToggleDemoMode}
+            title={isDemoMode ? 'Switch to Live API Mode' : 'Switch to Demo Mock Mode'}
+            style={{
+              fontSize: '12px',
+              border: '1px solid #cbd5e1',
+              background: '#f8fafc',
+            }}
+          >
+            {isDemoMode ? 'Use Live API' : 'Use Demo Mode'}
           </button>
         </div>
       </div>
@@ -356,6 +457,7 @@ export default function ApprovalsPage() {
         </div>
       </div>
 
+      {/* Useful Error State Display */}
       {error && (
         <div
           style={{
@@ -368,118 +470,98 @@ export default function ApprovalsPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            boxShadow: '0 2px 4px rgba(220, 38, 38, 0.08)',
           }}
         >
           <div>
-            <strong>Error:</strong> {error}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '16px' }}>⚠️</span>
+              <strong>
+                {errorStatusCode ? `API Error (HTTP ${errorStatusCode}):` : 'API Error:'}
+              </strong>
+              <span>{error}</span>
+            </div>
+            {!isDemoMode && (
+              <p style={{ margin: '4px 0 0 24px', fontSize: '12px', color: '#b91c1c' }}>
+                Tip: If the backend server is not running on localhost, click "Switch to Demo Mode"
+                to test with local sample data.
+              </p>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleRefresh}
-            style={{
-              backgroundColor: '#dc2626',
-              color: 'white',
-              padding: '6px 14px',
-              borderRadius: '999px',
-              fontWeight: 600,
-              fontSize: '12px',
-            }}
-          >
-            Retry
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => loadData()}
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                fontWeight: 600,
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              Retry
+            </button>
+
+            {!isDemoMode && (
+              <button
+                type="button"
+                onClick={handleToggleDemoMode}
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#dc2626',
+                  border: '1px solid #dc2626',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Switch to Demo Mode
+              </button>
+            )}
+          </div>
         </div>
       )}
 
+      {/* Loading Skeletons */}
       {isLoading ? (
         <div className="approvals-list">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="approval-card"
-              style={{ padding: '24px' }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '16px',
-                  marginBottom: '16px',
-                }}
-              >
+            <div key={i} className="approval-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                 <div
                   className="approval-skeleton"
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                  }}
+                  style={{ width: '44px', height: '44px', borderRadius: '50%' }}
                 />
-
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                  }}
-                >
-                  <div
-                    className="approval-skeleton"
-                    style={{
-                      width: '220px',
-                      height: '16px',
-                    }}
-                  />
-
-                  <div
-                    className="approval-skeleton"
-                    style={{
-                      width: '380px',
-                      height: '14px',
-                    }}
-                  />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="approval-skeleton" style={{ width: '220px', height: '16px' }} />
+                  <div className="approval-skeleton" style={{ width: '380px', height: '14px' }} />
                 </div>
               </div>
-
               <div
                 className="approval-skeleton"
-                style={{
-                  width: '90%',
-                  height: '40px',
-                  marginLeft: '60px',
-                  marginBottom: '16px',
-                }}
+                style={{ width: '90%', height: '40px', marginLeft: '60px', marginBottom: '16px' }}
               />
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '16px',
-                }}
-              >
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
                 <div
                   className="approval-skeleton"
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                  }}
+                  style={{ width: '44px', height: '44px', borderRadius: '50%' }}
                 />
-
                 <div
                   className="approval-skeleton"
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                  }}
+                  style={{ width: '44px', height: '44px', borderRadius: '50%' }}
                 />
               </div>
             </div>
           ))}
         </div>
       ) : filteredApprovals.length === 0 ? (
+        /* Empty State */
         <div className="approvals-empty">
           <div className="approvals-empty-icon">
             <svg
@@ -511,15 +593,12 @@ export default function ApprovalsPage() {
               : `There are currently no items in the ${currentTab} list.`}
           </p>
 
-          <button
-            className="btn-reset-approvals"
-            type="button"
-            onClick={handleResetData}
-          >
-            Reset Sample Data
+          <button className="btn-reset-approvals" type="button" onClick={handleResetData}>
+            Load Sample Data
           </button>
         </div>
       ) : (
+        /* Approval Cards List */
         <div className="approvals-list">
           {filteredApprovals.map((approval) => (
             <ApprovalCard
@@ -548,23 +627,14 @@ export default function ApprovalsPage() {
       )}
 
       {toast && (
-        <div className="approvals-toast">
+        <div
+          className={`approvals-toast ${toast.type || 'info'}`}
+          style={{
+            borderColor:
+              toast.type === 'error' ? '#ef4444' : toast.type === 'success' ? '#22c55e' : undefined,
+          }}
+        >
           <span>{toast.message}</span>
-
-          {toast.lastAction && (
-            <button
-              type="button"
-              onClick={handleUndo}
-              style={{
-                color: '#38bdf8',
-                fontWeight: 700,
-                textDecoration: 'underline',
-                marginLeft: '8px',
-              }}
-            >
-              Undo
-            </button>
-          )}
         </div>
       )}
     </div>

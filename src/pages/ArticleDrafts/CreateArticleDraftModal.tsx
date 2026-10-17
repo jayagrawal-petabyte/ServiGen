@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { ArticleDraft, ArticleDraftStatus } from './mockArticleDraftsData';
+import { useAuth } from '../Auth/AuthContext';
 
 interface CreateArticleDraftModalProps {
   isOpen: boolean;
@@ -31,13 +32,14 @@ export default function CreateArticleDraftModal({
   onClose,
   onCreateDraft,
 }: CreateArticleDraftModalProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [priority, setPriority] = useState('High');
   const [body, setBody] = useState('');
-  const [author, setAuthor] = useState('Aditya Kumar Singh');
-  const [team, setTeam] = useState('Frontend Core');
+  const [author, setAuthor] = useState(user?.fullName || 'Inesh Agarwal');
+  const [team, setTeam] = useState(user?.department || 'IT Operations');
   const [slaDays, setSlaDays] = useState('3');
   const [submitAsAwaiting, setSubmitAsAwaiting] = useState(false);
 
@@ -107,8 +109,8 @@ export default function CreateArticleDraftModal({
           month: 'short',
           year: 'numeric',
         }).replace(/ /g, '-'),
-        author: author.trim() || 'Demo User',
-        agent: author.trim() || 'Demo User',
+        author: author.trim() || user?.fullName || 'Inesh Agarwal',
+        agent: author.trim() || user?.fullName || 'Inesh Agarwal',
         team: team.trim() || 'General Operations',
         body: body.trim(),
       });

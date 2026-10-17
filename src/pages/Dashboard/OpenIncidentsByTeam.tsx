@@ -1,7 +1,17 @@
+import { useNavigate } from "react-router-dom";
 import { TEAM_INCIDENTS } from "./dashboard.data";
 
 export default function OpenIncidentsByTeam() {
+  const navigate = useNavigate();
   const maxValue = 90;
+
+  const handleTeamClick = (label: string) => {
+    if (label.toLowerCase().includes('2nd')) {
+      navigate('/team/2nd-line-live');
+    } else {
+      navigate('/team/1st-line-live');
+    }
+  };
 
   return (
     <section className="dashboard-card dashboard-team-card">
@@ -12,6 +22,9 @@ export default function OpenIncidentsByTeam() {
           type="button"
           className="dashboard-round-action"
           aria-label="Open team incidents"
+          onClick={() => navigate('/team/1st-line-live')}
+          title="Open Team Incidents"
+          style={{ cursor: 'pointer' }}
         >
           →
         </button>
@@ -49,6 +62,9 @@ export default function OpenIncidentsByTeam() {
               <div
                 key={team.label}
                 className="team-bar-column"
+                onClick={() => handleTeamClick(team.label)}
+                title={`View ${team.label} Incidents`}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="team-bar-plot">
                   <div

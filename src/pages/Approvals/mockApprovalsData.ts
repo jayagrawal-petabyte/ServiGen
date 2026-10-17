@@ -7,7 +7,7 @@ export const INITIAL_APPROVALS: Approval[] = [
     authorName: 'Dispatch Agent (AI)',
     authorInitials: 'DA',
     authorType: 'ai',
-    onBehalfOf: 'Demo User',
+    onBehalfOf: 'Inesh Agarwal',
     title:
       'Requesting a bulk mailroom pickup of outgoing packages from the second floor',
     timeAgo: '48 days ago',
@@ -24,8 +24,8 @@ export const INITIAL_APPROVALS: Approval[] = [
   {
     id: '3026',
     ticketNumber: '#3026',
-    authorName: 'Demo User',
-    authorInitials: null,
+    authorName: 'Inesh Agarwal',
+    authorInitials: 'IA',
     authorType: 'user',
     onBehalfOf: 'General User',
     title: 'Resolving Leave Request Issues',
@@ -51,10 +51,10 @@ export const INITIAL_APPROVALS: Approval[] = [
   {
     id: '2173',
     ticketNumber: '#2173',
-    authorName: 'Demo User',
-    authorInitials: null,
+    authorName: 'Inesh Agarwal',
+    authorInitials: 'IA',
     authorType: 'user',
-    onBehalfOf: 'Demo User',
+    onBehalfOf: 'Inesh Agarwal',
     title: 'New Starter Request - Jane Smith',
     timeAgo: '264 days ago',
     createdAt: '2026-01-03T09:00:00Z',
