@@ -32,8 +32,8 @@ export default function ArticleDraftSidebar({
         />
         <svg
           className="subnav-search-icon"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -53,8 +53,8 @@ export default function ArticleDraftSidebar({
         onClick={() => onSelectView('all')}
       >
         <svg
-          width="18"
-          height="18"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -81,8 +81,8 @@ export default function ArticleDraftSidebar({
           onClick={() => onSelectView('my-lists')}
         >
           <svg
-            width="17"
-            height="17"
+            width="19"
+            height="19"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -107,8 +107,8 @@ export default function ArticleDraftSidebar({
           onClick={() => onSelectView('by-agent')}
         >
           <svg
-            width="17"
-            height="17"
+            width="19"
+            height="19"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -129,8 +129,8 @@ export default function ArticleDraftSidebar({
           onClick={() => onSelectView('by-team')}
         >
           <svg
-            width="17"
-            height="17"
+            width="19"
+            height="19"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -153,8 +153,8 @@ export default function ArticleDraftSidebar({
           onClick={() => onSelectView('by-status')}
         >
           <svg
-            width="17"
-            height="17"
+            width="19"
+            height="19"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
