@@ -90,15 +90,15 @@
 /* CATALOGUE LAYOUT */
 .catalogue-layout {
   display: grid;
-  grid-template-columns: 225px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
 
 /* CATEGORY SIDEBAR */
 .category-sidebar {
-  padding: 14px;
-  border-radius: 15px;
+  padding: 20px 16px 32px 16px;
+  border-radius: 28px;
   background: #ffc2b0;
   box-sizing: border-box;
 }
@@ -106,13 +106,13 @@
 .sidebar-search {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   width: 100%;
-  height: 38px;
-  padding: 0 10px;
-  margin-bottom: 17px;
+  height: 42px;
+  padding: 0 14px;
+  margin-bottom: 18px;
   border: 1px solid #ead9d2;
-  border-radius: 20px;
+  border-radius: 24px;
   background: #fff;
   box-sizing: border-box;
 }
@@ -130,7 +130,7 @@
   outline: 0;
   background: transparent;
   color: #333;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .sidebar-search input::placeholder {
@@ -148,29 +148,30 @@
 }
 
 .sidebar-title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: #302723;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
+  padding: 0 4px;
 }
 
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .category-button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 9px;
+  padding: 11px 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   background: transparent;
   color: #633d34;
-  font-size: 11px;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -190,7 +191,7 @@
   width: 13px;
   flex-shrink: 0;
   text-align: center;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 /* SERVICE GRID */
