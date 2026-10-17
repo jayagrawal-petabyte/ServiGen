@@ -22,6 +22,7 @@ const getProjects = async (req, res) => {
       data: projects,
     });
   } catch (error) {
+    console.error('getProjects error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch projects',
@@ -39,6 +40,7 @@ const getActiveProjects = async (req, res) => {
       data: projects,
     });
   } catch (error) {
+    console.error('getActiveProjects error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch active projects',
@@ -72,6 +74,7 @@ const getProjectById = async (req, res) => {
       data: project,
     });
   } catch (error) {
+    console.error('getProjectById error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch project details',
@@ -105,6 +108,7 @@ const getProjectSubtasks = async (req, res) => {
       data: subtasks,
     });
   } catch (error) {
+    console.error('getProjectSubtasks error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch project subtasks',

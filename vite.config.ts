@@ -11,18 +11,6 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
-      '/lists': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/projects': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/escalation': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
     },
   },
   build: {

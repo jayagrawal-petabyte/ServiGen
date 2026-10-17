@@ -197,7 +197,7 @@ function ChangeRequestsWrapper() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Auth (Standalone screen - No sidebar) */}
           <Route path="/auth" element={<AuthPage />} />

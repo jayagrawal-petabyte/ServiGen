@@ -10,6 +10,18 @@ const db = require('../../config/db');
 
 const mockUsers = [
   {
+    id: 'USR-000',
+    email: 'inesh@servigen.io',
+    username: 'inesh.a',
+    password: 'Adm!n#9vK2$7xLq',
+    passwordHash: '$2a$10$xyz',
+    firstName: 'Inesh',
+    lastName: 'Agarwal',
+    role: 'Admin',
+    organisationId: 'org-001',
+    active: true,
+  },
+  {
     id: 'admin-001',
     email: 'admin@servigen.local',
     username: 'admin001',

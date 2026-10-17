@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials } from './types';
 import { MOCK_ORGANISATION_USERS, PRIMARY_USER } from './mockAuthData';
-import { api, setStoredToken, getStoredToken, setStoredUser, getStoredUser } from '../../services/apiClient';
+import { api, setStoredToken, getStoredToken, setStoredUser, getStoredUser, obtainDevAuthToken } from '../../services/apiClient';
 
 interface AuthContextType extends AuthState {
   token: string | null;
@@ -73,6 +73,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     checkBackendHealth();
+    if (!getStoredToken()) {
+      obtainDevAuthToken().then((tok) => {
+        if (tok) setToken(tok);
+      });
+    }
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
@@ -112,6 +117,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 
     if (foundUser) {
+      const devTok = await obtainDevAuthToken();
+      if (devTok) {
+        setStoredToken(devTok);
+        setToken(devTok);
+      }
       setStoredUser(foundUser);
       setAuthState({
         isAuthenticated: true,

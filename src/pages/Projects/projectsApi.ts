@@ -11,7 +11,7 @@
  * or subtasks yet, so this service is read-only until those are provided.
  */
 
-import { ApiError, api } from "../../services/apiClient";
+import { ApiError, api, getStoredUser } from "../../services/apiClient";
 import {
   type Project,
   type ProjectPriority,
@@ -113,7 +113,8 @@ export function normalizeProject(raw: any): Project {
     hoursBudget: num(raw?.hoursBudget ?? raw?.targetHours ?? raw?.estimatedHours ?? raw?.budgetHours),
     completionPercent: percent === undefined || percent === null ? undefined : num(percent),
     tasks: Array.isArray(embedded) ? embedded.map(normalizeSubtask) : [],
-  };
+    ...(Array.isArray(embedded) ? { _tasksLoaded: true } : {}),
+  } as Project & { _tasksLoaded?: boolean };
 }
 
 /* ---------- endpoints ---------- */
@@ -156,7 +157,7 @@ export async function loadProjectsScreen(): Promise<{ projects: Project[]; activ
 
   const projects = await Promise.all(
     all.map(async (p) => {
-      if (p.tasks.length > 0 || !p.id) return p;
+      if ((p as any)._tasksLoaded || p.tasks.length > 0 || !p.id) return p;
       try {
         return { ...p, tasks: await getProjectSubtasks(p.id) };
       } catch (err) {
@@ -175,9 +176,25 @@ export async function loadProjectsScreen(): Promise<{ projects: Project[]; activ
 export async function getSessionUserName(): Promise<string> {
   try {
     const res: any = await api.get("/api/auth/session");
-    const user = res?.user ?? res;
-    return text(user?.name ?? user?.fullName ?? user?.displayName ?? user?.email);
+    // res from backend is { success: true, message: '...', data: { id, firstName, lastName, username, email } }
+    const user = res?.data ?? res?.user ?? res;
+    const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
+    const name = text(
+      user?.name ??
+      user?.fullName ??
+      user?.displayName ??
+      fullName ??
+      user?.username ??
+      user?.email
+    );
+    if (name) return name;
   } catch {
-    return "";
+    // Fall through to stored user
   }
+  const stored = getStoredUser();
+  const storedFull = [stored?.firstName, stored?.lastName].filter(Boolean).join(" ").trim();
+  return (
+    text(stored?.fullName ?? stored?.name ?? stored?.displayName ?? storedFull ?? stored?.username ?? stored?.email) ||
+    "Inesh Agarwal"
+  );
 }

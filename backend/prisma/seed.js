@@ -86,6 +86,28 @@ async function main() {
     },
   });
 
+  await db.user.upsert({
+    where: { email: 'inesh@servigen.io' },
+    update: {
+      username: 'inesh.a',
+      passwordHash: adminPasswordHash,
+      role: 'Admin',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
+    create: {
+      id: 'USR-000',
+      email: 'inesh@servigen.io',
+      username: 'inesh.a',
+      passwordHash: adminPasswordHash,
+      firstName: 'Inesh',
+      lastName: 'Agarwal',
+      role: 'Admin',
+      organisationId: acme.id,
+      siteId: londonSite.id,
+    },
+  });
+
   const agent1 = await db.user.upsert({
     where: { email: 'agent001@servigen.local' },
     update: {
