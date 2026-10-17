@@ -11,7 +11,6 @@
 
 import { api } from './apiClient';
 import type { User } from '../pages/Auth/types';
-import { MOCK_ORGANISATION_USERS } from '../pages/Auth/mockAuthData';
 
 export interface OrganisationsApiResponse<T> {
   success: boolean;
@@ -103,74 +102,83 @@ export function normalizeOrganisationUser(raw: any): User {
 }
 
 /**
- * Fetch organisation users from live backend API
- * Tries:
+ * Fetch organisation users strictly from live backend API
+ * Queries:
  * 1. GET /api/organisations/:organisationId/users (if orgId is given)
- * 2. GET /api/users (directory of users)
- * 3. Graceful fallback to cached mock users if backend is unreachable
+ * 2. GET /api/users (directory of users across organisations)
  */
 export async function fetchOrganisationUsers(organisationId?: string): Promise<User[]> {
-  try {
-    // 1. If an organisation ID is specified, query tenant-isolated organisation endpoint
-    if (organisationId && organisationId !== 'ALL') {
-      try {
-        const res = await api.get(`/api/organisations/${encodeURIComponent(organisationId)}/users`);
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        if (list.length > 0) {
-          return list.map(normalizeOrganisationUser);
-        }
-      } catch (err: any) {
-        // If 403 or 404, fall through to directory endpoint
-        if (err?.statusCode !== 403 && err?.statusCode !== 404) {
-          console.warn('[organisationsService] Specific org fetch failed, falling back to /api/users:', err);
-        }
+  // 1. If an organisation ID is specified, query tenant-isolated organisation endpoint
+  if (organisationId && organisationId !== 'ALL') {
+    try {
+      const res = await api.get(`/api/organisations/${encodeURIComponent(organisationId)}/users`);
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        return list.map(normalizeOrganisationUser);
+      }
+    } catch (err: any) {
+      // If 403 or 404, fallback to /api/users
+      if (err?.statusCode !== 403 && err?.statusCode !== 404) {
+        console.warn('[organisationsService] Specific org fetch failed, querying directory endpoint:', err);
       }
     }
-
-    // 2. Fetch from standard users directory
-    const res = await api.get('/api/users');
-    const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-    if (rawList.length > 0) {
-      return rawList.map(normalizeOrganisationUser);
-    }
-  } catch (err) {
-    console.warn('[organisationsService] Live backend unreachable, utilizing local directory cache:', err);
   }
 
-  // 3. Fallback to cached organization user directory
-  return MOCK_ORGANISATION_USERS;
+  // 2. Fetch from standard users directory
+  const res = await api.get('/api/users');
+  const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+  return rawList.map(normalizeOrganisationUser);
 }
 
 /**
- * Fetch a specific user by ID
+ * Fetch a specific user by ID strictly from live backend API
  */
 export async function fetchOrganisationUserById(
   userId: string,
   organisationId?: string
 ): Promise<User | null> {
-  try {
-    if (organisationId && organisationId !== 'ALL') {
-      try {
-        const res = await api.get(
-          `/api/organisations/${encodeURIComponent(organisationId)}/users/${encodeURIComponent(userId)}`
-        );
-        const user = res?.data || res;
-        if (user && (user.id || user.username)) {
-          return normalizeOrganisationUser(user);
-        }
-      } catch {
-        // Fall back to /api/users/:id
+  if (organisationId && organisationId !== 'ALL') {
+    try {
+      const res = await api.get(
+        `/api/organisations/${encodeURIComponent(organisationId)}/users/${encodeURIComponent(userId)}`
+      );
+      const user = res?.data || res;
+      if (user && (user.id || user.username)) {
+        return normalizeOrganisationUser(user);
       }
+    } catch {
+      // Fall back to /api/users/:id
     }
-
-    const res = await api.get(`/api/users/${encodeURIComponent(userId)}`);
-    const user = res?.data || res;
-    if (user && (user.id || user.username)) {
-      return normalizeOrganisationUser(user);
-    }
-  } catch (err) {
-    console.warn(`[organisationsService] Failed to fetch user ${userId}:`, err);
   }
 
-  return MOCK_ORGANISATION_USERS.find((u) => u.id === userId || u.username === userId) || null;
+  const res = await api.get(`/api/users/${encodeURIComponent(userId)}`);
+  const user = res?.data || res;
+  if (user && (user.id || user.username)) {
+    return normalizeOrganisationUser(user);
+  }
+
+  return null;
+}
+
+/**
+ * Submit creation of a new user to the backend API
+ * Sends request to backend (POST /api/users or POST /api/organisations/:orgId/users)
+ */
+export async function createOrganisationUser(userData: Partial<User>): Promise<User> {
+  const payload = {
+    username: userData.username,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    email: userData.email,
+    phoneNumber: userData.phone,
+    role: userData.role,
+    organisationId: userData.defaultOrganisation,
+    site: userData.defaultSite,
+    region: userData.region,
+  };
+
+  // Dispatch request to backend
+  const res = await api.post('/api/users', payload);
+  const created = res?.data || res;
+  return normalizeOrganisationUser(created);
 }

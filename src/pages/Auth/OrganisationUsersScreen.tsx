@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from './types';
-import { fetchOrganisationUsers } from '../../services/organisationsService';
+import { fetchOrganisationUsers, createOrganisationUser } from '../../services/organisationsService';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './OrganisationUsersScreen.css';
@@ -104,34 +104,44 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     }
   };
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  const [isCreatingUser, setIsCreatingUser] = useState<boolean>(false);
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFirstName.trim() || !newEmail.trim()) return;
 
+    setCreateUserError(null);
+    setIsCreatingUser(true);
+
     const username = `${newFirstName.toLowerCase().trim()}.${(newLastName[0] || 'a').toLowerCase()}`;
-    const newUser: User = {
-      id: `USR-${Math.floor(100 + Math.random() * 900)}`,
+    const newUserPayload: Partial<User> = {
       username,
       firstName: newFirstName.trim(),
       lastName: newLastName.trim(),
-      fullName: `${newFirstName.trim()} ${newLastName.trim()}`,
       email: newEmail.trim(),
       phone: newPhone.trim(),
-      networkLogin: `CORP\\${username}`,
       defaultSite: newSite,
       defaultOrganisation: newOrg,
       region: newRegion,
       role: newRole,
-      status: 'Active',
-      lastLogin: 'Just now',
-      department: 'IT Operations',
     };
 
-    setUserList((prev) => [...prev, newUser]);
-    setIsAddUserModalOpen(false);
-    setNewFirstName('');
-    setNewLastName('');
-    setNewEmail('');
+    try {
+      const createdUser = await createOrganisationUser(newUserPayload);
+      setUserList((prev) => [createdUser, ...prev]);
+      setIsAddUserModalOpen(false);
+      setNewFirstName('');
+      setNewLastName('');
+      setNewEmail('');
+    } catch (err: any) {
+      setCreateUserError(
+        err?.message ||
+        'Backend endpoint POST /api/users is not implemented in the backend API documentation.'
+      );
+    } finally {
+      setIsCreatingUser(false);
+    }
   };
 
   return (
@@ -263,7 +273,13 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.length > 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
+                  Loading organisation users from backend...
+                </td>
+              </tr>
+            ) : filteredUsers.length > 0 ? (
               filteredUsers.map((user) => {
                 const initials = `${user.firstName?.[0] || 'U'}${user.lastName?.[0] || ''}`.toUpperCase();
                 return (
@@ -303,7 +319,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
             ) : (
               <tr>
                 <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
-                  No organisation users found matching the current filters.
+                  No organisation users found from the backend API matching the current filters.
                 </td>
               </tr>
             )}
@@ -413,6 +429,20 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                     </select>
                   </div>
                 </div>
+
+                {createUserError && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    fontSize: '12px'
+                  }}>
+                    ⚠️ {createUserError}
+                  </div>
+                )}
               </div>
 
               <div className="org-modal-footer">
@@ -423,8 +453,8 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                 >
                   Cancel
                 </button>
-                <button type="submit" className="org-btn-add-user">
-                  Save User
+                <button type="submit" className="org-btn-add-user" disabled={isCreatingUser}>
+                  {isCreatingUser ? 'Saving to Backend...' : 'Save User'}
                 </button>
               </div>
             </form>
