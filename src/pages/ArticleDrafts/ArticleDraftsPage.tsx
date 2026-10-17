@@ -10,6 +10,7 @@ import ArticleDraftSidebar, {
 import ArticleDraftsDesignView from './ArticleDraftsDesignView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
 import CreateArticleDraftModal from './CreateArticleDraftModal';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './articleDrafts.css';
 
 export default function ArticleDraftsPage() {
@@ -218,48 +219,9 @@ export default function ArticleDraftsPage() {
 
   return (
     <div className="article-drafts-page-wrapper">
-      {/* Top Application Navbar matching UI/UX design */}
+      {/* Top Application Navbar with Unified Global Actions */}
       <header className="article-drafts-top-navbar">
-        <div className="article-drafts-top-navbar-right">
-          <button type="button" className="btn-top-coral" title="Get started guide">
-            Get started
-          </button>
-          <button
-            type="button"
-            className="btn-top-coral"
-            title="Create a new ticket or draft"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            + New Ticket
-          </button>
-
-          <div className="top-navbar-bells">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <button
-                key={i}
-                type="button"
-                className="top-navbar-bell-btn"
-                title={`Notification alert ${i}`}
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              </button>
-            ))}
-          </div>
-
-          <div className="top-navbar-avatar" title="Logged in user profile" />
-        </div>
+        <GlobalNavbarActions onNewTicket={() => setIsCreateModalOpen(true)} />
       </header>
 
       {/* Main Page Layout Container */}
