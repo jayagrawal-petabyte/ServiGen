@@ -1,5 +1,6 @@
 import React from 'react';
-import type { ChangeRequest } from '../../types/cmdb';
+import { motion } from 'framer-motion';
+import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
 import { X, Clock, Tag, User, CheckSquare } from 'lucide-react';
@@ -7,17 +8,27 @@ import { X, Clock, Tag, User, CheckSquare } from 'lucide-react';
 interface ChangeRequestDetailModalProps {
   changeRequest: ChangeRequest | null;
   onClose: () => void;
+  onToggleSubtask?: (subtaskId: string) => void;
 }
 
 export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> = ({
   changeRequest,
   onClose,
+  onToggleSubtask,
 }) => {
   if (!changeRequest) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none"
+    >
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl"
+      >
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50 rounded-t-3xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
@@ -99,10 +110,12 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <CheckSquare className="w-4 h-4 text-[#E87A5D]" /> Subtask Implementation Plan
             </h3>
             <div className="space-y-2">
-              {changeRequest.subtasks.map((st) => (
+              {changeRequest.subtasks.map((st: SubTask) => (
                 <div
                   key={st.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl"
+                  onClick={() => onToggleSubtask && onToggleSubtask(st.id)}
+                  className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:bg-slate-100/70 transition-colors cursor-pointer"
+                  title="Click to toggle completion status"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono font-bold text-[#E87A5D]">{st.id}</span>
@@ -127,7 +140,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             Close
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

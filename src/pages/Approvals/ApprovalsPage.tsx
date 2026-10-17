@@ -27,7 +27,6 @@ export default function ApprovalsPage() {
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [modalRejectMode, setModalRejectMode] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-
   // Load approvals from API on mount
   useEffect(() => {
     let isMounted = true;

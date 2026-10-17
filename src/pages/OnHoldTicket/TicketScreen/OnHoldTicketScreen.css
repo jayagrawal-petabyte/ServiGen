@@ -4,8 +4,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* --- Shell --- */
 .app-shell {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
   background: #f1f5f9;
 }
@@ -273,7 +273,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 .main-table th {
-  padding: 8px 10px;
+  padding: 12px 16px;
   font-size: 11.5px;
   font-weight: 600;
   color: #64748b;
@@ -285,11 +285,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   background: #f8fafc;
 }
 
+.main-table th:last-child {
+  padding-right: 24px;
+}
+
 .main-table td {
-  padding: 6px 10px;
+  padding: 10px 16px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   vertical-align: middle;
+}
+
+.main-table td:last-child {
+  padding-right: 24px;
 }
 
 .ticket-row:hover td { background: #f8fafc; }
@@ -319,13 +327,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 /* Columns */
 .col-type { width: 40px; text-align: center; }
 .col-check { width: 32px; text-align: center; }
-.col-viewing { width: 80px; }
-.col-id { width: 80px; }
-.col-sla { width: 90px; }
-.col-priority { width: 90px; }
-.col-org { width: 220px; max-width: 220px; }
-.col-summary { min-width: 120px; }
-.col-status { width: 75px; }
+.col-viewing { width: 8%; }
+.col-id { width: 8%; }
+.col-sla { width: 10%; }
+.col-priority { width: 10%; }
+.col-org { width: 22%; max-width: 250px; }
+.col-summary { width: auto; min-width: 180px; }
+.col-status { width: 110px; }
 
 /* Cells */
 .badge-onhold {
@@ -390,16 +398,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
   font-weight: 600;
-  color: white;
+  letter-spacing: 0.2px;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-.status-cyan { background: #00b0f0; }
-.status-teal { background: #14b8a6; }
+.status-cyan { 
+  background: #e0f2fe; 
+  color: #0284c7; 
+  border: 1px solid #bae6fd;
+}
+.status-teal { 
+  background: #ccfbf1; 
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+}
 
 /* Input checkboxes */
 input[type="checkbox"] {

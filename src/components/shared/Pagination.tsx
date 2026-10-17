@@ -7,6 +7,7 @@ export interface PaginationProps {
   hasNext?: boolean;
   onPrevious?: () => void;
   onNext?: () => void;
+  className?: string;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -15,9 +16,10 @@ export const Pagination: React.FC<PaginationProps> = ({
   hasNext = false,
   onPrevious,
   onNext,
+  className = '',
 }) => {
   return (
-    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-3 py-1 text-xs font-bold text-slate-600 shadow-2xs select-none">
+    <div className={`flex items-center gap-2 bg-white border border-slate-200 rounded-full px-3 py-1 text-xs font-bold text-slate-600 shadow-2xs select-none ${className}`}>
       <button
         disabled={!hasPrevious}
         onClick={onPrevious}
@@ -36,3 +38,5 @@ export const Pagination: React.FC<PaginationProps> = ({
     </div>
   );
 };
+
+export default Pagination;

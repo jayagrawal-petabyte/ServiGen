@@ -18,7 +18,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
 
-  const filteredCis = items.filter((ci) => {
+  const filteredCis = items.filter((ci: ConfigurationItem) => {
     const matchesSearch =
       ci.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ci.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,7 +96,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCis.map((ci) => (
+        {filteredCis.map((ci: ConfigurationItem) => (
           <div
             key={ci.id}
             className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"

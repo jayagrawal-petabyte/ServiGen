@@ -1,4 +1,118 @@
 /* CustomLists.css */
+/* --- App Layout --- */
+.cl-app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* --- Top Navbar --- */
+.cl-top-navbar {
+  height: 42px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 0;
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+.cl-topnav-left, .cl-topnav-right { display: flex; align-items: center; }
+.cl-topnav-left { padding: 0 12px; }
+.cl-breadcrumb { display: flex; align-items: center; gap: 4px; }
+.cl-bc-item { font-size: 13px; color: #64748b; }
+.cl-bc-sep { font-size: 14px; color: #94a3b8; }
+.cl-bc-active { font-size: 13px; color: #0f172a; font-weight: 500; }
+.cl-btn-get-started { background: #00b0f0; color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; margin-right: 6px; }
+.cl-topnav-icons { display: flex; align-items: center; gap: 2px; margin-right: 12px; }
+.cl-tnav-icon-btn { background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; }
+.cl-tnav-icon-btn:hover { background: #f1f5f9; color: #0f172a; }
+.cl-user-avatar { width: 28px; height: 28px; background: #00b0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* --- Content Row (Sidebar + Main Area) --- */
+.cl-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* --- Sidebar --- */
+.cl-sidebar {
+  width: 260px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.cl-sidebar-header { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+.cl-search-wrap { position: relative; display: flex; align-items: center; }
+.cl-search-icon { position: absolute; left: 10px; color: #94a3b8; }
+.cl-search-input { width: 100%; padding: 6px 10px 6px 30px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; outline: none; }
+.cl-search-input:focus { border-color: #0ea5e9; }
+.cl-sidebar-content { flex: 1; overflow-y: auto; padding: 12px 0; }
+.cl-btn-new-list { width: calc(100% - 24px); margin: 0 12px 16px; background: white; border: 1px solid #cbd5e1; color: #334155; border-radius: 4px; padding: 6px 10px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+.cl-btn-new-list:hover { background: #f8fafc; border-color: #94a3b8; }
+
+.cl-group { margin-bottom: 16px; }
+.cl-group-title { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; padding: 0 16px 6px; }
+.cl-list-item { display: flex; align-items: center; padding: 8px 16px; cursor: pointer; color: #334155; gap: 8px; }
+.cl-list-item:hover { background: #f8fafc; }
+.cl-list-item.active { background: #e0f2fe; color: #0284c7; border-right: 3px solid #0ea5e9; }
+.cl-list-icon { color: #94a3b8; display: flex; }
+.cl-list-item.active .cl-list-icon { color: #0284c7; }
+.cl-list-name { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-list-actions { opacity: 0; display: flex; align-items: center; }
+.cl-list-item:hover .cl-list-actions { opacity: 1; }
+.cl-list-action-btn { background: none; border: none; cursor: pointer; color: #ef4444; display: flex; padding: 4px; border-radius: 4px; }
+.cl-list-action-btn:hover { background: #fee2e2; }
+
+/* --- Main Area (Tickets) --- */
+.cl-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+  margin: 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+.cl-empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; }
+.cl-empty-state h3 { color: #0f172a; margin: 12px 0 4px; }
+.cl-empty-state p { font-size: 13px; }
+
+.cl-table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.cl-toolbar-left, .cl-toolbar-right { display: flex; align-items: center; gap: 12px; }
+.cl-bulk-actions { display: flex; align-items: center; gap: 8px; padding-left: 12px; border-left: 1px solid #cbd5e1; }
+.cl-selected-count { font-size: 12px; color: #64748b; font-weight: 500; }
+.cl-btn-secondary { background: white; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.cl-btn-secondary:hover { background: #f1f5f9; }
+.cl-count-text { font-size: 12px; color: #64748b; }
+.cl-tb-nav-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; }
+.cl-tb-nav-btn:hover { background: #e2e8f0; }
+.cl-btn-new-green { background: #10b981; color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.cl-btn-new-green:hover { background: #059669; }
+
+.cl-table-wrap { flex: 1; overflow: auto; }
+.cl-main-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cl-main-table th { padding: 10px 12px; text-align: left; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; background: #f8fafc; white-space: nowrap; }
+.cl-main-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.cl-main-table tr:hover td { background: #f8fafc; }
+.cl-main-table tr.selected td { background: #f0f9ff; }
+.cl-ticket-link { color: #0ea5e9; text-decoration: none; font-weight: 500; }
+.cl-ticket-link:hover { text-decoration: underline; }
+.cl-priority-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.cl-status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+.cl-skeleton-loader { padding: 30px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+/* --- Modal Styles (Preserved) --- */
 .cl-modal-overlay {
   position: fixed;
   top: 0;

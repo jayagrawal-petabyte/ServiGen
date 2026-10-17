@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ChangeRequest } from '../../types/cmdb';
+import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import { mockChangeRequests } from '../../data/mockCmdbData';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { Pagination } from '../../components/shared/Pagination';
@@ -26,7 +26,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
 
-  const filteredRequests = items.filter((cr) => {
+  const filteredRequests = items.filter((cr: ChangeRequest) => {
     const matchesSearch =
       cr.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       cr.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -131,7 +131,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
       {/* Grid View */}
       {viewMode === 'grid' ? (
         <div className="flex flex-col gap-6">
-          {filteredRequests.map((cr) => (
+          {filteredRequests.map((cr: ChangeRequest) => (
             <Card
               key={cr.id}
               onClick={() => onSelectChangeRequest(cr)}
@@ -199,7 +199,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                 <div className="lg:col-span-5 pl-0 lg:pl-2">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                      Subtasks ({cr.subtasks.filter((st) => st.completed).length}/{cr.subtasks.length})
+                      Subtasks ({cr.subtasks.filter((st: SubTask) => st.completed).length}/{cr.subtasks.length})
                     </span>
                     <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
                       <TagIcon className="w-3.5 h-3.5" /> {cr.linkedCiName}
@@ -207,7 +207,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {cr.subtasks.slice(0, 6).map((subtask) => (
+                    {cr.subtasks.slice(0, 6).map((subtask: SubTask) => (
                       <div
                         key={subtask.id}
                         className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
@@ -252,7 +252,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {filteredRequests.map((cr) => (
+              {filteredRequests.map((cr: ChangeRequest) => (
                 <tr
                   key={cr.id}
                   onClick={() => onSelectChangeRequest(cr)}

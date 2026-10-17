@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { mockProjects, Project } from "./mockProjects";
+import { useMemo, useState, useEffect } from "react";
+import { Project } from "./mockProjects";
+import { getAllProjects } from "./projectsApi";
 import "./projects.css";
 
 const emptyForm = {
@@ -20,8 +21,24 @@ export default function ProjectsPage() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  useEffect(() => {
+  async function fetchProjects() {
+    try {
+      setLoading(true);
+      const data = await getAllProjects();
+      setProjects(data);
+    } catch (err) {
+      const { mockProjects } = await import("./mockProjects");
+      setProjects(mockProjects);
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchProjects();
+}, []);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -47,7 +64,11 @@ export default function ProjectsPage() {
     setShowAddModal(false);
     setForm(emptyForm);
   }
-
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
+      <p style={{ color: '#64748b', fontSize: '16px' }}>Loading projects...</p>
+    </div>
+  );
   return (
     <div className="projects-page">
       <div className="projects-header">

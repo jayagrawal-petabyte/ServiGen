@@ -1,5 +1,6 @@
-/* SCR-001 Login Screen - Pixel-Perfect Figma Accuracy */
+/* SCR-001 Login Screen, SCR-013 Splash Screen & SCR-020 Users List Styling */
 
+/* SCR-001 Login Page */
 .figma-login-page {
   width: 100vw;
   height: 100vh;
@@ -15,7 +16,6 @@
   box-sizing: border-box;
 }
 
-/* Central Organic Background SVG */
 .figma-svg-bg {
   position: absolute;
   top: 0;
@@ -26,7 +26,6 @@
   pointer-events: none;
 }
 
-/* Background Dots & Decorative Shapes */
 .figma-decor-layer {
   position: absolute;
   top: 0;
@@ -37,7 +36,6 @@
   pointer-events: none;
 }
 
-/* Top-left dark terracotta dot */
 .decor-dot-1 {
   position: absolute;
   top: 5.5%;
@@ -48,7 +46,6 @@
   background-color: #A8543D;
 }
 
-/* Left edge white semi-circle */
 .decor-dot-2 {
   position: absolute;
   top: 25.5%;
@@ -59,7 +56,6 @@
   background-color: #FFFFFF;
 }
 
-/* Bottom-left small light pink dot */
 .decor-dot-3 {
   position: absolute;
   bottom: 26%;
@@ -70,7 +66,6 @@
   background-color: #FBE2D8;
 }
 
-/* Bottom-center-left light pink dot */
 .decor-dot-4 {
   position: absolute;
   bottom: -15px;
@@ -81,7 +76,6 @@
   background-color: #FBE2D8;
 }
 
-/* Top-right light grey dot */
 .decor-dot-5 {
   position: absolute;
   top: 10.5%;
@@ -92,7 +86,6 @@
   background-color: #D7DEE5;
 }
 
-/* Middle-right terracotta capsule shape */
 .decor-capsule-6 {
   position: absolute;
   top: 33.5%;
@@ -103,7 +96,6 @@
   background-color: #C2674D;
 }
 
-/* Bottom-right light pink dot (upper) */
 .decor-dot-7 {
   position: absolute;
   bottom: 21.5%;
@@ -114,7 +106,6 @@
   background-color: #FBE2D8;
 }
 
-/* Bottom-right light pink dot (lower) */
 .decor-dot-8 {
   position: absolute;
   bottom: 8.5%;
@@ -125,7 +116,6 @@
   background-color: #FBE2D8;
 }
 
-/* Center Content Container */
 .figma-login-wrapper {
   position: relative;
   z-index: 10;
@@ -136,7 +126,6 @@
   align-items: center;
 }
 
-/* Header Text "Login" */
 .figma-login-header {
   font-size: 28px;
   font-weight: 500;
@@ -146,7 +135,6 @@
   letter-spacing: -0.01em;
 }
 
-/* Card Box */
 .figma-card-box {
   width: 100%;
   background-color: #FFFBF8;
@@ -156,7 +144,6 @@
   box-sizing: border-box;
 }
 
-/* Field Container */
 .figma-field {
   display: flex;
   flex-direction: column;
@@ -170,7 +157,13 @@
   margin-bottom: 6px;
 }
 
-/* Input Fields */
+.figma-password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .figma-input-field {
   width: 100%;
   height: 42px;
@@ -189,7 +182,19 @@
   box-shadow: 0 0 0 2px #C4674E;
 }
 
-/* Button Row */
+.figma-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .figma-btn-row {
   display: flex;
   justify-content: center;
@@ -222,7 +227,6 @@
   transform: translateY(0);
 }
 
-/* Forget Password Link directly under the right edge of the card */
 .figma-forget-row {
   width: 100%;
   display: flex;
@@ -242,10 +246,345 @@
   text-decoration: underline;
 }
 
-/* Error message styling */
 .figma-error-msg {
   color: #D32F2F;
   font-size: 12px;
   margin-bottom: 12px;
   text-align: center;
+}
+
+/* SCR-013 Splash Screen */
+.figma-splash-page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.splash-teal-curve {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .splash-teal-curve {
+    width: 60%;
+  }
+}
+
+.splash-content-wrapper {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.splash-welcome-heading {
+  font-size: 24px;
+  font-weight: 500;
+  color: #1F1F1F;
+  margin: 0 0 32px 0;
+  letter-spacing: -0.01em;
+}
+
+.splash-logo-container {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.splash-loader-orbit {
+  position: absolute;
+  inset: -12px;
+  animation: splashSpin 1.8s linear infinite;
+}
+
+@keyframes splashSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.splash-subtext {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1F1F1F;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================================
+   SCR-020 / SCR-031 Organisations - Users List Screen
+   ========================================================================== */
+
+.figma-users-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #0F172A;
+  color: #F8FAFC;
+  padding: 2rem;
+  box-sizing: border-box;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.users-screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.users-title-section h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #FFFFFF;
+}
+
+.users-title-section p {
+  color: #94A3B8;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.users-header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.users-btn-secondary {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #F8FAFC;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.users-btn-secondary:hover {
+  background-color: #334155;
+}
+
+.users-btn-primary {
+  background-color: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.users-btn-primary:hover {
+  background-color: #2563EB;
+}
+
+.region-tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.region-tab-btn {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #94A3B8;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.region-tab-btn:hover {
+  color: #FFFFFF;
+  background-color: #334155;
+}
+
+.region-tab-btn.active {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border-color: #3B82F6;
+}
+
+.users-filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.search-input-box {
+  flex: 1;
+  min-width: 260px;
+}
+
+.users-search-input {
+  width: 100%;
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.users-search-input:focus {
+  border-color: #3B82F6;
+}
+
+.users-filter-select {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  color: #FFFFFF;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.users-table-card {
+  background-color: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.table-responsive-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.users-table th {
+  background-color: #0F172A;
+  padding: 0.85rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+  border-bottom: 1px solid #334155;
+}
+
+.users-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #334155;
+  font-size: 0.875rem;
+  color: #E2E8F0;
+}
+
+.users-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.user-cell-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-full-name {
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.user-username-handle {
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+
+.network-login-code {
+  background-color: #0F172A;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #E2E8F0;
+}
+
+.region-badge {
+  font-size: 0.8rem;
+  color: #93C5FD;
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.status-active {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.status-inactive {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.status-pending {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.users-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #94A3B8;
 }

@@ -13,7 +13,7 @@ import CalendarPage from './pages/Calendar';
 export function App() {
   const [activeTab, setActiveTab] = useState<
     'approvals' | 'articleDrafts' | 'changeRequests' | 'cmdb' | 'serviceCis' | 'projects' | 'calendar'
-  >('approvals');
+  >('projects');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedChangeRequest, setSelectedChangeRequest] =
     useState<ChangeRequest | null>(null);
@@ -28,11 +28,10 @@ export function App() {
           </div>
           <div>
             <span className="font-extrabold text-base text-[#eb6a47]">ServiGen</span>
-            <span className="text-xs text-slate-400 ml-2 font-medium">Halo AI Enterprise</span>
+            <span className="text-xs text-slate-400 ml-2 font-medium">HaloAI Enterprise</span>
           </div>
         </div>
 
-        {/* Global Module Switcher */}
         <nav className="flex items-center gap-1.5 flex-wrap my-1">
           <button
             onClick={() => setActiveTab('approvals')}
@@ -121,7 +120,6 @@ export function App() {
         </div>
       </header>
 
-      {/* Main Content Viewport */}
       <main className="flex-1 flex overflow-hidden">
         {activeTab === 'approvals' && (
           <div className="flex-1 overflow-y-auto w-full">
@@ -169,7 +167,6 @@ export function App() {
         )}
       </main>
 
-      {/* Modals for team member components */}
       <CreateChangeModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

@@ -9,14 +9,16 @@ export interface Subtask {
   completed: boolean;
 }
 
+export type SubTask = Subtask;
+
 export interface ChangeRequest {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   type: ChangeType;
   status: ChangeStatus;
   risk: RiskLevel;
-  impact: ImpactLevel;
+  impact: ImpactLevel | string;
   linkedCiId: string;
   linkedCiName: string;
   agentName: string;
@@ -48,7 +50,8 @@ export interface ConfigurationItem {
   lastUpdated?: string;
 }
 
-export type ServiceHealthStatus = 'Operational' | 'Degraded' | 'Maintenance';
+export type ServiceHealthStatus = 'Operational' | 'Degraded' | 'Maintenance' | 'Outage';
+export type HealthStatus = ServiceHealthStatus;
 
 export interface ServiceCI {
   id: string;
