@@ -5,6 +5,7 @@ import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
 import { FeedPopover } from './FeedPopover';
 import { fetchAllTeamIncidents } from '../../services/teamIncidentsService';
+import { api } from '../../services/apiClient';
 import './GlobalNavbarActions.css';
 
 export interface GlobalNavbarActionsProps {
@@ -131,46 +132,63 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Notifications state
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'notif-1',
-      ticketId: '0003987',
-      title: 'Critical SLA Breach Alert',
-      desc: 'Desktop shows a blue screen with CRITICAL_PROCESS_DIED',
-      time: '12m ago',
-      isSla: true,
-      slaTime: '-88:01',
-      unread: true,
-    },
-    {
-      id: 'notif-2',
-      ticketId: '0003986',
-      title: 'SLA Warning Alert',
-      desc: 'New phone is stuck on applying enterprise policy',
-      time: '24m ago',
-      isSla: true,
-      slaTime: '-64:00',
-      unread: true,
-    },
-    {
-      id: 'notif-3',
-      ticketId: '0003982',
-      title: 'Database Query Performance Alert',
-      desc: 'Monthly reporting query has been timing out',
-      time: '1h ago',
-      isSla: true,
-      slaTime: '-64:00',
-      unread: true,
-    },
-    {
-      id: 'notif-4',
-      ticketId: '0003977',
-      title: 'Ticket Status Update',
-      desc: 'Wifi keeps dropping marked In Progress by Jennifer Williams',
-      time: '2h ago',
-      unread: false,
-    },
-  ]);
+  const [readNotifIds, setReadNotifIds] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('servigen_read_notif_ids') || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([
+      api.get('/api/major-incidents'),
+      api.get('/api/tickets'),
+    ]).then(([miRes, tickRes]) => {
+      if (!active) return;
+      const liveNotifs: NotificationItem[] = [];
+
+      if (miRes.status === 'fulfilled' && Array.isArray(miRes.value?.data)) {
+        miRes.value.data.slice(0, 3).forEach((mi: any) => {
+          const notifId = `notif-mi-${mi.id}`;
+          liveNotifs.push({
+            id: notifId,
+            ticketId: String(mi.id),
+            title: mi.priority === 'P1' || mi.priority === 'Critical' ? 'Critical SLA Breach Alert' : 'Major Incident Alert',
+            desc: `#${mi.id}: ${mi.title}`,
+            time: 'Live',
+            isSla: true,
+            slaTime: mi.resolutionTarget || '-179:00',
+            unread: !readNotifIds[notifId],
+          });
+        });
+      }
+
+      if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
+        tickRes.value.data.slice(0, 4).forEach((t: any) => {
+          const notifId = `notif-t-${t.id}`;
+          liveNotifs.push({
+            id: notifId,
+            ticketId: String(t.id),
+            title: t.priority === 'Critical' || t.priority === 'High' ? 'SLA Warning Alert' : 'Ticket Status Update',
+            desc: `#${t.id}: ${t.summary || t.title}`,
+            time: 'Recent',
+            isSla: t.priority === 'Critical' || t.priority === 'High',
+            slaTime: '-64:00',
+            unread: !readNotifIds[notifId],
+          });
+        });
+      }
+
+      setNotifications(liveNotifs);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [readNotifIds]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -231,7 +249,27 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const handleMarkAllRead = () => {
+    const updatedMap: Record<string, boolean> = { ...readNotifIds };
+    notifications.forEach((n) => {
+      updatedMap[n.id] = true;
+    });
+    setReadNotifIds(updatedMap);
+    try {
+      localStorage.setItem('servigen_read_notif_ids', JSON.stringify(updatedMap));
+    } catch {}
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
+  const handleNotificationClick = (item: NotificationItem) => {
+    const updatedMap = { ...readNotifIds, [item.id]: true };
+    setReadNotifIds(updatedMap);
+    try {
+      localStorage.setItem('servigen_read_notif_ids', JSON.stringify(updatedMap));
+    } catch {}
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, unread: false } : n))
+    );
+    handleTicketClick(item.ticketId);
   };
 
   // Filtered search results
@@ -521,11 +559,20 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       {/* ─── FLYOUT 2: NOTIFICATIONS ─── */}
       {activeFlyout === 'notifications' && (
         <div className="global-flyout-dropdown global-notifications-flyout">
-          <div className="global-flyout-header">
-            <span className="global-flyout-title">
-              Notifications {unreadCount > 0 ? `(${unreadCount} unread)` : ''}
-            </span>
-            {unreadCount > 0 && (
+          <div className="global-flyout-header flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="global-flyout-title">Notifications</span>
+              {unreadCount > 0 ? (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                  {unreadCount} unread
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                  All read ✓
+                </span>
+              )}
+            </div>
+            {unreadCount > 0 ? (
               <button
                 type="button"
                 className="global-flyout-action-btn"
@@ -533,6 +580,8 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
               >
                 Mark all read
               </button>
+            ) : (
+              <span className="text-[11px] text-gray-400 font-medium">All caught up</span>
             )}
           </div>
           <div className="global-notifications-list">
@@ -542,7 +591,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
                 className={`global-notif-item ${item.unread ? 'is-unread' : ''} ${
                   item.isSla ? 'is-sla' : ''
                 }`}
-                onClick={() => handleTicketClick(item.ticketId)}
+                onClick={() => handleNotificationClick(item)}
               >
                 <div
                   className="global-notif-icon"

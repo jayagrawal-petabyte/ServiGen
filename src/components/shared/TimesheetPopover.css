@@ -120,13 +120,48 @@
 }
 
 .timesheet-input-box {
+  position: relative;
   display: flex;
   align-items: center;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
   padding: 2px 6px;
-  width: 90px;
+  width: 96px;
+}
+
+.timesheet-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+}
+
+.timesheet-dropdown-item {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s ease;
+}
+
+.timesheet-dropdown-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .timesheet-time-input {

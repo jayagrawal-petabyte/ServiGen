@@ -13,7 +13,7 @@ import IncidentDetailPanel from './components/IncidentDetailPanel';
 import MajorIncidentConsole from './components/MajorIncidentConsole';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority, ActivityFeedEntry } from './types/majorIncident.types';
 import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
-import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
+import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
 import { FeedPopover } from '../../components/shared/FeedPopover';
 import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
 import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
@@ -96,7 +96,7 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
 
 const SCR022_MajorIncidentsLive: React.FC = () => {
   const { user } = useAuth();
-  const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(false);
+  const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(true);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
   const [localIncidents, setLocalIncidents] = usePersistentState<MajorIncident[]>(
@@ -106,7 +106,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(true);
-  const [selectedListId, setSelectedListId] = useState<string>('dashboard');
+  const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
@@ -178,7 +178,9 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    if (serverIncidents.length === 0) {
+      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
+    }
     serverIncidents.forEach((inc) => map.set(inc.id, inc));
     localIncidents.forEach((inc) => map.set(inc.id, inc));
     return Array.from(map.values());
@@ -326,62 +328,107 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     }).catch(() => {});
   };
 
-  const handleAdvanceStage = (incidentId: string) => {
-    let nextStageIdx = -1;
-    const advance = (list: MajorIncident[]): MajorIncident[] =>
+  const handleSetStage = (incidentId: string, targetStageIdx: number) => {
+    if (targetStageIdx < 0 || targetStageIdx >= STAGE_ORDER.length) return;
+    const now = new Date().toLocaleString('en-GB', {
+      hour12: true,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const updateStageInList = (list: MajorIncident[]): MajorIncident[] =>
       list.map((inc) => {
         if (inc.id !== incidentId) return inc;
-        const activeIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
-        if (activeIdx === -1 || activeIdx >= STAGE_ORDER.length - 1) return inc;
-        nextStageIdx = activeIdx + 1;
-        const now = new Date().toLocaleString('en-GB', { hour12: true, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const currentActiveIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
+        const fromStageLabel = currentActiveIdx !== -1 ? STAGE_ORDER[currentActiveIdx] : 'Unknown';
+        const toStageLabel = STAGE_ORDER[targetStageIdx];
+
         const newStages = inc.lifecycleStages.map((s, i) => ({
           ...s,
-          isCompleted: i <= activeIdx ? true : s.isCompleted,
-          isActive:    i === activeIdx + 1,
-          timestamp:   i === activeIdx + 1 ? now : s.timestamp,
+          isCompleted: i < targetStageIdx || (targetStageIdx === 5 && i === 5),
+          isActive: i === targetStageIdx,
+          timestamp: i === targetStageIdx ? now : (i < targetStageIdx ? (s.timestamp || now) : undefined),
         }));
-        const stageChangeUpdate: IncidentUpdate = {
+
+        const stageUpdate: IncidentUpdate = {
           id: `u-${Date.now()}`,
           timestamp: now,
           author: activeUserName,
           authorRole: role,
           type: 'stage_change',
-          content: `Stage advanced to ${STAGE_ORDER[activeIdx + 1]}`,
-          fromStage: STAGE_ORDER[activeIdx],
-          toStage: STAGE_ORDER[activeIdx + 1],
+          content: `Lifecycle stage moved from ${fromStageLabel} to ${toStageLabel}`,
+          fromStage: fromStageLabel,
+          toStage: toStageLabel,
         };
-        return { ...inc, lifecycleStages: newStages, updates: [...(inc.updates ?? []), stageChangeUpdate] };
+
+        return {
+          ...inc,
+          resolutionTarget: targetStageIdx === 5 ? 'Completed' : (inc.resolutionTarget === 'Completed' ? '0d 4h 0m' : inc.resolutionTarget),
+          lifecycleStages: newStages,
+          updates: [...(inc.updates ?? []), stageUpdate],
+        };
       });
 
     setLocalIncidents((prev) => {
       const alreadyLocal = prev.some((i) => i.id === incidentId);
-      if (alreadyLocal) return advance(prev);
+      if (alreadyLocal) return updateStageInList(prev);
       const existing = allIncidents.find((i) => i.id === incidentId);
-      if (existing) return advance([{ ...existing }, ...prev]);
+      if (existing) return updateStageInList([{ ...existing }, ...prev]);
       return prev;
     });
 
-    if (nextStageIdx !== -1) {
-      const backendStatus = mapStageToBackendStatus(nextStageIdx);
-      majorIncidentsService.updateMajorIncident(incidentId, { status: backendStatus })
-        .then((updated) => {
-          if (updated) {
-            setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
-          }
-        })
-        .catch(() => {});
-      majorIncidentsService.addMajorIncidentUpdate(incidentId, {
-        message: `Lifecycle stage advanced to ${STAGE_ORDER[nextStageIdx]}`,
-        author: activeUserName,
-      })
-        .then((updated) => {
-          if (updated) {
-            setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
-          }
-        })
-        .catch(() => {});
+    setServerIncidents((prev) => updateStageInList(prev));
+
+    const backendStatus = mapStageToBackendStatus(targetStageIdx);
+    majorIncidentsService.updateMajorIncident(incidentId, {
+      status: backendStatus,
+      resolvedAt: targetStageIdx === 5 ? new Date().toISOString() : null,
+    }).then((updated) => {
+      if (updated) {
+        setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
+      }
+    }).catch(() => {});
+
+    majorIncidentsService.addMajorIncidentUpdate(incidentId, {
+      message: `Lifecycle stage moved to ${STAGE_ORDER[targetStageIdx]}`,
+      author: activeUserName,
+    }).catch(() => {});
+  };
+
+  const handleStepBackStage = (incidentId: string) => {
+    const inc = allIncidents.find((i) => i.id === incidentId);
+    if (!inc) return;
+    const activeIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
+    if (activeIdx > 0) {
+      handleSetStage(incidentId, activeIdx - 1);
     }
+  };
+
+  const handleAdvanceStage = (incidentId: string) => {
+    const inc = allIncidents.find((i) => i.id === incidentId);
+    if (!inc) return;
+    const activeIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
+    if (activeIdx !== -1 && activeIdx < STAGE_ORDER.length - 1) {
+      handleSetStage(incidentId, activeIdx + 1);
+    }
+  };
+
+  const handleReopenIncident = (incidentId: string) => {
+    handleSetStage(incidentId, 0);
+  };
+
+  const handleResetDemoIncidents = async () => {
+    localStorage.removeItem('servigen_major_incidents_live_v1');
+    setLocalIncidents([]);
+    try {
+      await majorIncidentsService.updateMajorIncident('0002671', { status: 'Investigating', commander: 'Unassigned', priority: 'P1' });
+      await majorIncidentsService.updateMajorIncident('0002672', { status: 'Investigating', commander: 'Jennifer Williams', priority: 'P2' });
+      await majorIncidentsService.updateMajorIncident('0002673', { status: 'Investigating', commander: 'Demo User', priority: 'P1' });
+    } catch {}
+    await loadLiveIncidents();
   };
 
   const handleAddUpdate = (incidentId: string, update: IncidentUpdate) => {
@@ -571,48 +618,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     return () => window.removeEventListener('keydown', h);
   }, []);
 
-  if (selectedIncident) {
-    return (
-      <>
-        <MajorIncidentConsole
-          incident={selectedIncident}
-          role={role}
-          onBack={() => {
-            setSelectedIncidentId(null);
-            const url = new URL(window.location.href);
-            url.searchParams.delete('incident');
-            window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
-          }}
-          onAdvanceStage={(id) => handleAdvanceStage(id)}
-          onAddUpdate={(id, update) => handleAddUpdate(id, update)}
-          onReassignCommander={(id, assignee) => handleReassign(id, assignee)}
-          onUpdatePriority={(id, prio) => handleUpdatePriority(id, prio)}
-          allIncidents={allIncidents}
-          onSelectIncident={(id) => {
-            setSelectedIncidentId(id);
-            const url = new URL(window.location.href);
-            url.searchParams.set('incident', id);
-            window.history.pushState({}, '', url.toString());
-          }}
-          onOpenNewTicket={() => setShowNewModal(true)}
-        />
-        {showNewModal && (
-          <NewIncidentModal
-            onClose={() => setShowNewModal(false)}
-            onSubmit={(newInc) => {
-              handleAddIncident(newInc);
-              setShowNewModal(false);
-              setSelectedIncidentId(newInc.id);
-              const url = new URL(window.location.href);
-              url.searchParams.set('incident', newInc.id);
-              window.history.pushState({}, '', url.toString());
-            }}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
       <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
@@ -637,6 +642,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setIsFeedOpen(false);
             loadLiveIncidents();
           }}
+          onResetDemo={handleResetDemoIncidents}
           onToggleFeed={() => {
             setIsFeedOpen((v) => {
               const next = !v;
@@ -991,13 +997,22 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             </div>
           )}
 
-          {/* ── Incident detail panel ── */}
+
+          {/* ── Incident Detail Side Bar Menu (Primary) ── */}
           {selectedIncident && (
             <IncidentDetailPanel
               incident={selectedIncident}
               role={role}
-              onClose={() => setSelectedIncidentId(null)}
+              onClose={() => {
+                setSelectedIncidentId(null);
+                const url = new URL(window.location.href);
+                url.searchParams.delete('incident');
+                window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+              }}
               onAdvanceStage={handleAdvanceStage}
+              onStepBackStage={handleStepBackStage}
+              onSetStage={handleSetStage}
+              onReopen={handleReopenIncident}
               onAddUpdate={handleAddUpdate}
               onReassign={handleReassign}
               onUpdatePriority={handleUpdatePriority}

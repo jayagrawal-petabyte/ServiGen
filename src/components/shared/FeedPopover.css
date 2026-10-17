@@ -56,6 +56,10 @@
   margin-bottom: 14px;
 }
 
+.feed-filter-dropdown-container {
+  position: relative;
+}
+
 .feed-filter-dropdown {
   display: flex;
   align-items: center;
@@ -64,11 +68,59 @@
   font-weight: 700;
   color: #0f172a;
   cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .dropdown-caret {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748b;
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.feed-filter-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  min-width: 180px;
+  z-index: 200;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-filter-option {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.feed-filter-option:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.feed-filter-option.is-selected {
+  background: #fdf2f0;
+  color: #3a201a;
+  font-weight: 700;
 }
 
 .feed-popout-btn {

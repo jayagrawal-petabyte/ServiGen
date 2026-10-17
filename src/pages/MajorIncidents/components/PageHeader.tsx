@@ -15,6 +15,7 @@ interface PageHeaderProps {
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
   onRefresh?: () => void;
+  onResetDemo?: () => void;
   onNew?: () => void;
   onGetStarted?: () => void;
   breadcrumb?: string;
@@ -57,6 +58,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   searchQuery = '',
   onSearchChange,
   onRefresh,
+  onResetDemo,
   onNew,
   onGetStarted,
   breadcrumb = 'Update Required',
@@ -151,6 +153,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             onClick={handleRefresh}
             className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
             aria-label="Refresh"
+            title="Refresh major incidents from database"
           >
             <svg
               className={`w-3.5 h-3.5 ${spinning ? 'animate-spin' : ''}`}
@@ -161,9 +164,19 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </svg>
           </button>
 
+          {onResetDemo && (
+            <button
+              onClick={onResetDemo}
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600 hover:text-amber-700 bg-gray-100 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
+              title="Reset the 3 demo incidents to their initial stages"
+            >
+              <span>↺ Reset Demo</span>
+            </button>
+          )}
+
           <button
             onClick={handleNew}
-            className="flex items-center gap-1 bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-3 py-1 rounded-full transition-colors shadow-sm whitespace-nowrap"
+            className="flex items-center gap-1 bg-[#13273e] hover:bg-[#0c1a2b] text-white text-xs font-semibold px-3.5 py-1 rounded-full transition-colors shadow-xs whitespace-nowrap"
           >
             <span className="text-sm leading-none font-light">+</span> New
           </button>

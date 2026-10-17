@@ -16,6 +16,7 @@ const EDITABLE_FIELDS = new Set([
   'impact',
   'affectedServices',
   'commander',
+  'resolvedAt',
 ]);
 
 let incidentSequence = 0;
@@ -102,6 +103,8 @@ const changeMajorIncident = async (id, payload) => {
 
   if (changes.status === 'Resolved' && !changes.resolvedAt) {
     changes.resolvedAt = new Date().toISOString();
+  } else if (changes.status && changes.status !== 'Resolved') {
+    changes.resolvedAt = null;
   }
 
   return updateMajorIncident(id, changes);

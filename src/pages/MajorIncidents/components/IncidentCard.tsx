@@ -47,54 +47,65 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white border rounded-lg px-6 py-4 mb-4 shadow-sm hover:shadow-md transition-all ${
+      className={`bg-white border rounded-xl p-5 mb-4 shadow-xs hover:shadow-md transition-all ${
         onClick ? 'cursor-pointer' : ''
       } ${
         isSelected ? 'border-cyan-500 ring-2 ring-cyan-100' : 'border-gray-200'
       }`}
     >
-      <div className="flex items-center gap-6">
-        <div className="flex flex-col justify-center gap-1.5 w-64 shrink-0">
-          <div className="flex items-center gap-2 min-w-0 mb-1">
-            <span className="shrink-0 text-[12px] font-bold font-mono text-cyan-600 bg-cyan-50/50 border border-cyan-400 rounded px-1.5 py-0.5">
-              #{incident.id}
-            </span>
-            <span className="text-gray-900 font-bold text-sm leading-tight break-words">
-              {incident.title}
-            </span>
-          </div>
-          <p className="text-[13px] text-gray-500">
-            Resolution Target <span className={resolutionTargetStyle(incident.resolutionTarget)}>{incident.resolutionTarget}</span>
-          </p>
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] text-gray-500">
-              Response Target <span className="text-gray-800 font-medium">{incident.responseTarget}</span>
-            </p>
-            {canAdvance && onAdvanceStage && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdvanceStage();
-                }}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 shadow-xs"
-                title={`Advance as ${role}`}
-              >
-                <span>Advance</span>
-                <span>→</span>
-              </button>
-            )}
-            {role === 'Agent' && !isClosed && (
-              <span className="text-[10px] text-gray-400 font-medium bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded">
-                View only
-              </span>
-            )}
-          </div>
+      {/* Top Header Line */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 text-xs font-bold font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 rounded px-2 py-0.5">
+            #{incident.id}
+          </span>
+          <h3 className="text-sm font-bold text-gray-900 leading-tight">
+            {incident.title}
+          </h3>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <LifecyclePipeline stages={incident.lifecycleStages} topBadges={topBadges} />
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold ${
+            incident.priority === 'Critical' ? 'text-red-600' : incident.priority === 'High' ? 'text-orange-600' : 'text-yellow-600'
+          }`}>
+            {incident.priority}
+          </span>
+          <span className="text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+            {incident.product || 'MyFinance PROD'}
+          </span>
         </div>
+      </div>
+
+      {/* Target Subtitle Line */}
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+        <div className="flex items-center gap-4">
+          <span>
+            Resolution Target <strong className={resolutionTargetStyle(incident.resolutionTarget)}>{incident.resolutionTarget}</strong>
+          </span>
+          <span>
+            Response Target <strong className="text-gray-700 font-semibold">{incident.responseTarget}</strong>
+          </span>
+        </div>
+
+        {canAdvance && onAdvanceStage && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdvanceStage();
+            }}
+            className="bg-[#13273e] hover:bg-[#0c1a2b] text-white text-[11px] font-bold px-3 py-1 rounded-full transition-colors flex items-center gap-1 shadow-xs"
+            title={`Advance as ${role}`}
+          >
+            <span>Advance Stage</span>
+            <span>→</span>
+          </button>
+        )}
+      </div>
+
+      {/* Lifecycle Pipeline Chevrons */}
+      <div className="w-full overflow-x-auto">
+        <LifecyclePipeline stages={incident.lifecycleStages} />
       </div>
     </div>
   );

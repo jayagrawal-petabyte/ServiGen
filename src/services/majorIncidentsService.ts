@@ -104,7 +104,7 @@ function buildLifecycleStages(
   return STAGE_LABELS.map((label, idx) => ({
     label,
     isActive: idx === activeIndex,
-    isCompleted: idx < activeIndex || (idx === 5 && (backendStatus === 'Closed' || Boolean(resolvedAt))),
+    isCompleted: idx < activeIndex || (idx === 5 && backendStatus === 'Closed'),
     timestamp: idx === 0 ? formattedStarted : idx === 4 || idx === 5 ? formattedResolved : undefined,
   }));
 }
@@ -256,6 +256,7 @@ export const majorIncidentsService = {
       affectedServices: string[];
       commander: string;
       assignee: string;
+      resolvedAt: string | null;
     }>
   ): Promise<MajorIncident | null> {
     try {
@@ -263,6 +264,7 @@ export const majorIncidentsService = {
       if (changes.title !== undefined) payload.title = changes.title;
       if (changes.description !== undefined) payload.description = changes.description;
       if (changes.status !== undefined) payload.status = changes.status;
+      if (changes.resolvedAt !== undefined) payload.resolvedAt = changes.resolvedAt;
       if (changes.priority !== undefined) payload.priority = changes.priority;
       if (changes.impact !== undefined) payload.impact = changes.impact;
       if (changes.affectedServices !== undefined) payload.affectedServices = changes.affectedServices;
