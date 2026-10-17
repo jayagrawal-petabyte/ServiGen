@@ -298,7 +298,27 @@ async function main() {
   await db.teamMembership.upsert({where:{teamId_userId:{teamId:'team-001',userId:agent1.id}},update:{},create:{teamId:'team-001',userId:agent1.id}});
   await db.ticket.update({where:{id:'INC-1001'},data:{teamId:'team-001'}});
   await db.incident.upsert({where:{ticketId:'INC-1001'},update:{},create:{id:'incident-001',ticketId:'INC-1001',category:'Network'}});
-  await db.serviceCatalogueItem.upsert({where:{id:'service-admin-rights'},update:{},create:{id:'service-admin-rights',name:'Administrator Rights',description:'Developer workstation administrator access',category:'Access',requiresApproval:true}});
+  const serviceCatalogueSeeds = [
+    { id: 'service-admin-rights', name: 'Administrator Rights', description: 'Request administrator access to your device.', icon: '⚙️', category: 'End-User Catalogue', requiresApproval: true },
+    { id: 'service-laptop', name: 'Request a Laptop', description: 'Standard high-performance laptop for developers.', icon: '🖥️', category: 'End-User Catalogue', requiresApproval: true },
+    { id: 'service-vpn', name: 'VPN Access', description: 'Secure remote corporate network access token.', icon: '🔒', category: 'Access', requiresApproval: false },
+    { id: 'service-adobe', name: 'Adobe Creative Cloud', description: 'Design and multimedia creative software suite.', icon: '🎨', category: 'Business Applications', requiresApproval: true },
+    { id: 'service-crm', name: 'CRM Platform Support', description: 'Customer relationship management workspace support.', icon: '👥', category: 'Business Applications', requiresApproval: false },
+    { id: 'service-data-integration', name: 'Data Integration', description: 'Enterprise application and data pipeline integration.', icon: '🧩', category: 'Business Applications', requiresApproval: true },
+    { id: 'service-database-admin', name: 'Database Administration', description: 'Database schema migration and DBA provisioning support.', icon: '🗄️', category: 'Business Applications', requiresApproval: true },
+    { id: 'service-desk-booking', name: 'Desk Booking', description: 'Hot-desk reservation and office seat relocation.', icon: '🪑', category: 'Services', requiresApproval: false },
+    { id: 'service-air-con', name: 'Air Con & Climate', description: 'Report an office air conditioning or temperature issue.', icon: '❄️', category: 'Services', requiresApproval: false },
+    { id: 'service-building-fabric', name: 'Building Fabric', description: 'Report facilities maintenance and infrastructure repairs.', icon: '🏢', category: 'Services', requiresApproval: false },
+    { id: 'service-absence', name: 'Absence Management', description: 'Submit leave request or emergency attendance notification.', icon: '📅', category: 'End-User Catalogue', requiresApproval: true },
+    { id: 'service-electrical', name: 'Electrical & Power', description: 'Report power outlet disruptions or UPS failures.', icon: '🔌', category: 'Services', requiresApproval: false }
+  ];
+  for (const s of serviceCatalogueSeeds) {
+    await db.serviceCatalogueItem.upsert({
+      where: { id: s.id },
+      update: { name: s.name, description: s.description, icon: s.icon, category: s.category, requiresApproval: s.requiresApproval },
+      create: { id: s.id, name: s.name, description: s.description, icon: s.icon, category: s.category, requiresApproval: s.requiresApproval }
+    });
+  }
   await db.serviceRequest.upsert({where:{ticketId:'REQ-1002'},update:{},create:{id:'request-001',ticketId:'REQ-1002',serviceCatalogueItemId:'service-admin-rights'}});
   await db.approval.upsert({where:{id:'APP-1001'},update:{},create:{id:'APP-1001',ticketId:'REQ-1002',entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
 

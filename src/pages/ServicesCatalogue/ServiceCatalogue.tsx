@@ -6,8 +6,9 @@ import {
   submitServiceRequest,
   type ServiceItem,
   type SubmittedServiceRequest,
-  FALLBACK_SERVICES,
 } from "../../services/servicesCatalogueService";
+import { useAuth } from "../Auth/AuthContext";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 
 type CategoryFilter = string;
 
@@ -52,12 +53,10 @@ function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
 }
 
 export default function ServiceCatalogue() {
-  const [servicesList, setServicesList] = useState<ServiceItem[]>(FALLBACK_SERVICES);
+  const { user } = useAuth();
+  const [servicesList, setServicesList] = useState<ServiceItem[]>([]);
   const [categories, setCategories] = useState<string[]>([
     "All Services",
-    "Business Applications",
-    "End-User Catalogue",
-    "Services",
   ]);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All Services");
   const [searchText, setSearchText] = useState("");
@@ -68,7 +67,7 @@ export default function ServiceCatalogue() {
   const [requestDetails, setRequestDetails] = useState("");
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [submittedResult, setSubmittedResult] = useState<SubmittedServiceRequest | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load categories and initial services from live backend API
   useEffect(() => {
@@ -82,7 +81,7 @@ export default function ServiceCatalogue() {
         ]);
         if (mounted) {
           if (cats && cats.length > 0) setCategories(cats);
-          if (servs && servs.length > 0) setServicesList(servs);
+          setServicesList(servs || []);
         }
       } catch (err) {
         console.warn("[ServiceCatalogue] Error loading services data:", err);
@@ -144,6 +143,7 @@ export default function ServiceCatalogue() {
       const result = await submitServiceRequest(requestService.id, {
         details: requestDetails.trim(),
         urgency: "Medium",
+        requester: user?.fullName || "Inesh Agarwal",
       });
       setSubmittedResult(result);
       setRequestState("success");
@@ -183,6 +183,7 @@ export default function ServiceCatalogue() {
             >
               <span>+</span> New Request
             </button>
+            <GlobalNavbarActions />
           </div>
         </header>
 
