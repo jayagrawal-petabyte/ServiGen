@@ -67,7 +67,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Main Module Tabs (SCR-024 vs Live Service Health) */}
+          {/* Main Module Tabs (Configuration Items vs Live Service Health) */}
           <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
             <button
               onClick={() => navigate('/cmdb')}

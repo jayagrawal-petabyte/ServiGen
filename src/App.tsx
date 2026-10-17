@@ -13,10 +13,10 @@ import Incidents from './pages/Incidents'
 
 // Major Incidents
 import {
-  SCR021_MajorIncidentsDesign,
-  SCR022_MajorIncidentsLive,
-  SCR023_MajorIncidentsWithFeed,
-  SCR025_MajorIncidentsListMockup,
+  MajorIncidentsDesign,
+  MajorIncidentsLive,
+  MajorIncidentsWithFeed,
+  MajorIncidentsListMockup,
 } from './pages/MajorIncidents'
 
 // Projects & Calendar
@@ -208,10 +208,10 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/incidents" element={<Incidents />} />
             <Route path="/my-work" element={<MyWork />} />
-            <Route path="/major-incidents/design" element={<SCR021_MajorIncidentsDesign />} />
-            <Route path="/major-incidents/live" element={<SCR022_MajorIncidentsLive />} />
-            <Route path="/major-incidents/feed" element={<SCR023_MajorIncidentsWithFeed />} />
-            <Route path="/major-incidents/list" element={<SCR025_MajorIncidentsListMockup />} />
+            <Route path="/major-incidents/design" element={<MajorIncidentsDesign />} />
+            <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
+            <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
+            <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/requests" element={<RequestsPage />} />

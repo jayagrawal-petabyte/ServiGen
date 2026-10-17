@@ -110,7 +110,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
       {/* Header Section */}
       <div className="org-users-header-row">
         <div className="org-users-title-col">
-          <h1>Organisations - Users List (SCR-020 / SCR-031)</h1>
+          <h1>Organisations - Users List</h1>
           <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC &amp; Americas</p>
         </div>
 

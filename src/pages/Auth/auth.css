@@ -1,6 +1,6 @@
-/* SCR-001 Login Screen, SCR-013 Splash Screen & SCR-020 Users List Styling */
+/* Login Screen, Splash Screen & Users List Styling */
 
-/* SCR-001 Login Page */
+/* Login Page */
 .figma-login-page {
   width: 100vw;
   height: 100vh;
@@ -253,7 +253,7 @@
   text-align: center;
 }
 
-/* SCR-013 Splash Screen */
+/* Splash Screen */
 .figma-splash-page {
   width: 100vw;
   height: 100vh;
@@ -333,7 +333,7 @@
 }
 
 /* ==========================================================================
-   SCR-020 / SCR-031 Organisations - Users List Screen
+   Organisations - Users List Screen
    ========================================================================== */
 
 .figma-users-page {

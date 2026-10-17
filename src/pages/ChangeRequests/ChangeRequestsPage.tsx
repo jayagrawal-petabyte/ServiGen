@@ -114,7 +114,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Change Management (SCR-009 / SCR-026)
+            Change Management
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             Active change requests, implementation windows, risk review, and rollback checklists
@@ -201,7 +201,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Flame className="w-3.5 h-3.5" /> Active Only (SCR-026)
+              <Flame className="w-3.5 h-3.5" /> Active Only
             </button>
           </div>
 
