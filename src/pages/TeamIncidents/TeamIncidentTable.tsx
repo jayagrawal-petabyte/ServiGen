@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
-import SLAIndicator from "./SLAIndicator";
 import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
-import { MOCK_ORGANISATION_USERS } from "../Auth/mockAuthData";
-import { usePersistentState } from "../../utils/persistentState";
 import { TicketDetailModal, type TicketPriority } from "../../components/TicketDetailModal";
 import { AgentKpiDrawer } from "../../components/shared/AgentKpiDrawer";
 import { FeedPopover } from "../../components/shared/FeedPopover";
 import { TimesheetPopover } from "../../components/shared/TimesheetPopover";
 import "./TeamIncidents.css";
 import {
-  fetchSupportIncidents,
-  fetchSupportAgents,
+  fetchAllTeamIncidents,
   updateSupportIncidentStatus,
+  type SupportAgent,
 } from "../../services/teamIncidentsService";
 
-import { INITIAL_ALL_TEAM_INCIDENTS, type TeamIncident } from "./teamIncidents.data";
+import type { TeamIncident } from "./teamIncidents.data";
 
 export type Incident = TeamIncident;
 
@@ -32,8 +29,6 @@ interface TeamIncidentTableProps {
   initialViewKind?: "team" | "agent" | "breaching-sla";
 }
 
-const agents = MOCK_ORGANISATION_USERS.map((u) => u.fullName);
-
 function TeamIncidentTable({
   team = "1st Line Support",
   initialViewKind,
@@ -42,48 +37,43 @@ function TeamIncidentTable({
   const { user } = useAuth();
   const isSecondLine = team.toLowerCase().includes("2nd");
 
-  const [incidents, setIncidents] = usePersistentState<TeamIncident[]>(
-    "servigen_all_team_incidents_v6",
-    INITIAL_ALL_TEAM_INCIDENTS
-  );
-
-  const [agentsList, setAgentsList] = useState<string[]>(agents);
-  const [isSyncingApi, setIsSyncingApi] = useState<boolean>(false);
+  const [incidents, setIncidents] = useState<TeamIncident[]>([]);
+  const [firstLineAgents, setFirstLineAgents] = useState<SupportAgent[]>([]);
+  const [secondLineAgents, setSecondLineAgents] = useState<SupportAgent[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Sync incidents and agents with live backend API
   useEffect(() => {
-    let mounted = true;
-    const targetTeam = isSecondLine ? "2nd Line Support" : "1st Line Support";
-    setIsSyncingApi(true);
+    // Clear legacy localStorage cached mock data
+    try {
+      localStorage.removeItem("servigen_all_team_incidents_v6");
+      localStorage.removeItem("servigen_all_team_incidents_v5");
+    } catch {
+      // ignore
+    }
 
-    fetchSupportIncidents(targetTeam)
+    let mounted = true;
+    setIsLoading(true);
+
+    fetchAllTeamIncidents()
       .then((res) => {
-        if (mounted && res.incidents && res.incidents.length > 0) {
-          setIncidents((prev) => {
-            const newOnes = res.incidents.filter(
-              (remote) => !prev.some((loc) => loc.id.toLowerCase() === remote.id.toLowerCase())
-            );
-            return newOnes.length > 0 ? [...newOnes, ...prev] : prev;
-          });
+        if (mounted) {
+          setIncidents(res.incidents);
+          setFirstLineAgents(res.firstLineAgents);
+          setSecondLineAgents(res.secondLineAgents);
         }
       })
+      .catch((err) => {
+        console.error("[TeamIncidentTable] Live API fetch failed:", err);
+      })
       .finally(() => {
-        if (mounted) setIsSyncingApi(false);
+        if (mounted) setIsLoading(false);
       });
-
-    fetchSupportAgents(targetTeam).then((agentList) => {
-      if (mounted && agentList && agentList.length > 0) {
-        const names = agentList
-          .map((a) => `${a.firstName} ${a.lastName}`.trim())
-          .filter(Boolean);
-        setAgentsList((prev) => Array.from(new Set([...prev, ...names])));
-      }
-    });
 
     return () => {
       mounted = false;
     };
-  }, [team, isSecondLine]);
+  }, [team]);
 
   const [selectedView, setSelectedView] = useState<TeamViewSelection>(() => {
     if (initialViewKind === "breaching-sla") {
@@ -104,71 +94,63 @@ function TeamIncidentTable({
   const [showKpiDrawer, setShowKpiDrawer] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
   const [showTimesheetPopover, setShowTimesheetPopover] = useState(false);
-  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Team Sidebar Navigation state
   const [firstLineExpanded, setFirstLineExpanded] = useState<boolean>(!isSecondLine);
   const [secondLineExpanded, setSecondLineExpanded] = useState<boolean>(isSecondLine);
 
-  // Dynamic live counts for 1st Line Support (Sum = 37)
-  const count1stLineTotal = React.useMemo(
+  // Dynamic live agent lists
+  const firstLineAgentNames = useMemo(() => {
+    const fromRoster = firstLineAgents.map((a) => `${a.firstName} ${a.lastName}`.trim()).filter(Boolean);
+    const fromIncidents = incidents
+      .filter((i) => i.team === "1st Line Support" && i.agent && i.agent !== "Unassigned")
+      .map((i) => i.agent);
+    return Array.from(new Set([...fromRoster, ...fromIncidents]));
+  }, [firstLineAgents, incidents]);
+
+  const secondLineAgentNames = useMemo(() => {
+    const fromRoster = secondLineAgents.map((a) => `${a.firstName} ${a.lastName}`.trim()).filter(Boolean);
+    const fromIncidents = incidents
+      .filter((i) => i.team === "2nd Line Support" && i.agent && i.agent !== "Unassigned")
+      .map((i) => i.agent);
+    return Array.from(new Set([...fromRoster, ...fromIncidents]));
+  }, [secondLineAgents, incidents]);
+
+  // Dynamic live counts for 1st Line Support
+  const count1stLineTotal = useMemo(
     () => incidents.filter((i) => i.team === "1st Line Support").length,
     [incidents]
   );
-  const count1stLineUnassigned = React.useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Unassigned").length,
-    [incidents]
-  );
-  const count1stLineDemo = React.useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Demo User").length,
-    [incidents]
-  );
-  const count1stLineJames = React.useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "James Brown").length,
-    [incidents]
-  );
-  const count1stLineJennifer = React.useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Jennifer Williams").length,
+  const count1stLineUnassigned = useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support" && (!i.agent || i.agent === "Unassigned")).length,
     [incidents]
   );
 
-  // Dynamic live counts for 2nd Line Support (Sum = 12)
-  const count2ndLineTotal = React.useMemo(
+  // Dynamic live counts for 2nd Line Support
+  const count2ndLineTotal = useMemo(
     () => incidents.filter((i) => i.team === "2nd Line Support").length,
     [incidents]
   );
-  const count2ndLineUnassigned = React.useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Unassigned").length,
-    [incidents]
-  );
-  const count2ndLineDemo = React.useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Demo User").length,
-    [incidents]
-  );
-  const count2ndLineDavid = React.useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "David Chen").length,
-    [incidents]
-  );
-  const count2ndLineElena = React.useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Elena Rostova").length,
+  const count2ndLineUnassigned = useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support" && (!i.agent || i.agent === "Unassigned")).length,
     [incidents]
   );
 
-  // Dynamic live counts for Infrastructure (Sum = 12)
-  const countInfrastructure = React.useMemo(
+  // Dynamic live counts for Infrastructure
+  const countInfrastructure = useMemo(
     () => incidents.filter((i) => i.team === "Infrastructure").length,
     [incidents]
   );
 
-  // Dynamic live counts for Breaching SLA (Sum = 61)
-  const countBreachingSLA = React.useMemo(
-    () => incidents.filter((i) => i.sla.startsWith("-")).length,
+  // Dynamic live counts for Breaching SLA
+  const countBreachingSLA = useMemo(
+    () => incidents.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach")).length,
     [incidents]
   );
 
   // Reset page and selection when view or search changes
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
     setSelectedIncidents([]);
   }, [selectedView, search]);
@@ -181,16 +163,22 @@ function TeamIncidentTable({
   const [newPriority, setNewPriority] = useState<string>("Medium");
 
   // Filtered incidents based on active sidebar view selection & search query
-  const filteredIncidents = React.useMemo(() => {
+  const filteredIncidents = useMemo(() => {
     let base = incidents;
     if (selectedView.kind === "team") {
       base = incidents.filter((i) => i.team === selectedView.team);
     } else if (selectedView.kind === "agent") {
-      base = incidents.filter(
-        (i) => i.team === selectedView.team && i.agent === selectedView.agent
-      );
+      if (selectedView.agent === "Unassigned") {
+        base = incidents.filter(
+          (i) => i.team === selectedView.team && (!i.agent || i.agent === "Unassigned")
+        );
+      } else {
+        base = incidents.filter(
+          (i) => i.team === selectedView.team && i.agent.toLowerCase() === selectedView.agent.toLowerCase()
+        );
+      }
     } else if (selectedView.kind === "breaching-sla") {
-      base = incidents.filter((i) => i.sla.startsWith("-"));
+      base = incidents.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach"));
     }
 
     if (!search.trim()) return base;
@@ -259,7 +247,7 @@ function TeamIncidentTable({
         selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
       )
     );
-    // Push status changes to backend API
+    // Push status updates to backend API
     selectedIncidents.forEach((id) => {
       updateSupportIncidentStatus(id, newStat);
     });
@@ -267,9 +255,9 @@ function TeamIncidentTable({
 
   const handleCreateIncident = () => {
     if (!newSummary.trim()) return;
-    const newId = `000${Math.floor(3900 + Math.random() * 99)}`;
+    const newId = `INC-${Math.floor(2000 + Math.random() * 8000)}`;
     const targetTeam = selectedView.kind === "breaching-sla" ? "1st Line Support" : selectedView.team;
-    const targetAgent = selectedView.kind === "agent" ? selectedView.agent : "Demo User";
+    const targetAgent = selectedView.kind === "agent" ? selectedView.agent : (user?.fullName || "Unassigned");
     const newInc: Incident = {
       id: newId,
       sla: "-12:00",
@@ -277,10 +265,10 @@ function TeamIncidentTable({
       category: newCategory,
       agent: targetAgent,
       priority: newPriority,
-      status: "In Progress",
+      status: "Active",
       type: "Incident",
       team: targetTeam,
-      dateLogged: "28/07/2026",
+      dateLogged: new Date().toLocaleDateString("en-GB"),
     };
     setIncidents((prev) => [newInc, ...prev]);
     setNewSummary("");
@@ -289,7 +277,7 @@ function TeamIncidentTable({
 
   return (
     <div className="team-shell">
-      {/* Top Navbar Header (Image 4 Match) */}
+      {/* Top Navbar Header */}
       <header className="team-top-navbar">
         <div className="team-breadcrumb">
           <span className="team-bc-link cursor-pointer hover:underline" onClick={() => navigate('/incidents')}>Incidents</span>
@@ -357,7 +345,7 @@ function TeamIncidentTable({
               type="button"
               className="team-header-icon-btn"
               title="Notifications"
-              onClick={() => alert("You have 3 unread team SLA alerts.")}
+              onClick={() => alert("Live SLA Alert: " + countBreachingSLA + " tickets currently breaching SLA.")}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -369,7 +357,7 @@ function TeamIncidentTable({
               type="button"
               className="team-header-icon-btn"
               title="Tasks"
-              onClick={() => alert("Open assigned checklist tasks")}
+              onClick={() => navigate('/my-work')}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
@@ -441,11 +429,11 @@ function TeamIncidentTable({
               </svg>
             </button>
 
-            {/* User Chat Bubble Avatar */}
+            {/* User Avatar */}
             <button
               type="button"
               className="team-avatar-speech-btn"
-              title={`Logged in as ${user?.fullName || "Demo User"}`}
+              title={`Logged in as ${user?.fullName || "Agent"}`}
               onClick={() => navigate('/my-work')}
             >
               <div className="team-avatar-speech-inner" />
@@ -534,7 +522,7 @@ function TeamIncidentTable({
                   setSelectedView({ kind: "team", team: "1st Line Support" });
                   setFirstLineExpanded(true);
                 }}
-                title="View all 37 incidents for 1st Line Support"
+                title={`View all ${count1stLineTotal} incidents for 1st Line Support`}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -571,7 +559,7 @@ function TeamIncidentTable({
                         agent: "Unassigned",
                       })
                     }
-                    title="View 13 unassigned tickets"
+                    title={`View ${count1stLineUnassigned} unassigned tickets`}
                   >
                     <div className="flex items-center gap-2">
                       <span style={{ color: "#7c3aed", fontSize: 14 }}>👤</span>
@@ -580,90 +568,54 @@ function TeamIncidentTable({
                     <span className="team-sidebar-badge">{count1stLineUnassigned}</span>
                   </button>
 
-                  {/* Available label */}
-                  <span className="team-section-pill-label available">Available</span>
+                  {/* Dynamic 1st Line Agents */}
+                  {firstLineAgentNames.length > 0 && (
+                    <>
+                      <span className="team-section-pill-label available">Support Agents</span>
+                      {firstLineAgentNames.map((agentName) => {
+                        const count = incidents.filter(
+                          (i) => i.team === "1st Line Support" && i.agent.toLowerCase() === agentName.toLowerCase()
+                        ).length;
+                        const isMe = user?.fullName && user.fullName.toLowerCase() === agentName.toLowerCase();
+                        const initials = agentName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2);
 
-                  {/* Demo User (You) */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "1st Line Support" &&
-                      selectedView.agent === "Demo User"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "1st Line Support",
-                        agent: "Demo User",
-                      })
-                    }
-                    title="View 4 tickets assigned to Demo User"
-                  >
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span style={{ color: "#22c55e", fontSize: 10 }}>🟢</span>
-                      <span className="truncate">Demo User (You)</span>
-                      <span>🏆</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count1stLineDemo}</span>
-                  </button>
-
-                  {/* Offline label */}
-                  <span className="team-section-pill-label offline">Offline</span>
-
-                  {/* James Brown */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "1st Line Support" &&
-                      selectedView.agent === "James Brown"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "1st Line Support",
-                        agent: "James Brown",
-                      })
-                    }
-                    title="View 10 tickets assigned to James Brown"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="team-avatar-initials">JB</span>
-                      <span>James Brown</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count1stLineJames}</span>
-                  </button>
-
-                  {/* Jennifer Williams */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "1st Line Support" &&
-                      selectedView.agent === "Jennifer Williams"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "1st Line Support",
-                        agent: "Jennifer Williams",
-                      })
-                    }
-                    title="View 10 tickets assigned to Jennifer Williams"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="team-avatar-initials jw">JW</span>
-                      <span>Jennifer Williams</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count1stLineJennifer}</span>
-                  </button>
+                        return (
+                          <button
+                            key={agentName}
+                            type="button"
+                            className={`team-subitem-btn ${
+                              selectedView.kind === "agent" &&
+                              selectedView.team === "1st Line Support" &&
+                              selectedView.agent.toLowerCase() === agentName.toLowerCase()
+                                ? "active"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setSelectedView({
+                                kind: "agent",
+                                team: "1st Line Support",
+                                agent: agentName,
+                              })
+                            }
+                            title={`View ${count} tickets assigned to ${agentName}`}
+                          >
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <span className="team-avatar-initials">{initials}</span>
+                              <span className="truncate">
+                                {agentName}{isMe ? " (You)" : ""}
+                              </span>
+                            </div>
+                            <span className="team-sidebar-badge">{count}</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -681,7 +633,7 @@ function TeamIncidentTable({
                   setSelectedView({ kind: "team", team: "2nd Line Support" });
                   setSecondLineExpanded(true);
                 }}
-                title="View all 12 incidents for 2nd Line Support"
+                title={`View all ${count2ndLineTotal} incidents for 2nd Line Support`}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -718,7 +670,7 @@ function TeamIncidentTable({
                         agent: "Unassigned",
                       })
                     }
-                    title="View 2 unassigned tickets"
+                    title={`View ${count2ndLineUnassigned} unassigned tickets`}
                   >
                     <div className="flex items-center gap-2">
                       <span style={{ color: "#7c3aed", fontSize: 14 }}>👤</span>
@@ -727,90 +679,54 @@ function TeamIncidentTable({
                     <span className="team-sidebar-badge">{count2ndLineUnassigned}</span>
                   </button>
 
-                  {/* Available label */}
-                  <span className="team-section-pill-label available">Available</span>
+                  {/* Dynamic 2nd Line Agents */}
+                  {secondLineAgentNames.length > 0 && (
+                    <>
+                      <span className="team-section-pill-label available">Support Agents</span>
+                      {secondLineAgentNames.map((agentName) => {
+                        const count = incidents.filter(
+                          (i) => i.team === "2nd Line Support" && i.agent.toLowerCase() === agentName.toLowerCase()
+                        ).length;
+                        const isMe = user?.fullName && user.fullName.toLowerCase() === agentName.toLowerCase();
+                        const initials = agentName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2);
 
-                  {/* Demo User (You) */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "2nd Line Support" &&
-                      selectedView.agent === "Demo User"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "2nd Line Support",
-                        agent: "Demo User",
-                      })
-                    }
-                    title="View 4 tickets assigned to Demo User"
-                  >
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span style={{ color: "#22c55e", fontSize: 10 }}>🟢</span>
-                      <span className="truncate">Demo User (You)</span>
-                      <span>🏆</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count2ndLineDemo}</span>
-                  </button>
-
-                  {/* Offline label */}
-                  <span className="team-section-pill-label offline">Offline</span>
-
-                  {/* David Chen */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "2nd Line Support" &&
-                      selectedView.agent === "David Chen"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "2nd Line Support",
-                        agent: "David Chen",
-                      })
-                    }
-                    title="View 3 tickets assigned to David Chen"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="team-avatar-initials">DC</span>
-                      <span>David Chen</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count2ndLineDavid}</span>
-                  </button>
-
-                  {/* Elena Rostova */}
-                  <button
-                    type="button"
-                    className={`team-subitem-btn ${
-                      selectedView.kind === "agent" &&
-                      selectedView.team === "2nd Line Support" &&
-                      selectedView.agent === "Elena Rostova"
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedView({
-                        kind: "agent",
-                        team: "2nd Line Support",
-                        agent: "Elena Rostova",
-                      })
-                    }
-                    title="View 3 tickets assigned to Elena Rostova"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="team-avatar-initials jw">ER</span>
-                      <span>Elena Rostova</span>
-                    </div>
-                    <span className="team-sidebar-badge">{count2ndLineElena}</span>
-                  </button>
+                        return (
+                          <button
+                            key={agentName}
+                            type="button"
+                            className={`team-subitem-btn ${
+                              selectedView.kind === "agent" &&
+                              selectedView.team === "2nd Line Support" &&
+                              selectedView.agent.toLowerCase() === agentName.toLowerCase()
+                                ? "active"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setSelectedView({
+                                kind: "agent",
+                                team: "2nd Line Support",
+                                agent: agentName,
+                              })
+                            }
+                            title={`View ${count} tickets assigned to ${agentName}`}
+                          >
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <span className="team-avatar-initials">{initials}</span>
+                              <span className="truncate">
+                                {agentName}{isMe ? " (You)" : ""}
+                              </span>
+                            </div>
+                            <span className="team-sidebar-badge">{count}</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -827,7 +743,7 @@ function TeamIncidentTable({
                 onClick={() =>
                   setSelectedView({ kind: "team", team: "Infrastructure" })
                 }
-                title="View all 12 Infrastructure tickets"
+                title={`View all ${countInfrastructure} Infrastructure tickets`}
               >
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize: 10 }}>►</span>
@@ -845,7 +761,7 @@ function TeamIncidentTable({
                   selectedView.kind === "breaching-sla" ? "active-group" : ""
                 }`}
                 onClick={() => setSelectedView({ kind: "breaching-sla" })}
-                title="View all 61 Breaching SLA incidents across teams"
+                title={`View all ${countBreachingSLA} Breaching SLA incidents across teams`}
               >
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize: 14 }}>⏰</span>
@@ -890,8 +806,17 @@ function TeamIncidentTable({
               <button
                 type="button"
                 className="tb-nav-btn"
-                onClick={() => setSearch("")}
-                title="Refresh table"
+                onClick={() => {
+                  setIsLoading(true);
+                  fetchAllTeamIncidents()
+                    .then((res) => {
+                      setIncidents(res.incidents);
+                      setFirstLineAgents(res.firstLineAgents);
+                      setSecondLineAgents(res.secondLineAgents);
+                    })
+                    .finally(() => setIsLoading(false));
+                }}
+                title="Refresh table from API"
               >
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -905,15 +830,6 @@ function TeamIncidentTable({
               >
                 <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
                 <span>New</span>
-              </button>
-
-              <button
-                type="button"
-                className="tb-nav-btn"
-                title="More Options"
-                onClick={() => alert("Batch table exports & view configuration")}
-              >
-                <span style={{ letterSpacing: "1px", fontWeight: "bold" }}>···</span>
               </button>
             </div>
           </div>
@@ -931,7 +847,7 @@ function TeamIncidentTable({
                   type="button"
                   className="bulk-btn bulk-btn-assign"
                   onClick={handleBulkAssignToMe}
-                  title={`Assign selected incidents to ${user?.fullName || "Inesh Agarwal"}`}
+                  title={`Assign selected incidents to ${user?.fullName || "Agent"}`}
                 >
                   Assign to Me
                 </button>
@@ -969,8 +885,10 @@ function TeamIncidentTable({
                     aria-label="Set status"
                   >
                     <option value="" disabled>Set Status ▾</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Open">Open</option>
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Actioned">Actioned</option>
+                    <option value="On Hold">On Hold</option>
                     <option value="Resolved">Resolved</option>
                     <option value="Closed">Closed</option>
                   </select>
@@ -1012,7 +930,16 @@ function TeamIncidentTable({
                 </tr>
               </thead>
               <tbody>
-                {paginatedIncidents.length > 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={10} className="empty-state text-center py-12 text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="inline-block w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-medium text-slate-600">Loading live support incidents from backend...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedIncidents.length > 0 ? (
                   paginatedIncidents.map((incident) => {
                     const isSelected = selectedIncidents.includes(incident.id);
                     return (
@@ -1040,7 +967,9 @@ function TeamIncidentTable({
                           {incident.id}
                         </td>
                         <td>
-                          <span className="sla-bar-red">{incident.sla}</span>
+                          <span className={incident.sla.startsWith("-") || incident.sla.includes("Breach") ? "sla-bar-red" : "sla-bar-green"}>
+                            {incident.sla}
+                          </span>
                         </td>
                         <td className="team-table-summary-link font-medium">
                           {incident.summary}
@@ -1054,9 +983,9 @@ function TeamIncidentTable({
                         <td>
                           <span
                             className={
-                              incident.status.toLowerCase() === "new"
+                              incident.status.toLowerCase() === "new" || incident.status.toLowerCase() === "active"
                                 ? "status-pill-new"
-                                : incident.status.toLowerCase() === "in progress"
+                                : incident.status.toLowerCase() === "in progress" || incident.status.toLowerCase() === "actioned"
                                 ? "status-pill-in-progress"
                                 : incident.status.toLowerCase() === "on hold"
                                 ? "status-pill-on-hold"
@@ -1077,8 +1006,11 @@ function TeamIncidentTable({
                   })
                 ) : (
                   <tr>
-                    <td colSpan={10} className="empty-state text-center py-8 text-gray-500">
-                      No incidents found matching the current view or search filter.
+                    <td colSpan={10} className="empty-state text-center py-12 text-gray-500">
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-slate-700">No incidents found in this view</p>
+                        <p className="text-xs text-slate-400 mt-1">There are currently no tickets matching the selected team, agent, or filter.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -1101,7 +1033,7 @@ function TeamIncidentTable({
             category: selectedIncident.category,
             targetSla: `Target SLA: ${selectedIncident.sla}`,
           }}
-          currentUser={user?.fullName || "Inesh Agarwal"}
+          currentUser={user?.fullName || "Service Agent"}
           onClose={() => setSelectedIncident(null)}
           onUpdateTicket={(updated) => {
             setIncidents((prev) =>

@@ -12,7 +12,7 @@
  * - PATCH /api/tickets/:id/status               : Update ticket status
  */
 
-import { api, type ApiResponse } from './apiClient';
+import { api } from './apiClient';
 import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.data';
 
 export interface SupportAgent {
@@ -30,6 +30,22 @@ export interface SupportIncidentsResponse {
   totalPages: number;
 }
 
+function formatSla(slaTimeLeft: any, slaFormatted?: string): string {
+  if (typeof slaTimeLeft === 'number') {
+    const isNeg = slaTimeLeft < 0;
+    const absMins = Math.abs(slaTimeLeft);
+    const hours = Math.floor(absMins / 60);
+    const mins = absMins % 60;
+    const formatted = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    return isNeg ? `-${formatted}` : formatted;
+  }
+  if (slaFormatted) {
+    if (slaFormatted === 'SLA Breached') return '-64:00';
+    return slaFormatted;
+  }
+  return '-64:00';
+}
+
 /**
  * Normalizes raw backend ticket data to frontend TeamIncident model
  */
@@ -44,7 +60,7 @@ export function normalizeSupportIncident(
 
   let agentName = 'Unassigned';
   if (raw.assignedAgent) {
-    agentName = `${raw.assignedAgent.firstName || ''} ${raw.assignedAgent.lastName || ''}`.trim() || 'Demo User';
+    agentName = `${raw.assignedAgent.firstName || ''} ${raw.assignedAgent.lastName || ''}`.trim() || 'Unassigned';
   } else if (raw.agent && typeof raw.agent === 'string') {
     agentName = raw.agent;
   } else if (raw.assignedAgentId) {
@@ -62,13 +78,13 @@ export function normalizeSupportIncident(
     }
   }
 
-  const slaStr = raw.slaFormatted || (typeof raw.slaTimeLeft === 'number' ? `${raw.slaTimeLeft}m` : '-64:00');
+  const slaStr = formatSla(raw.slaTimeLeft, raw.slaFormatted);
 
   return {
     id: String(raw.ticketId || raw.id || ''),
     sla: slaStr,
     summary: raw.summary || 'Incident ticket',
-    category: raw.category || 'General Support',
+    category: raw.category || (raw.incident && raw.incident.category) || 'General Support',
     agent: agentName,
     priority: raw.priority || 'Medium',
     status: raw.status || 'Active',
@@ -97,7 +113,9 @@ export async function fetchSupportIncidents(
     ? '/api/incidents/support/second-line'
     : '/api/incidents/support/first-line';
 
-  const queryParams: Record<string, string | number> = {};
+  const queryParams: Record<string, string | number> = {
+    limit: 100, // retrieve full queue for responsive client-side filtering
+  };
   if (params?.page) queryParams.page = params.page;
   if (params?.limit) queryParams.limit = params.limit;
   if (params?.status) queryParams.status = params.status;
@@ -153,6 +171,41 @@ export async function fetchSupportAgents(
   } catch (err) {
     console.warn(`[teamIncidentsService] Failed to fetch agents from ${endpoint}:`, err);
     return [];
+  }
+}
+
+/**
+ * Fetch all support incidents and agent rosters across all support teams
+ */
+export async function fetchAllTeamIncidents(): Promise<{
+  incidents: TeamIncident[];
+  firstLineAgents: SupportAgent[];
+  secondLineAgents: SupportAgent[];
+}> {
+  try {
+    const [firstLineRes, secondLineRes, firstLineAgents, secondLineAgents] = await Promise.all([
+      fetchSupportIncidents('1st Line Support', { limit: 100 }),
+      fetchSupportIncidents('2nd Line Support', { limit: 100 }),
+      fetchSupportAgents('1st Line Support'),
+      fetchSupportAgents('2nd Line Support'),
+    ]);
+
+    const combinedMap = new Map<string, TeamIncident>();
+    (firstLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
+    (secondLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
+
+    return {
+      incidents: Array.from(combinedMap.values()),
+      firstLineAgents,
+      secondLineAgents,
+    };
+  } catch (err) {
+    console.error('[teamIncidentsService] Failed to fetch all team incidents:', err);
+    return {
+      incidents: [],
+      firstLineAgents: [],
+      secondLineAgents: [],
+    };
   }
 }
 
