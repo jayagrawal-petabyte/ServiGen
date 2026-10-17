@@ -8,20 +8,24 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://servigen-1.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/lists': {
-        target: 'http://localhost:5000',
+        target: 'https://servigen-1.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/projects': {
-        target: 'http://localhost:5000',
+        target: 'https://servigen-1.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/escalation': {
-        target: 'http://localhost:5000',
+        target: 'https://servigen-1.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
     },
   },

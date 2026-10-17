@@ -486,8 +486,8 @@ export default function ApprovalsPage() {
             </div>
             {!isDemoMode && (
               <p style={{ margin: '4px 0 0 24px', fontSize: '12px', color: '#b91c1c' }}>
-                Tip: If the backend server is not running on localhost, click "Switch to Demo Mode"
-                to test with local sample data.
+                Tip: If the backend server is temporarily unreachable, click "Switch to Demo Mode"
+                to test with sample data.
               </p>
             )}
           </div>

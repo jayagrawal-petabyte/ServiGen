@@ -134,6 +134,11 @@ export function getApiBaseUrl(): string {
     // Strip trailing slash for consistency
     return envUrl.replace(/\/+$/, '');
   }
+  // In production builds (e.g. Vercel), default to the live Render backend
+  if (import.meta.env.PROD) {
+    return 'https://servigen-1.onrender.com';
+  }
+  // In local development, empty string leverages Vite's dev proxy to Render
   return '';
 }
 
