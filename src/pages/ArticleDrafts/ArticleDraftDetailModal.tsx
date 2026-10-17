@@ -15,6 +15,7 @@ interface ArticleDraftDetailModalProps {
     id: string,
     updates: Partial<ArticleDraft>
   ) => Promise<void> | void;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
 const CATEGORIES = [
@@ -41,6 +42,7 @@ export default function ArticleDraftDetailModal({
   onClose,
   onUpdateStatus,
   onSaveContent,
+  onDelete,
 }: ArticleDraftDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(article ? article.summaryTitle : '');
@@ -95,7 +97,7 @@ export default function ArticleDraftDetailModal({
     return isValid;
   };
 
-  const handleSave = async () => {
+  const handleSave = async (submitForApprovalAfter = false) => {
     if (!validate()) return;
 
     setIsSubmitting(true);
@@ -110,6 +112,11 @@ export default function ArticleDraftDetailModal({
         body: editedBody.trim(),
       });
       setIsEditing(false);
+
+      if (submitForApprovalAfter) {
+        await onUpdateStatus(article.id, 'Awaiting Approval');
+        onClose();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -560,24 +567,79 @@ export default function ArticleDraftDetailModal({
             justifyContent: 'space-between',
           }}
         >
-          <div>
-            {isEditing && (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {onDelete && (
               <button
                 type="button"
-                onClick={handleSave}
                 disabled={isSubmitting}
+                onClick={async () => {
+                  await onDelete(article.id);
+                  onClose();
+                }}
                 style={{
-                  backgroundColor: '#0284c7',
-                  color: 'white',
-                  padding: '7px 16px',
+                  backgroundColor: '#fef2f2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  padding: '7px 14px',
                   borderRadius: '999px',
                   fontWeight: 600,
                   fontSize: '13px',
-                  opacity: isSubmitting ? 0.7 : 1,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
                 }}
+                title="Delete this article draft"
               >
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                Delete Draft
               </button>
+            )}
+
+            {isEditing && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSave(false)}
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: '#0284c7',
+                    color: 'white',
+                    padding: '7px 16px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
+                  title="Save edits to draft"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Draft'}
+                </button>
+
+                {article.status === 'Draft' && (
+                  <button
+                    type="button"
+                    onClick={() => handleSave(true)}
+                    disabled={isSubmitting}
+                    style={{
+                      backgroundColor: '#eb6a47',
+                      color: 'white',
+                      padding: '7px 16px',
+                      borderRadius: '999px',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      opacity: isSubmitting ? 0.7 : 1,
+                      boxShadow: '0 2px 6px rgba(235, 106, 71, 0.35)',
+                    }}
+                    title="Save changes and immediately submit to My Approvals"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Save & Submit for Approval'}
+                  </button>
+                )}
+              </div>
             )}
           </div>
 

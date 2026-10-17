@@ -21,8 +21,11 @@ export default function OpenIncidentsByTeam() {
   }, []);
 
   const handleTeamClick = (label: string) => {
-    if (label.toLowerCase().includes('2nd')) {
+    const lower = label.toLowerCase();
+    if (lower.includes('2nd')) {
       navigate('/team/2nd-line-live');
+    } else if (lower.includes('major')) {
+      navigate('/major-incidents/live');
     } else {
       navigate('/team/1st-line-live');
     }

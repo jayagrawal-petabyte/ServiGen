@@ -899,3 +899,61 @@ input[type="checkbox"] {
 }
 
 
+
+/* ── My New Tickets (Image 3 Match) ── */
+.sla-bar-red {
+  background: #ea3829;
+  color: #ffffff;
+  padding: 2.5px 16px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+  display: inline-block;
+  min-width: 90px;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.status-new {
+  background: #0f3d2e !important;
+  color: #ffffff !important;
+  padding: 3px 16px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 11px;
+  display: inline-block;
+  text-align: center;
+}
+
+.major-incident-group-row td {
+  background: #00bcd4 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 7px 14px !important;
+  cursor: pointer;
+}
+
+.major-incident-group-row:hover td {
+  background: #00acc1 !important;
+}
+
+.major-incident-ticket-row td {
+  background: #f8fafc;
+}
+
+.major-incident-ticket-row:hover td {
+  background: #f1f5f9;
+}
+
+.mi-arrow-icon {
+  display: inline-block;
+  font-size: 11px;
+  color: #64748b;
+  margin-right: 6px;
+  transition: transform 0.15s;
+}
+
+.mi-arrow-icon:hover {
+  color: #0f172a;
+}

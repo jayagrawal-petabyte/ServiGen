@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SidebarListItem } from '../types/majorIncident.types';
 import { SIDEBAR_GROUPS } from '../data/mockData';
@@ -58,6 +59,7 @@ const getIcon = (iconKey?: string) => {
 };
 
 const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectList, counts }) => {
+  const navigate = useNavigate();
   const [selectedId, setSelectedId]   = useState<string>('update-required');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [listsOpen, setListsOpen]     = useState<boolean>(true);
@@ -86,6 +88,13 @@ const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectL
   const handleSelect = (item: SidebarListItem) => {
     setSelectedId(item.id);
     onSelectList?.(item.id);
+    if (item.id === 'calendar') {
+      navigate('/calendar');
+    } else if (item.id === 'dashboard') {
+      navigate('/dashboard');
+    } else if (item.id === 'board') {
+      navigate('/major-incidents/live');
+    }
   };
 
   const filteredGroups = useMemo(() => {

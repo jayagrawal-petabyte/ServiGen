@@ -10,8 +10,13 @@ import NewIncidentModal from './components/NewIncidentModal';
 import GetStartedModal from './components/GetStartedModal';
 import PriorityBadge from './components/PriorityBadge';
 import IncidentDetailPanel from './components/IncidentDetailPanel';
+import MajorIncidentConsole from './components/MajorIncidentConsole';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority, ActivityFeedEntry } from './types/majorIncident.types';
 import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
+import { MOCK_MAJOR_INCIDENTS } from './data/mockData';
+import { FeedPopover } from '../../components/shared/FeedPopover';
+import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
+import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
 
 const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
 
@@ -32,7 +37,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'closed':          'Closed',
   'board':           'Major Incident Board',
   'calendar':        'Major Incident Calendar',
-  'dashboard':       'Major Incident Dashboard',
+  'dashboard':       '🌐 Major Incident Dashboard',
 };
 
 /* ─── panel registry ─── */
@@ -101,10 +106,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(true);
-  const [selectedListId, setSelectedListId] = useState<string>('update-required');
+  const [selectedListId, setSelectedListId] = useState<string>('dashboard');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [isFeedPopoverOpen, setIsFeedPopoverOpen] = useState<boolean>(false);
+  const [isTimesheetOpen, setIsTimesheetOpen] = useState<boolean>(false);
+  const [isKpiDrawerOpen, setIsKpiDrawerOpen] = useState<boolean>(false);
 
   const loadLiveIncidents = useCallback(async () => {
     try {
@@ -170,6 +178,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
+    MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
     serverIncidents.forEach((inc) => map.set(inc.id, inc));
     localIncidents.forEach((inc) => map.set(inc.id, inc));
     return Array.from(map.values());
@@ -268,8 +277,36 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const pageStart      = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const pageEnd        = Math.min(page * PAGE_SIZE, totalCount);
   const pagedIncidents = displayedIncidents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const selectedIncident = useMemo(() => {
+    if (!selectedIncidentId) return null;
+    return (
+      allIncidents.find(
+        (i) => i.id === selectedIncidentId || i.id.replace(/^0+/, '') === selectedIncidentId.replace(/^0+/, '')
+      ) ?? null
+    );
+  }, [allIncidents, selectedIncidentId]);
 
-  const selectedIncident = allIncidents.find((i) => i.id === selectedIncidentId) ?? null;
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const incParam = params.get('incident');
+    if (incParam) {
+      const match = allIncidents.find(
+        (i) => i.id === incParam || i.id.replace(/^0+/, '') === incParam.replace(/^0+/, '')
+      );
+      if (match) {
+        setSelectedIncidentId(match.id);
+      }
+    }
+  }, [location.search, allIncidents]);
+
+  useEffect(() => {
+    if (!selectedIncidentId) return;
+    majorIncidentsService.getMajorIncidentById(selectedIncidentId).then((fresh) => {
+      if (fresh) {
+        setServerIncidents((prev) => prev.map((i) => i.id === fresh.id ? fresh : i));
+      }
+    }).catch(() => {});
+  }, [selectedIncidentId]);
 
   const handleAddIncident = (incident: MajorIncident) => {
     setLocalIncidents((prev) => [incident, ...prev]);
@@ -534,6 +571,48 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     return () => window.removeEventListener('keydown', h);
   }, []);
 
+  if (selectedIncident) {
+    return (
+      <>
+        <MajorIncidentConsole
+          incident={selectedIncident}
+          role={role}
+          onBack={() => {
+            setSelectedIncidentId(null);
+            const url = new URL(window.location.href);
+            url.searchParams.delete('incident');
+            window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+          }}
+          onAdvanceStage={(id) => handleAdvanceStage(id)}
+          onAddUpdate={(id, update) => handleAddUpdate(id, update)}
+          onReassignCommander={(id, assignee) => handleReassign(id, assignee)}
+          onUpdatePriority={(id, prio) => handleUpdatePriority(id, prio)}
+          allIncidents={allIncidents}
+          onSelectIncident={(id) => {
+            setSelectedIncidentId(id);
+            const url = new URL(window.location.href);
+            url.searchParams.set('incident', id);
+            window.history.pushState({}, '', url.toString());
+          }}
+          onOpenNewTicket={() => setShowNewModal(true)}
+        />
+        {showNewModal && (
+          <NewIncidentModal
+            onClose={() => setShowNewModal(false)}
+            onSubmit={(newInc) => {
+              handleAddIncident(newInc);
+              setShowNewModal(false);
+              setSelectedIncidentId(newInc.id);
+              const url = new URL(window.location.href);
+              url.searchParams.set('incident', newInc.id);
+              window.history.pushState({}, '', url.toString());
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
       <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
@@ -572,69 +651,28 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           onGetStarted={() => setShowGetStartedModal(true)}
           onNotifications={() => handlePanel('notifications')}
           onTasks={() => handlePanel('tasks')}
-          onPerformance={() => handlePanel('performance')}
-          onStatus={() => handlePanel('status')}
-          onHistory={() => handlePanel('history')}
+          onPerformance={() => {
+            setIsFeedPopoverOpen(false);
+            setIsKpiDrawerOpen(false);
+            setOpenPanel(null);
+            setIsTimesheetOpen((p) => !p);
+          }}
+          onStatus={() => {
+            setIsFeedPopoverOpen(false);
+            setIsTimesheetOpen(false);
+            setOpenPanel(null);
+            setIsKpiDrawerOpen((p) => !p);
+          }}
+          onHistory={() => {
+            setIsTimesheetOpen(false);
+            setIsKpiDrawerOpen(false);
+            setOpenPanel(null);
+            setIsFeedPopoverOpen((p) => !p);
+          }}
           onHelp={() => handlePanel('help')}
           onProfile={() => handlePanel('profile')}
           breadcrumb={BREADCRUMB_LABELS[selectedListId] ?? selectedListId}
         />
-
-        {/* View Switcher Bar */}
-        <div className="flex items-center justify-between px-5 py-2 bg-white border-b border-gray-200 text-xs shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400 font-semibold mr-1">Views:</span>
-            <Link
-              to="/major-incidents/live"
-              className="px-3 py-1 rounded-full font-semibold transition-all bg-cyan-500 text-white shadow-xs"
-            >
-              Live Cards
-            </Link>
-            <Link
-              to="/major-incidents/list"
-              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-            >
-              List Table
-            </Link>
-            <Link
-              to="/major-incidents/feed"
-              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-            >
-              Live Feed
-            </Link>
-            <Link
-              to="/major-incidents/design"
-              className="px-3 py-1 rounded-full font-semibold transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-            >
-              Design Canvas
-            </Link>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium ${
-              isLiveConnected 
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                : 'bg-amber-50 border-amber-200 text-amber-700'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`} />
-              <span>{isLiveConnected ? 'Live API Connected' : 'Connecting to API...'}</span>
-            </div>
-            <button
-              onClick={() => loadLiveIncidents()}
-              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
-              title="Refresh incidents from backend"
-            >
-              <span>↻</span> Refresh
-            </button>
-            <Link
-              to="/cmdb"
-              className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-0.5 rounded-full transition-colors"
-            >
-              Asset CMDB →
-            </Link>
-          </div>
-        </div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main content area */}
@@ -720,57 +758,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                       </div>
                     );
                   })}
-                </div>
-              </div>
-            ) : selectedListId === 'dashboard' ? (
-              <div className="grid grid-cols-2 gap-4 h-full">
-                <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-5 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Incidents by Priority</h3>
-                    <span className="text-xs text-gray-400 font-semibold">Total: {allIncidents.length}</span>
-                  </div>
-                  {(() => {
-                    const criticalCount = allIncidents.filter((i) => i.priority === 'Critical').length;
-                    const highCount = allIncidents.filter((i) => i.priority === 'High').length;
-                    const medCount = allIncidents.filter((i) => i.priority === 'Medium' || i.priority === 'Low').length;
-                    const maxVal = Math.max(1, criticalCount, highCount, medCount);
-                    return (
-                      <>
-                        <div className="flex-1 flex items-end justify-around gap-4 mt-4 pb-3 border-b border-gray-100">
-                          <div className="flex flex-col items-center gap-1.5 w-16">
-                            <span className="text-xs font-bold text-red-600">{criticalCount}</span>
-                            <div className="w-full bg-red-500 rounded-t-lg transition-all" style={{ height: `${(criticalCount / maxVal) * 120 + 10}px` }} />
-                          </div>
-                          <div className="flex flex-col items-center gap-1.5 w-16">
-                            <span className="text-xs font-bold text-orange-500">{highCount}</span>
-                            <div className="w-full bg-orange-400 rounded-t-lg transition-all" style={{ height: `${(highCount / maxVal) * 120 + 10}px` }} />
-                          </div>
-                          <div className="flex flex-col items-center gap-1.5 w-16">
-                            <span className="text-xs font-bold text-yellow-600">{medCount}</span>
-                            <div className="w-full bg-yellow-400 rounded-t-lg transition-all" style={{ height: `${(medCount / maxVal) * 120 + 10}px` }} />
-                          </div>
-                        </div>
-                        <div className="flex justify-around text-xs text-gray-500 mt-2 font-medium">
-                          <span>Critical</span><span>High</span><span>Med/Low</span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-5 flex flex-col items-center justify-center">
-                  {(() => {
-                    const onTimeCount = allIncidents.filter((i) => !i.resolutionTarget.startsWith('-')).length;
-                    const slaRate = Math.round((onTimeCount / Math.max(1, allIncidents.length)) * 100);
-                    return (
-                      <>
-                        <div className="w-36 h-36 rounded-full border-8 border-cyan-400 border-t-gray-100 flex items-center justify-center shadow-xs">
-                          <span className="text-3xl font-extrabold text-gray-800">{slaRate}%</span>
-                        </div>
-                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider mt-4">Resolution SLA Performance</span>
-                        <p className="text-[11px] text-gray-400 mt-1">{onTimeCount} of {allIncidents.length} incidents meeting SLA</p>
-                      </>
-                    );
-                  })()}
                 </div>
               </div>
             ) : (
@@ -1036,6 +1023,31 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         <GetStartedModal
           onClose={() => setShowGetStartedModal(false)}
           onOpenNewTicket={() => setShowNewModal(true)}
+        />
+      )}
+
+      {/* Floating Popovers */}
+      {isFeedPopoverOpen && (
+        <FeedPopover
+          onClose={() => setIsFeedPopoverOpen(false)}
+          onOpenTicket={(id) => {
+            setSelectedIncidentId(id);
+            setIsFeedPopoverOpen(false);
+          }}
+        />
+      )}
+
+      {isTimesheetOpen && (
+        <TimesheetPopover onClose={() => setIsTimesheetOpen(false)} />
+      )}
+
+      {isKpiDrawerOpen && (
+        <AgentKpiDrawer
+          onClose={() => setIsKpiDrawerOpen(false)}
+          onOpenTicket={(id) => {
+            setSelectedIncidentId(id);
+            setIsKpiDrawerOpen(false);
+          }}
         />
       )}
     </div>

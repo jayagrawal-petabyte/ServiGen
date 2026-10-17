@@ -48,23 +48,34 @@ const STAGE_LABELS = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolve
  * Maps backend status to frontend lifecycle stages array.
  */
 function buildLifecycleStages(
-  backendStatus: BackendMajorIncident['status'],
+  backendStatus: string,
   startedAt?: string,
   resolvedAt?: string | null
 ): LifecycleStage[] {
   let activeIndex = 0;
   switch (backendStatus) {
+    case 'Started':
+      activeIndex = 0;
+      break;
+    case 'Escalated':
+      activeIndex = 1;
+      break;
     case 'Investigating':
-      activeIndex = 1; // Escalated / Diagnosed
+      activeIndex = 1;
       break;
     case 'Identified':
-      activeIndex = 2; // Diagnosed
+    case 'Diagnosed':
+      activeIndex = 2;
       break;
     case 'Monitoring':
-      activeIndex = 3; // Mitigated
+    case 'Mitigated':
+      activeIndex = 3;
       break;
     case 'Resolved':
-      activeIndex = resolvedAt ? 5 : 4; // Resolved or Closed
+      activeIndex = resolvedAt ? 5 : 4;
+      break;
+    case 'Closed':
+      activeIndex = 5;
       break;
     default:
       activeIndex = 0;
@@ -93,19 +104,30 @@ function buildLifecycleStages(
   return STAGE_LABELS.map((label, idx) => ({
     label,
     isActive: idx === activeIndex,
-    isCompleted: idx < activeIndex || (backendStatus === 'Resolved' && idx === 5 && Boolean(resolvedAt)),
+    isCompleted: idx < activeIndex || (idx === 5 && (backendStatus === 'Closed' || Boolean(resolvedAt))),
     timestamp: idx === 0 ? formattedStarted : idx === 4 || idx === 5 ? formattedResolved : undefined,
   }));
 }
 
 /**
- * Maps frontend lifecycle stage index to backend status.
+ * Maps frontend lifecycle stage index to official backend status.
+ * Per API_Documentation_Servigen.docx Section 5.9:
+ * Valid statuses are: Investigating, Identified, Monitoring, Resolved.
  */
 export function mapStageToBackendStatus(stageIndex: number): 'Investigating' | 'Identified' | 'Monitoring' | 'Resolved' {
-  if (stageIndex <= 1) return 'Investigating';
-  if (stageIndex === 2) return 'Identified';
-  if (stageIndex === 3) return 'Monitoring';
-  return 'Resolved';
+  switch (stageIndex) {
+    case 0: // Started
+    case 1: // Escalated
+      return 'Investigating';
+    case 2: // Diagnosed
+      return 'Identified';
+    case 3: // Mitigated
+      return 'Monitoring';
+    case 4: // Resolved
+    case 5: // Closed
+    default:
+      return 'Resolved';
+  }
 }
 
 /**
@@ -173,6 +195,7 @@ export const majorIncidentsService = {
 
   /**
    * Fetch a single major incident by ID
+   * GET /api/major-incidents/:id (per spec)
    */
   async getMajorIncidentById(id: string): Promise<MajorIncident | null> {
     try {
@@ -189,6 +212,7 @@ export const majorIncidentsService = {
 
   /**
    * Declare and create a new major incident
+   * POST /api/major-incidents (per spec)
    */
   async createMajorIncident(payload: CreateMajorIncidentPayload): Promise<MajorIncident | null> {
     try {
@@ -218,22 +242,34 @@ export const majorIncidentsService = {
   },
 
   /**
-   * Update major incident fields (status, commander, priority, affectedServices)
+   * Update major incident fields (status, commander, priority, affectedServices, title, description, impact)
+   * PATCH /api/major-incidents/:id (per spec)
    */
   async updateMajorIncident(
     id: string,
     changes: Partial<{
       title: string;
       description: string;
-      status: 'Investigating' | 'Identified' | 'Monitoring' | 'Resolved';
-      priority: 'P1' | 'P2';
+      status: string;
+      priority: string;
       impact: string;
       affectedServices: string[];
       commander: string;
+      assignee: string;
     }>
   ): Promise<MajorIncident | null> {
     try {
-      const res = await api.patch(`/api/major-incidents/${id}`, changes);
+      const payload: Record<string, any> = {};
+      if (changes.title !== undefined) payload.title = changes.title;
+      if (changes.description !== undefined) payload.description = changes.description;
+      if (changes.status !== undefined) payload.status = changes.status;
+      if (changes.priority !== undefined) payload.priority = changes.priority;
+      if (changes.impact !== undefined) payload.impact = changes.impact;
+      if (changes.affectedServices !== undefined) payload.affectedServices = changes.affectedServices;
+      if (changes.commander !== undefined) payload.commander = changes.commander;
+      else if (changes.assignee !== undefined) payload.commander = changes.assignee;
+
+      const res = await api.patch(`/api/major-incidents/${id}`, payload);
       if (res?.success && res.data) {
         return mapBackendToFrontendIncident(res.data as BackendMajorIncident);
       }
@@ -245,6 +281,7 @@ export const majorIncidentsService = {
 
   /**
    * Add a timeline update / comment to a major incident
+   * POST /api/major-incidents/:id/updates (per spec)
    */
   async addMajorIncidentUpdate(
     incidentId: string,

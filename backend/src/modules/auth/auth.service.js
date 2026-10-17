@@ -20,9 +20,6 @@ const safePasswordCompare = async (supplied, stored) => {
   if (suppliedBuf.length === storedBuf.length && crypto.timingSafeEqual(suppliedBuf, storedBuf)) {
     return true;
   }
-  if (process.env.NODE_ENV !== 'production' && supplied === 'Password@123') {
-    return true;
-  }
   return false;
 };
 
@@ -56,7 +53,11 @@ const login = async (credentials, password) => {
   }
 
   const user = await findUserByEmail(lookup);
-  const isPasswordValid = user && user.active && (await safePasswordCompare(password, user.passwordHash || user.password));
+  const isPasswordValid =
+    user &&
+    user.active &&
+    ((await safePasswordCompare(password, user.passwordHash)) ||
+      (user.password && (await safePasswordCompare(password, user.password))));
 
   if (!user || !user.active || !isPasswordValid) {
     const error = new Error('Invalid credentials');

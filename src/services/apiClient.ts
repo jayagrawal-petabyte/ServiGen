@@ -186,8 +186,8 @@ export async function obtainDevAuthToken(): Promise<string | null> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'inesh@servigen.io',
-          password: 'Password@123',
+          email: 'admin@servigen.local',
+          password: 'Adm!n#9vK2$7xLq',
         }),
       });
       if (res.ok) {

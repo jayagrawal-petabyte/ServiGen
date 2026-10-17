@@ -1,0 +1,251 @@
+/* ── Feed Popover (Exact Match to Image 1) ── */
+
+.feed-floating-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 350px;
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 16px 45px rgba(15, 23, 42, 0.16);
+  border: 1px solid #e2e8f0;
+  z-index: 100;
+  animation: ticketFadeIn 0.18s ease-out;
+  display: flex;
+  flex-direction: column;
+  max-height: 84vh;
+  overflow-y: auto;
+}
+
+.feed-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.feed-popover-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.feed-popover-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.feed-popover-close-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.feed-subheader-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.feed-filter-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.dropdown-caret {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.feed-popout-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.feed-popout-btn:hover {
+  color: #0f172a;
+}
+
+.feed-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feed-card-item {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.feed-card-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.feed-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+}
+
+.feed-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feed-speech-avatar-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.feed-speech-bubble {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f0fdfa;
+  border: 1.5px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-green-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1.5px solid #ffffff;
+}
+
+.feed-card-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-author-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.feed-author-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.feed-author-org {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.feed-ticket-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.feed-ticket-link .ticket-num {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.feed-ticket-link .ticket-dash {
+  color: #64748b;
+}
+
+.feed-ticket-link .ticket-action {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.feed-timestamp {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.feed-snippet-text {
+  font-size: 12.5px;
+  color: #334155;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.feed-email-body-text {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.feed-email-body-text p {
+  margin: 0;
+}
+
+.feed-triaged-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.feed-triaged-meta p {
+  margin: 0;
+}

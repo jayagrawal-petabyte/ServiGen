@@ -1,258 +1,213 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
-import TeamIncidentFilters from "./TeamIncidentFilters";
 import SLAIndicator from "./SLAIndicator";
 import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
 import { MOCK_ORGANISATION_USERS } from "../Auth/mockAuthData";
 import { usePersistentState } from "../../utils/persistentState";
-import { TicketDetailModal, type FullTicket, type TicketPriority } from "../../components/TicketDetailModal";
+import { TicketDetailModal, type TicketPriority } from "../../components/TicketDetailModal";
+import { AgentKpiDrawer } from "../../components/shared/AgentKpiDrawer";
+import { FeedPopover } from "../../components/shared/FeedPopover";
+import { TimesheetPopover } from "../../components/shared/TimesheetPopover";
 import "./TeamIncidents.css";
 
-interface Incident {
-  id: string;
-  sla: string;
-  summary: string;
-  category: string;
-  agent: string;
-  priority: string;
-  status: string;
-  type: string;
-}
+import { INITIAL_ALL_TEAM_INCIDENTS, type TeamIncident } from "./teamIncidents.data";
+
+export type Incident = TeamIncident;
+
+export type TeamViewSelection =
+  | { kind: "team"; team: "1st Line Support" | "2nd Line Support" | "Infrastructure" }
+  | { kind: "agent"; team: "1st Line Support" | "2nd Line Support" | "Infrastructure"; agent: string }
+  | { kind: "breaching-sla" };
 
 interface TeamIncidentTableProps {
-  team: string;
-  mode: string;
+  team?: string;
+  mode?: string;
+  initialViewKind?: "team" | "agent" | "breaching-sla";
 }
-
-const initialIncidents: Incident[] = [
-  {
-    id: "0003910",
-    sla: "-18:53",
-    summary: "Screen share button does not work",
-    category: "Office Applications",
-    agent: "Anjali Prasad",
-    priority: "Medium",
-    status: "In Progress",
-    type: "Incident",
-  },
-  {
-    id: "0003576",
-    sla: "-42:54",
-    summary: "Audio echo looping when two people join",
-    category: "Collaboration Tools",
-    agent: "Mohammad Taha Ali",
-    priority: "Low",
-    status: "In Progress",
-    type: "Incident",
-  },
-  {
-    id: "0003357",
-    sla: "05:05",
-    summary: "Account locked while working from home",
-    category: "Security",
-    agent: "Monalisa Panda",
-    priority: "Medium",
-    status: "In Progress",
-    type: "Incident",
-  },
-  {
-    id: "0003269",
-    sla: "05:05",
-    summary: "VPN worked yesterday, now says unavailable",
-    category: "Network",
-    agent: "Aditya Kumar Singh",
-    priority: "Medium",
-    status: "In Progress",
-    type: "Incident",
-  },
-];
 
 const agents = MOCK_ORGANISATION_USERS.map((u) => u.fullName);
 
 function TeamIncidentTable({
-  team,
-  mode,
+  team = "1st Line Support",
+  initialViewKind,
 }: TeamIncidentTableProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
+  const isSecondLine = team.toLowerCase().includes("2nd");
 
-  const [incidents, setIncidents] = usePersistentState<Incident[]>(
-    `servigen_team_incidents_${team.toLowerCase().replace(/\s+/g, '_')}`,
-    initialIncidents
+  const [incidents, setIncidents] = usePersistentState<TeamIncident[]>(
+    "servigen_all_team_incidents_v6",
+    INITIAL_ALL_TEAM_INCIDENTS
   );
+
+  const [selectedView, setSelectedView] = useState<TeamViewSelection>(() => {
+    if (initialViewKind === "breaching-sla") {
+      return { kind: "breaching-sla" };
+    }
+    if (isSecondLine) {
+      return { kind: "team", team: "2nd Line Support" };
+    }
+    return { kind: "team", team: "1st Line Support" };
+  });
 
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("All");
-  const [priority, setPriority] = useState("All");
-
-  const [selectedIncidents, setSelectedIncidents] =
-    useState<string[]>([]);
-
+  const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
-  const [showNewIncidentForm, setShowNewIncidentForm] =
-    useState(false);
+  // Popover & Drawer States
+  const [showKpiDrawer, setShowKpiDrawer] = useState(false);
+  const [showFeedPopover, setShowFeedPopover] = useState(false);
+  const [showTimesheetPopover, setShowTimesheetPopover] = useState(false);
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const [selectedIncident, setSelectedIncident] =
-    useState<Incident | null>(null);
+  // Team Sidebar Navigation state
+  const [firstLineExpanded, setFirstLineExpanded] = useState<boolean>(!isSecondLine);
+  const [secondLineExpanded, setSecondLineExpanded] = useState<boolean>(isSecondLine);
 
+  // Dynamic live counts for 1st Line Support (Sum = 37)
+  const count1stLineTotal = React.useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support").length,
+    [incidents]
+  );
+  const count1stLineUnassigned = React.useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Unassigned").length,
+    [incidents]
+  );
+  const count1stLineDemo = React.useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Demo User").length,
+    [incidents]
+  );
+  const count1stLineJames = React.useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "James Brown").length,
+    [incidents]
+  );
+  const count1stLineJennifer = React.useMemo(
+    () => incidents.filter((i) => i.team === "1st Line Support" && i.agent === "Jennifer Williams").length,
+    [incidents]
+  );
+
+  // Dynamic live counts for 2nd Line Support (Sum = 12)
+  const count2ndLineTotal = React.useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support").length,
+    [incidents]
+  );
+  const count2ndLineUnassigned = React.useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Unassigned").length,
+    [incidents]
+  );
+  const count2ndLineDemo = React.useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Demo User").length,
+    [incidents]
+  );
+  const count2ndLineDavid = React.useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "David Chen").length,
+    [incidents]
+  );
+  const count2ndLineElena = React.useMemo(
+    () => incidents.filter((i) => i.team === "2nd Line Support" && i.agent === "Elena Rostova").length,
+    [incidents]
+  );
+
+  // Dynamic live counts for Infrastructure (Sum = 12)
+  const countInfrastructure = React.useMemo(
+    () => incidents.filter((i) => i.team === "Infrastructure").length,
+    [incidents]
+  );
+
+  // Dynamic live counts for Breaching SLA (Sum = 61)
+  const countBreachingSLA = React.useMemo(
+    () => incidents.filter((i) => i.sla.startsWith("-")).length,
+    [incidents]
+  );
+
+  // Reset page and selection when view or search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+    setSelectedIncidents([]);
+  }, [selectedView, search]);
+
+  // Get Started & New incident modals
+  const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
+  const [showNewIncidentModal, setShowNewIncidentModal] = useState<boolean>(false);
   const [newSummary, setNewSummary] = useState("");
+  const [newCategory, setNewCategory] = useState(isSecondLine ? "Hardware>Workstation>Operating System" : "Network>VPN>Connectivity");
+  const [newPriority, setNewPriority] = useState<string>("Medium");
 
-  const [newCategory, setNewCategory] =
-    useState("Network");
-
-  const [newAgent, setNewAgent] =
-    useState(user?.fullName || agents[0]);
-
-  const [newPriority, setNewPriority] =
-    useState("Medium");
-
-  const [createError, setCreateError] =
-    useState("");
-
-  const itemsPerPage = 10;
-
-  /* ---------------- FILTERING ---------------- */
-
-  const filteredIncidents = incidents.filter(
-    (incident) => {
-      const searchValue = search.toLowerCase();
-
-      const matchesSearch =
-        incident.id
-          .toLowerCase()
-          .includes(searchValue) ||
-        incident.summary
-          .toLowerCase()
-          .includes(searchValue) ||
-        incident.category
-          .toLowerCase()
-          .includes(searchValue) ||
-        incident.agent
-          .toLowerCase()
-          .includes(searchValue);
-
-      const matchesStatus =
-        status === "All" ||
-        incident.status === status;
-
-      const matchesPriority =
-        priority === "All" ||
-        incident.priority === priority;
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPriority
+  // Filtered incidents based on active sidebar view selection & search query
+  const filteredIncidents = React.useMemo(() => {
+    let base = incidents;
+    if (selectedView.kind === "team") {
+      base = incidents.filter((i) => i.team === selectedView.team);
+    } else if (selectedView.kind === "agent") {
+      base = incidents.filter(
+        (i) => i.team === selectedView.team && i.agent === selectedView.agent
       );
+    } else if (selectedView.kind === "breaching-sla") {
+      base = incidents.filter((i) => i.sla.startsWith("-"));
     }
+
+    if (!search.trim()) return base;
+    const q = search.toLowerCase();
+    return base.filter(
+      (incident) =>
+        incident.id.toLowerCase().includes(q) ||
+        incident.summary.toLowerCase().includes(q) ||
+        incident.category.toLowerCase().includes(q) ||
+        incident.agent.toLowerCase().includes(q)
+    );
+  }, [incidents, selectedView, search]);
+
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedIncidents = filteredIncidents.slice(
+    startIndex,
+    startIndex + itemsPerPage
   );
-
-  /* ---------------- PAGINATION ---------------- */
-
-  const totalPages = Math.ceil(
-    filteredIncidents.length / itemsPerPage
-  );
-
-  useEffect(() => {
-    if (totalPages === 0) {
-      setCurrentPage(1);
-    } else if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  const startIndex =
-    (currentPage - 1) * itemsPerPage;
-
-  const paginatedIncidents =
-    filteredIncidents.slice(
-      startIndex,
-      startIndex + itemsPerPage
-    );
-
-  const handlePrevious = () => {
-    setCurrentPage((page) =>
-      Math.max(1, page - 1)
-    );
-  };
-
-  const handleNext = () => {
-    setCurrentPage((page) =>
-      Math.min(totalPages, page + 1)
-    );
-  };
-
-  /* ---------------- SELECTION ---------------- */
-
-  const toggleIncidentSelection = (
-    id: string
-  ) => {
-    setSelectedIncidents((current) =>
-      current.includes(id)
-        ? current.filter(
-            (selectedId) => selectedId !== id
-          )
-        : [...current, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    const filteredIds =
-      filteredIncidents.map(
-        (incident) => incident.id
-      );
-
-    const allSelected =
-      filteredIds.length > 0 &&
-      filteredIds.every((id) =>
-        selectedIncidents.includes(id)
-      );
-
-    if (allSelected) {
-      setSelectedIncidents((current) =>
-        current.filter(
-          (id) => !filteredIds.includes(id)
-        )
-      );
-    } else {
-      setSelectedIncidents((current) => [
-        ...new Set([
-          ...current,
-          ...filteredIds,
-        ]),
-      ]);
-    }
-  };
 
   const allFilteredSelected =
-    filteredIncidents.length > 0 &&
-    filteredIncidents.every((incident) =>
-      selectedIncidents.includes(incident.id)
-    );
+    paginatedIncidents.length > 0 &&
+    paginatedIncidents.every((inc) => selectedIncidents.includes(inc.id));
 
-  /* ---------------- BULK ACTIONS ---------------- */
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIncidents((prev) =>
+        prev.filter((id) => !paginatedIncidents.some((p) => p.id === id))
+      );
+    } else {
+      const toAdd = paginatedIncidents
+        .map((p) => p.id)
+        .filter((id) => !selectedIncidents.includes(id));
+      setSelectedIncidents((prev) => [...prev, ...toAdd]);
+    }
+  };
+
+  const toggleIncidentSelection = (id: string) => {
+    setSelectedIncidents((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   const handleBulkAssignToMe = () => {
-    const me = user?.fullName || "Inesh Agarwal";
+    const myName = user?.fullName || "Inesh Agarwal";
     setIncidents((prev) =>
       prev.map((inc) =>
-        selectedIncidents.includes(inc.id) ? { ...inc, agent: me } : inc
+        selectedIncidents.includes(inc.id) ? { ...inc, agent: myName } : inc
       )
     );
     setSelectedIncidents([]);
   };
 
-  const handleBulkSetPriority = (newPrio: string) => {
+  const handleBulkSetPriority = (newPri: string) => {
     setIncidents((prev) =>
       prev.map((inc) =>
-        selectedIncidents.includes(inc.id) ? { ...inc, priority: newPrio } : inc
+        selectedIncidents.includes(inc.id) ? { ...inc, priority: newPri } : inc
       )
     );
-    setSelectedIncidents([]);
   };
 
   const handleBulkSetStatus = (newStat: string) => {
@@ -261,599 +216,832 @@ function TeamIncidentTable({
         selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
       )
     );
-    setSelectedIncidents([]);
-  };
-
-  const handleBulkClear = () => {
-    setSelectedIncidents([]);
-  };
-
-  const handleModalUpdateTicket = (updated: FullTicket) => {
-    setIncidents((prev) =>
-      prev.map((inc) =>
-        inc.id === updated.id
-          ? {
-              ...inc,
-              agent: updated.agent,
-              priority: updated.priority,
-              status: updated.status || inc.status,
-              summary: updated.summary,
-              category: updated.category || inc.category,
-              type: updated.type || inc.type,
-            }
-          : inc
-      )
-    );
-    if (selectedIncident && selectedIncident.id === updated.id) {
-      setSelectedIncident((curr) =>
-        curr
-          ? {
-              ...curr,
-              agent: updated.agent,
-              priority: updated.priority,
-              status: updated.status || curr.status,
-              summary: updated.summary,
-              category: updated.category || curr.category,
-              type: updated.type || curr.type,
-            }
-          : null
-      );
-    }
-  };
-
-  /* ---------------- CREATE INCIDENT ---------------- */
-
-  const openNewIncidentForm = () => {
-    setNewSummary("");
-    setNewCategory("Network");
-    setNewAgent(user?.fullName || agents[0]);
-    setNewPriority("Medium");
-    setCreateError("");
-    setShowNewIncidentForm(true);
-  };
-
-  const closeNewIncidentForm = () => {
-    setNewSummary("");
-    setNewCategory("Network");
-    setNewAgent(user?.fullName || agents[0]);
-    setNewPriority("Medium");
-    setCreateError("");
-    setShowNewIncidentForm(false);
   };
 
   const handleCreateIncident = () => {
-    if (!newSummary.trim()) {
-      setCreateError(
-        "Please enter an incident summary."
-      );
-      return;
-    }
-
-    const newIncident: Incident = {
-      id: String(
-        1000000 + incidents.length + 1
-      ),
-      sla: "10:00",
-      summary: newSummary.trim(),
+    if (!newSummary.trim()) return;
+    const newId = `000${Math.floor(3900 + Math.random() * 99)}`;
+    const targetTeam = selectedView.kind === "breaching-sla" ? "1st Line Support" : selectedView.team;
+    const targetAgent = selectedView.kind === "agent" ? selectedView.agent : "Demo User";
+    const newInc: Incident = {
+      id: newId,
+      sla: "-12:00",
+      summary: newSummary,
       category: newCategory,
-      agent: newAgent,
+      agent: targetAgent,
       priority: newPriority,
-      status: "New",
+      status: "In Progress",
       type: "Incident",
+      team: targetTeam,
+      dateLogged: "28/07/2026",
     };
-
-    setIncidents((current) => [
-      newIncident,
-      ...current,
-    ]);
-
+    setIncidents((prev) => [newInc, ...prev]);
     setNewSummary("");
-    setNewCategory("Network");
-    setNewAgent(agents[0]);
-    setNewPriority("Medium");
-    setCreateError("");
-    setShowNewIncidentForm(false);
-    setCurrentPage(1);
+    setShowNewIncidentModal(false);
   };
 
-  /* ---------------- RENDER ---------------- */
-
   return (
-    <div className="team-incidents-page">
-
-      {/* PAGE HEADER */}
-      <div className="team-incidents-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1>Incidents by Team</h1>
-
-          <p>
-            {team} — {mode} Mode
-          </p>
-        </div>
-
-        <div className="team-view-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {[
-            { label: '1st Line (Live)', path: '/team/1st-line-live' },
-            { label: '1st Line (Design)', path: '/team/1st-line-design' },
-            { label: '2nd Line (Live)', path: '/team/2nd-line-live' },
-            { label: '2nd Line (Design)', path: '/team/2nd-line-design' },
-          ].map((tab) => {
-            const isActive = location.pathname === tab.path;
-            return (
-              <button
-                key={tab.path}
-                type="button"
-                onClick={() => navigate(tab.path)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: isActive ? 700 : 500,
-                  background: isActive ? '#003c50' : '#ffffff',
-                  color: isActive ? '#ffffff' : '#334155',
-                  border: isActive ? '1px solid #003c50' : '1px solid #cbd5e1',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
+    <div className="team-shell">
+      {/* Top Navbar Header (Image 4 Match) */}
+      <header className="team-top-navbar">
+        <div className="team-breadcrumb">
+          <span className="team-bc-link cursor-pointer hover:underline" onClick={() => navigate('/incidents')}>Incidents</span>
+          <span className="team-bc-sep">›</span>
+          {selectedView.kind === "breaching-sla" ? (
+            <span className="team-bc-active font-semibold text-slate-800 flex items-center gap-1.5">
+              <span style={{ fontSize: 13 }}>⏰</span> Breaching SLA
+            </span>
+          ) : (
+            <>
+              <span
+                className="team-bc-link cursor-pointer hover:underline"
+                onClick={() => setSelectedView({ kind: "team", team: selectedView.team })}
               >
-                {tab.label}
-              </button>
-            );
-          })}
+                {selectedView.team}
+              </span>
+              {selectedView.kind === "agent" && (
+                <>
+                  <span className="team-bc-sep">›</span>
+                  <span className="team-bc-active font-semibold text-slate-800">
+                    {selectedView.agent}
+                  </span>
+                </>
+              )}
+            </>
+          )}
         </div>
-      </div>
 
-      {/* FILTERS */}
-      <TeamIncidentFilters
-        search={search}
-        setSearch={(value) => {
-          setSearch(value);
-          setCurrentPage(1);
-        }}
-        status={status}
-        setStatus={(value) => {
-          setStatus(value);
-          setCurrentPage(1);
-        }}
-        priority={priority}
-        setPriority={(value) => {
-          setPriority(value);
-          setCurrentPage(1);
-        }}
-      />
+        <div className="team-header-actions">
+          <button
+            type="button"
+            className="team-btn-get-started"
+            onClick={() => setShowGetStartedModal(true)}
+            title={`Get started with ${team} guide`}
+          >
+            Get started
+          </button>
+          <button
+            type="button"
+            className="team-btn-new-ticket"
+            onClick={() => setShowNewIncidentModal(true)}
+          >
+            <span style={{ fontSize: 15, lineHeight: 1 }}>+</span>
+            <span>New Ticket</span>
+          </button>
 
-      {/* INCIDENT TABLE */}
-      <div className="incident-table-container">
+          <div className="team-icon-buttons-group">
+            {/* Search */}
+            <button
+              type="button"
+              className="team-header-icon-btn"
+              title="Search"
+              onClick={() => {
+                const el = document.getElementById("team-sidebar-search-input");
+                el?.focus();
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
 
-        {/* TOOLBAR */}
-        <div className="incident-table-toolbar">
+            {/* Notifications */}
+            <button
+              type="button"
+              className="team-header-icon-btn"
+              title="Notifications"
+              onClick={() => alert("You have 3 unread team SLA alerts.")}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
 
-          <div className="incident-toolbar-left">
-            <span className="incident-title">
-              Open Incidents
+            {/* Tasks / Clipboard */}
+            <button
+              type="button"
+              className="team-header-icon-btn"
+              title="Tasks"
+              onClick={() => alert("Open assigned checklist tasks")}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="1" />
+                <path d="M9 12h6M9 16h4" />
+              </svg>
+            </button>
+
+            {/* Compass / Performance */}
+            <button
+              type="button"
+              className="team-header-icon-btn"
+              title="Team SLA Performance"
+              onClick={() => navigate('/reporting/incidents-by-category')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+              </svg>
+            </button>
+
+            {/* Broadcast Waves (Signal) -> Agent KPI Dashboard */}
+            <button
+              type="button"
+              className={`team-header-icon-btn ${showKpiDrawer ? 'team-header-icon-active' : ''}`}
+              title="Agent KPI Dashboard"
+              onClick={() => {
+                setShowTimesheetPopover(false);
+                setShowFeedPopover(false);
+                setShowKpiDrawer((p) => !p);
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+
+            {/* Feed (Clock) Popover */}
+            <button
+              type="button"
+              className={`team-header-icon-btn ${showFeedPopover ? 'team-header-icon-active' : ''}`}
+              title="Live Activity Feed"
+              onClick={() => {
+                setShowTimesheetPopover(false);
+                setShowKpiDrawer(false);
+                setShowFeedPopover((p) => !p);
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            {/* Help */}
+            <button
+              type="button"
+              className="team-header-icon-btn"
+              title={`${team} Guide & Help`}
+              onClick={() => setShowGetStartedModal(true)}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+                <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+              </svg>
+            </button>
+
+            {/* User Chat Bubble Avatar */}
+            <button
+              type="button"
+              className="team-avatar-speech-btn"
+              title={`Logged in as ${user?.fullName || "Demo User"}`}
+              onClick={() => navigate('/my-work')}
+            >
+              <div className="team-avatar-speech-inner" />
+              <span className="team-presence-green-dot" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Floating Drawers & Popovers */}
+      {showKpiDrawer && (
+        <AgentKpiDrawer
+          onClose={() => setShowKpiDrawer(false)}
+          onOpenTicket={(id) => {
+            const found = incidents.find((i) => i.id === id);
+            if (found) setSelectedIncident(found);
+            setShowKpiDrawer(false);
+          }}
+        />
+      )}
+
+      {showFeedPopover && (
+        <FeedPopover
+          onClose={() => setShowFeedPopover(false)}
+          onOpenTicket={(id) => {
+            const found = incidents.find((i) => i.id === id);
+            if (found) setSelectedIncident(found);
+            setShowFeedPopover(false);
+          }}
+        />
+      )}
+
+      {showTimesheetPopover && (
+        <TimesheetPopover onClose={() => setShowTimesheetPopover(false)} />
+      )}
+
+      {/* Two-Column Body */}
+      <div className="team-body-row">
+        {/* Left Sidebar: Incidents by Team */}
+        <aside className={`team-sidebar-panel ${isSidebarCollapsed ? "collapsed" : ""}`}>
+          {/* Search */}
+          <div className="team-sidebar-search">
+            <input
+              id="team-sidebar-search-input"
+              type="text"
+              placeholder="Search Incidents..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#00bcd4" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+
+          {/* Heading */}
+          <div className="team-sidebar-header-row">
+            <div className="team-sidebar-title-wrap">
+              <div className="team-sidebar-title">
+                <span style={{ fontSize: 15 }}>👥</span>
+                <span>Incidents by Team</span>
+              </div>
+              <span className="team-sidebar-subtitle">▽ Open incidents</span>
+            </div>
+            <span
+              className="collapse-arrow cursor-pointer select-none text-gray-500 hover:text-black font-bold"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarCollapsed ? "»" : "«"}
             </span>
           </div>
 
-          <div className="incident-toolbar-right">
-
-            <Pagination
-              currentRange={
-                filteredIncidents.length > 0
-                  ? `${startIndex + 1}-${Math.min(
-                      startIndex + itemsPerPage,
-                      filteredIncidents.length
-                    )} of ${
-                      filteredIncidents.length
-                    }`
-                  : "0 of 0"
-              }
-              hasPrevious={currentPage > 1}
-              hasNext={currentPage < totalPages}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-            />
-
-            <button
-              type="button"
-              className="new-incident-button"
-              onClick={openNewIncidentForm}
-            >
-              + New
-            </button>
-
-          </div>
-        </div>
-
-        {/* CREATE INCIDENT MODAL */}
-        {showNewIncidentForm && (
-          <div className="new-incident-overlay">
-
-            <div className="new-incident-modal">
-
-              <div className="new-incident-modal-header">
-
-                <h2>
-                  Create New Incident
-                </h2>
-
-                <button
-                  type="button"
-                  className="close-button"
-                  onClick={closeNewIncidentForm}
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <div className="new-incident-modal-body">
-
-                {/* SUMMARY */}
-                <label htmlFor="incident-summary">
-                  Incident Summary
-                </label>
-
-                <input
-                  id="incident-summary"
-                  type="text"
-                  placeholder="Enter incident summary"
-                  value={newSummary}
-                  onChange={(event) => {
-                    setNewSummary(
-                      event.target.value
-                    );
-                    setCreateError("");
-                  }}
-                />
-
-                {/* CATEGORY */}
-                <label htmlFor="incident-category">
-                  Category
-                </label>
-
-                <select
-                  id="incident-category"
-                  value={newCategory}
-                  onChange={(event) =>
-                    setNewCategory(
-                      event.target.value
-                    )
-                  }
-                >
-                  <option value="Network">
-                    Network
-                  </option>
-
-                  <option value="Security">
-                    Security
-                  </option>
-
-                  <option value="Office Applications">
-                    Office Applications
-                  </option>
-
-                  <option value="Collaboration Tools">
-                    Collaboration Tools
-                  </option>
-                </select>
-
-                {/* AGENT */}
-                <label htmlFor="incident-agent">
-                  Agent
-                </label>
-
-                <select
-                  id="incident-agent"
-                  value={newAgent}
-                  onChange={(event) =>
-                    setNewAgent(
-                      event.target.value
-                    )
-                  }
-                >
-                  {agents.map((agent) => (
-                    <option
-                      key={agent}
-                      value={agent}
-                    >
-                      {agent}
-                    </option>
-                  ))}
-                </select>
-
-                {/* PRIORITY */}
-                <label htmlFor="incident-priority">
-                  Priority
-                </label>
-
-                <select
-                  id="incident-priority"
-                  value={newPriority}
-                  onChange={(event) =>
-                    setNewPriority(
-                      event.target.value
-                    )
-                  }
-                >
-                  <option value="Critical">
-                    Critical
-                  </option>
-
-                  <option value="High">
-                    High
-                  </option>
-
-                  <option value="Medium">
-                    Medium
-                  </option>
-
-                  <option value="Low">
-                    Low
-                  </option>
-                </select>
-
-                {createError && (
-                  <p className="create-error">
-                    {createError}
-                  </p>
-                )}
-
-              </div>
-
-              <div className="new-incident-modal-actions">
-
-                <button
-                  type="button"
-                  className="cancel-button"
-                  onClick={closeNewIncidentForm}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="create-incident-button"
-                  onClick={handleCreateIncident}
-                >
-                  Create Incident
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-        {/* BULK ACTIONS BAR */}
-        {selectedIncidents.length > 0 && (
-          <div className="tickets-bulk-actions-bar">
-            <div className="bulk-selection-count">
-              <span className="bulk-badge">{selectedIncidents.length}</span>
-              <span>incident{selectedIncidents.length > 1 ? "s" : ""} selected</span>
-            </div>
-
-            <div className="bulk-actions-buttons">
+          {/* Teams Navigation Tree */}
+          <div className="team-sidebar-scroll">
+            {/* 1st Line Support Group */}
+            <div className="team-sidebar-section">
               <button
                 type="button"
-                className="bulk-btn bulk-btn-assign"
-                onClick={handleBulkAssignToMe}
-                title={`Assign selected incidents to ${user?.fullName || "Inesh Agarwal"}`}
+                className={`team-sidebar-group-header ${
+                  selectedView.kind === "team" && selectedView.team === "1st Line Support"
+                    ? "active-group"
+                    : ""
+                }`}
+                onClick={() => {
+                  setSelectedView({ kind: "team", team: "1st Line Support" });
+                  setFirstLineExpanded(true);
+                }}
+                title="View all 37 incidents for 1st Line Support"
               >
-                Assign to Me
-              </button>
-
-              <div className="bulk-priority-dropdown-wrap">
-                <select
-                  className="bulk-select"
-                  defaultValue=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleBulkSetPriority(e.target.value);
-                      e.target.value = "";
-                    }
-                  }}
-                  aria-label="Set priority for selected incidents"
-                >
-                  <option value="" disabled>Set Priority ▾</option>
-                  <option value="Critical">Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-
-              <div className="bulk-priority-dropdown-wrap">
-                <select
-                  className="bulk-select"
-                  defaultValue=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleBulkSetStatus(e.target.value);
-                      e.target.value = "";
-                    }
-                  }}
-                  aria-label="Set status for selected incidents"
-                >
-                  <option value="" disabled>Set Status ▾</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Open">Open</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Closed">Closed</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                className="bulk-btn bulk-btn-clear"
-                onClick={handleBulkClear}
-              >
-                Clear Selection
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* TABLE */}
-        <table className="incident-table">
-
-          <thead>
-            <tr>
-
-              <th>
-                <input
-                  type="checkbox"
-                  aria-label="Select all incidents"
-                  checked={allFilteredSelected}
-                  onChange={toggleSelectAll}
-                />
-              </th>
-
-              <th>Viewing</th>
-              <th>ID</th>
-              <th>SLA Time Left</th>
-              <th>Summary</th>
-              <th>Category</th>
-              <th>Agent</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Type</th>
-
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {paginatedIncidents.length > 0 ? (
-              paginatedIncidents.map(
-                (incident) => (
-                  <tr
-                    key={incident.id}
-                    className={selectedIncident?.id === incident.id ? "row-viewing-active" : ""}
-                    onClick={() =>
-                      setSelectedIncident(
-                        incident
-                      )
-                    }
-                    style={{
-                      cursor: "pointer",
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ fontSize: 10, cursor: "pointer", padding: "2px 4px" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFirstLineExpanded(!firstLineExpanded);
                     }}
+                    title="Toggle folder"
                   >
+                    {firstLineExpanded ? "▼" : "►"}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>1st Line Support</span>
+                </div>
+                <span className="team-sidebar-badge">{count1stLineTotal}</span>
+              </button>
 
-                    {/* CHECKBOX */}
-                    <td
-                      onClick={(event) =>
-                        event.stopPropagation()
-                      }
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${incident.id}`}
-                        checked={selectedIncidents.includes(
-                          incident.id
-                        )}
-                        onChange={() =>
-                          toggleIncidentSelection(
-                            incident.id
-                          )
-                        }
-                      />
-                    </td>
+              {firstLineExpanded && (
+                <div className="team-subitems-tree">
+                  {/* Unassigned */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "1st Line Support" &&
+                      selectedView.agent === "Unassigned"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "1st Line Support",
+                        agent: "Unassigned",
+                      })
+                    }
+                    title="View 13 unassigned tickets"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#7c3aed", fontSize: 14 }}>👤</span>
+                      <span>Unassigned</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count1stLineUnassigned}</span>
+                  </button>
 
-                    {/* VIEWING */}
-                    <td>
-                      {selectedIncident?.id === incident.id ? (
-                        <span
-                          className="viewing-badge viewing-active"
-                          title="Currently open in details view"
-                        >
-                          <span className="viewing-icon">👁</span>
-                          <span>You</span>
-                        </span>
-                      ) : (
-                        <span className="viewing-dash" title="Not currently open in details view">
-                          —
-                        </span>
-                      )}
-                    </td>
+                  {/* Available label */}
+                  <span className="team-section-pill-label available">Available</span>
 
-                    {/* ID */}
-                    <td>
-                      {incident.id}
-                    </td>
+                  {/* Demo User (You) */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "1st Line Support" &&
+                      selectedView.agent === "Demo User"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "1st Line Support",
+                        agent: "Demo User",
+                      })
+                    }
+                    title="View 4 tickets assigned to Demo User"
+                  >
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span style={{ color: "#22c55e", fontSize: 10 }}>🟢</span>
+                      <span className="truncate">Demo User (You)</span>
+                      <span>🏆</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count1stLineDemo}</span>
+                  </button>
 
-                    {/* SLA */}
-                    <td>
-                      <SLAIndicator
-                        time={incident.sla}
-                      />
-                    </td>
+                  {/* Offline label */}
+                  <span className="team-section-pill-label offline">Offline</span>
 
-                    {/* SUMMARY */}
-                    <td>
-                      {incident.summary}
-                    </td>
+                  {/* James Brown */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "1st Line Support" &&
+                      selectedView.agent === "James Brown"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "1st Line Support",
+                        agent: "James Brown",
+                      })
+                    }
+                    title="View 10 tickets assigned to James Brown"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="team-avatar-initials">JB</span>
+                      <span>James Brown</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count1stLineJames}</span>
+                  </button>
 
-                    {/* CATEGORY */}
-                    <td>
-                      {incident.category}
-                    </td>
+                  {/* Jennifer Williams */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "1st Line Support" &&
+                      selectedView.agent === "Jennifer Williams"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "1st Line Support",
+                        agent: "Jennifer Williams",
+                      })
+                    }
+                    title="View 10 tickets assigned to Jennifer Williams"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="team-avatar-initials jw">JW</span>
+                      <span>Jennifer Williams</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count1stLineJennifer}</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
-                    {/* AGENT */}
-                    <td>
-                      {incident.agent}
-                    </td>
+            {/* 2nd Line Support Group */}
+            <div className="team-sidebar-section">
+              <button
+                type="button"
+                className={`team-sidebar-group-header ${
+                  selectedView.kind === "team" && selectedView.team === "2nd Line Support"
+                    ? "active-group"
+                    : ""
+                }`}
+                onClick={() => {
+                  setSelectedView({ kind: "team", team: "2nd Line Support" });
+                  setSecondLineExpanded(true);
+                }}
+                title="View all 12 incidents for 2nd Line Support"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ fontSize: 10, cursor: "pointer", padding: "2px 4px" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSecondLineExpanded(!secondLineExpanded);
+                    }}
+                    title="Toggle folder"
+                  >
+                    {secondLineExpanded ? "▼" : "►"}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>2nd Line Support</span>
+                </div>
+                <span className="team-sidebar-badge">{count2ndLineTotal}</span>
+              </button>
 
-                    {/* PRIORITY */}
-                    <td>
-                      <PriorityIndicator
-                        priority={
-                          incident.priority
-                        }
-                      />
-                    </td>
+              {secondLineExpanded && (
+                <div className="team-subitems-tree">
+                  {/* Unassigned */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "2nd Line Support" &&
+                      selectedView.agent === "Unassigned"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "2nd Line Support",
+                        agent: "Unassigned",
+                      })
+                    }
+                    title="View 2 unassigned tickets"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#7c3aed", fontSize: 14 }}>👤</span>
+                      <span>Unassigned</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count2ndLineUnassigned}</span>
+                  </button>
 
-                    {/* STATUS */}
-                    <td>
-                      <span
-                        className={`status status-${incident.status
-                          .toLowerCase()
-                          .replace(
-                            /\s+/g,
-                            "-"
-                          )}`}
-                      >
-                        {incident.status}
-                      </span>
-                    </td>
+                  {/* Available label */}
+                  <span className="team-section-pill-label available">Available</span>
 
-                    {/* TYPE */}
-                    <td>
-                      {incident.type}
-                    </td>
+                  {/* Demo User (You) */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "2nd Line Support" &&
+                      selectedView.agent === "Demo User"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "2nd Line Support",
+                        agent: "Demo User",
+                      })
+                    }
+                    title="View 4 tickets assigned to Demo User"
+                  >
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span style={{ color: "#22c55e", fontSize: 10 }}>🟢</span>
+                      <span className="truncate">Demo User (You)</span>
+                      <span>🏆</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count2ndLineDemo}</span>
+                  </button>
 
-                  </tr>
-                )
-              )
-            ) : (
-              <tr>
-                <td
-                  colSpan={10}
-                  className="empty-state"
+                  {/* Offline label */}
+                  <span className="team-section-pill-label offline">Offline</span>
+
+                  {/* David Chen */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "2nd Line Support" &&
+                      selectedView.agent === "David Chen"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "2nd Line Support",
+                        agent: "David Chen",
+                      })
+                    }
+                    title="View 3 tickets assigned to David Chen"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="team-avatar-initials">DC</span>
+                      <span>David Chen</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count2ndLineDavid}</span>
+                  </button>
+
+                  {/* Elena Rostova */}
+                  <button
+                    type="button"
+                    className={`team-subitem-btn ${
+                      selectedView.kind === "agent" &&
+                      selectedView.team === "2nd Line Support" &&
+                      selectedView.agent === "Elena Rostova"
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedView({
+                        kind: "agent",
+                        team: "2nd Line Support",
+                        agent: "Elena Rostova",
+                      })
+                    }
+                    title="View 3 tickets assigned to Elena Rostova"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="team-avatar-initials jw">ER</span>
+                      <span>Elena Rostova</span>
+                    </div>
+                    <span className="team-sidebar-badge">{count2ndLineElena}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Infrastructure Group */}
+            <div className="team-sidebar-section">
+              <button
+                type="button"
+                className={`team-sidebar-group-header ${
+                  selectedView.kind === "team" && selectedView.team === "Infrastructure"
+                    ? "active-group"
+                    : ""
+                }`}
+                onClick={() =>
+                  setSelectedView({ kind: "team", team: "Infrastructure" })
+                }
+                title="View all 12 Infrastructure tickets"
+              >
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 10 }}>►</span>
+                  <span style={{ fontWeight: 700 }}>Infrastructure</span>
+                </div>
+                <span className="team-sidebar-badge">{countInfrastructure}</span>
+              </button>
+            </div>
+
+            {/* Breaching SLA */}
+            <div className="team-sidebar-section" style={{ marginTop: 6 }}>
+              <button
+                type="button"
+                className={`team-sidebar-breaching-sla ${
+                  selectedView.kind === "breaching-sla" ? "active-group" : ""
+                }`}
+                onClick={() => setSelectedView({ kind: "breaching-sla" })}
+                title="View all 61 Breaching SLA incidents across teams"
+              >
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 14 }}>⏰</span>
+                  <span style={{ color: "#ef4444", fontWeight: 700 }}>Breaching SLA</span>
+                </div>
+                <span className="team-sidebar-badge breaching">{countBreachingSLA}</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Main Table Content */}
+        <main className="team-main-content">
+          {/* Table Toolbar */}
+          <div className="team-table-toolbar-row">
+            <div className="team-toolbar-left-group">
+              <button
+                type="button"
+                className="team-toolbar-add-pill"
+                title="Create Incident"
+                onClick={() => setShowNewIncidentModal(true)}
+              >
+                +
+              </button>
+            </div>
+
+            <div className="team-toolbar-right-group">
+              <span className="team-count-display">
+                {paginatedIncidents.length > 0
+                  ? `${startIndex + 1}-${Math.min(startIndex + itemsPerPage, filteredIncidents.length)} of ${filteredIncidents.length}`
+                  : "0-0 of 0"}
+              </span>
+
+              <Pagination
+                currentRange=""
+                hasPrevious={currentPage > 1}
+                hasNext={currentPage < totalPages}
+                onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              />
+
+              <button
+                type="button"
+                className="tb-nav-btn"
+                onClick={() => setSearch("")}
+                title="Refresh table"
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                className="team-btn-new-cyan"
+                onClick={() => setShowNewIncidentModal(true)}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
+                <span>New</span>
+              </button>
+
+              <button
+                type="button"
+                className="tb-nav-btn"
+                title="More Options"
+                onClick={() => alert("Batch table exports & view configuration")}
+              >
+                <span style={{ letterSpacing: "1px", fontWeight: "bold" }}>···</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Bulk Action Bar when checkboxes are checked */}
+          {selectedIncidents.length > 0 && (
+            <div className="tickets-bulk-actions-bar">
+              <div className="bulk-selection-count">
+                <span className="bulk-badge">{selectedIncidents.length}</span>
+                <span>incident{selectedIncidents.length > 1 ? "s" : ""} selected</span>
+              </div>
+
+              <div className="bulk-actions-buttons">
+                <button
+                  type="button"
+                  className="bulk-btn bulk-btn-assign"
+                  onClick={handleBulkAssignToMe}
+                  title={`Assign selected incidents to ${user?.fullName || "Inesh Agarwal"}`}
                 >
-                  No incidents found.
-                </td>
-              </tr>
-            )}
+                  Assign to Me
+                </button>
 
-          </tbody>
+                <div className="bulk-priority-dropdown-wrap">
+                  <select
+                    className="bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetPriority(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Set priority"
+                  >
+                    <option value="" disabled>Set Priority ▾</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
 
-        </table>
+                <div className="bulk-priority-dropdown-wrap">
+                  <select
+                    className="bulk-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkSetStatus(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    aria-label="Set status"
+                  >
+                    <option value="" disabled>Set Status ▾</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Open">Open</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
 
+                <button
+                  type="button"
+                  className="bulk-btn bulk-btn-clear"
+                  onClick={() => setSelectedIncidents([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="incident-table-container" style={{ border: "none", borderRadius: 0 }}>
+            <table className="incident-table">
+              <thead>
+                <tr>
+                  <th style={{ width: 36 }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all incidents"
+                      checked={allFilteredSelected}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
+                  <th style={{ width: 70 }}>Viewing</th>
+                  <th style={{ width: 90 }}>ID</th>
+                  <th style={{ width: 120 }}>SLA Time Left</th>
+                  <th>Summary</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Type</th>
+                  <th>Date Logged</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedIncidents.length > 0 ? (
+                  paginatedIncidents.map((incident) => {
+                    const isSelected = selectedIncidents.includes(incident.id);
+                    return (
+                      <tr
+                        key={incident.id}
+                        className={selectedIncident?.id === incident.id ? "row-viewing-active" : isSelected ? "selected" : ""}
+                        onClick={() => setSelectedIncident(incident)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleIncidentSelection(incident.id)}
+                          />
+                        </td>
+                        <td>
+                          {incident.isStarred ? (
+                            <span className="star-indicator" title="Starred / Flagged">⭐</span>
+                          ) : (
+                            <span className="viewing-dash">—</span>
+                          )}
+                        </td>
+                        <td className="font-bold text-gray-900">
+                          {incident.id}
+                        </td>
+                        <td>
+                          <span className="sla-bar-red">{incident.sla}</span>
+                        </td>
+                        <td className="team-table-summary-link font-medium">
+                          {incident.summary}
+                        </td>
+                        <td className="text-gray-600 text-xs">
+                          {incident.category}
+                        </td>
+                        <td>
+                          <PriorityIndicator priority={incident.priority} />
+                        </td>
+                        <td>
+                          <span
+                            className={
+                              incident.status.toLowerCase() === "new"
+                                ? "status-pill-new"
+                                : incident.status.toLowerCase() === "in progress"
+                                ? "status-pill-in-progress"
+                                : incident.status.toLowerCase() === "on hold"
+                                ? "status-pill-on-hold"
+                                : "status-pill-resolved"
+                            }
+                          >
+                            {incident.status}
+                          </span>
+                        </td>
+                        <td className="text-gray-600 text-xs">
+                          {incident.type}
+                        </td>
+                        <td className="text-gray-500 text-xs">
+                          {incident.dateLogged || "28/07/2026"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={10} className="empty-state text-center py-8 text-gray-500">
+                      No incidents found matching the current view or search filter.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </main>
       </div>
 
-      {/* INCIDENT DETAILS MODAL */}
+      {/* Ticket Detail Modal */}
       {selectedIncident && (
         <TicketDetailModal
           ticket={{
@@ -868,10 +1056,220 @@ function TeamIncidentTable({
           }}
           currentUser={user?.fullName || "Inesh Agarwal"}
           onClose={() => setSelectedIncident(null)}
-          onUpdateTicket={handleModalUpdateTicket}
+          onUpdateTicket={(updated) => {
+            setIncidents((prev) =>
+              prev.map((i) =>
+                i.id === updated.id
+                  ? {
+                      ...i,
+                      status: updated.status || i.status,
+                      priority: (updated.priority as any) || i.priority,
+                      category: updated.category || i.category,
+                      agent: updated.agent || i.agent,
+                    }
+                  : i
+              )
+            );
+          }}
         />
       )}
 
+      {/* New Incident Modal */}
+      {showNewIncidentModal && (
+        <div className="new-incident-modal-backdrop" onClick={() => setShowNewIncidentModal(false)}>
+          <div className="new-incident-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="new-incident-modal-header">
+              <h2>Log New Incident</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setShowNewIncidentModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="new-incident-modal-body">
+              <label htmlFor="inc-summary">Summary</label>
+              <input
+                id="inc-summary"
+                type="text"
+                value={newSummary}
+                onChange={(e) => setNewSummary(e.target.value)}
+                placeholder="Brief description of the incident..."
+                autoFocus
+              />
+
+              <label htmlFor="inc-cat">Category</label>
+              <select
+                id="inc-cat"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+              >
+                <option value="Office Applications>Microsoft 365">Office Applications &gt; Microsoft 365</option>
+                <option value="Collaboration Tools>Zoom/Teams">Collaboration Tools &gt; Zoom/Teams</option>
+                <option value="Security>Password Management">Security &gt; Password Management</option>
+                <option value="Network>VPN>Connectivity">Network &gt; VPN &gt; Connectivity</option>
+              </select>
+
+              <label htmlFor="inc-pri">Priority</label>
+              <select
+                id="inc-pri"
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value)}
+              >
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div className="new-incident-modal-actions">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => setShowNewIncidentModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="create-incident-button"
+                onClick={handleCreateIncident}
+              >
+                Log Incident
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Get Started Guide Modal */}
+      {showGetStartedModal && (
+        <div className="new-incident-modal-backdrop" onClick={() => setShowGetStartedModal(false)}>
+          <div className="team-get-started-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="team-get-started-header">
+              <div className="team-get-started-title-row">
+                <span style={{ fontSize: 18 }}>🚀</span>
+                <h2>{team} — Incident Management Guide</h2>
+              </div>
+              <button
+                type="button"
+                className="team-get-started-close"
+                onClick={() => setShowGetStartedModal(false)}
+                aria-label="Close guide"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="team-get-started-body">
+              <div className="team-guide-banner">
+                <span className="team-guide-banner-title">
+                  <span>📌</span>
+                  <span>{isSecondLine ? "2nd Line Technical Support Hub" : "1st Line Help Desk Operations"}</span>
+                </span>
+                <span className="team-guide-banner-desc">
+                  {isSecondLine
+                    ? "2nd Line Support manages escalated and complex incident tickets requiring root-cause diagnostics, hardware firmware repairs, network infrastructure triage, and advanced configuration fixes."
+                    : "1st Line Support handles primary incident intake, first-contact resolution, account provisioning, triage verification, and routing tickets to specialist engineering pods."}
+                </span>
+              </div>
+
+              <div className="team-guide-section">
+                <h3 className="team-guide-section-title">Essential Workflows & Tools</h3>
+
+                <div className="team-guide-feature-card">
+                  <span className="team-guide-feature-icon">🔍</span>
+                  <div className="team-guide-feature-info">
+                    <span className="team-guide-feature-name">Full Ticket Screen Inspection</span>
+                    <span className="team-guide-feature-desc">
+                      Click any incident row or ticket ID to open the full ticket screen complete with Progress, Details, View Log, and Notification Log.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="team-guide-feature-card">
+                  <span className="team-guide-feature-icon">⚡</span>
+                  <div className="team-guide-feature-info">
+                    <span className="team-guide-feature-name">Bulk Agent Assignment & Priority Updates</span>
+                    <span className="team-guide-feature-desc">
+                      Check multiple ticket checkboxes to activate bulk operations. Assign tickets to yourself, adjust priority tiers, or advance statuses with a single click.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="team-guide-feature-card">
+                  <span className="team-guide-feature-icon">➕</span>
+                  <div className="team-guide-feature-info">
+                    <span className="team-guide-feature-name">Log New Incident / Escalation</span>
+                    <span className="team-guide-feature-desc">
+                      Use the <strong>+ New Ticket</strong> button in the top navbar to log fresh technical issues directly into {selectedView.kind === "agent" ? selectedView.agent : selectedView.kind === "team" ? selectedView.team : "Breaching SLA Queue"}.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="team-guide-feature-card">
+                  <span className="team-guide-feature-icon">📊</span>
+                  <div className="team-guide-feature-info">
+                    <span className="team-guide-feature-name">Real-time KPI & Activity Drawers</span>
+                    <span className="team-guide-feature-desc">
+                      Click the broadcast icon to view the Agent KPI Dashboard, the clock icon for the live Feed, or the compass for SLA performance analytics.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="team-guide-section">
+                <h3 className="team-guide-section-title">Support Teams Navigation</h3>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    className="team-subitem-btn"
+                    style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", background: !isSecondLine ? "#e0f2fe" : "#ffffff" }}
+                    onClick={() => {
+                      setShowGetStartedModal(false);
+                      navigate('/team/1st-line-live');
+                    }}
+                  >
+                    <span>👥 1st Line Support</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="team-subitem-btn"
+                    style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", background: isSecondLine ? "#e0f2fe" : "#ffffff" }}
+                    onClick={() => {
+                      setShowGetStartedModal(false);
+                      navigate('/team/2nd-line-live');
+                    }}
+                  >
+                    <span>👥 2nd Line Support</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="team-get-started-actions">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => {
+                  setShowGetStartedModal(false);
+                  setShowNewIncidentModal(true);
+                }}
+              >
+                + Log New Ticket
+              </button>
+              <button
+                type="button"
+                className="create-incident-button"
+                onClick={() => setShowGetStartedModal(false)}
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

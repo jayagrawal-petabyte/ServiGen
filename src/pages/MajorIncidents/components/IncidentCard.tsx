@@ -26,9 +26,13 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
   const canAdvance = (role === 'Manager' || role === 'Admin') && !isClosed && activeStageIdx !== -1 && activeStageIdx < 5;
 
   const topBadges = [
-    null,
     <PriorityBadge key="priority" priority={incident.priority} />,
-    <span key="product" className="text-[11px] font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+    null,
+    <span
+      key="product"
+      title={incident.product}
+      className="text-[11px] font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-full whitespace-nowrap truncate max-w-[200px]"
+    >
       {incident.product}
     </span>,
     null,
@@ -52,7 +56,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
       <div className="flex items-center gap-6">
         <div className="flex flex-col justify-center gap-1.5 w-64 shrink-0">
           <div className="flex items-center gap-2 min-w-0 mb-1">
-            <span className="shrink-0 text-[11px] font-bold font-mono text-white bg-cyan-500 rounded-full px-2 py-0.5">
+            <span className="shrink-0 text-[12px] font-bold font-mono text-cyan-600 bg-cyan-50/50 border border-cyan-400 rounded px-1.5 py-0.5">
               #{incident.id}
             </span>
             <span className="text-gray-900 font-bold text-sm leading-tight break-words">

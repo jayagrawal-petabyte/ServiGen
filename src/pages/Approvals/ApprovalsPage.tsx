@@ -49,8 +49,15 @@ export default function ApprovalsPage() {
     setError(null);
     setErrorStatusCode(null);
     try {
-      const data = await approvalsApi.getPendingApprovals(demo);
-      setApprovals(data);
+      const pendingData = await approvalsApi.getPendingApprovals(demo);
+      const cached = approvalsApi.getCachedHistory();
+      const combined = [...pendingData];
+      cached.forEach((item) => {
+        if (!combined.some((a) => a.id === item.id)) {
+          combined.push(item);
+        }
+      });
+      setApprovals(combined);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setErrorStatusCode(err.statusCode);

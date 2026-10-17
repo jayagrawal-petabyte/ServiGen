@@ -1,6 +1,23 @@
 'use strict';
 
+const { randomUUID } = require('node:crypto');
 const db = require('../../config/db');
+
+// ─── Domain Constants ─────────────────────────────────────────────────────────
+
+const VALID_CHANGE_TYPES = Object.freeze(['Standard', 'Normal', 'Emergency']);
+
+// Allowed status transitions. Callers may only move to these values via PATCH.
+const VALID_STATUSES = Object.freeze([
+  'Draft',
+  'Pending Approval',
+  'Approved',
+  'Active',
+  'Scheduled',
+  'On Hold',
+  'Completed',
+  'Rejected',
+]);
 
 // ─── Mock Seed Data (dev/test fallback only) ──────────────────────────────────
 // Used ONLY when NODE_ENV === 'test' or the database connection throws.
@@ -192,8 +209,128 @@ const getActiveChangeRequests = async (options = {}) => {
   );
 };
 
+/**
+ * Create a new ChangeRequest record.
+ * The `id` is auto-generated — callers must not supply one.
+ * `status` defaults to 'Draft' on creation — callers cannot self-approve.
+ *
+ * @param {object} payload
+ * @param {string}  payload.summary
+ * @param {string}  payload.changeType   Must be in VALID_CHANGE_TYPES
+ * @param {string}  [payload.ciId]
+ * @param {string}  [payload.ciTag]
+ * @param {string}  [payload.assignedAgentId]
+ * @param {string}  [payload.relatedService]
+ * @param {string}  [payload.startDate]  ISO 8601
+ * @param {string}  [payload.endDate]    ISO 8601
+ * @returns {Promise<object>} The formatted newly-created record
+ */
+const createChangeRequest = async (payload) => {
+  const {
+    summary,
+    changeType,
+    ciId = null,
+    ciTag = null,
+    assignedAgentId = null,
+    relatedService = null,
+    startDate = null,
+    endDate = null,
+  } = payload;
+
+  if (process.env.NODE_ENV !== 'test') {
+    const cr = await db.changeRequest.create({
+      data: {
+        summary,
+        changeType,
+        status: 'Draft',
+        ciId: ciId || undefined,
+        ciTag: ciTag || undefined,
+        assignedAgentId: assignedAgentId || undefined,
+        relatedService: relatedService || undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+      },
+      include: crInclude,
+    });
+    return formatRecord(cr);
+  }
+
+  // Mock fallback for test env — generate a sequential-looking ID
+  const newRecord = {
+    id: `CR-${String(mockChangeRequests.length + 1).padStart(3, '0')}`,
+    agent: assignedAgentId,
+    summary,
+    changeType,
+    status: 'Draft',
+    ciTag,
+    relatedService,
+    startDate: startDate ? new Date(startDate).toISOString() : null,
+    endDate: endDate ? new Date(endDate).toISOString() : null,
+    organisationId: null, // resolved at query time via crInclude in live DB
+  };
+  mockChangeRequests.push(newRecord);
+  return newRecord;
+};
+
+/**
+ * Update an existing ChangeRequest — strict tenant guard + allowlisted fields.
+ * Only `status` may be patched (implementationChecklist pending schema decision).
+ *
+ * @param {string}      id
+ * @param {string|null} organisationId  The caller's org — enforced for IDOR prevention
+ * @param {object}      patch           Allowlisted fields only
+ * @param {string}      [patch.status]  Must be in VALID_STATUSES
+ * @returns {Promise<object|null>} Updated record, or null if not found / IDOR blocked
+ */
+const updateChangeRequest = async (id, organisationId, patch) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      // 1. Fetch with crInclude so tenant can be verified before mutating
+      const existing = await db.changeRequest.findUnique({
+        where: { id },
+        include: crInclude,
+      });
+      if (!existing) return null;
+
+      // 2. Tenant isolation — IDOR guard
+      const formatted = formatRecord(existing);
+      if (organisationId && formatted.organisationId !== organisationId) {
+        return null;
+      }
+
+      // 3. Build safe update payload — only allowlisted fields
+      const data = {};
+      if (patch.status !== undefined) data.status = patch.status;
+
+      const updated = await db.changeRequest.update({
+        where: { id },
+        data,
+        include: crInclude,
+      });
+      return formatRecord(updated);
+    } catch (_err) {
+      // Database unreachable — fall through to mock
+    }
+  }
+
+  // Mock fallback
+  const idx = mockChangeRequests.findIndex((cr) => cr.id === id);
+  if (idx === -1) return null;
+  if (organisationId && mockChangeRequests[idx].organisationId !== organisationId) {
+    return null;
+  }
+  if (patch.status !== undefined) {
+    mockChangeRequests[idx] = { ...mockChangeRequests[idx], status: patch.status };
+  }
+  return mockChangeRequests[idx];
+};
+
 module.exports = {
+  VALID_CHANGE_TYPES,
+  VALID_STATUSES,
   getChangeRequests,
   getChangeRequestById,
   getActiveChangeRequests,
+  createChangeRequest,
+  updateChangeRequest,
 };

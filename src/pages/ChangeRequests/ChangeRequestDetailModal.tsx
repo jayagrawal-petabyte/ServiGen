@@ -1,9 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
-import { X, Clock, Tag, User, CheckSquare } from 'lucide-react';
+import { X, Clock, Tag, User, CheckSquare, ClipboardList, ExternalLink } from 'lucide-react';
 
 interface ChangeRequestDetailModalProps {
   changeRequest: ChangeRequest | null;
@@ -16,6 +17,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
   onClose,
   onToggleSubtask,
 }) => {
+  const navigate = useNavigate();
   if (!changeRequest) return null;
 
   return (
@@ -68,6 +70,41 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <span className="text-sm font-bold text-slate-800">{changeRequest.timeSpentHours}h / {changeRequest.targetHours}h</span>
             </div>
           </div>
+
+          {changeRequest.linkedRequestId && (
+            <div className="p-4 bg-cyan-50/80 border border-cyan-200 rounded-2xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  SR
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-cyan-800 uppercase tracking-wider block">
+                    Originating Service Request
+                  </span>
+                  <span className="font-bold text-slate-900 text-sm">
+                    #{changeRequest.linkedRequestId}
+                  </span>
+                  {changeRequest.linkedRequestSummary && (
+                    <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
+                      {changeRequest.linkedRequestSummary}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate(`/requests?id=${changeRequest.linkedRequestId}`);
+                }}
+                className="px-3.5 py-1.5 bg-white hover:bg-cyan-100 text-cyan-700 font-bold text-xs rounded-xl border border-cyan-300 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs"
+                title="Open this service request in Requests queue"
+              >
+                <span>View Request</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
           <div>
             <h3 className="font-bold text-slate-800 text-sm mb-1">Description</h3>

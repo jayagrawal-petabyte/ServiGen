@@ -1551,3 +1551,196 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+/* ── My New Tickets Visual Polish & Summary Hover Popover (Image 5) ── */
+.incident-row.row-hovered {
+  background: #eef5fb !important;
+}
+
+.ticket-summary-cell {
+  position: relative;
+}
+
+.ticket-summary-link {
+  color: #0284c7;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.ticket-summary-link:hover {
+  text-decoration: underline;
+  color: #0369a1;
+}
+
+/* Table Avatar with Bubble Q and Green Dot */
+.ticket-agent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.table-bubble-avatar {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.table-bubble-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f0fdfa;
+  border: 1.5px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-bubble-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1.2px solid #ffffff;
+}
+
+/* Floating summary preview popover (Image 5) */
+.ticket-hover-popover {
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  margin-top: 8px;
+  width: 360px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+  z-index: 120;
+  text-align: left;
+  animation: ticketScaleUp 0.12s ease-out;
+  cursor: default;
+}
+
+.hover-popover-arrow {
+  position: absolute;
+  top: -6px;
+  left: 28px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  transform: rotate(45deg);
+}
+
+.hover-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.hover-badge-new {
+  background: #064e3b;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.hover-ticket-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.hover-flag-icon {
+  color: #16a34a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.hover-popover-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.hover-popover-heading {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.hover-popover-ago {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.hover-popover-desc {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #475569;
+  margin: 8px 0 10px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hover-popover-footer {
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.hover-dots-spinner {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  animation: hoverSpin 1.2s linear infinite;
+}
+
+@keyframes hoverSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hover-dots-spinner .dot {
+  position: absolute;
+  width: 2.5px;
+  height: 2.5px;
+  background: #475569;
+  border-radius: 50%;
+}
+
+.dot.d1 { top: 0; left: 5.5px; opacity: 1; }
+.dot.d2 { top: 2px; right: 2px; opacity: 0.85; }
+.dot.d3 { top: 5.5px; right: 0; opacity: 0.7; }
+.dot.d4 { bottom: 2px; right: 2px; opacity: 0.55; }
+.dot.d5 { bottom: 0; left: 5.5px; opacity: 0.4; }
+.dot.d6 { bottom: 2px; left: 2px; opacity: 0.25; }
+.dot.d7 { top: 5.5px; left: 0; opacity: 0.15; }
+.dot.d8 { top: 2px; left: 2px; opacity: 0.1; }

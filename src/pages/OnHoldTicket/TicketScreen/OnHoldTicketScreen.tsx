@@ -2,8 +2,11 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./OnHoldTicketScreen.css";
 import MyList from "../mylist/MyList";
-import { TicketDetailModal, type FullTicket, type TicketPriority } from "../../../components/TicketDetailModal";
+import { TicketDetailModal, type TicketPriority } from "../../../components/TicketDetailModal";
 import { usePersistentState } from "../../../utils/persistentState";
+import { AgentKpiDrawer } from "../../../components/shared/AgentKpiDrawer";
+import { FeedPopover } from "../../../components/shared/FeedPopover";
+import { TimesheetPopover } from "../../../components/shared/TimesheetPopover";
 
 export interface Ticket {
   id: string;
@@ -11,7 +14,7 @@ export interface Ticket {
   priorityColor: "red" | "orange" | "yellow" | "green";
   org: string;
   summary: string;
-  status: "On H" | "With";
+  status: "On H" | "With" | "New";
   type: "Incident" | "Service Request";
   description?: string;
   requester?: string;
@@ -19,6 +22,33 @@ export interface Ticket {
   createdAt?: string;
   targetSla?: string;
 }
+
+export const NEW_TICKETS_DATA: Ticket[] = [
+  { id: "0003012", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/Admin", summary: "Request external monitor", status: "New", type: "Service Request", targetSla: "-40:01", description: "Standard external monitor requisition for developer workstation." },
+  { id: "0003011", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Install Adobe Acrobat Pro", status: "New", type: "Service Request", targetSla: "-88:01", description: "Software deployment request for Adobe Creative Suite licensing." },
+  { id: "0003010", priority: "Medium", priorityColor: "yellow", org: "consultancy/EMEA/Mary Johnson", summary: "Access request for shared folder", status: "New", type: "Service Request", targetSla: "-64:00", description: "Permission escalation for departmental network share drive." },
+  { id: "0003009", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/James Brown", summary: "Request new laptop for new sta...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Hardware provisioning for incoming technical consultant." },
+  { id: "0002237", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Request Addition of New Printer ...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Network printer IP assignment and CUPS queue mapping." },
+  { id: "0002236", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Request Printer Maintenance Se...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Quarterly preventative maintenance service for 3rd floor MFP." },
+  { id: "0002235", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Access for New Employee", status: "New", type: "Service Request", targetSla: "-88:01", description: "Active Directory security group membership for secure badge printing." },
+  { id: "0002234", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Configuration Change", status: "New", type: "Service Request", targetSla: "-64:00", description: "Duplex and color profile preset configuration update." },
+  { id: "0002233", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Toner Replacement", status: "New", type: "Service Request", targetSla: "-40:01", description: "Consumable cartridge replacement request for finance queue." },
+  { id: "0002232", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Office 365 License Activation", status: "New", type: "Service Request", targetSla: "-40:01", description: "M365 E5 license assignment for newly onboarded team member." },
+  { id: "0002231", priority: "Medium", priorityColor: "yellow", org: "consultancy/EMEA/General User", summary: "VPN Certificate Renewal", status: "New", type: "Service Request", targetSla: "-40:01", description: "User client TLS certificate expired on macOS workstation." },
+  { id: "0002230", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/General User", summary: "Production Database Access", status: "New", type: "Service Request", targetSla: "-40:01", description: "Read-only replica access approval for monthly financial audit." },
+];
+
+export const MAJOR_INCIDENT_ROW: Ticket = {
+  id: "0002673-P",
+  priority: "Critical",
+  priorityColor: "red",
+  org: "consultancy/EMEA/General User",
+  summary: "System Login Failure",
+  status: "New",
+  type: "Incident",
+  targetSla: "-179:06",
+  description: "Global authentication provider timeout. Users experiencing SSO login failure on primary portal.",
+};
 
 const ALL_TICKETS: Ticket[] = [
   { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be from HR about bonuses...", status: "On H", type: "Incident", description: "Suspicious email received with external phishing links posing as HR compensation review. Account credentials may have been targeted; security quarantine requested." },
@@ -67,16 +97,20 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
         <path d="M8 12h8M8 8h8M8 16h4" />
       </svg>
     </td>
-    <td className="col-check">
+    <td className="col-check" onClick={(e) => e.stopPropagation()}>
       <input type="checkbox" checked={selectedItems.includes(ticket.id)} onChange={() => onToggle(ticket.id)} />
     </td>
     <td className="col-viewing">
-      <span className="badge-onhold">On Hold</span>
+      {ticket.status === "On H" ? (
+        <span className="badge-onhold">On Hold</span>
+      ) : ticket.status === "New" ? null : (
+        <span className="badge-onhold" style={{ background: "#f0fdf4", color: "#16a34a", borderColor: "#bbf7d0" }}>Active</span>
+      )}
     </td>
     <td className="col-id">
       <button 
         type="button" 
-        className="ticket-id-link text-left bg-transparent border-0 cursor-pointer" 
+        className="ticket-id-link text-left bg-transparent border-0 cursor-pointer font-bold text-gray-900" 
         onClick={(e) => {
           e.stopPropagation();
           onSelectTicket(ticket);
@@ -87,7 +121,11 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
       </button>
     </td>
     <td className="col-sla">
-      <span className="sla-text">On Hold</span>
+      {ticket.targetSla ? (
+        <span className="sla-bar-red">{ticket.targetSla}</span>
+      ) : (
+        <span className="sla-text">On Hold</span>
+      )}
     </td>
     <td className="col-priority">
       <span className="priority-dot" style={{ backgroundColor: PRIORITY_DOT[ticket.priorityColor] }}></span>
@@ -98,9 +136,13 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, selectedItems, onToggle, 
     </td>
     <td className="col-summary">{ticket.summary}</td>
     <td className="col-status">
-      <span className={"status-badge " + (ticket.status === "On H" ? "status-cyan" : "status-teal")}>
-        {ticket.status === "On H" ? "On Hold" : "With User"}
-      </span>
+      {ticket.status === "New" ? (
+        <span className="status-badge status-new">New</span>
+      ) : (
+        <span className={"status-badge " + (ticket.status === "On H" ? "status-cyan" : "status-teal")}>
+          {ticket.status === "On H" ? "On Hold" : "With User"}
+        </span>
+      )}
     </td>
   </tr>
 );
@@ -111,8 +153,12 @@ const OnHoldTicketScreen: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [activeView, setActiveView] = useState<string>("My Lists");
+  const [activeView, setActiveView] = useState<string>("My New Tickets");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showKpiDrawer, setShowKpiDrawer] = useState<boolean>(false);
+  const [showFeedPopover, setShowFeedPopover] = useState<boolean>(false);
+  const [showTimesheetPopover, setShowTimesheetPopover] = useState<boolean>(false);
+  const [majorIncidentCollapsed, setMajorIncidentCollapsed] = useState<boolean>(false);
 
   // Flyouts & Modals State
   const [activeFlyout, setActiveFlyout] = useState<
@@ -205,12 +251,13 @@ const OnHoldTicketScreen: React.FC = () => {
 
   // 1. Filter Tickets
   const filteredTickets = useMemo(() => {
-    return tickets.filter(t => 
+    const source = activeView === "My New Tickets" ? NEW_TICKETS_DATA : tickets;
+    return source.filter(t => 
       t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.org.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.summary.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, tickets]);
+  }, [searchQuery, tickets, activeView]);
 
   // 2. Pagination
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
@@ -359,8 +406,17 @@ const OnHoldTicketScreen: React.FC = () => {
               <span className="bc-item">Tickets</span>
               <span className="bc-sep">›</span>
               <span className="bc-active">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="#ef4444" style={{marginRight:5,flexShrink:0}}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                My On Hold Tickets
+                {activeView === "My New Tickets" ? (
+                  <>
+                    <span style={{ marginRight: 5 }}>📰</span>
+                    My New Tickets
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="#ef4444" style={{marginRight:5,flexShrink:0}}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    {activeView}
+                  </>
+                )}
               </span>
             </span>
           </div>
@@ -482,8 +538,11 @@ const OnHoldTicketScreen: React.FC = () => {
                       <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/major-incidents/live'); }}>
                         <span className="onhold-flyout-item-title">🚨 Major Incidents Live</span>
                       </button>
+                      <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/requests'); }}>
+                        <span className="onhold-flyout-item-title">📋 Requests</span>
+                      </button>
                       <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/services-catalogue'); }}>
-                        <span className="onhold-flyout-item-title">🛒 Services Catalogue</span>
+                        <span className="onhold-flyout-item-title">📖 Services</span>
                       </button>
                       <button type="button" className="onhold-flyout-item" onClick={() => { setActiveFlyout(null); navigate('/projects'); }}>
                         <span className="onhold-flyout-item-title">📁 Projects & Tasks</span>
@@ -557,6 +616,59 @@ const OnHoldTicketScreen: React.FC = () => {
                   </div>
                 )}
               </div>
+              {/* Timesheet Flyout (Speedometer) */}
+              <button
+                type="button"
+                className={`tnav-icon-btn ${showTimesheetPopover ? 'tnav-icon-active' : ''}`}
+                onClick={() => {
+                  setShowFeedPopover(false);
+                  setShowKpiDrawer(false);
+                  setShowTimesheetPopover((p) => !p);
+                }}
+                title="Timesheet & Hours"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 12l3.5-3.5" />
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+
+              {/* Agent KPI Dashboard (Signal / Broadcast) */}
+              <button
+                type="button"
+                className={`tnav-icon-btn ${showKpiDrawer ? 'tnav-icon-active' : ''}`}
+                onClick={() => {
+                  setShowTimesheetPopover(false);
+                  setShowFeedPopover(false);
+                  setShowKpiDrawer((p) => !p);
+                }}
+                title="Agent KPI Dashboard"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                  <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+
+              {/* Feed Flyout (Clock) */}
+              <button
+                type="button"
+                className={`tnav-icon-btn ${showFeedPopover ? 'tnav-icon-active' : ''}`}
+                onClick={() => {
+                  setShowTimesheetPopover(false);
+                  setShowKpiDrawer(false);
+                  setShowFeedPopover((p) => !p);
+                }}
+                title="Live Activity Feed"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
 
             {/* Profile Avatar Flyout */}
@@ -592,6 +704,33 @@ const OnHoldTicketScreen: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Floating Drawers & Popovers */}
+        {showKpiDrawer && (
+          <AgentKpiDrawer
+            onClose={() => setShowKpiDrawer(false)}
+            onOpenTicket={(id) => {
+              const match = NEW_TICKETS_DATA.find((t) => t.id === id) || tickets.find((t) => t.id === id);
+              if (match) setSelectedTicket(match);
+              setShowKpiDrawer(false);
+            }}
+          />
+        )}
+
+        {showFeedPopover && (
+          <FeedPopover
+            onClose={() => setShowFeedPopover(false)}
+            onOpenTicket={(id) => {
+              const match = NEW_TICKETS_DATA.find((t) => t.id === id) || tickets.find((t) => t.id === id);
+              if (match) setSelectedTicket(match);
+              setShowFeedPopover(false);
+            }}
+          />
+        )}
+
+        {showTimesheetPopover && (
+          <TimesheetPopover onClose={() => setShowTimesheetPopover(false)} />
+        )}
 
         {/* Content */}
         <div className="content-row">
@@ -801,28 +940,98 @@ const OnHoldTicketScreen: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(groupedTickets).map(([groupName, tickets]) => {
-                      const isCollapsed = collapsedGroups[groupName];
-                      return (
-                        <React.Fragment key={groupName}>
-                          <tr className="group-header-row" onClick={() => toggleGroup(groupName)}>
-                            <td colSpan={9}>
-                              <span className="group-toggle">{isCollapsed ? "▶" : "▼"}</span>
-                              <span className="group-title"> {groupName} ({tickets.length})</span>
+                    {activeView === "My New Tickets" ? (
+                      <>
+                        {paginatedTickets.slice(0, 9).map((t) => (
+                          <TicketRow 
+                            key={t.id} 
+                            ticket={t} 
+                            selectedItems={selectedItems} 
+                            onToggle={toggleSelect} 
+                            onSelectTicket={setSelectedTicket}
+                          />
+                        ))}
+                        <tr
+                          className="major-incident-group-row"
+                          onClick={() => setMajorIncidentCollapsed(!majorIncidentCollapsed)}
+                        >
+                          <td colSpan={9}>
+                            <span className="group-toggle" style={{ marginRight: 6 }}>
+                              {majorIncidentCollapsed ? "▶" : "▼"}
+                            </span>
+                            Major Incident (1)
+                          </td>
+                        </tr>
+                        {!majorIncidentCollapsed && (
+                          <tr
+                            className="ticket-row major-incident-ticket-row"
+                            onClick={() => navigate('/major-incidents/live?incident=0002673')}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <td className="col-type">
+                              <span className="mi-arrow-icon">▶</span>
+                            </td>
+                            <td className="col-check" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.includes(MAJOR_INCIDENT_ROW.id)}
+                                onChange={() => toggleSelect(MAJOR_INCIDENT_ROW.id)}
+                              />
+                            </td>
+                            <td className="col-viewing"></td>
+                            <td className="col-id">
+                              <button
+                                type="button"
+                                className="ticket-id-link text-left bg-transparent border-0 cursor-pointer font-bold text-gray-900"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/major-incidents/live?incident=0002673');
+                                }}
+                              >
+                                {MAJOR_INCIDENT_ROW.id}
+                              </button>
+                            </td>
+                            <td className="col-sla">
+                              <span className="sla-bar-red">{MAJOR_INCIDENT_ROW.targetSla}</span>
+                            </td>
+                            <td className="col-priority">
+                              <span className="priority-dot" style={{ backgroundColor: "#ef4444" }}></span>
+                              <span className="priority-label">{MAJOR_INCIDENT_ROW.priority}</span>
+                            </td>
+                            <td className="col-org">
+                              <span className="org-link">{MAJOR_INCIDENT_ROW.org}</span>
+                            </td>
+                            <td className="col-summary">{MAJOR_INCIDENT_ROW.summary}</td>
+                            <td className="col-status">
+                              <span className="status-badge status-new">New</span>
                             </td>
                           </tr>
-                          {!isCollapsed && tickets.map((t) => (
-                            <TicketRow 
-                              key={t.id} 
-                              ticket={t} 
-                              selectedItems={selectedItems} 
-                              onToggle={toggleSelect} 
-                              onSelectTicket={setSelectedTicket}
-                            />
-                          ))}
-                        </React.Fragment>
-                      );
-                    })}
+                        )}
+                      </>
+                    ) : (
+                      Object.entries(groupedTickets).map(([groupName, tickets]) => {
+                        const isCollapsed = collapsedGroups[groupName];
+                        return (
+                          <React.Fragment key={groupName}>
+                            <tr className="group-header-row" onClick={() => toggleGroup(groupName)}>
+                              <td colSpan={9}>
+                                <span className="group-toggle">{isCollapsed ? "▶" : "▼"}</span>
+                                <span className="group-title"> {groupName} ({tickets.length})</span>
+                              </td>
+                            </tr>
+                            {!isCollapsed && tickets.map((t) => (
+                              <TicketRow 
+                                key={t.id} 
+                                ticket={t} 
+                                selectedItems={selectedItems} 
+                                onToggle={toggleSelect} 
+                                onSelectTicket={setSelectedTicket}
+                              />
+                            ))}
+                          </React.Fragment>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               )}

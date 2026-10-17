@@ -301,6 +301,60 @@ async function main() {
   await db.serviceCatalogueItem.upsert({where:{id:'service-admin-rights'},update:{},create:{id:'service-admin-rights',name:'Administrator Rights',description:'Developer workstation administrator access',category:'Access',requiresApproval:true}});
   await db.serviceRequest.upsert({where:{ticketId:'REQ-1002'},update:{},create:{id:'request-001',ticketId:'REQ-1002',serviceCatalogueItemId:'service-admin-rights'}});
   await db.approval.upsert({where:{id:'APP-1001'},update:{},create:{id:'APP-1001',ticketId:'REQ-1002',entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
+
+  // 8. Seed Major Incidents
+  const majorIncidentsSeed = [
+    {
+      id: '0002673',
+      title: 'System Login Failure',
+      description: 'Widespread authentication timeouts and system login failures impacting MyFinance PROD users.',
+      status: 'Investigating',
+      priority: 'P1',
+      impact: 'Critical customer login failure; users unable to access MyFinance PROD platform.',
+      affectedServices: ['MyFinance PROD', 'Authentication Gateway', 'SSO Service'],
+      commander: 'Demo User',
+      startedAt: new Date('2025-11-02T16:57:00Z'),
+    },
+    {
+      id: '0002672',
+      title: 'Financial Data Corruption',
+      description: 'Ledger synchronization discrepancy detected in MyFinance PROD database replica cluster.',
+      status: 'Investigating',
+      priority: 'P2',
+      impact: 'High performance degradation and reconciliation queue lag.',
+      affectedServices: ['MyFinance PROD', 'Ledger Sync', 'Reconciliation Engine'],
+      commander: 'Jennifer Williams',
+      startedAt: new Date('2025-11-02T16:56:00Z'),
+    },
+    {
+      id: '0002671',
+      title: 'Payment Processing Failure',
+      description: 'Merchant payment tokenization service returning intermittent 502 Bad Gateway errors.',
+      status: 'Investigating',
+      priority: 'P1',
+      impact: 'Payment gateway transactions failing for 15% of checkout traffic.',
+      affectedServices: ['MyFinance PROD', 'Payment Processing', 'Merchant Gateway'],
+      commander: 'Unassigned',
+      startedAt: new Date('2025-11-02T16:52:00Z'),
+    },
+  ];
+
+  for (const mi of majorIncidentsSeed) {
+    await db.majorIncident.upsert({
+      where: { id: mi.id },
+      update: {
+        title: mi.title,
+        description: mi.description,
+        status: mi.status,
+        priority: mi.priority,
+        impact: mi.impact,
+        affectedServices: mi.affectedServices,
+        commander: mi.commander,
+      },
+      create: mi,
+    });
+  }
+
   console.log('[servigen:seed] Seed completed successfully!');
 }
 

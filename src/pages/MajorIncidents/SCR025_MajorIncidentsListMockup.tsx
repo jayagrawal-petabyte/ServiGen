@@ -244,16 +244,6 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
               <span className="font-semibold text-gray-800 text-sm">Major Incidents Register</span>
               <span className="text-gray-300">·</span>
               <span>{incidents.length} records</span>
-              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-medium ${
-                isLiveConnected 
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                  : 'bg-amber-50 border-amber-200 text-amber-700'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-                }`} />
-                <span>{isLiveConnected ? 'Live API Connected' : 'Connecting to API...'}</span>
-              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 text-[11px] text-gray-400">
@@ -265,12 +255,6 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
                   Priority {sortDir === 'desc' ? '↓' : '↑'}
                 </button>
               </div>
-              <Link
-                to="/major-incidents/live"
-                className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
-              >
-                Live Pipeline Board →
-              </Link>
             </div>
           </div>
 
@@ -294,8 +278,8 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
                     key={incident.id} 
                     incident={incident} 
                     index={i} 
-                    onSelect={(inc) => setSelectedTicketForModal(inc)}
-                    onOpenLive={() => navigate('/major-incidents/live')}
+                    onSelect={(inc) => navigate(`/major-incidents/live?incident=${inc.id}`)}
+                    onOpenLive={() => navigate(`/major-incidents/live?incident=${incident.id}`)}
                   />
                 ))}
               </tbody>

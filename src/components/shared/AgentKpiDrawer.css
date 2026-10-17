@@ -1,0 +1,353 @@
+/* ── Agent KPI Dashboard Drawer (Matches media_1792151243234_fe133929.png) ── */
+.agent-kpi-drawer-floating {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  width: 375px;
+  max-width: calc(100vw - 32px);
+  height: calc(100vh - 72px);
+  background: #f8fafc;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+  animation: agentKpiSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes agentKpiSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.agent-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.agent-kpi-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.agent-kpi-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: #94a3b8;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.agent-kpi-close-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.agent-kpi-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Agent selector row */
+.agent-kpi-agent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agent-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.agent-kpi-select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.agent-kpi-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #00bcd4;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.agent-kpi-pill-remove {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.agent-kpi-pill-remove:hover {
+  color: #ffffff;
+}
+
+.agent-kpi-dots-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.agent-kpi-dots-indicator .dot-active {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00bcd4;
+}
+
+.agent-kpi-dots-indicator .dot-inactive {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.agent-kpi-caret-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+.agent-kpi-caret-btn:hover {
+  color: #334155;
+}
+
+/* Cards */
+.agent-kpi-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.agent-kpi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px 14px;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.agent-kpi-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.agent-kpi-confidence-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.agent-kpi-sla-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #059669;
+  background: #d1fae5;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.agent-kpi-card-body {
+  padding: 12px 14px;
+}
+
+/* Spinner matching Image 2 */
+.agent-kpi-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 12px;
+}
+
+.agent-kpi-circular-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 188, 212, 0.2);
+  border-top-color: #00bcd4;
+  animation: agentKpiSpin 0.75s linear infinite;
+}
+
+@keyframes agentKpiSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.agent-kpi-loading-text {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Big stat and charts */
+.agent-kpi-big-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0ea5e9;
+  line-height: 1;
+}
+
+.stat-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 11.5px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.stat-trend {
+  font-size: 10px;
+}
+
+.agent-kpi-bars-preview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 64px;
+  padding: 4px 6px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.bar-track {
+  flex: 1;
+  width: 14px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.bar-fill {
+  width: 100%;
+  background: #38bdf8;
+  border-radius: 3px;
+  transition: height 0.4s ease;
+}
+
+.bar-fill.bar-peak {
+  background: #0284c7;
+}
+
+.bar-label {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.agent-kpi-footer-note {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.agent-kpi-split-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.split-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.split-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.split-val {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.split-sub {
+  font-size: 9px;
+  color: #94a3b8;
+}

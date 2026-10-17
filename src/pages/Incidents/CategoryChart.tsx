@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { CategoryItem } from "./incidents.data";
 
 type CategoryChartProps = {
@@ -62,8 +63,40 @@ function slicePath(start: number, end: number) {
 export default function CategoryChart({
   data,
 }: CategoryChartProps) {
+  const navigate = useNavigate();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hoveredSlice, setHoveredSlice] = useState<{
+    label: string;
+    value: number;
+    color: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleSliceMouseMove = (
+    e: React.MouseEvent<SVGElement>,
+    label: string,
+    value: number,
+    color: string
+  ) => {
+    const svg = e.currentTarget.ownerSVGElement;
+    if (!svg) return;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const cursor = pt.matrixTransform(ctm.inverse());
+    setHoveredSlice({
+      label,
+      value,
+      color,
+      x: cursor.x,
+      y: cursor.y,
+    });
+  };
+
   if (data.length === 0) {
     return (
       <section className="incident-card category-card">
@@ -138,16 +171,33 @@ export default function CategoryChart({
           <span className="tickets-heading-arrow">{isCollapsed ? "›" : "⌄"}</span>
         </div>
 
-        <button
-          type="button"
-          className="chart-action-button"
-          aria-label="Open category breakdown report"
-          title="Open category breakdown report"
-          onClick={() => setShowDetailsModal(true)}
-          style={{ cursor: "pointer" }}
-        >
-          →
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <button
+            type="button"
+            className="chart-action-button"
+            aria-label="Open Incidents by Category report"
+            title="Open Incidents by Category report"
+            onClick={() => navigate('/reports/incidents-by-category')}
+            style={{ cursor: "pointer" }}
+          >
+            <span
+              style={{
+                width: "18px",
+                height: "18px",
+                borderRadius: "50%",
+                backgroundColor: "#2c3b4d",
+                color: "#ffffff",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "10px",
+                lineHeight: 1,
+              }}
+            >
+              ➔
+            </span>
+          </button>
+        </div>
       </div>
 
       {!isCollapsed && (
@@ -157,17 +207,36 @@ export default function CategoryChart({
           preserveAspectRatio="xMidYMid meet"
           role="img"
           aria-label="Incidents by category pie chart"
+          onMouseLeave={() => setHoveredSlice(null)}
+          style={{ cursor: "pointer" }}
         >
-          {slices.map((s) => (
-            <path
-              key={`slice-${s.item.label}`}
-              d={slicePath(s.start, s.end)}
-              fill={s.style.fill}
-            />
-          ))}
+          {slices.map((s) => {
+            const isHovered = hoveredSlice?.label === s.item.label;
+            return (
+              <path
+                key={`slice-${s.item.label}`}
+                d={slicePath(s.start, s.end)}
+                fill={s.style.fill}
+                style={{
+                  cursor: "pointer",
+                  transition: "opacity 0.15s ease",
+                  opacity: hoveredSlice ? (isHovered ? 1 : 0.88) : 1,
+                }}
+                onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
+                onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
+                onClick={() => navigate('/reports/incidents-by-category')}
+              />
+            );
+          })}
 
           {slices.map((s) => (
-            <g key={`label-${s.item.label}`}>
+            <g
+              key={`label-${s.item.label}`}
+              style={{ cursor: "pointer" }}
+              onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
+              onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
+              onClick={() => navigate('/reports/incidents-by-category')}
+            >
               <line
                 x1={s.edge.x}
                 y1={s.edge.y}
@@ -200,6 +269,71 @@ export default function CategoryChart({
               </text>
             </g>
           ))}
+
+          {/* Slice hover tooltip matching Image 1 */}
+          {hoveredSlice && (() => {
+            const textLen = hoveredSlice.label.length;
+            const boxWidth = Math.max(190, textLen * 6.5 + 24);
+            const boxHeight = 44;
+            const placeLeft = hoveredSlice.x > boxWidth + 30;
+            const boxX = placeLeft ? hoveredSlice.x - boxWidth - 14 : hoveredSlice.x + 14;
+            const boxY = Math.max(10, Math.min(H - boxHeight - 10, hoveredSlice.y - boxHeight / 2));
+            const notchY = Math.max(boxY + 10, Math.min(boxY + boxHeight - 10, hoveredSlice.y));
+
+            const notchPath = placeLeft
+              ? `M ${boxX + boxWidth} ${notchY - 6} L ${boxX + boxWidth + 8} ${notchY} L ${boxX + boxWidth} ${notchY + 6} Z`
+              : `M ${boxX} ${notchY - 6} L ${boxX - 8} ${notchY} L ${boxX} ${notchY + 6} Z`;
+
+            return (
+              <g style={{ pointerEvents: "none" }}>
+                <rect
+                  x={boxX}
+                  y={boxY}
+                  width={boxWidth}
+                  height={boxHeight}
+                  rx={4}
+                  ry={4}
+                  fill="#0b1b28"
+                  stroke="#1b3145"
+                  strokeWidth="1"
+                />
+                <path d={notchPath} fill="#0b1b28" />
+
+                {/* Line 1: Category Name */}
+                <text
+                  x={boxX + 10}
+                  y={boxY + 17}
+                  fill="#ffffff"
+                  fontSize="12.5"
+                  fontWeight="600"
+                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+                >
+                  {hoveredSlice.label}
+                </text>
+
+                {/* Line 2: Color square swatch + count */}
+                <rect
+                  x={boxX + 10}
+                  y={boxY + 25}
+                  width="10"
+                  height="10"
+                  fill={hoveredSlice.color}
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth="1"
+                />
+                <text
+                  x={boxX + 26}
+                  y={boxY + 34}
+                  fill="#ffffff"
+                  fontSize="12"
+                  fontWeight="500"
+                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+                >
+                  {hoveredSlice.value}
+                </text>
+              </g>
+            );
+          })()}
         </svg>
       )}
 

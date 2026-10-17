@@ -63,7 +63,10 @@ export default function BreachingSLA({
     );
   };
 
-  const handleIncidentClick = (incident: SlaIncident) => {
+  const handleIncidentClick = (incident: SlaIncident, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setSelectedTicket(incident);
   };
 
@@ -228,7 +231,6 @@ export default function BreachingSLA({
                   <th>Summary</th>
                   <th>Agent</th>
                   <th>Priority</th>
-                  <th>SLA Time Left</th>
                 </tr>
               </thead>
 
@@ -238,7 +240,7 @@ export default function BreachingSLA({
                     key={incident.id}
                     onClick={(e) => {
                       if ((e.target as HTMLElement).tagName === "INPUT") return;
-                      handleIncidentClick(incident);
+                      handleIncidentClick(incident, e);
                     }}
                     style={{ cursor: "pointer" }}
                   >
@@ -253,18 +255,23 @@ export default function BreachingSLA({
 
                     <td
                       className="dashboard-link-cell"
-                      onClick={() => handleIncidentClick(incident)}
+                      onClick={(e) => handleIncidentClick(incident, e)}
                       title={`View complete details for ${incident.id}`}
                       style={{ cursor: 'pointer', fontWeight: 600 }}
                     >
                       {incident.id}
                     </td>
 
-                    <td>{incident.type}</td>
+                    <td
+                      onClick={(e) => handleIncidentClick(incident, e)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {incident.type}
+                    </td>
 
                     <td
                       className="dashboard-link-cell"
-                      onClick={() => handleIncidentClick(incident)}
+                      onClick={(e) => handleIncidentClick(incident, e)}
                       title={`View complete details for ${incident.id}`}
                       style={{ cursor: 'pointer' }}
                     >
@@ -288,12 +295,6 @@ export default function BreachingSLA({
                         {incident.priority}
                       </span>
                     </td>
-
-                    <td>
-                      <span className="dashboard-sla-time">
-                        {incident.slaTime}
-                      </span>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -305,6 +306,7 @@ export default function BreachingSLA({
         <TicketDetailModal
           ticket={selectedTicket}
           currentUser={currentAgentName}
+          variant="sla"
           onClose={() => setSelectedTicket(null)}
           onUpdateTicket={handleModalUpdateTicket}
         />

@@ -29,6 +29,8 @@ export interface ChangeRequest {
   completionPercent: number;
   tags: string[];
   subtasks: Subtask[];
+  linkedRequestId?: string;
+  linkedRequestSummary?: string;
 }
 
 export type CiType = 'Cloud Service' | 'Database' | 'Network' | 'Application' | 'Server' | 'Security';

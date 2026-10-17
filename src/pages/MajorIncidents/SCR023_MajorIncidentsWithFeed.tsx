@@ -182,31 +182,6 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
                 <span className="font-semibold text-gray-800 text-sm">Major Incidents + Feed</span>
                 <span className="text-gray-300">·</span>
                 <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
-                <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium ${
-                  isLiveConnected 
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                    : 'bg-amber-50 border-amber-200 text-amber-700'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-                  }`} />
-                  <span>{isLiveConnected ? 'Live API Connected' : 'Connecting to API...'}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => loadLiveIncidents()}
-                  className="text-[11px] font-medium text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1 cursor-pointer"
-                  title="Refresh incidents from backend"
-                >
-                  <span>↻</span> Refresh
-                </button>
-                <Link
-                  to="/major-incidents/live"
-                  className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
-                >
-                  Live Pipeline Board →
-                </Link>
               </div>
             </div>
 

@@ -25,11 +25,14 @@ const PRIORITY_CLASS: Record<DashboardPriority, string> = {
 
 function TicketAvatar() {
   return (
-    <span className="dashboard-ticket-avatar">
-      <span className="dashboard-ticket-head" />
-      <span className="dashboard-ticket-body" />
-      <span className="dashboard-ticket-status" />
-    </span>
+    <div className="table-bubble-avatar">
+      <div className="table-bubble-circle">
+        <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
+        </svg>
+      </div>
+      <span className="table-bubble-dot" />
+    </div>
   );
 }
 
@@ -42,7 +45,7 @@ export default function DashboardTickets({
   const currentAgentName = user?.fullName || "Inesh Agarwal";
 
   const [tickets, setTickets] = usePersistentState<DashboardTicket[]>(
-    "servigen_incidents_new_tickets_v1",
+    "servigen_incidents_new_tickets_v2",
     DASHBOARD_TICKETS
   );
   const [selectedTicket, setSelectedTicket] = useState<DashboardTicket | null>(null);
@@ -319,6 +322,7 @@ export default function DashboardTickets({
                     <span className="dashboard-agent">
                       <TicketAvatar />
                       <span>{ticket.agent === 'Inesh Agarwal' || ticket.agent === 'Demo User' ? currentAgentName : ticket.agent}</span>
+                      <span className="trophy-badge text-xs ml-1">🏆</span>
                     </span>
                   </td>
 

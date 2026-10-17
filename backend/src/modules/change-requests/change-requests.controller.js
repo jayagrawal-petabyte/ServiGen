@@ -4,6 +4,8 @@ const {
   getAllChangeRequests,
   getChangeRequestDetails,
   getActiveChangeRequestsData,
+  createNewChangeRequest,
+  updateChangeRequestData,
 } = require('./change-requests.service');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
@@ -98,8 +100,65 @@ const getChangeRequestById = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/change-requests
+ * Create a new Change Request submitted from the frontend modal.
+ * Caller cannot supply `id` or `status` — both are enforced server-side.
+ */
+const createChangeRequest = async (req, res, next) => {
+  try {
+    const organisationId = getEffectiveOrgId(req);
+    const record = await createNewChangeRequest(req.body, organisationId);
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: record,
+    });
+  } catch (err) {
+    // Validation errors from service layer are plain Error objects — map to 422
+    if (err.isOperational) return next(err);
+    return next(new AppError(err.message, HTTP_STATUS.UNPROCESSABLE_ENTITY));
+  }
+};
+
+/**
+ * PATCH /api/change-requests/:id
+ * Update a Change Request's status (and future: implementation checklist).
+ * Enforces tenant isolation before mutating. Only allowlisted fields are applied.
+ */
+const updateChangeRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (typeof id !== 'string' || !id.trim() || id.length > 50) {
+      return next(
+        new AppError('Invalid change request ID format', HTTP_STATUS.BAD_REQUEST)
+      );
+    }
+
+    const organisationId = getEffectiveOrgId(req);
+    const updated = await updateChangeRequestData(id.trim(), req.body, organisationId);
+
+    if (!updated) {
+      return next(
+        new AppError('Change request not found', HTTP_STATUS.NOT_FOUND)
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+    });
+  } catch (err) {
+    // Validation errors from service layer — map to 422
+    if (err.isOperational) return next(err);
+    return next(new AppError(err.message, HTTP_STATUS.UNPROCESSABLE_ENTITY));
+  }
+};
+
 module.exports = {
   getChangeRequestsList,
   getActiveChangeRequestsList,
   getChangeRequestById,
+  createChangeRequest,
+  updateChangeRequest,
 };

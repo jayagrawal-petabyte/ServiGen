@@ -122,14 +122,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               <path d="M9 12h6M9 16h4" />
             </svg>
           </IconBtn>
-          <IconBtn label="Performance" onClick={onPerformance}>
+          <IconBtn label="Timesheet & Hours" onClick={onPerformance}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2a10 10 0 1 0 10 10" />
               <path d="M12 12 18 6" strokeLinecap="round" />
               <circle cx="12" cy="12" r="1.5" fill="currentColor" />
             </svg>
           </IconBtn>
-          <IconBtn label="Signal" onClick={onStatus}>
+          <IconBtn label="Agent KPI Dashboard" onClick={onStatus}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12.55a11 11 0 0 1 14.08 0" />
               <path d="M1.42 9a16 16 0 0 1 21.16 0" />
@@ -137,7 +137,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
             </svg>
           </IconBtn>
-          <IconBtn label="History" onClick={onHistory}>
+          <IconBtn label="Live Activity Feed" onClick={onHistory}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" strokeLinecap="round" />
@@ -168,7 +168,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           <span className="text-gray-400 hover:text-gray-600 cursor-pointer whitespace-nowrap">Major Incidents</span>
           <span className="text-gray-300">›</span>
           <span className="flex items-center gap-1 font-medium text-gray-700 whitespace-nowrap">
-            <span className="w-3 h-3 bg-red-500 rounded-sm inline-block shrink-0" />
+            {!breadcrumb.includes('🌐') && !breadcrumb.includes('📊') && !breadcrumb.includes('📅') && (
+              <span className="w-3 h-3 bg-red-500 rounded-sm inline-block shrink-0" />
+            )}
             {breadcrumb}
           </span>
         </div>

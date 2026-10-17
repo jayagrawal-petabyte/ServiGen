@@ -12,6 +12,12 @@ export type TicketNote = {
   text: string;
 };
 
+export interface UserAsset {
+  id: string;
+  type: string;
+  icon: "workstation" | "phone" | "monitor" | "laptop";
+}
+
 export type FullTicket = {
   id: string;
   type: string;
@@ -26,6 +32,36 @@ export type FullTicket = {
   createdAt?: string;
   targetSla?: string;
   notes?: TicketNote[];
+  site?: string;
+  organisationName?: string;
+  email?: string;
+  phoneNumber?: string;
+  preferredNumber?: string;
+  isAgent?: boolean;
+  timeTaken?: string;
+  fromTicketId?: string;
+  actionTitle?: string;
+  contactAddress?: string[];
+  assets?: UserAsset[];
+  projectId?: string;
+  projectName?: string;
+  workflowName?: string;
+  createdBy?: string;
+  executionDate?: string;
+  assignedTeam?: string;
+  additionalAgents?: string;
+  timeRecorded?: string;
+  budgetType?: string;
+  timeBudget?: string;
+  startDate?: string;
+  targetDate?: string;
+  responseTarget?: string;
+  resolutionTarget?: string;
+  responseTargetMet?: boolean;
+  resolutionTargetMet?: boolean;
+  slaTime?: string;
+  pipelineStage?: string;
+  pipelineDate?: string;
 };
 
 export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
@@ -67,7 +103,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
     department: "Talent Acquisition",
     category: "Collaboration Tools > Audio/Video",
     createdAt: "15 Oct 2026, 11:05 AM",
-    targetSla: "SLA remaining: -42:54 (Breached)",
+    targetSla: "SLA remaining: -88:01 (Breached)",
     description:
       "Acoustic echo cancellation feedback loop occurs whenever two or more users join conference room B-10 meeting link simultaneously from laptops while room microphone bar is engaged. Requires DSP audio profile reset.",
     notes: [
@@ -75,6 +111,28 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
         id: "n-3576-1",
         author: "Mohammad Taha Ali",
         time: "15 Oct 2026, 11:40 AM",
+        text: "Checked room hardware firmware. Polycom studio bar requires pending audio profile patch.",
+      },
+    ],
+  },
+  "0003575": {
+    type: "Incident",
+    summary: "Audio echo looping when two people join",
+    priority: "Low",
+    status: "In Progress",
+    agent: "Demo User",
+    requester: "Sarah Jenkins (Human Resources)",
+    department: "Talent Acquisition",
+    category: "Collaboration Tools > Audio/Video",
+    createdAt: "20/07/2026",
+    targetSla: "SLA remaining: -88:01 (Breached)",
+    description:
+      "Acoustic echo cancellation feedback loop occurs whenever two or more users join conference room B-10 meeting link simultaneously from laptops while room microphone bar is engaged. Requires DSP audio profile reset.",
+    notes: [
+      {
+        id: "n-3575-1",
+        author: "Demo User",
+        time: "20/07/2026",
         text: "Checked room hardware firmware. Polycom studio bar requires pending audio profile patch.",
       },
     ],
@@ -123,31 +181,111 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
       },
     ],
   },
-  "0003132-C": {
+  "0003132": {
     type: "Project Task",
-    summary: "Deployment and Implementation of Production Hotfix 4.2",
+    summary: "Deployment and Implementation Review",
     priority: "Low",
-    status: "In Progress",
-    agent: "Inesh Agarwal",
-    requester: "Priya Sharma (Release Manager)",
-    department: "Core Engineering",
+    status: "New",
+    agent: "Demo User",
+    requester: "Demo User",
+    department: "consultancy",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "jagath.varshan@softrateglobal.com",
+    phoneNumber: "4644354",
+    preferredNumber: "01449 833111",
+    isAgent: true,
+    timeTaken: "70:15",
+    fromTicketId: "#2196",
+    actionTitle: "Create Project Task",
     category: "Infrastructure > Production Deployment",
-    createdAt: "12 Oct 2026, 09:15 AM",
+    createdAt: "17/05/2026 4:06 AM",
     targetSla: "2 days remaining (14 Oct 2026, 18:00)",
+    assignedTeam: "1st Line Support",
+    additionalAgents: "Not set",
+    timeRecorded: "70:15",
+    budgetType: "Project Management",
+    timeBudget: "05:00",
+    startDate: "Not set",
+    targetDate: "Not set",
+    executionDate: "06/11/2025 10:56 PM",
+    pipelineStage: "Task Execution",
+    pipelineDate: "06/11/2025 10:56 PM",
+    contactAddress: [
+      "Halo House, Gipping Way",
+      "Stowmarket",
+      "Suffolk",
+      "United Kingdom",
+      "Ip14 1GJ",
+    ],
+    assets: [
+      { id: "ABC00001", type: "Workstation", icon: "workstation" },
+      { id: "ABC00002", type: "Mobile Phone", icon: "phone" },
+      { id: "ABC00007", type: "Monitor", icon: "monitor" },
+      { id: "ABC00008", type: "Laptop", icon: "laptop" },
+    ],
     description:
-      "Deployment and implementation of Production Hotfix 4.2 patch. Requirements include validating database migration scripts, executing pre-flight canary tests on staging clusters, and coordinating maintenance window with customer success teams. Rollback scripts must be verified prior to production deployment.",
+      "Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.",
     notes: [
       {
         id: "n-1",
-        author: "Priya Sharma",
-        time: "12 Oct 2026, 09:30 AM",
-        text: "Canary build 4.2-rc3 passed unit testing in staging environment.",
+        author: "Admin (You)",
+        time: "17/05/2026 4:06 AM",
+        text: "Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.",
       },
+    ],
+  },
+  "0003132-C": {
+    type: "Project Task",
+    summary: "Deployment and Implementation Review",
+    priority: "Low",
+    status: "New",
+    agent: "Admin (You)",
+    requester: "Admin (You)",
+    department: "consultancy",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "jagath.varshan@softrateglobal.com",
+    phoneNumber: "4644354",
+    preferredNumber: "01449 833111",
+    isAgent: true,
+    timeTaken: "70:15",
+    fromTicketId: "#2196",
+    actionTitle: "Create Project Task",
+    category: "Infrastructure > Production Deployment",
+    createdAt: "17/05/2026 4:06 AM",
+    targetSla: "2 days remaining (14 Oct 2026, 18:00)",
+    assignedTeam: "1st Line Support",
+    additionalAgents: "Not set",
+    timeRecorded: "70:15",
+    budgetType: "Project Management",
+    timeBudget: "05:00",
+    startDate: "Not set",
+    targetDate: "Not set",
+    executionDate: "06/11/2025 10:56 PM",
+    pipelineStage: "Task Execution",
+    pipelineDate: "06/11/2025 10:56 PM",
+    contactAddress: [
+      "Halo House, Gipping Way",
+      "Stowmarket",
+      "Suffolk",
+      "United Kingdom",
+      "Ip14 1GJ",
+    ],
+    assets: [
+      { id: "ABC00001", type: "Workstation", icon: "workstation" },
+      { id: "ABC00002", type: "Mobile Phone", icon: "phone" },
+      { id: "ABC00007", type: "Monitor", icon: "monitor" },
+      { id: "ABC00008", type: "Laptop", icon: "laptop" },
+    ],
+    description:
+      "Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.",
+    notes: [
       {
-        id: "n-2",
-        author: "Inesh Agarwal",
-        time: "12 Oct 2026, 11:15 AM",
-        text: "Database migration schema validated against staging replica.",
+        id: "n-1",
+        author: "Admin (You)",
+        time: "17/05/2026 4:06 AM",
+        text: "Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.",
       },
     ],
   },
@@ -335,23 +473,217 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
   },
   "0003988": {
     type: "Service Request",
-    summary: "Would like my desk phone extension routed to softphone client",
+    summary: "Would like my desk phone extension updated after moving to the new floor",
     priority: "Low",
-    status: "Open",
+    status: "New",
     agent: "Unassigned",
-    requester: "Pooja Hegde (Customer Service)",
-    department: "Telecom & Voice Ops",
-    category: "Telephony > Softphone Routing",
-    createdAt: "14 Oct 2026, 09:15 AM",
-    targetSla: "SLA Breached (-32:01 remaining)",
+    assignedTeam: "1st Line Support",
+    additionalAgents: "Not set",
+    timeRecorded: "00:00",
+    requester: "Aisha Khan",
+    department: "Corporate Operations",
+    category: "Service Desk Portal>Catalog>Item Update",
+    createdAt: "27/07/2026 4:44 PM",
+    executionDate: "29/07/2026 6:22 PM",
+    pipelineStage: "Request Fulfillment",
+    pipelineDate: "29/07/2026 6:22 PM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "akhan@usehalo.com",
+    phoneNumber: "01632 960101",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "-32:01",
+    responseTarget: "01/09/2026 10:29 PM",
+    responseTargetMet: true,
+    resolutionTarget: "10/09/2026 10:29 PM",
+    resolutionTargetMet: false,
     description:
-      "Agent needs corporate desk phone extension routed to WebRTC softphone on their laptop for hybrid remote shift. Requires telephony profile update in Asterisk / Cisco CallManager.",
+      "Moved desks on Friday and calls are still routing to my old extension. Not urgent since I mostly use my mobile, but would like it corrected when convenient.",
     notes: [
       {
-        id: "n-sla-1",
-        author: "System",
-        time: "32 mins ago",
-        text: "Response SLA breached (-32:01). Escalated to voice ops queue.",
+        id: "n-3988-1",
+        author: "Aisha Khan",
+        time: "27/07/2026 4:44 PM",
+        text: "Moved desks on Friday and calls are still routing to my old extension. Not urgent since I mostly use my mobile, but would like it corrected when convenient.",
+      },
+    ],
+  },
+  "3988": {
+    type: "Service Request",
+    summary: "Would like my desk phone extension updated after moving to the new floor",
+    priority: "Low",
+    status: "New",
+    agent: "Unassigned",
+    assignedTeam: "1st Line Support",
+    additionalAgents: "Not set",
+    timeRecorded: "00:00",
+    requester: "Aisha Khan",
+    department: "Corporate Operations",
+    category: "Service Desk Portal>Catalog>Item Update",
+    createdAt: "27/07/2026 4:44 PM",
+    executionDate: "29/07/2026 6:22 PM",
+    pipelineStage: "Request Fulfillment",
+    pipelineDate: "29/07/2026 6:22 PM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "akhan@usehalo.com",
+    phoneNumber: "01632 960101",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "-32:01",
+    responseTarget: "01/09/2026 10:29 PM",
+    responseTargetMet: true,
+    resolutionTarget: "10/09/2026 10:29 PM",
+    resolutionTargetMet: false,
+    description:
+      "Moved desks on Friday and calls are still routing to my old extension. Not urgent since I mostly use my mobile, but would like it corrected when convenient.",
+    notes: [
+      {
+        id: "n-3988-1",
+        author: "Aisha Khan",
+        time: "27/07/2026 4:44 PM",
+        text: "Moved desks on Friday and calls are still routing to my old extension. Not urgent since I mostly use my mobile, but would like it corrected when convenient.",
+      },
+    ],
+  },
+  "3840": {
+    type: "Incident",
+    summary: "Getting an unacceptable credentials error whenever I try to connect over VPN",
+    priority: "Low",
+    status: "Closed",
+    agent: "Demo User",
+    requester: "David Miller",
+    department: "Corporate Operations",
+    category: "Network>VPN>Connection Failure",
+    createdAt: "12/05/2026 7:50 PM",
+    executionDate: "12/05/2026 7:50 PM",
+    pipelineStage: "Resolution",
+    pipelineDate: "13/05/2026 10:15 AM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "dmiller@usehalo.com",
+    phoneNumber: "01632 944102",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "00:00",
+    responseTarget: "12/05/2026 8:50 PM",
+    responseTargetMet: true,
+    resolutionTarget: "13/05/2026 7:50 PM",
+    resolutionTargetMet: true,
+    description:
+      "Getting an unacceptable credentials error whenever I try to connect over VPN. Password cache expired in RADIUS authentication pool. Credentials resynced.",
+    notes: [
+      {
+        id: "n-3840-1",
+        author: "David Miller",
+        time: "12/05/2026 7:50 PM",
+        text: "Getting an unacceptable credentials error whenever I try to connect over VPN.",
+      },
+    ],
+  },
+  "3841": {
+    type: "Incident",
+    summary: "VPN connects for a few seconds then drops back to disconnected on its own",
+    priority: "Medium",
+    status: "With User",
+    agent: "Demo User",
+    requester: "Claire Bennett",
+    department: "Finance",
+    category: "Network>VPN>Connection Failure",
+    createdAt: "28/08/2026 10:29 PM",
+    executionDate: "28/08/2026 10:29 PM",
+    pipelineStage: "Investigation",
+    pipelineDate: "28/08/2026 11:05 PM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "cbennett@usehalo.com",
+    phoneNumber: "01632 955310",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "+14:22",
+    responseTarget: "28/08/2026 11:29 PM",
+    responseTargetMet: true,
+    resolutionTarget: "29/08/2026 10:29 PM",
+    resolutionTargetMet: false,
+    description:
+      "VPN connects for a few seconds then drops back to disconnected on its own. Tunnel keepalive MTU packets dropped. Awaiting user modem test.",
+    notes: [
+      {
+        id: "n-3841-1",
+        author: "Claire Bennett",
+        time: "28/08/2026 10:29 PM",
+        text: "VPN connects for a few seconds then drops back to disconnected on its own.",
+      },
+    ],
+  },
+  "3842": {
+    type: "Incident",
+    summary: "Multi factor prompts for VPN aren't arriving on my phone during login",
+    priority: "High",
+    status: "Closed",
+    agent: "Jennifer Williams",
+    requester: "Robert Evans",
+    department: "Sales",
+    category: "Network>VPN>Connection Failure",
+    createdAt: "11/05/2026 1:37 PM",
+    executionDate: "11/05/2026 1:37 PM",
+    pipelineStage: "Resolution",
+    pipelineDate: "11/05/2026 3:45 PM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "revans@usehalo.com",
+    phoneNumber: "01632 977421",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "00:00",
+    responseTarget: "11/05/2026 2:07 PM",
+    responseTargetMet: true,
+    resolutionTarget: "11/05/2026 5:37 PM",
+    resolutionTargetMet: true,
+    description:
+      "Multi factor prompts for VPN aren't arriving on my phone during login. Authenticator push token re-registered on company portal.",
+    notes: [
+      {
+        id: "n-3842-1",
+        author: "Robert Evans",
+        time: "11/05/2026 1:37 PM",
+        text: "Multi factor prompts for VPN aren't arriving on my phone during login.",
+      },
+    ],
+  },
+  "3843": {
+    type: "Incident",
+    summary: "VPN is extremely unstable on this hotel's wireless network this week",
+    priority: "Low",
+    status: "Closed",
+    agent: "James Brown",
+    requester: "Susan Wright",
+    department: "Field Services",
+    category: "Network>VPN>Connection Failure",
+    createdAt: "10/07/2026 9:33 PM",
+    executionDate: "10/07/2026 9:33 PM",
+    pipelineStage: "Resolution",
+    pipelineDate: "11/07/2026 8:00 AM",
+    organisationName: "consultancy",
+    site: "EMEA",
+    email: "swright@usehalo.com",
+    phoneNumber: "01632 988312",
+    preferredNumber: "01449 833111",
+    targetSla: "Incident SLA",
+    slaTime: "00:00",
+    responseTarget: "10/07/2026 10:33 PM",
+    responseTargetMet: true,
+    resolutionTarget: "11/07/2026 9:33 PM",
+    resolutionTargetMet: true,
+    description:
+      "VPN is extremely unstable on this hotel's wireless network this week. Captive portal throttled UDP tunnel. Switched client config to TCP 443.",
+    notes: [
+      {
+        id: "n-3843-1",
+        author: "Susan Wright",
+        time: "10/07/2026 9:33 PM",
+        text: "VPN is extremely unstable on this hotel's wireless network this week.",
       },
     ],
   },
@@ -487,6 +819,122 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
       },
     ],
   },
+  "0003983": {
+    type: "Incident",
+    summary: "External keyboard and mouse stop responding on USB-C dock",
+    priority: "Medium",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Kunal Shah (Product Design)",
+    department: "Workplace Technology",
+    category: "Hardware > Peripherals > Docking Station",
+    createdAt: "14 Oct 2026, 08:35 AM",
+    targetSla: "SLA Breached (-88:01 remaining)",
+    description:
+      "Peripherals connected via Dell Thunderbolt 4 Dock WD22TB4 randomly drop power every 20-30 minutes during video calls. Firmware update and Thunderbolt security controller driver reinstall needed.",
+    notes: [
+      {
+        id: "n-sla-8",
+        author: "System",
+        time: "1h 30m ago",
+        text: "Ticket flagged by user. Docking station swapped with test unit.",
+      },
+    ],
+  },
+  "0003982": {
+    type: "Incident",
+    summary: "Monthly financial reporting query timing out after 15 minutes",
+    priority: "High",
+    status: "In Progress",
+    agent: "Unassigned",
+    requester: "Pooja Hegde (Finance Controller)",
+    department: "Financial Operations",
+    category: "Business Applications > Oracle ERP",
+    createdAt: "14 Oct 2026, 08:20 AM",
+    targetSla: "SLA Breached (-64:00 remaining)",
+    description:
+      "Oracle ERP ledger trial balance export times out with gateway 504 error. Month-end financial reporting cannot proceed until query execution plan is optimized or index rebuilt.",
+    notes: [
+      {
+        id: "n-sla-9",
+        author: "Pooja Hegde",
+        time: "14 Oct 2026, 08:25 AM",
+        text: "Finance close deadline is end of day today.",
+      },
+    ],
+  },
+  "0003981": {
+    type: "Service Request",
+    summary: "Need addition to Executive Leadership team shared calendar",
+    priority: "Low",
+    status: "Open",
+    agent: "Unassigned",
+    requester: "Rohan Varma (Executive Assistant)",
+    department: "Executive Operations",
+    category: "Collaboration > Calendar Delegation",
+    createdAt: "14 Oct 2026, 08:15 AM",
+    targetSla: "SLA Breached (-40:01 remaining)",
+    description:
+      "User requires Delegate with Full Edit permissions to Executive Leadership team calendar on Microsoft Exchange Online for executive board meeting scheduling.",
+    notes: [
+      {
+        id: "n-sla-10",
+        author: "System",
+        time: "40 mins ago",
+        text: "Awaiting line manager approval.",
+      },
+    ],
+  },
+  "0003025": {
+    type: "Incident",
+    summary: "Salesforce CRM opportunity pipeline export failing with 413 Payload Too Large",
+    priority: "Critical",
+    status: "In Progress",
+    agent: "Inesh Agarwal",
+    requester: "Vikram Malhotra (VP Global Sales)",
+    department: "Commercial & Sales Operations",
+    category: "Business Applications > Salesforce CRM",
+    createdAt: "16 Oct 2026, 12:45 PM",
+    targetSla: "Critical SLA: 45 mins remaining",
+    description:
+      "Quarterly pipeline export failing on bulk REST API request with HTTP 413 Payload Too Large. Field sales managers unable to pull revenue projections ahead of Board review. Requires adjusting client batch chunk size to 2,000 records.",
+    notes: [
+      {
+        id: "n-3025-1",
+        author: "Vikram Malhotra",
+        time: "16 Oct 2026, 12:48 PM",
+        text: "Need urgent resolution before executive committee meeting at 3 PM.",
+      },
+      {
+        id: "n-3025-2",
+        author: "Inesh Agarwal",
+        time: "16 Oct 2026, 12:55 PM",
+        text: "Identified batch API serialization issue. Reconfiguring middleware pagination gateway.",
+      },
+    ],
+  },
+  "0003024": {
+    type: "Service Request",
+    summary: "GitHub Enterprise organization invite for newly hired backend engineer",
+    priority: "High",
+    status: "Open",
+    agent: "Nainesh Patel",
+    requester: "Priya Sharma (Engineering Director)",
+    department: "Core Engineering",
+    category: "Developer Tools > GitHub Enterprise",
+    createdAt: "16 Oct 2026, 12:35 PM",
+    targetSla: "Target SLA: 2 hours remaining",
+    description:
+      "Requesting SSO SAML provisioning and member invitation to 'servigen-corp' GitHub Enterprise organization for new backend engineer joining the payments pod. Needs access to repositories: core-api, payments-service, and infra-terraform.",
+    notes: [
+      {
+        id: "n-3024-1",
+        author: "Priya Sharma",
+        time: "16 Oct 2026, 12:40 PM",
+        text: "Approved by Engineering Director. Fast-track onboarding.",
+      },
+    ],
+  },
 };
 
 export const AVAILABLE_AGENTS = [
@@ -535,7 +983,17 @@ export function enrichTicketDetails(rawTicket: {
   targetSla?: string;
   notes?: TicketNote[];
 }): FullTicket {
-  const catalogEntry = MOCK_TICKET_CATALOG[rawTicket.id] || {};
+  const cleanedId = (rawTicket.id || "").replace(/^[#\s]+/, "");
+  const strippedId = cleanedId.replace(/-C$/, "");
+  const paddedId = strippedId.padStart(7, "0");
+  const unpaddedId = strippedId.replace(/^0+/, "");
+  const catalogEntry =
+    MOCK_TICKET_CATALOG[rawTicket.id] ||
+    MOCK_TICKET_CATALOG[cleanedId] ||
+    MOCK_TICKET_CATALOG[strippedId] ||
+    MOCK_TICKET_CATALOG[paddedId] ||
+    MOCK_TICKET_CATALOG[unpaddedId] ||
+    {};
 
   return {
     id: rawTicket.id,
@@ -569,10 +1027,54 @@ export function enrichTicketDetails(rawTicket: {
         : catalogEntry.notes || [
             {
               id: "n-init",
-              author: "System",
-              time: "Just now",
-              text: `Ticket ${rawTicket.id} registered in ServiGen queue.`,
+              author: "Admin (You)",
+              time: catalogEntry.createdAt || "17/05/2026 4:06 AM",
+              text:
+                catalogEntry.description ||
+                rawTicket.description ||
+                `Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.`,
             },
           ],
+    site: catalogEntry.site || "EMEA",
+    organisationName: catalogEntry.organisationName || catalogEntry.department || "consultancy",
+    email: catalogEntry.email || "jagath.varshan@softrateglobal.com",
+    phoneNumber: catalogEntry.phoneNumber || "4644354",
+    preferredNumber: catalogEntry.preferredNumber || "01449 833111",
+    isAgent: catalogEntry.isAgent !== undefined ? catalogEntry.isAgent : true,
+    timeTaken: catalogEntry.timeTaken || "70:15",
+    fromTicketId: catalogEntry.fromTicketId || "#2196",
+    actionTitle: catalogEntry.actionTitle || `Create ${rawTicket.type || catalogEntry.type || "Project Task"}`,
+    contactAddress: catalogEntry.contactAddress || [
+      "Halo House, Gipping Way",
+      "Stowmarket",
+      "Suffolk",
+      "United Kingdom",
+      "Ip14 1GJ",
+    ],
+    assets: catalogEntry.assets || [
+      { id: "ABC00001", type: "Workstation", icon: "workstation" },
+      { id: "ABC00002", type: "Mobile Phone", icon: "phone" },
+      { id: "ABC00007", type: "Monitor", icon: "monitor" },
+      { id: "ABC00008", type: "Laptop", icon: "laptop" },
+    ],
+    projectId: catalogEntry.projectId || "2196",
+    projectName: catalogEntry.projectName || "2196 - Halo Implementation - Project",
+    workflowName: catalogEntry.workflowName || "Task Management Workflow",
+    createdBy: catalogEntry.createdBy || "Admin",
+    executionDate: catalogEntry.executionDate || "06/11/2025 10:56 PM",
+    assignedTeam: catalogEntry.assignedTeam || "1st Line Support",
+    additionalAgents: catalogEntry.additionalAgents || "Not set",
+    timeRecorded: catalogEntry.timeRecorded || catalogEntry.timeTaken || "70:15",
+    budgetType: catalogEntry.budgetType || "Project Management",
+    timeBudget: catalogEntry.timeBudget || "05:00",
+    startDate: catalogEntry.startDate || "Not set",
+    targetDate: catalogEntry.targetDate || "Not set",
+    responseTarget: catalogEntry.responseTarget || "01/09/2026 10:29 PM",
+    responseTargetMet: catalogEntry.responseTargetMet !== undefined ? catalogEntry.responseTargetMet : true,
+    resolutionTarget: catalogEntry.resolutionTarget || "10/09/2026 10:29 PM",
+    resolutionTargetMet: catalogEntry.resolutionTargetMet !== undefined ? catalogEntry.resolutionTargetMet : false,
+    slaTime: catalogEntry.slaTime || (rawTicket as any).slaTime || "-32:01",
+    pipelineStage: catalogEntry.pipelineStage || "Request Fulfillment",
+    pipelineDate: catalogEntry.pipelineDate || catalogEntry.executionDate || "29/07/2026 6:22 PM",
   };
 }

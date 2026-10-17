@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BrandLogo from "../../../components/shared/BrandLogo";
 import "./OnHold.css";
 
@@ -303,6 +304,7 @@ const TicketRow: React.FC<RowProps> = ({ ticket, selected, onToggle }) => (
 /* ─────────────────────────── Main component ─────────────────── */
 
 const OnHold: React.FC = () => {
+  const navigate = useNavigate();
   const [search, setSearch]                     = useState("");
   const [activeView, setActiveView]             = useState("My List");
   const [showSelectView, setShowSelectView]     = useState(true);
@@ -337,8 +339,20 @@ const OnHold: React.FC = () => {
             {/* breadcrumb */}
           </div>
           <div className="oh-topbar-center">
-            <button className="oh-btn-get-started">Get started</button>
-            <button className="oh-btn-new-ticket">
+            <button 
+              type="button"
+              className="oh-btn-get-started cursor-pointer"
+              onClick={() => navigate('/dashboard')}
+              title="Return to Dashboard"
+            >
+              Get started
+            </button>
+            <button 
+              type="button"
+              className="oh-btn-new-ticket cursor-pointer"
+              onClick={() => navigate('/incidents')}
+              title="New Incident Ticket"
+            >
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
@@ -346,20 +360,37 @@ const OnHold: React.FC = () => {
             </button>
           </div>
           <div className="oh-topbar-right">
-            <button className="oh-icon-btn">
+            <button 
+              type="button"
+              className="oh-icon-btn cursor-pointer"
+              title="Search Tickets"
+              onClick={() => {
+                const el = document.querySelector('.oh-search-input') as HTMLInputElement | null;
+                if (el) el.focus();
+              }}
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </button>
-            <button className="oh-icon-btn oh-icon-btn-notif">
+            <button 
+              type="button"
+              className="oh-icon-btn oh-icon-btn-notif cursor-pointer"
+              title="Notifications"
+              onClick={() => navigate('/major-incidents/live')}
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
               <span className="oh-notif-dot">1</span>
             </button>
-            <div className="oh-avatar">
+            <div 
+              className="oh-avatar cursor-pointer" 
+              onClick={() => navigate('/my-work')} 
+              title="My Work Queue"
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
             </div>
           </div>
@@ -456,7 +487,7 @@ const OnHold: React.FC = () => {
               </div>
               <div className="oh-footer-pages">
                 <button className="oh-page-btn oh-page-btn-disabled" disabled>Previous</button>
-                <button className="oh-page-btn oh-page-btn-active">1</button>
+                <button type="button" className="oh-page-btn oh-page-btn-active cursor-pointer" onClick={() => {}}>1</button>
               </div>
             </div>
           </div>

@@ -9,23 +9,44 @@ interface CreateChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (newChange: ChangeRequest) => void;
+  fromRequest?: { id: string; summary: string; category?: string; requester?: string } | null;
 }
 
 export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
   isOpen,
   onClose,
   onCreate,
+  fromRequest = null,
 }) => {
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(
+    fromRequest ? `[CR from Req #${fromRequest.id}] ${fromRequest.summary}` : ''
+  );
+  const [description, setDescription] = useState(
+    fromRequest
+      ? `Originating Service Request #${fromRequest.id} (${fromRequest.category || 'Service Request'}). Requester: ${fromRequest.requester || 'User'}.`
+      : ''
+  );
   const [type, setType] = useState<ChangeType>('Normal');
   const [risk, setRisk] = useState<RiskLevel>('Medium');
-  const [linkedCiName, setLinkedCiName] = useState('DB-PROD-POSTGRES-01');
+  const [linkedCiName, setLinkedCiName] = useState(
+    fromRequest?.category?.includes('>') ? fromRequest.category.split('>')[0] : 'DB-PROD-POSTGRES-01'
+  );
   const [agentName, setAgentName] = useState(user?.fullName || 'Inesh Agarwal');
   const [scheduledStart, setScheduledStart] = useState('Sep 25, 2026');
   const [scheduledEnd, setScheduledEnd] = useState('Oct 05, 2026');
   const [targetHours, setTargetHours] = useState(120);
+
+  // Sync state when fromRequest changes
+  React.useEffect(() => {
+    if (fromRequest) {
+      setTitle(`[CR from Req #${fromRequest.id}] ${fromRequest.summary}`);
+      setDescription(`Originating Service Request #${fromRequest.id} (${fromRequest.category || 'Service Request'}). Requester: ${fromRequest.requester || 'User'}.`);
+      if (fromRequest.category?.includes('>')) {
+        setLinkedCiName(fromRequest.category.split('>')[0]);
+      }
+    }
+  }, [fromRequest]);
 
   if (!isOpen) return null;
 
@@ -50,12 +71,14 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
       timeSpentHours: 0,
       targetHours,
       completionPercent: 0,
-      tags: [type, 'NewChange'],
+      tags: [type, fromRequest ? 'Service-Request-Linked' : 'NewChange'],
       subtasks: [
         { id: `#${Math.floor(3000 + Math.random() * 1000)}`, title: 'Initial Assessment & Pre-check', completed: true },
         { id: `#${Math.floor(3000 + Math.random() * 1000)}`, title: 'Execution Phase 1', completed: false },
         { id: `#${Math.floor(3000 + Math.random() * 1000)}`, title: 'Post-Rollout Validation', completed: false },
       ],
+      linkedRequestId: fromRequest ? fromRequest.id : undefined,
+      linkedRequestSummary: fromRequest ? fromRequest.summary : undefined,
     };
 
     onCreate(newChange);
@@ -87,6 +110,18 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {fromRequest && (
+          <div className="mx-6 mt-4 p-3 bg-cyan-50 border border-cyan-200 rounded-2xl flex items-center gap-3">
+            <span className="text-xl">📋</span>
+            <div className="flex-1 min-w-0 text-xs">
+              <span className="font-bold text-cyan-900 block">
+                Originating Service Request #{fromRequest.id}
+              </span>
+              <p className="text-cyan-700 truncate">{fromRequest.summary}</p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs text-slate-700">
           <div>

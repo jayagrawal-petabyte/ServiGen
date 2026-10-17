@@ -7,7 +7,7 @@ import { Pagination } from '../../components/shared/Pagination';
 import { Button } from '../../components/shared/Button';
 import { Card } from '../../components/shared/Card';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
-import { LayoutGrid, Table, Plus, Clock, Tag as TagIcon, AlertCircle } from 'lucide-react';
+import { LayoutGrid, Table, Plus, Clock, Tag as TagIcon, AlertCircle, ClipboardList } from 'lucide-react';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
@@ -56,6 +56,24 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
+      {/* Fast Switcher between Requests & Change Requests */}
+      <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl mb-4 self-start inline-flex">
+        <button
+          onClick={() => navigate('/requests')}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
+          title="Switch to Service Requests queue"
+        >
+          <ClipboardList className="w-3.5 h-3.5 text-cyan-600" />
+          <span>Service Requests</span>
+        </button>
+        <button
+          className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-2xs flex items-center gap-1.5 cursor-default"
+        >
+          <span>📝</span>
+          <span>Change Requests</span>
+        </button>
+      </div>
+
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -182,6 +200,20 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                       variant={getChangeStatusVariant(cr.status)}
                     />
                     {cr.type === 'Emergency' && <StatusBadge label="EMERGENCY" variant="red" />}
+                    {cr.linkedRequestId && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/requests?id=${cr.linkedRequestId}`);
+                        }}
+                        className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors flex items-center gap-1 cursor-pointer"
+                        title={`View originating Service Request #${cr.linkedRequestId}`}
+                      >
+                        <ClipboardList className="w-3 h-3 text-cyan-600" />
+                        <span>Req #{cr.linkedRequestId}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -290,7 +322,24 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                   className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                 >
                   <td className="py-3.5 px-4 font-bold text-[#E87A5D]">{cr.id}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900 max-w-xs truncate">{cr.title}</td>
+                  <td className="py-3.5 px-4 font-bold text-slate-900 max-w-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate">{cr.title}</span>
+                      {cr.linkedRequestId && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/requests?id=${cr.linkedRequestId}`);
+                          }}
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors shrink-0 cursor-pointer"
+                          title={`View Service Request #${cr.linkedRequestId}`}
+                        >
+                          Req #{cr.linkedRequestId}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td className="py-3.5 px-4">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                       {cr.type}

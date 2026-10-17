@@ -15,6 +15,7 @@ import {
   DASHBOARD_TICKETS,
   DashboardPriority,
 } from '../pages/Dashboard/dashboard.data';
+import { MOCK_TICKET_CATALOG } from '../components/TicketDetailModal/ticketDetails.data';
 
 export interface DashboardKpis {
   openIncidents: number;
@@ -154,19 +155,24 @@ export const dashboardService = {
    */
   async getNewTickets(): Promise<DashboardTicket[]> {
     try {
-      const res = await api.get('/api/dashboard/new-tickets');
+      const res = await api.get('/api/dashboard/new-tickets', { params: { limit: 30 } });
       if (res?.success && Array.isArray(res.data)) {
-        return (res.data as BackendTicketItem[]).map((t) => ({
-          id: t.id,
-          type: t.ticketType || 'Incident',
-          summary: t.summary,
-          agent: 'Unassigned',
-          priority: (t.priority || 'Medium') as DashboardPriority,
-          status: 'New',
-          requester: t.organisation,
-          createdAt: t.createdAt ? new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-          description: `${t.summary} — logged via ${t.organisation}`,
-        }));
+        return (res.data as BackendTicketItem[]).map((t) => {
+          const catalog = MOCK_TICKET_CATALOG[t.id];
+          return {
+            id: t.id,
+            type: catalog?.type || t.ticketType || 'Incident',
+            summary: catalog?.summary || t.summary,
+            agent: catalog?.agent || 'Unassigned',
+            priority: (catalog?.priority || t.priority || 'Medium') as DashboardPriority,
+            status: catalog?.status || 'Open',
+            requester: catalog?.requester || t.organisation,
+            department: catalog?.department,
+            category: catalog?.category,
+            createdAt: t.createdAt ? new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+            description: catalog?.description || `${t.summary} — logged via ${t.organisation}`,
+          };
+        });
       }
     } catch {
       // Fallback

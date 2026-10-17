@@ -1,0 +1,235 @@
+/* Timesheet Floating Popover */
+.timesheet-floating-popover {
+  position: absolute;
+  top: 50px;
+  right: 60px;
+  width: 340px;
+  max-height: 85vh;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: inherit;
+  animation: timesheetFadeIn 0.15s ease-out;
+}
+
+@keyframes timesheetFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.timesheet-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 8px;
+  background: #f8fafc;
+}
+
+.timesheet-popover-title {
+  font-size: 19px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.timesheet-popover-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.timesheet-popover-close-btn:hover {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+/* Info Card */
+.timesheet-info-card {
+  margin: 6px 12px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.timesheet-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.timesheet-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0f2c4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.timesheet-user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Metrics Grid */
+.timesheet-metrics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timesheet-metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.timesheet-metric-label {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.timesheet-metric-val {
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.timesheet-input-box {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 2px 6px;
+  width: 90px;
+}
+
+.timesheet-time-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 12px;
+  color: #334155;
+  background: transparent;
+  font-family: inherit;
+  text-align: center;
+}
+
+.timesheet-clock-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timesheet-plus-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #00bcd4;
+  color: #00bcd4;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.timesheet-plus-circle:hover {
+  background: #e0f7fa;
+}
+
+/* Action Links */
+.timesheet-links-row {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timesheet-action-link {
+  font-size: 13px;
+  color: #0284c7;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.timesheet-action-link:hover {
+  text-decoration: underline;
+  color: #0369a1;
+}
+
+/* Timeline Schedule Grid */
+.timesheet-timeline-grid-wrap {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 280px;
+  border-top: 1px solid #bae6fd;
+}
+
+.timesheet-timeline-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.timesheet-grid-row {
+  display: flex;
+  border-bottom: 1px solid #e0f2fe;
+  min-height: 34px;
+  align-items: center;
+}
+
+.timesheet-grid-time {
+  width: 76px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  border-right: 1px solid #e0f2fe;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.timesheet-grid-cell {
+  flex: 1;
+  height: 100%;
+  background: #f0f9ff;
+  min-height: 34px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.timesheet-grid-cell:hover {
+  background: #e0f2fe;
+}

@@ -1,20 +1,19 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from './types';
 import { MOCK_ORGANISATION_USERS } from './mockAuthData';
-import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
+import './OrganisationUsersScreen.css';
 
 interface OrganisationUsersScreenProps {
   users?: User[];
-  onAddUserClick?: () => void;
 }
 
 export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = ({
   users = MOCK_ORGANISATION_USERS,
-  onAddUserClick,
 }) => {
-  const { user: currentUser, switchUser, updateUserRole } = useAuth();
-  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v1', users);
+  const navigate = useNavigate();
+  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSite, setSelectedSite] = useState<string>('ALL');
   const [selectedOrganisation, setSelectedOrganisation] = useState<string>('ALL');
@@ -22,7 +21,17 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState<boolean>(false);
+
+  // New User Form State
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('+91 98765 ');
+  const [newOrg, setNewOrg] = useState('ServiGen Global Tech');
+  const [newSite, setNewSite] = useState('Bangalore HQ');
+  const [newRegion, setNewRegion] = useState<'APAC' | 'EMEA' | 'Americas'>('APAC');
+  const [newRole, setNewRole] = useState<User['role']>('Support Agent');
 
   // Extract unique sites for filter dropdown
   const sites = useMemo(() => {
@@ -39,12 +48,14 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   // Filter users based on search and selected options
   const filteredUsers = useMemo(() => {
     return userList.filter((user) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.networkLogin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        user.fullName.toLowerCase().includes(q) ||
+        user.username.toLowerCase().includes(q) ||
+        user.email.toLowerCase().includes(q) ||
+        user.networkLogin.toLowerCase().includes(q) ||
+        user.firstName.toLowerCase().includes(q);
 
       const matchesSite = selectedSite === 'ALL' || user.defaultSite === selectedSite;
       const matchesOrg = selectedOrganisation === 'ALL' || user.defaultOrganisation === selectedOrganisation;
@@ -60,57 +71,80 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-    }, 600);
+    }, 450);
   };
 
-  const handleRoleChange = (userId: string, newRole: User['role']) => {
-    setUserList((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-    );
-    updateUserRole(userId, newRole);
-    const target = userList.find((u) => u.id === userId);
-    setToastMessage(`Updated ${target?.fullName || 'User'}'s role to ${newRole}`);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFirstName.trim() || !newEmail.trim()) return;
 
-  const handleSwitchUser = (targetUser: User) => {
-    switchUser(targetUser);
-    setToastMessage(`Switched active session to ${targetUser.fullName} (${targetUser.role})`);
-    setTimeout(() => setToastMessage(null), 3000);
+    const username = `${newFirstName.toLowerCase().trim()}.${(newLastName[0] || 'a').toLowerCase()}`;
+    const newUser: User = {
+      id: `USR-${Math.floor(100 + Math.random() * 900)}`,
+      username,
+      firstName: newFirstName.trim(),
+      lastName: newLastName.trim(),
+      fullName: `${newFirstName.trim()} ${newLastName.trim()}`,
+      email: newEmail.trim(),
+      phone: newPhone.trim(),
+      networkLogin: `CORP\\${username}`,
+      defaultSite: newSite,
+      defaultOrganisation: newOrg,
+      region: newRegion,
+      role: newRole,
+      status: 'Active',
+      lastLogin: 'Just now',
+      department: 'IT Operations',
+    };
+
+    setUserList((prev) => [...prev, newUser]);
+    setIsAddUserModalOpen(false);
+    setNewFirstName('');
+    setNewLastName('');
+    setNewEmail('');
   };
 
   return (
-    <div className="figma-users-page">
+    <div className="org-users-page">
       {/* Header Section */}
-      <div className="users-screen-header">
-        <div className="users-title-section">
+      <div className="org-users-header-row">
+        <div className="org-users-title-col">
           <h1>Organisations - Users List (SCR-020 / SCR-031)</h1>
-          <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC & Americas</p>
+          <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC &amp; Americas</p>
         </div>
 
-        <div className="users-header-actions">
-          <button className="users-btn-secondary" onClick={handleRefresh}>
-            🔄 Refresh
-          </button>
-          <button
-            className="users-btn-primary"
-            onClick={() => {
-              if (onAddUserClick) {
-                onAddUserClick();
-              }
-            }}
-          >
-            + Add User
-          </button>
+        <div className="org-users-header-right">
+          {/* Sub actions */}
+          <div className="org-users-actions-row">
+            <button
+              type="button"
+              className="org-btn-refresh"
+              onClick={handleRefresh}
+              title="Refresh users directory"
+            >
+              <span>{isLoading ? '⏳' : '🔄'}</span>
+              <span>Refresh</span>
+            </button>
+            <button
+              type="button"
+              className="org-btn-add-user"
+              onClick={() => setIsAddUserModalOpen(true)}
+              title="Add a new organisation user"
+            >
+              <span>+</span>
+              <span>Add User</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Region Tabs (EMEA, APAC, Americas, ALL) */}
-      <div className="region-tab-bar">
+      {/* Region Tabs */}
+      <div className="org-region-tabs-row">
         {['ALL', 'APAC', 'EMEA', 'Americas'].map((reg) => (
           <button
             key={reg}
-            className={`region-tab-btn ${selectedRegion === reg ? 'active' : ''}`}
+            type="button"
+            className={`org-region-tab-btn ${selectedRegion === reg ? 'active' : ''}`}
             onClick={() => setSelectedRegion(reg)}
           >
             {reg === 'ALL' ? 'All Regions' : `${reg} Region`}
@@ -118,22 +152,22 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         ))}
       </div>
 
-      {/* Search and Filter Controls */}
-      <div className="users-filter-bar">
-        <div className="search-input-box">
+      {/* Search & Filter Bar */}
+      <div className="org-filters-bar">
+        <div className="org-search-box">
           <input
             type="text"
-            className="users-search-input"
+            className="org-search-input"
             placeholder="Search by name, username, email, site, or domain login..."
             value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
         <select
-          className="users-filter-select"
+          className="org-filter-select"
           value={selectedOrganisation}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedOrganisation(e.target.value)}
+          onChange={(e) => setSelectedOrganisation(e.target.value)}
         >
           <option value="ALL">All Organisations</option>
           {organisations.map((org) => (
@@ -144,9 +178,9 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </select>
 
         <select
-          className="users-filter-select"
+          className="org-filter-select"
           value={selectedSite}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSite(e.target.value)}
+          onChange={(e) => setSelectedSite(e.target.value)}
         >
           <option value="ALL">All Default Sites</option>
           {sites.map((site) => (
@@ -157,9 +191,9 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </select>
 
         <select
-          className="users-filter-select"
+          className="org-filter-select"
           value={selectedRole}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedRole(e.target.value)}
+          onChange={(e) => setSelectedRole(e.target.value)}
         >
           <option value="ALL">All Roles</option>
           <option value="Administrator">Administrator</option>
@@ -170,9 +204,9 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </select>
 
         <select
-          className="users-filter-select"
+          className="org-filter-select"
           value={selectedStatus}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedStatus(e.target.value)}
+          onChange={(e) => setSelectedStatus(e.target.value)}
         >
           <option value="ALL">All Statuses</option>
           <option value="Active">Active</option>
@@ -181,110 +215,189 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </select>
       </div>
 
-      {/* Data Table */}
-      <div className="users-table-card">
-        {isLoading ? (
-          <div className="users-empty-state">
-            <p>Loading organisation user directory...</p>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="users-empty-state">
-            <h3>No users found</h3>
-            <p>Try clearing search or changing filter criteria.</p>
-          </div>
-        ) : (
-          <div className="table-responsive-wrapper">
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>Username / Name</th>
-                  <th>First Name</th>
-                  <th>Role / Permissions</th>
-                  <th>Default Organisation</th>
-                  <th>Default Site</th>
-                  <th>Email Address</th>
-                  <th>Phone Number</th>
-                  <th>Network Login</th>
-                  <th>Region</th>
-                  <th>Status</th>
-                  <th>Session</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
+      {/* Users Table matching image columns */}
+      <div className="org-table-wrapper">
+        <table className="org-users-table">
+          <thead>
+            <tr>
+              <th>USERNAME / NAME</th>
+              <th>FIRST NAME</th>
+              <th>DEFAULT ORGANISATION</th>
+              <th>DEFAULT SITE</th>
+              <th>EMAIL ADDRESS</th>
+              <th>PHONE NUMBER</th>
+              <th>NETWORK LOGIN</th>
+              <th>REGION</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => {
+                const initials = `${user.firstName?.[0] || 'U'}${user.lastName?.[0] || ''}`.toUpperCase();
+                return (
                   <tr key={user.id}>
                     <td>
-                      <div className="user-cell-name">
-                        <div className="user-avatar">
-                          {user.firstName[0]}
-                          {user.lastName[0]}
-                        </div>
-                        <div>
-                          <div className="user-full-name">{user.fullName}</div>
-                          <div className="user-username-handle">@{user.username}</div>
+                      <div className="org-user-identity">
+                        <div className="org-user-avatar">{initials}</div>
+                        <div className="org-user-name-box">
+                          <span className="org-user-fullname">{user.fullName}</span>
+                          <span className="org-user-handle">@{user.username}</span>
                         </div>
                       </div>
                     </td>
                     <td>{user.firstName}</td>
-                    <td>
-                      <div className="role-selector-cell">
-                        <select
-                          className={`user-role-select role-${user.role.toLowerCase().replace(/\s+/g, '-')}`}
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value as User['role'])}
-                          title={`Change role / permissions for ${user.fullName}`}
-                        >
-                          <option value="Administrator">👑 Administrator</option>
-                          <option value="System Manager">⚙️ System Manager</option>
-                          <option value="Team Lead">👔 Team Lead</option>
-                          <option value="Support Agent">🎧 Support Agent</option>
-                          <option value="End User">👤 End User</option>
-                        </select>
-                      </div>
-                    </td>
                     <td>{user.defaultOrganisation}</td>
                     <td>{user.defaultSite}</td>
-                    <td>{user.email}</td>
+                    <td>
+                      <span className="text-[#0284c7] font-medium hover:underline cursor-pointer">
+                        {user.email}
+                      </span>
+                    </td>
                     <td>{user.phone}</td>
                     <td>
-                      <code className="network-login-code">{user.networkLogin}</code>
+                      <code className="org-login-code">{user.networkLogin}</code>
                     </td>
                     <td>
-                      <span className="region-badge">{user.region}</span>
+                      <span className="text-slate-700 font-medium">{user.region}</span>
                     </td>
                     <td>
-                      <span className={`status-badge status-${user.status.toLowerCase()}`}>
+                      <span className={`org-status-pill ${user.status.toLowerCase()}`}>
                         {user.status}
                       </span>
                     </td>
-                    <td>
-                      {currentUser?.id === user.id ? (
-                        <span className="current-user-pill">
-                          ● You
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="switch-user-btn"
-                          onClick={() => handleSwitchUser(user)}
-                          title={`Switch active session to ${user.fullName}`}
-                        >
-                          Login As
-                        </button>
-                      )}
-                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
+                  No organisation users found matching the current filters.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Toast Feedback */}
-      {toastMessage && (
-        <div className="users-toast-banner">
-          <span>✨ {toastMessage}</span>
+      {/* Add User Modal */}
+      {isAddUserModalOpen && (
+        <div className="org-modal-backdrop" onClick={() => setIsAddUserModalOpen(false)}>
+          <div className="org-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="org-modal-header">
+              <h2>Add New Organisation User</h2>
+              <button
+                type="button"
+                className="org-modal-close"
+                onClick={() => setIsAddUserModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser}>
+              <div className="org-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="org-modal-field">
+                    <label>First Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. John"
+                      value={newFirstName}
+                      onChange={(e) => setNewFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div className="org-modal-field">
+                    <label>Last Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Doe"
+                      value={newLastName}
+                      onChange={(e) => setNewLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="org-modal-field">
+                  <label>Corporate Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="john.doe@servigen.io"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                </div>
+
+                <div className="org-modal-field">
+                  <label>Phone Number</label>
+                  <input
+                    type="text"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="org-modal-field">
+                    <label>Default Organisation</label>
+                    <select value={newOrg} onChange={(e) => setNewOrg(e.target.value)}>
+                      <option value="ServiGen Global Tech">ServiGen Global Tech</option>
+                      <option value="Halo AI Enterprise">Halo AI Enterprise</option>
+                      <option value="Halo AI Europe">Halo AI Europe</option>
+                      <option value="Halo Americas Inc.">Halo Americas Inc.</option>
+                    </select>
+                  </div>
+                  <div className="org-modal-field">
+                    <label>Default Site</label>
+                    <select value={newSite} onChange={(e) => setNewSite(e.target.value)}>
+                      <option value="Bangalore HQ">Bangalore HQ</option>
+                      <option value="Hyderabad Hub">Hyderabad Hub</option>
+                      <option value="London UK Branch">London UK Branch</option>
+                      <option value="New York HQ">New York HQ</option>
+                      <option value="Frankfurt Tech Center">Frankfurt Tech Center</option>
+                      <option value="San Jose US Office">San Jose US Office</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="org-modal-field">
+                    <label>Region</label>
+                    <select value={newRegion} onChange={(e) => setNewRegion(e.target.value as any)}>
+                      <option value="APAC">APAC</option>
+                      <option value="EMEA">EMEA</option>
+                      <option value="Americas">Americas</option>
+                    </select>
+                  </div>
+                  <div className="org-modal-field">
+                    <label>Role</label>
+                    <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)}>
+                      <option value="Support Agent">Support Agent</option>
+                      <option value="Administrator">Administrator</option>
+                      <option value="Team Lead">Team Lead</option>
+                      <option value="System Manager">System Manager</option>
+                      <option value="End User">End User</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="org-modal-footer">
+                <button
+                  type="button"
+                  className="org-btn-refresh"
+                  onClick={() => setIsAddUserModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="org-btn-add-user">
+                  Save User
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
