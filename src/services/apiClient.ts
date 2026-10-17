@@ -182,7 +182,7 @@ export async function obtainDevAuthToken(): Promise<string | null> {
     try {
       const baseUrl = getApiBaseUrl();
       const loginUrl = `${baseUrl}/api/auth/login`;
-      const res = await fetch(loginUrl, {
+      let res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,11 +190,24 @@ export async function obtainDevAuthToken(): Promise<string | null> {
           password: 'Adm!n#9vK2$7xLq',
         }),
       });
+      if (!res.ok) {
+        res = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'agent001@servigen.local',
+            password: 'Ag3nt*8mP4!wR9t',
+          }),
+        });
+      }
       if (res.ok) {
         const json = await res.json();
         const tok = json?.data?.token || json?.token;
         if (tok) {
           setStoredToken(tok);
+          if (json?.data) {
+            setStoredUser(json.data);
+          }
           return tok;
         }
       }
