@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import AppLayout from './layouts/AppLayout'
 
 // Auth
@@ -59,36 +59,41 @@ import { ServiceCisPage } from './pages/CMDB/ServiceCisPage'
 import { ChangeRequestsPage } from './pages/ChangeRequests/ChangeRequestsPage'
 import { ChangeRequestDetailModal } from './pages/ChangeRequests/ChangeRequestDetailModal'
 import { CreateChangeModal } from './pages/ChangeRequests/CreateChangeModal'
-import { mockChangeRequests } from './data/mockCmdbData'
-import type { ChangeRequest } from './types/cmdb'
-import { changeRequestsService } from './services/changeRequestsService'
-import { useSearchParams } from 'react-router-dom'
+import type { ChangeRequest, ChangeStatus } from './types/cmdb'
+import {
+  fetchChangeRequests,
+  fetchChangeRequestById,
+  createChangeRequest,
+  updateChangeRequestStatus,
+  toggleSubtaskCompletion,
+} from './services/changeRequestsService'
 
-// Change Requests wrapper (connects to live API and handles modal states)
+// Change Requests wrapper (manages live data synchronization with service layer)
 function ChangeRequestsWrapper() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>(mockChangeRequests)
+  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([])
   const [selectedCR, setSelectedCR] = useState<ChangeRequest | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [fromRequestData, setFromRequestData] = useState<{ id: string; summary: string; category?: string; requester?: string } | null>(null)
 
-  // Fetch change requests on mount from backend and local cache
-  React.useEffect(() => {
-    let mounted = true
-    changeRequestsService.getAll().then((crs) => {
-      if (mounted) {
-        setChangeRequests(crs)
-        const targetId = searchParams.get('id')
-        if (targetId) {
-          const match = crs.find((c) => c.id.toLowerCase() === targetId.toLowerCase() || c.id.replace('#', '').toLowerCase() === targetId.toLowerCase())
-          if (match) setSelectedCR(match)
-        }
+  const loadRequests = async () => {
+    try {
+      const res = await fetchChangeRequests()
+      setChangeRequests(res.data)
+      const targetId = searchParams.get('id')
+      if (targetId) {
+        const match = res.data.find((c) => c.id.toLowerCase() === targetId.toLowerCase() || c.id.replace('#', '').toLowerCase() === targetId.toLowerCase())
+        if (match) setSelectedCR(match)
       }
-    })
-    return () => { mounted = false }
+    } catch (err) {
+      console.error('[ChangeRequestsWrapper] Failed to fetch:', err)
+    }
+  }
+
+  React.useEffect(() => {
+    loadRequests()
   }, [searchParams])
 
-  // Handle URL parameters for fromRequestId or openCreate
   React.useEffect(() => {
     const fromRequestId = searchParams.get('fromRequestId')
     const summary = searchParams.get('summary')
@@ -107,44 +112,48 @@ function ChangeRequestsWrapper() {
     }
   }, [searchParams])
 
-  const handleToggleSubtask = (subtaskId: string) => {
-    if (!selectedCR) return
-    const updatedSubtasks = selectedCR.subtasks.map((st) =>
-      st.id === subtaskId ? { ...st, completed: !st.completed } : st
-    )
-    const completedCount = updatedSubtasks.filter((st) => st.completed).length
-    const completionPercent = Math.round((completedCount / (updatedSubtasks.length || 1)) * 100)
-    const updatedCR: ChangeRequest = {
-      ...selectedCR,
-      subtasks: updatedSubtasks,
-      completionPercent,
+  const handleSelectCR = async (cr: ChangeRequest) => {
+    try {
+      const res = await fetchChangeRequestById(cr.id)
+      setSelectedCR(res.data)
+    } catch {
+      setSelectedCR(cr)
     }
-    setSelectedCR(updatedCR)
-    const updatedList = changeRequests.map((cr) => (cr.id === updatedCR.id ? updatedCR : cr))
-    setChangeRequests(updatedList)
-    changeRequestsService.persistAll(updatedList)
   }
 
-  const handleCreateNewChange = async (newChange: ChangeRequest) => {
-    const created = await changeRequestsService.create({
-      title: newChange.title,
-      description: newChange.description,
-      type: newChange.type,
-      risk: newChange.risk,
-      linkedCiName: newChange.linkedCiName,
-      agentName: newChange.agentName,
-      scheduledStart: newChange.scheduledStart,
-      scheduledEnd: newChange.scheduledEnd,
-      targetHours: newChange.targetHours,
-      linkedRequestId: newChange.linkedRequestId,
-      linkedRequestSummary: newChange.linkedRequestSummary,
-    })
-    setChangeRequests((prev) => [created, ...prev])
+  const handleCreateCR = async (newChange: Partial<ChangeRequest> & { title: string }) => {
+    const res = await createChangeRequest(newChange)
+    setChangeRequests((prev) => [res.data, ...prev])
     setCreateOpen(false)
     setFromRequestData(null)
-    // Clear URL params if present
     if (searchParams.get('fromRequestId') || searchParams.get('openCreate')) {
       setSearchParams({})
+    }
+  }
+
+  const handleToggleSubtask = async (subtaskId: string) => {
+    if (!selectedCR) return
+    try {
+      const res = await toggleSubtaskCompletion(selectedCR.id, subtaskId)
+      setSelectedCR(res.data)
+      setChangeRequests((prev) =>
+        prev.map((item) => (item.id === res.data.id ? res.data : item))
+      )
+    } catch (err) {
+      console.error('Error toggling subtask:', err)
+    }
+  }
+
+  const handleStatusChange = async (newStatus: ChangeStatus) => {
+    if (!selectedCR) return
+    try {
+      const res = await updateChangeRequestStatus(selectedCR.id, newStatus)
+      setSelectedCR(res.data)
+      setChangeRequests((prev) =>
+        prev.map((item) => (item.id === res.data.id ? res.data : item))
+      )
+    } catch (err) {
+      console.error('Error updating status:', err)
     }
   }
 
@@ -152,11 +161,12 @@ function ChangeRequestsWrapper() {
     <>
       <ChangeRequestsPage
         changeRequests={changeRequests}
-        onSelectChangeRequest={(cr) => setSelectedCR(cr)}
+        onSelectChangeRequest={handleSelectCR}
         onOpenCreateModal={() => {
           setFromRequestData(null)
           setCreateOpen(true)
         }}
+        onRefreshData={loadRequests}
       />
       <ChangeRequestDetailModal
         changeRequest={selectedCR}
@@ -167,10 +177,10 @@ function ChangeRequestsWrapper() {
           }
         }}
         onToggleSubtask={handleToggleSubtask}
+        onChangeStatus={handleStatusChange}
       />
       <CreateChangeModal
         isOpen={createOpen}
-        fromRequest={fromRequestData}
         onClose={() => {
           setCreateOpen(false)
           setFromRequestData(null)
@@ -178,7 +188,7 @@ function ChangeRequestsWrapper() {
             setSearchParams({})
           }
         }}
-        onCreate={handleCreateNewChange}
+        onCreate={handleCreateCR}
       />
     </>
   )
@@ -226,4 +236,3 @@ export default function App() {
     </AuthProvider>
   )
 }
-

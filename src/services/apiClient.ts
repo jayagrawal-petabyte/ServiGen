@@ -207,7 +207,6 @@ export async function obtainDevAuthToken(): Promise<string | null> {
   })();
   return autoLoginPromise;
 }
-
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
  * standard error parsing, and transparent JWT auto-acquisition.

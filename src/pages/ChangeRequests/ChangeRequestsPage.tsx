@@ -1,34 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ChangeRequest, SubTask } from '../../types/cmdb';
-import { mockChangeRequests } from '../../data/mockCmdbData';
+import {
+  fetchChangeRequests,
+  fetchActiveChangeRequests,
+} from '../../services/changeRequestsService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { Pagination } from '../../components/shared/Pagination';
 import { Button } from '../../components/shared/Button';
 import { Card } from '../../components/shared/Card';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
-import { LayoutGrid, Table, Plus, Clock, Tag as TagIcon, AlertCircle, ClipboardList } from 'lucide-react';
+import {
+  LayoutGrid,
+  Table,
+  Plus,
+  Clock,
+  Tag as TagIcon,
+  AlertCircle,
+  RefreshCw,
+  Flame,
+  ListFilter,
+  Layers,
+} from 'lucide-react';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
   searchQuery?: string;
   onOpenCreateModal?: () => void;
   onSelectChangeRequest?: (cr: ChangeRequest) => void;
+  onRefreshData?: () => void;
 }
 
 export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
-  changeRequests = mockChangeRequests,
+  changeRequests: externalRequests,
   searchQuery = '',
   onOpenCreateModal = () => {},
   onSelectChangeRequest = () => {},
+  onRefreshData,
 }) => {
   const navigate = useNavigate();
-  const items = changeRequests.length > 0 ? changeRequests : mockChangeRequests;
+  const [internalRequests, setInternalRequests] = useState<ChangeRequest[]>([]);
+  const [filterMode, setFilterMode] = useState<'all' | 'active'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(!externalRequests);
+  const [error, setError] = useState<string | null>(null);
   const pageSize = 6;
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (filterMode === 'active') {
+        const res = await fetchActiveChangeRequests();
+        setInternalRequests(res.data);
+      } else {
+        const res = await fetchChangeRequests();
+        setInternalRequests(res.data);
+      }
+      if (onRefreshData) {
+        onRefreshData();
+      }
+    } catch (err: any) {
+      console.error('[ChangeRequestsPage] Error fetching requests:', err);
+      setError(err?.message || 'Failed to fetch Change Requests from server.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filterMode, onRefreshData]);
+
+  useEffect(() => {
+    if (!externalRequests) {
+      loadData();
+    } else {
+      setInternalRequests(externalRequests);
+    }
+  }, [externalRequests, loadData]);
+
+  const items = externalRequests || internalRequests;
 
   const filteredRequests = items.filter((cr: ChangeRequest) => {
     const matchesSearch =
@@ -39,14 +90,16 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
     const matchesType = selectedType === 'ALL' || cr.type === selectedType;
     const matchesStatus = selectedStatus === 'ALL' || cr.status === selectedStatus;
+    const matchesActiveTab = filterMode === 'all' || cr.status !== 'Completed';
 
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesType && matchesStatus && matchesActiveTab;
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
-  const startIndex = (safePage - 1) * pageSize;
-  const pagedRequests = filteredRequests.slice(startIndex, startIndex + pageSize);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const getPercentBadgeVariant = (percent: number) => {
     if (percent >= 60) return 'green';
@@ -56,108 +109,124 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
-      {/* Fast Switcher between Requests & Change Requests */}
-      <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl mb-4 self-start inline-flex">
-        <button
-          onClick={() => navigate('/requests')}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
-          title="Switch to Service Requests queue"
-        >
-          <ClipboardList className="w-3.5 h-3.5 text-cyan-600" />
-          <span>Service Requests</span>
-        </button>
-        <button
-          className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-2xs flex items-center gap-1.5 cursor-default"
-        >
-          <span>📝</span>
-          <span>Change Requests</span>
-        </button>
-      </div>
-
-      {/* Header Row */}
+      {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Change Requests & Active Changes
+            Change Management (SCR-009 / SCR-026)
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Manage, track, and audit active change requests, timelines, and subtask implementations
+            Active change requests, implementation windows, risk review, and rollback checklists
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Pagination
-            currentRange={
-              filteredRequests.length === 0
-                ? '0-0 of 0'
-                : `${startIndex + 1}-${Math.min(startIndex + pageSize, filteredRequests.length)} of ${filteredRequests.length}`
-            }
-            hasPrevious={safePage > 1}
-            hasNext={safePage < totalPages}
-            onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          />
-
-          <div className="flex items-center bg-white border border-slate-200 rounded-full p-1 shadow-2xs">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-full transition-colors cursor-pointer ${
-                viewMode === 'grid' ? 'bg-[#E87A5D] text-white' : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-full transition-colors cursor-pointer ${
-                viewMode === 'table' ? 'bg-[#E87A5D] text-white' : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Table View"
-            >
-              <Table className="w-4 h-4" />
-            </button>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Quick link to CMDB */}
           <button
             onClick={() => navigate('/cmdb')}
-            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-colors flex items-center gap-1.5"
-            title="Inspect infrastructure assets in CMDB"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+            title="Inspect related Configuration Items in CMDB"
           >
-            <TagIcon className="w-3.5 h-3.5 text-[#E87A5D]" /> CMDB Assets
+            <Layers className="w-3.5 h-3.5" /> CMDB CIs
           </button>
 
-          <Button onClick={onOpenCreateModal} icon={<Plus className="w-4 h-4" />}>
-            + New
+          {/* Refresh button */}
+          <button
+            onClick={() => loadData()}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            title="Fetch latest from backend API"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
+            Refresh
+          </button>
+
+          {/* New Change Request Button */}
+          <Button
+            variant="primary"
+            onClick={onOpenCreateModal}
+            className="flex items-center gap-2 cursor-pointer shadow-md shadow-[#E87A5D]/20 text-xs py-2 px-4 rounded-xl"
+          >
+            <Plus className="w-4 h-4" />
+            New Change Request
           </Button>
         </div>
       </div>
 
-      {/* Filter Options */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 mr-1 uppercase">Type:</span>
-          {['ALL', 'Standard', 'Normal', 'Emergency'].map((type) => (
+      {/* Error state */}
+      {error && (
+        <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span className="font-semibold">{error}</span>
+          </div>
+          <button
+            onClick={() => loadData()}
+            className="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Filter and View Controls Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+        {/* Left: Active vs All tabs (corresponds to backend /api/change-requests/active) */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
             <button
-              key={type}
-              onClick={() => setSelectedType(type)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                selectedType === type
-                  ? 'bg-[#1B254B] text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              onClick={() => {
+                setFilterMode('all');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filterMode === 'all'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {type}
+              <ListFilter className="w-3.5 h-3.5" /> All Changes
             </button>
-          ))}
-        </div>
+            <button
+              onClick={() => {
+                setFilterMode('active');
+                setCurrentPage(1);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filterMode === 'active'
+                  ? 'bg-[#E87A5D] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5" /> Active Only (SCR-026)
+            </button>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 uppercase">Status:</span>
+          <div className="h-6 w-px bg-slate-200 hidden md:block mx-1" />
+
+          {/* Type filter */}
+          <select
+            value={selectedType}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+          >
+            <option value="ALL">All Change Types</option>
+            <option value="Normal">Normal</option>
+            <option value="Standard">Standard</option>
+            <option value="Emergency">Emergency</option>
+          </select>
+
+          {/* Status filter */}
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E87A5D] cursor-pointer"
+            onChange={(e) => {
+              setSelectedStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
           >
             <option value="ALL">All Statuses</option>
             <option value="In Progress">In Progress</option>
@@ -167,206 +236,238 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             <option value="Completed">Completed</option>
           </select>
         </div>
+
+        {/* Right: View Mode Toggle */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-[#E87A5D] shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Grid view"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-white text-[#E87A5D] shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Table view"
+            >
+              <Table className="w-4 h-4" />
+            </button>
+          </div>
+          <span className="text-xs text-slate-400 font-semibold">
+            {filteredRequests.length} results
+          </span>
+        </div>
       </div>
 
       {/* Grid View */}
-      {viewMode === 'grid' ? (
-        <div className="flex flex-col gap-6">
-          {pagedRequests.map((cr: ChangeRequest) => (
-            <Card
-              key={cr.id}
-              onClick={() => onSelectChangeRequest(cr)}
-              className="group relative overflow-hidden"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-4 flex flex-col justify-between pr-4 border-b lg:border-b-0 lg:border-r border-slate-100 pb-4 lg:pb-0">
-                  <div>
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-[#E87A5D] group-hover:text-[#D96A4C] transition-colors leading-tight">
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedRequests.map((cr: ChangeRequest) => {
+            const completedSubtasks = cr.subtasks.filter((s) => s.completed).length;
+
+            return (
+              <Card
+                key={cr.id}
+                onClick={() => onSelectChangeRequest(cr)}
+                className="group hover:border-[#E87A5D]/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <span className="text-xs font-extrabold text-[#E87A5D] tracking-wider block mb-1">
+                        {cr.id}
+                      </span>
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#E87A5D] transition-colors">
                         {cr.title}
                       </h3>
-                      <span className="text-lg font-bold text-slate-800 shrink-0">{cr.id}</span>
                     </div>
-                    <p className="text-sm font-semibold text-slate-800 mb-4">{cr.agentName}</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <StatusBadge
-                      label={`${cr.completionPercent}% COMPLETE`}
-                      variant={getPercentBadgeVariant(cr.completionPercent)}
-                    />
                     <StatusBadge
                       label={cr.status}
                       variant={getChangeStatusVariant(cr.status)}
                     />
-                    {cr.type === 'Emergency' && <StatusBadge label="EMERGENCY" variant="red" />}
-                    {cr.linkedRequestId && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/requests?id=${cr.linkedRequestId}`);
-                        }}
-                        className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors flex items-center gap-1 cursor-pointer"
-                        title={`View originating Service Request #${cr.linkedRequestId}`}
-                      >
-                        <ClipboardList className="w-3 h-3 text-cyan-600" />
-                        <span>Req #{cr.linkedRequestId}</span>
-                      </button>
-                    )}
                   </div>
-                </div>
 
-                <div className="lg:col-span-3 flex flex-col justify-between px-0 lg:px-4 border-b lg:border-b-0 lg:border-r border-slate-100 pb-4 lg:pb-0">
-                  <div>
-                    <h4 className="text-xs font-bold text-[#E87A5D] uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" /> Timeline
-                    </h4>
-
-                    <div className="grid grid-cols-2 gap-3 text-xs mb-3">
-                      <div>
-                        <span className="text-slate-400 font-medium block">Start</span>
-                        <span className="font-bold text-slate-800">{cr.scheduledStart}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 font-medium block">Target</span>
-                        <span className="font-bold text-slate-800">{cr.scheduledEnd}</span>
-                      </div>
+                  <div className="space-y-2.5 my-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="font-medium">Assigned Agent</span>
+                      <span className="font-bold text-slate-800">{cr.agentName}</span>
                     </div>
-                  </div>
 
-                  <div>
-                    <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="text-slate-500 font-medium">Time Spent</span>
-                      <span className="font-bold text-[#E87A5D]">
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="font-medium">Target / Spent</span>
+                      <span className="font-bold text-slate-800">
                         {cr.timeSpentHours}h / {cr.targetHours}h
                       </span>
                     </div>
-                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#E87A5D] rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (cr.timeSpentHours / cr.targetHours) * 100)}%` }}
-                      />
+
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="font-medium">Linked CI</span>
+                      <span className="font-bold text-indigo-600 truncate max-w-[150px]">
+                        {cr.linkedCiName}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60">
+                      <div className="flex justify-between items-center text-[11px] mb-1">
+                        <span className="text-slate-500 font-semibold">Implementation Progress</span>
+                        <span className="font-extrabold text-slate-800">{cr.completionPercent}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-[#E87A5D] h-full rounded-full transition-all duration-300"
+                          style={{ width: `${cr.completionPercent}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="lg:col-span-5 pl-0 lg:pl-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                      Subtasks ({cr.subtasks.filter((st: SubTask) => st.completed).length}/{cr.subtasks.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/cmdb');
-                      }}
-                      title={`Inspect ${cr.linkedCiName} in CMDB`}
-                      className="text-xs text-slate-500 hover:text-[#E87A5D] font-medium flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      <TagIcon className="w-3.5 h-3.5 text-[#E87A5D]" /> {cr.linkedCiName} →
-                    </button>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{cr.scheduledStart}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {cr.subtasks.slice(0, 6).map((subtask: SubTask) => (
-                      <div
-                        key={subtask.id}
-                        className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
-                          subtask.completed
-                            ? 'bg-slate-50 border-slate-200 text-slate-600'
-                            : 'bg-slate-100/60 border-slate-200/70 text-slate-800'
-                        }`}
-                      >
-                        <span className="text-[10px] font-bold text-slate-500">{subtask.id}</span>
-                        <span className="text-[11px] font-medium leading-tight line-clamp-2">
-                          {subtask.title}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                      {completedSubtasks}/{cr.subtasks.length} tasks
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        cr.risk === 'High'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : cr.risk === 'Medium'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      }`}
+                    >
+                      {cr.risk} Risk
+                    </span>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
 
-          {filteredRequests.length === 0 && (
-            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-              <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-base font-bold text-slate-700">No Change Requests found</h3>
-              <p className="text-xs text-slate-500 mt-1">Try adjusting your search query or filters.</p>
+          {paginatedRequests.length === 0 && (
+            <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
+              <Clock className="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-1" />
+              <p className="text-sm font-bold text-slate-600">No Change Requests Found</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Try adjusting your search criteria or create a new change request.
+              </p>
             </div>
           )}
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold tracking-wider">
-                <th className="py-3.5 px-4">Change ID</th>
-                <th className="py-3.5 px-4">Title</th>
-                <th className="py-3.5 px-4">Type</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4">Linked CI</th>
-                <th className="py-3.5 px-4">Owner</th>
-                <th className="py-3.5 px-4">Target Date</th>
-                <th className="py-3.5 px-4 text-right">Progress</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {pagedRequests.map((cr: ChangeRequest) => (
-                <tr
-                  key={cr.id}
-                  onClick={() => onSelectChangeRequest(cr)}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                >
-                  <td className="py-3.5 px-4 font-bold text-[#E87A5D]">{cr.id}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900 max-w-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate">{cr.title}</span>
-                      {cr.linkedRequestId && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/requests?id=${cr.linkedRequestId}`);
-                          }}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition-colors shrink-0 cursor-pointer"
-                          title={`View Service Request #${cr.linkedRequestId}`}
-                        >
-                          Req #{cr.linkedRequestId}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      {cr.type}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <StatusBadge label={cr.status} variant={getChangeStatusVariant(cr.status)} size="sm" />
-                  </td>
-                  <td
-                    className="py-3.5 px-4 text-[#E87A5D] hover:underline font-mono font-bold cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/cmdb');
-                    }}
-                    title={`Inspect ${cr.linkedCiName} in CMDB`}
-                  >
-                    {cr.linkedCiName}
-                  </td>
-                  <td className="py-3.5 px-4">{cr.agentName}</td>
-                  <td className="py-3.5 px-4">{cr.scheduledEnd}</td>
-                  <td className="py-3.5 px-4 text-right font-bold text-[#E87A5D]">
-                    {cr.completionPercent}%
-                  </td>
+      )}
+
+      {/* Table View */}
+      {viewMode === 'table' && (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="py-3.5 px-4">CR ID</th>
+                  <th className="py-3.5 px-4">Title</th>
+                  <th className="py-3.5 px-4">Type</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Risk</th>
+                  <th className="py-3.5 px-4">Linked CI</th>
+                  <th className="py-3.5 px-4">Owner</th>
+                  <th className="py-3.5 px-4">Progress</th>
+                  <th className="py-3.5 px-4">Window</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedRequests.map((cr: ChangeRequest) => (
+                  <tr
+                    key={cr.id}
+                    onClick={() => onSelectChangeRequest(cr)}
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  >
+                    <td className="py-3 px-4 font-extrabold text-[#E87A5D]">{cr.id}</td>
+                    <td className="py-3 px-4 font-bold text-slate-800 max-w-[220px] truncate">
+                      {cr.title}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                        {cr.type}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <StatusBadge
+                        label={cr.status}
+                        variant={getChangeStatusVariant(cr.status)}
+                      />
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          cr.risk === 'High'
+                            ? 'text-rose-700 bg-rose-50'
+                            : cr.risk === 'Medium'
+                            ? 'text-amber-700 bg-amber-50'
+                            : 'text-emerald-700 bg-emerald-50'
+                        }`}
+                      >
+                        {cr.risk}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 font-medium truncate max-w-[140px]">
+                      {cr.linkedCiName}
+                    </td>
+                    <td className="py-3 px-4 text-slate-700 font-semibold">{cr.agentName}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-[#E87A5D] h-full rounded-full"
+                            style={{ width: `${cr.completionPercent}%` }}
+                          />
+                        </div>
+                        <span className="font-bold text-slate-700 text-[10px]">
+                          {cr.completionPercent}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+                      {cr.scheduledStart}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Footer */}
+      {filteredRequests.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs text-slate-500 font-medium">
+            Showing {(currentPage - 1) * pageSize + 1} to{' '}
+            {Math.min(currentPage * pageSize, filteredRequests.length)} of{' '}
+            {filteredRequests.length} change requests
+          </p>
+
+          <Pagination
+            currentRange={`Page ${currentPage} of ${totalPages}`}
+            hasPrevious={currentPage > 1}
+            hasNext={currentPage < totalPages}
+            onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          />
         </div>
       )}
     </div>

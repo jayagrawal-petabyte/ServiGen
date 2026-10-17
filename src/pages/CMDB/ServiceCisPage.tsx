@@ -1,28 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ServiceCI } from '../../types/cmdb';
-import { mockServiceCis } from '../../data/mockCmdbData';
+import { fetchServiceCis } from '../../services/cmdbService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getServiceHealthVariant } from '../../utils/statusUtils';
-import { Activity, ShieldCheck, AlertCircle, Server, CheckCircle } from 'lucide-react';
+import {
+  ShieldCheck,
+  AlertCircle,
+  Server,
+  CheckCircle,
+  RefreshCw,
+  ExternalLink,
+} from 'lucide-react';
 
 interface ServiceCisPageProps {
   serviceCis?: ServiceCI[];
 }
 
-export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = mockServiceCis }) => {
+export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: initialServices }) => {
   const navigate = useNavigate();
-  const items = serviceCis.length > 0 ? serviceCis : mockServiceCis;
+  const [items, setItems] = useState<ServiceCI[]>(initialServices || []);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialServices);
+  const [error, setError] = useState<string | null>(null);
 
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetchServiceCis();
+      setItems(res.data);
+    } catch (err: any) {
+      console.error('[ServiceCisPage] Error fetching service CIs:', err);
+      setError(err?.message || 'Failed to load Service CIs.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!initialServices) {
+      loadData();
+    } else {
+      setItems(initialServices);
+    }
+  }, [initialServices, loadData]);
+
+  // Derived metrics from loaded data
   const operationalCount = items.filter((s) => s.healthStatus === 'Operational').length;
-  const supportingCisTotal = items.reduce((sum, s) => sum + s.supportingCisCount, 0);
-  const activeIssuesCount = items.filter((s) => s.healthStatus !== 'Operational').length;
+  const totalSupportingCis = items.reduce((acc, curr) => acc + (curr.supportingCisCount || 0), 0);
   const avgSla = items.length > 0
-    ? (items.reduce((sum, s) => sum + s.uptimeSlaPercent, 0) / items.length).toFixed(2)
-    : '100.00';
+    ? (items.reduce((acc, curr) => acc + curr.uptimeSlaPercent, 0) / items.length).toFixed(2)
+    : '99.9';
 
   return (
     <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
+      {/* Header with Navigation Pills */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -33,22 +65,50 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </p>
         </div>
 
-        <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Main Module Tabs (SCR-024 vs Live Service Health) */}
+          <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+            <button
+              onClick={() => navigate('/cmdb')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+            >
+              Configuration Items (CIs)
+            </button>
+            <button
+              onClick={() => navigate('/cmdb/services')}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E87A5D] text-white shadow-2xs cursor-pointer transition-all"
+            >
+              Service CIs (Live Health)
+            </button>
+          </div>
+
           <button
-            onClick={() => navigate('/cmdb')}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+            onClick={() => loadData()}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
           >
-            Configuration Items (CIs)
-          </button>
-          <button
-            onClick={() => navigate('/cmdb/services')}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E87A5D] text-white shadow-2xs cursor-pointer transition-all"
-          >
-            Service CIs (Live Health)
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
+            Refresh Live Health
           </button>
         </div>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span className="font-semibold">{error}</span>
+          </div>
+          <button
+            onClick={() => loadData()}
+            className="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-4">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -56,7 +116,9 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Operational Services</span>
-            <h3 className="text-2xl font-extrabold text-slate-900">{operationalCount} / {items.length}</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">
+              {operationalCount} / {items.length}
+            </h3>
           </div>
         </div>
 
@@ -65,18 +127,18 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase">Platform SLA</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Average SLA</span>
             <h3 className="text-2xl font-extrabold text-slate-900">{avgSla}%</h3>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
             <Server className="w-6 h-6" />
           </div>
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase">Supporting CIs</span>
-            <h3 className="text-2xl font-extrabold text-slate-900">{supportingCisTotal}</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">{totalSupportingCis}</h3>
           </div>
         </div>
 
@@ -85,65 +147,93 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis = moc
             <AlertCircle className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-400 uppercase">Active Maintenance</span>
-            <h3 className="text-2xl font-extrabold text-amber-600">{activeIssuesCount}</h3>
+            <span className="text-xs font-bold text-slate-400 uppercase">Monitored Endpoints</span>
+            <h3 className="text-2xl font-extrabold text-slate-900">{items.length}</h3>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {items.map((svc: ServiceCI) => (
+      {/* Services Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((service: ServiceCI) => (
           <div
-            key={svc.id}
-            className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between"
+            key={service.id}
+            className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs flex flex-col justify-between hover:shadow-md transition-all duration-200"
           >
             <div>
-              <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-bold text-[#E87A5D]">{svc.id}</span>
-                    <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-full">
-                      {svc.category}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight">{svc.name}</h3>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    {service.category}
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-base leading-snug mt-0.5">
+                    {service.name}
+                  </h3>
                 </div>
-                <StatusBadge label={svc.healthStatus} variant={getServiceHealthVariant(svc.healthStatus)} />
+                <StatusBadge
+                  label={service.healthStatus}
+                  variant={getServiceHealthVariant(service.healthStatus)}
+                />
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed mb-5">{svc.description}</p>
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                {service.description}
+              </p>
 
-              <div className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center text-xs mb-1.5">
-                  <span className="text-slate-500 font-semibold flex items-center gap-1">
-                    <Activity className="w-3.5 h-3.5 text-[#E87A5D]" /> Uptime SLA
-                  </span>
-                  <span className="font-bold text-emerald-600">{svc.uptimeSlaPercent}% Target</span>
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                <div>
+                  <div className="flex justify-between items-center mb-1 text-slate-700 font-bold">
+                    <span>Uptime SLA</span>
+                    <span className="text-slate-900">{service.uptimeSlaPercent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        service.uptimeSlaPercent >= 99.9
+                          ? 'bg-emerald-500'
+                          : service.uptimeSlaPercent >= 99.0
+                          ? 'bg-amber-500'
+                          : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${Math.min(100, service.uptimeSlaPercent)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: `${svc.uptimeSlaPercent}%` }}
-                  />
+
+                <div className="flex justify-between items-center text-slate-600 pt-1 border-t border-slate-200/60">
+                  <span className="font-medium">Business Owner</span>
+                  <span className="font-bold text-slate-800">{service.businessOwner}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-slate-600">
+                  <span className="font-medium">Supporting CIs</span>
+                  <span className="font-bold text-indigo-600">{service.supportingCisCount} mapped</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span className="font-semibold text-slate-700">
-                Owner: <strong className="text-slate-900">{svc.businessOwner}</strong>
-              </span>
+            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+              <span>Last Incident: {service.lastIncidentDate || 'None'}</span>
               <button
                 type="button"
-                onClick={() => navigate('/cmdb')}
-                title="View supporting Configuration Items in CMDB"
-                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg font-bold cursor-pointer transition-colors"
+                onClick={() => navigate('/services-catalogue')}
+                className="flex items-center gap-1 text-[#E87A5D] font-bold hover:underline cursor-pointer"
               >
-                {svc.supportingCisCount} Supporting CIs →
+                Catalogue <ExternalLink className="w-3 h-3" />
               </button>
             </div>
           </div>
         ))}
+
+        {items.length === 0 && !isLoading && (
+          <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
+            <Server className="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-1" />
+            <p className="text-sm font-bold text-slate-600">No Service CIs Loaded</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Click refresh above to query the live CMDB services endpoint
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
