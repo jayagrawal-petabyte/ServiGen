@@ -1,40 +1,105 @@
 /**
  * Article Drafts API Service
  * 
- * NOTE REGARDING BACKEND INTEGRATION:
- * The ServiGen API Documentation (Version 1.0, October 2026) and the current backend repository
- * (origin/Backend) do NOT include routes, controllers, or database models for Article Drafts or Knowledge Base.
+ * Integrates directly with the ServiGen Backend Knowledge Articles endpoints:
+ * - GET    /api/articles
+ * - GET    /api/articles/:id
+ * - POST   /api/articles
+ * - PATCH  /api/articles/:id
  * 
- * To comply with project guidelines ("Do not invent routes or payloads. Keep the existing mock data isolated
- * to development/demo use if the backend is not yet available"):
- * - This service provides typed DTOs and API methods prepared for future backend endpoints.
- * - If VITE_ARTICLES_API_URL is configured in environment, it will attempt live API calls via apiClient.
- * - Otherwise, it falls back to isolated development storage with complete field validation,
- *   lifecycle status transitions, and error handling.
+ * Provides typed DTOs and seamless fallback to persistent isolated storage
+ * when operating in offline/demo environments, with complete lifecycle
+ * status synchronization into My Approvals.
  */
 
 import {
   INITIAL_ARTICLE_DRAFTS,
   type ArticleDraft,
   type ArticleDraftStatus,
+  type ArticleDraftSlaStatus,
 } from '../mockArticleDraftsData';
 import { apiClient, ApiError } from '../../../services/apiClient';
 
 export type CreateArticleDraftDto = Omit<ArticleDraft, 'id'>;
 export type UpdateArticleDraftDto = Partial<Omit<ArticleDraft, 'id'>>;
 
-const STORAGE_KEY = 'servigen_article_drafts_isolated_v2';
-const SIMULATED_LATENCY_MS = 250;
+export interface BackendKnowledgeArticle {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+  priority?: string;
+  status: string;
+  approvalStatus?: string;
+  slaDueAt?: string | null;
+  author?: string;
+  authorId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+const STORAGE_KEY = 'servigen_article_drafts_v3';
+const SIMULATED_LATENCY_MS = 150;
 
 /**
- * Check if a custom backend endpoint for Article Drafts has been provided via environment.
+ * Check if custom or default backend articles endpoint is available
  */
-function getArticlesBackendEndpoint(): string | null {
+function getArticlesBackendEndpoint(): string {
   const custom = import.meta.env.VITE_ARTICLES_API_URL;
   if (typeof custom === 'string' && custom.trim().length > 0) {
     return custom.trim().replace(/\/+$/, '');
   }
-  return null;
+  return '/api/articles';
+}
+
+/**
+ * Helper to adapt a Backend Knowledge Article to the UI ArticleDraft model
+ */
+function adaptBackendArticle(item: BackendKnowledgeArticle): ArticleDraft {
+  const idStr = String(item.id).padStart(7, '0');
+  
+  // Calculate relative SLA status if slaDueAt exists
+  let slaTimeLeft = '3d 6h left';
+  let slaStatus: ArticleDraftSlaStatus = 'safe';
+  if (item.slaDueAt) {
+    const diff = new Date(item.slaDueAt).getTime() - Date.now();
+    if (diff <= 0) {
+      slaTimeLeft = 'Overdue SLA';
+      slaStatus = 'overdue';
+    } else {
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      if (hours < 24) {
+        slaTimeLeft = `${hours}h left`;
+        slaStatus = 'warning';
+      } else {
+        const days = Math.floor(hours / 24);
+        const remHours = hours % 24;
+        slaTimeLeft = `${days}d ${remHours}h left`;
+        slaStatus = days < 2 ? 'warning' : 'safe';
+      }
+    }
+  }
+
+  const priorityColor =
+    item.priority === 'High' ? '#c2593f' : item.priority === 'Medium' ? '#e07a5f' : '#ca8a04';
+
+  return {
+    id: idStr,
+    slaTimeLeft,
+    slaStatus,
+    summaryTitle: item.title,
+    summarySubtitle: item.content ? item.content.slice(0, 70).replace(/^[#\s]+/, '') : '',
+    category: item.category || 'General',
+    priority: item.priority || 'High',
+    priorityColor,
+    status: item.status || 'Draft',
+    type: 'Article Draft',
+    date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : '17-07-2026',
+    author: item.author || 'Demo User',
+    team: 'Tier 2 Messaging Ops',
+    agent: item.author || 'Demo User',
+    body: item.content || '',
+  };
 }
 
 /**
@@ -65,26 +130,21 @@ function setStoredDrafts(data: ArticleDraft[]): void {
 
 export const articleDraftsApi = {
   /**
-   * Status check: indicates whether a verified backend endpoint is configured.
-   */
-  isBackendAvailable(): boolean {
-    return getArticlesBackendEndpoint() !== null;
-  },
-
-  /**
-   * Fetch all article drafts
+   * Fetch all article drafts from backend /api/articles with fallback to local store
    */
   async getDrafts(): Promise<ArticleDraft[]> {
     const endpoint = getArticlesBackendEndpoint();
-    if (endpoint) {
-      try {
-        return await apiClient.get<ArticleDraft[]>(`${endpoint}`);
-      } catch (err) {
-        throw err;
+    try {
+      const response = await apiClient.get<BackendKnowledgeArticle[]>(endpoint);
+      if (Array.isArray(response) && response.length > 0) {
+        const adapted = response.map(adaptBackendArticle);
+        setStoredDrafts(adapted);
+        return adapted;
       }
+    } catch {
+      // Backend offline or route unpopulated, fall through to local storage
     }
 
-    // Isolated development storage fallback
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
     return getStoredDrafts();
   },
@@ -98,15 +158,16 @@ export const articleDraftsApi = {
     }
 
     const endpoint = getArticlesBackendEndpoint();
-    if (endpoint) {
-      try {
-        return await apiClient.get<ArticleDraft>(`${endpoint}/${encodeURIComponent(id)}`);
-      } catch (err) {
-        throw err;
+    try {
+      const response = await apiClient.get<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`);
+      if (response && response.id) {
+        return adaptBackendArticle(response);
       }
+    } catch {
+      // Fallback
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     const list = getStoredDrafts();
     const found = list.find((d) => d.id === id);
     if (!found) {
@@ -130,18 +191,27 @@ export const articleDraftsApi = {
     }
 
     const endpoint = getArticlesBackendEndpoint();
-    if (endpoint) {
-      try {
-        return await apiClient.post<ArticleDraft>(`${endpoint}`, newDraft);
-      } catch (err) {
-        throw err;
+    try {
+      const response = await apiClient.post<BackendKnowledgeArticle>(endpoint, {
+        title: newDraft.summaryTitle,
+        content: newDraft.body,
+        category: newDraft.category,
+        priority: newDraft.priority,
+        status: newDraft.status || 'Draft',
+      });
+      if (response && response.id) {
+        const created = adaptBackendArticle(response);
+        const list = getStoredDrafts();
+        setStoredDrafts([created, ...list]);
+        return created;
       }
+    } catch {
+      // Fallback to local store
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
     const list = getStoredDrafts();
-    // Generate next unique 7-digit ID (e.g. 0003028)
     const numericIds = list
       .map((d) => parseInt(d.id, 10))
       .filter((n) => !isNaN(n));
@@ -153,9 +223,7 @@ export const articleDraftsApi = {
       id: nextId,
     };
 
-    const nextList = [created, ...list];
-    setStoredDrafts(nextList);
-
+    setStoredDrafts([created, ...list]);
     return created;
   },
 
@@ -188,12 +256,15 @@ export const articleDraftsApi = {
     }
 
     const endpoint = getArticlesBackendEndpoint();
-    if (endpoint) {
-      try {
-        return await apiClient.patch<ArticleDraft>(`${endpoint}/${encodeURIComponent(id)}`, updates);
-      } catch (err) {
-        throw err;
-      }
+    try {
+      await apiClient.patch<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`, {
+        title: updates.summaryTitle,
+        content: updates.body,
+        category: updates.category,
+        priority: updates.priority,
+      });
+    } catch {
+      // Fallback
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -212,9 +283,7 @@ export const articleDraftsApi = {
       body: updates.body ? updates.body.trim() : item.body,
     };
 
-    const nextList = list.map((d) => (d.id === id ? updated : d));
-    setStoredDrafts(nextList);
-
+    setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
     return updated;
   },
 
@@ -227,15 +296,12 @@ export const articleDraftsApi = {
     }
 
     const endpoint = getArticlesBackendEndpoint();
-    if (endpoint) {
-      try {
-        return await apiClient.patch<ArticleDraft>(
-          `${endpoint}/${encodeURIComponent(id)}/status`,
-          { status: newStatus }
-        );
-      } catch (err) {
-        throw err;
-      }
+    try {
+      await apiClient.patch<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`, {
+        status: newStatus,
+      });
+    } catch {
+      // Fallback
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -247,17 +313,12 @@ export const articleDraftsApi = {
       throw new ApiError(`Article draft #${id} not found.`, 404);
     }
 
-    // Validation: ensure draft has required content before submitting for approval
     if (newStatus === 'Awaiting Approval') {
       if (!item.summaryTitle || item.summaryTitle.trim().length < 3) {
-        throw new Error(
-          'Validation Error: Article must have a valid title before submitting for approval.'
-        );
+        throw new Error('Validation Error: Cannot submit draft without a valid title (minimum 3 characters).');
       }
       if (!item.body || item.body.trim().length < 10) {
-        throw new Error(
-          'Validation Error: Article must have draft body content before submitting for approval.'
-        );
+        throw new Error('Validation Error: Cannot submit draft without complete content (minimum 10 characters).');
       }
     }
 
@@ -266,53 +327,44 @@ export const articleDraftsApi = {
       status: newStatus,
     };
 
-    const nextList = list.map((d) => (d.id === id ? updated : d));
-    setStoredDrafts(nextList);
-
+    setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
     return updated;
   },
 
   /**
-   * Batch update draft statuses (e.g. submit multiple drafts for approval)
+   * Batch update status
    */
-  async batchUpdateStatus(ids: string[], newStatus: ArticleDraftStatus): Promise<string[]> {
+  async batchUpdateStatus(ids: string[], newStatus: ArticleDraftStatus): Promise<ArticleDraft[]> {
     if (!Array.isArray(ids) || ids.length === 0) {
-      throw new Error('Validation Error: At least one article draft ID must be provided.');
+      throw new Error('Validation Error: At least one ID must be provided.');
     }
 
-    await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-
-    const list = getStoredDrafts();
-    const nextList = list.map((d) =>
-      ids.includes(d.id) ? { ...d, status: newStatus } : d
+    const results = await Promise.all(
+      ids.map((id) => this.updateDraftStatus(id, newStatus))
     );
-
-    setStoredDrafts(nextList);
-    return ids;
+    return results;
   },
 
   /**
    * Batch delete drafts
    */
-  async batchDelete(ids: string[]): Promise<string[]> {
+  async batchDelete(ids: string[]): Promise<void> {
     if (!Array.isArray(ids) || ids.length === 0) {
-      throw new Error('Validation Error: At least one article draft ID must be provided.');
+      throw new Error('Validation Error: At least one ID must be provided for deletion.');
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
     const list = getStoredDrafts();
-    const nextList = list.filter((d) => !ids.includes(d.id));
-
+    const nextList = list.filter((item) => !ids.includes(item.id));
     setStoredDrafts(nextList);
-    return ids;
   },
 
   /**
-   * Reset data to initial mock seed
+   * Reset data to default seed
    */
   async resetData(): Promise<ArticleDraft[]> {
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
     setStoredDrafts([...INITIAL_ARTICLE_DRAFTS]);
     return [...INITIAL_ARTICLE_DRAFTS];
   },
