@@ -132,12 +132,19 @@ export default function CreateArticleDraftModal({
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div
         className="modal-content"
-        style={{ maxWidth: '680px' }}
+        style={{
+          maxWidth: '680px',
+          backgroundColor: '#ffffff',
+          borderRadius: '18px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid #f0ede8',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
+        <div className="modal-header" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#eb6a47' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#e07a5f' }}>
               Knowledge Base Management
             </span>
             <h2 style={{ marginTop: '2px', fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>
@@ -159,7 +166,7 @@ export default function CreateArticleDraftModal({
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#ffffff' }}>
             {/* Title */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -412,7 +419,7 @@ export default function CreateArticleDraftModal({
             </div>
           </div>
 
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ backgroundColor: '#fbf9f6' }}>
             <button
               type="button"
               className="btn-approval-action"
