@@ -1,51 +1,29 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import "./ServiceCatalogue.css";
+import {
+  fetchServices,
+  fetchServiceCategories,
+  submitServiceRequest,
+  type ServiceItem,
+  type SubmittedServiceRequest,
+  FALLBACK_SERVICES,
+} from "../../services/servicesCatalogueService";
 
-type Category = "Business Applications" | "End-User Catalogue" | "Services";
-type CategoryFilter = "All Services" | Category;
+type CategoryFilter = string;
 
-type Service = {
-  name: string;
-  description: string;
-  icon: string;
-  category: Category;
+type RequestState = "idle" | "submitting" | "error" | "success";
+
+const categoryClass = (category: string): string => {
+  const c = (category || "").toLowerCase();
+  if (c.includes("business")) return "business-applications";
+  if (c.includes("end-user") || c.includes("access")) return "end-user-catalogue";
+  return "services";
 };
 
-type RequestState = "idle" | "error" | "success";
-
-const services: Service[] = [
-  { name: "Absence Management", description: "Raise an absence management request.", icon: "📅", category: "End-User Catalogue" },
-  { name: "Administrator Rights", description: "Request administrator access to your device.", icon: "⚙️", category: "End-User Catalogue" },
-  { name: "Air Con", description: "Report an air conditioning issue.", icon: "❄️", category: "Services" },
-  { name: "Benefit Change", description: "Raise a request to change your benefits.", icon: "🎁", category: "End-User Catalogue" },
-  { name: "Building Fabric", description: "Report an issue with the building or its facilities.", icon: "🏢", category: "Services" },
-  { name: "CRM", description: "Get support for customer relationship management.", icon: "👥", category: "Business Applications" },
-  { name: "Data Integration", description: "Request help with data and application integration.", icon: "🧩", category: "Business Applications" },
-  { name: "Database Administration", description: "Request database support and administration.", icon: "🗄️", category: "Business Applications" },
-  { name: "Desk Booking", description: "Request assistance with desk booking.", icon: "🪑", category: "End-User Catalogue" },
-  { name: "Desktop", description: "Request a desktop or desktop support.", icon: "🖥️", category: "End-User Catalogue" },
-  { name: "Dynamics CRM", description: "Get support for Dynamics CRM.", icon: "📊", category: "Business Applications" },
-  { name: "Electrical", description: "Report an electrical issue.", icon: "🔌", category: "Services" },
-];
-
-const categories: CategoryFilter[] = [
-  "All Services",
-  "Business Applications",
-  "End-User Catalogue",
-  "Services",
-];
-
-const categoryClass = (category: Category): string =>
-  category === "Business Applications"
-    ? "business-applications"
-    : category === "End-User Catalogue"
-      ? "end-user-catalogue"
-      : "services";
-
 type ServiceCardProps = {
-  service: Service;
-  onDetails: (service: Service) => void;
-  onRequest: (service: Service) => void;
+  service: ServiceItem;
+  onDetails: (service: ServiceItem) => void;
+  onRequest: (service: ServiceItem) => void;
 };
 
 function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
@@ -53,7 +31,7 @@ function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
     <article className="service-card">
       <div className="service-card-top">
         <div className={`service-icon service-icon-${categoryClass(service.category)}`}>
-          {service.icon}
+          {service.icon || "📦"}
         </div>
         <span className="service-category">{service.category}</span>
       </div>
@@ -74,21 +52,57 @@ function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
 }
 
 export default function ServiceCatalogue() {
+  const [servicesList, setServicesList] = useState<ServiceItem[]>(FALLBACK_SERVICES);
+  const [categories, setCategories] = useState<string[]>([
+    "All Services",
+    "Business Applications",
+    "End-User Catalogue",
+    "Services",
+  ]);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All Services");
   const [searchText, setSearchText] = useState("");
-  const [detailsService, setDetailsService] = useState<Service | null>(null);
+  const [detailsService, setDetailsService] = useState<ServiceItem | null>(null);
 
   const [requestOpen, setRequestOpen] = useState(false);
-  const [requestService, setRequestService] = useState<Service | null>(null);
+  const [requestService, setRequestService] = useState<ServiceItem | null>(null);
   const [requestDetails, setRequestDetails] = useState("");
   const [requestState, setRequestState] = useState<RequestState>("idle");
+  const [submittedResult, setSubmittedResult] = useState<SubmittedServiceRequest | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load categories and initial services from live backend API
+  useEffect(() => {
+    let mounted = true;
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const [cats, servs] = await Promise.all([
+          fetchServiceCategories(),
+          fetchServices(),
+        ]);
+        if (mounted) {
+          if (cats && cats.length > 0) setCategories(cats);
+          if (servs && servs.length > 0) setServicesList(servs);
+        }
+      } catch (err) {
+        console.warn("[ServiceCatalogue] Error loading services data:", err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredServices = useMemo(() => {
     const search = searchText.trim().toLowerCase();
 
-    return services.filter((service) => {
+    return servicesList.filter((service) => {
       const matchesCategory =
-        selectedCategory === "All Services" || service.category === selectedCategory;
+        selectedCategory === "All Services" ||
+        service.category.toLowerCase() === selectedCategory.toLowerCase();
 
       const matchesSearch =
         !search ||
@@ -98,13 +112,14 @@ export default function ServiceCatalogue() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchText]);
+  }, [servicesList, selectedCategory, searchText]);
 
-  const openRequest = (service?: Service) => {
+  const openRequest = (service?: ServiceItem) => {
     setDetailsService(null);
-    setRequestService(service ?? null);
+    setRequestService(service ?? (servicesList[0] || null));
     setRequestDetails("");
     setRequestState("idle");
+    setSubmittedResult(null);
     setRequestOpen(true);
   };
 
@@ -113,9 +128,10 @@ export default function ServiceCatalogue() {
     setRequestService(null);
     setRequestDetails("");
     setRequestState("idle");
+    setSubmittedResult(null);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!requestService || !requestDetails.trim()) {
@@ -123,8 +139,18 @@ export default function ServiceCatalogue() {
       return;
     }
 
-    // Frontend fallback: simulates a successful backend response.
-    setRequestState("success");
+    setRequestState("submitting");
+    try {
+      const result = await submitServiceRequest(requestService.id, {
+        details: requestDetails.trim(),
+        urgency: "Medium",
+      });
+      setSubmittedResult(result);
+      setRequestState("success");
+    } catch (err) {
+      console.error("[ServiceCatalogue] Failed to submit service request:", err);
+      setRequestState("error");
+    }
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -141,28 +167,22 @@ export default function ServiceCatalogue() {
       <div className="services-container">
         <header className="services-header">
           <div className="services-heading">
-            <h1>Services</h1>
-            <p>Browse available services and submit requests</p>
+            <h1>Services Catalogue</h1>
+            <p>Browse available services, check SLAs, and submit service requests</p>
           </div>
 
           <div className="header-actions">
             <div className="service-count">
-              <strong>{services.length}</strong>
+              <strong>{filteredServices.length}</strong>
               <span>services</span>
             </div>
-          <button
-  type="button"
-  className="new-button"
-  onClick={() => {
-    setDetailsService(null);
-    setRequestService(null);
-    setRequestDetails("");
-    setRequestState("idle");
-    setRequestOpen(true);
-  }}
->
-  <span>+</span> New
-</button>
+            <button
+              type="button"
+              className="new-button"
+              onClick={() => openRequest(servicesList[0])}
+            >
+              <span>+</span> New Request
+            </button>
           </div>
         </header>
 
@@ -210,10 +230,16 @@ export default function ServiceCatalogue() {
           </aside>
 
           <section className="service-grid" aria-label="Available services">
-            {filteredServices.length > 0 ? (
+            {isLoading ? (
+              <div className="empty-state">
+                <div className="empty-icon animate-spin">⚙️</div>
+                <h3>Loading catalogue...</h3>
+                <p>Retrieving services from live backend API.</p>
+              </div>
+            ) : filteredServices.length > 0 ? (
               filteredServices.map((service) => (
                 <ServiceCard
-                  key={service.name}
+                  key={service.id || service.name}
                   service={service}
                   onDetails={setDetailsService}
                   onRequest={openRequest}
@@ -231,6 +257,7 @@ export default function ServiceCatalogue() {
         </div>
       </div>
 
+      {/* Details Modal */}
       {detailsService && (
         <div className="modal-overlay" onClick={() => setDetailsService(null)}>
           <section
@@ -250,7 +277,7 @@ export default function ServiceCatalogue() {
             </button>
 
             <div className={`modal-icon service-icon-${categoryClass(detailsService.category)}`}>
-              {detailsService.icon}
+              {detailsService.icon || "📦"}
             </div>
             <span className="modal-category">{detailsService.category}</span>
             <h2 id="details-title">{detailsService.name}</h2>
@@ -259,7 +286,8 @@ export default function ServiceCatalogue() {
             <div className="service-info">
               <div><span>Service</span><strong>{detailsService.name}</strong></div>
               <div><span>Category</span><strong>{detailsService.category}</strong></div>
-              <div><span>Status</span><strong>Available</strong></div>
+              <div><span>Status</span><strong className="text-emerald-600">Available</strong></div>
+              <div><span>Approval</span><strong>{detailsService.requiresApproval ? "Requires Approval" : "Auto-Approved"}</strong></div>
             </div>
 
             <div className="modal-actions">
@@ -274,6 +302,7 @@ export default function ServiceCatalogue() {
         </div>
       )}
 
+      {/* Request Modal */}
       {requestOpen && (
         <div className="modal-overlay" onClick={closeRequest}>
           <section
@@ -292,9 +321,15 @@ export default function ServiceCatalogue() {
                 <div className="success-icon">✓</div>
                 <h2 id="request-title">Request submitted</h2>
                 <p>
-                  Your request for <strong>{requestService?.name}</strong> has been submitted successfully.
+                  Your request for <strong>{requestService?.name}</strong> has been submitted to the backend API.
                 </p>
-                <p className="mock-response-note">Demo confirmation — no backend request was sent.</p>
+                {submittedResult && (
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 space-y-1 text-left my-3">
+                    <div><strong>Request ID:</strong> #{submittedResult.id}</div>
+                    <div><strong>Initial Status:</strong> {submittedResult.status}</div>
+                    <div><strong>Timestamp:</strong> {new Date(submittedResult.submittedAt).toLocaleString()}</div>
+                  </div>
+                )}
                 <button type="button" className="primary-button full-width" onClick={closeRequest}>
                   Done
                 </button>
@@ -313,16 +348,18 @@ export default function ServiceCatalogue() {
                   <label htmlFor="service-choice">Choose a service</label>
                   <select
                     id="service-choice"
-                    value={requestService?.name ?? ""}
+                    value={requestService?.id ?? ""}
                     onChange={(event) => {
-                      const chosen = services.find((service) => service.name === event.target.value);
+                      const chosen = servicesList.find((service) => service.id === event.target.value);
                       setRequestService(chosen ?? null);
                       setRequestState("idle");
                     }}
                   >
                     <option value="">Select a service</option>
-                    {services.map((service) => (
-                      <option key={service.name} value={service.name}>{service.name}</option>
+                    {servicesList.map((service) => (
+                      <option key={service.id || service.name} value={service.id}>
+                        {service.name} ({service.category})
+                      </option>
                     ))}
                   </select>
 
@@ -343,11 +380,11 @@ export default function ServiceCatalogue() {
                   )}
 
                   <div className="modal-actions">
-                    <button type="button" className="secondary-button" onClick={closeRequest}>
+                    <button type="button" className="secondary-button" onClick={closeRequest} disabled={requestState === "submitting"}>
                       Cancel
                     </button>
-                    <button type="submit" className="primary-button">
-                      Submit request
+                    <button type="submit" className="primary-button" disabled={requestState === "submitting"}>
+                      {requestState === "submitting" ? "Submitting to API..." : "Submit request"}
                     </button>
                   </div>
                 </form>

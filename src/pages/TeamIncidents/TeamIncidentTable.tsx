@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import SLAIndicator from "./SLAIndicator";
@@ -11,6 +11,11 @@ import { AgentKpiDrawer } from "../../components/shared/AgentKpiDrawer";
 import { FeedPopover } from "../../components/shared/FeedPopover";
 import { TimesheetPopover } from "../../components/shared/TimesheetPopover";
 import "./TeamIncidents.css";
+import {
+  fetchSupportIncidents,
+  fetchSupportAgents,
+  updateSupportIncidentStatus,
+} from "../../services/teamIncidentsService";
 
 import { INITIAL_ALL_TEAM_INCIDENTS, type TeamIncident } from "./teamIncidents.data";
 
@@ -41,6 +46,44 @@ function TeamIncidentTable({
     "servigen_all_team_incidents_v6",
     INITIAL_ALL_TEAM_INCIDENTS
   );
+
+  const [agentsList, setAgentsList] = useState<string[]>(agents);
+  const [isSyncingApi, setIsSyncingApi] = useState<boolean>(false);
+
+  // Sync incidents and agents with live backend API
+  useEffect(() => {
+    let mounted = true;
+    const targetTeam = isSecondLine ? "2nd Line Support" : "1st Line Support";
+    setIsSyncingApi(true);
+
+    fetchSupportIncidents(targetTeam)
+      .then((res) => {
+        if (mounted && res.incidents && res.incidents.length > 0) {
+          setIncidents((prev) => {
+            const newOnes = res.incidents.filter(
+              (remote) => !prev.some((loc) => loc.id.toLowerCase() === remote.id.toLowerCase())
+            );
+            return newOnes.length > 0 ? [...newOnes, ...prev] : prev;
+          });
+        }
+      })
+      .finally(() => {
+        if (mounted) setIsSyncingApi(false);
+      });
+
+    fetchSupportAgents(targetTeam).then((agentList) => {
+      if (mounted && agentList && agentList.length > 0) {
+        const names = agentList
+          .map((a) => `${a.firstName} ${a.lastName}`.trim())
+          .filter(Boolean);
+        setAgentsList((prev) => Array.from(new Set([...prev, ...names])));
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [team, isSecondLine]);
 
   const [selectedView, setSelectedView] = useState<TeamViewSelection>(() => {
     if (initialViewKind === "breaching-sla") {
@@ -216,6 +259,10 @@ function TeamIncidentTable({
         selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
       )
     );
+    // Push status changes to backend API
+    selectedIncidents.forEach((id) => {
+      updateSupportIncidentStatus(id, newStat);
+    });
   };
 
   const handleCreateIncident = () => {
