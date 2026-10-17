@@ -22,7 +22,7 @@ import {
 
 // API doc 5.7 lists the routes without an /api prefix. If the backend mounts
 // them under /api, change this one line to "/api/projects".
-const PROJECTS_PATH = "/projects";
+const PROJECTS_PATH = "/api/projects";
 
 /* ---------- normalisers (backend response schema is not documented yet) ---------- */
 
