@@ -880,6 +880,8 @@
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .team-sidebar-search {
@@ -888,6 +890,7 @@
   gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid #f1f5f9;
+  position: relative;
 }
 
 .team-sidebar-search input {
@@ -903,6 +906,22 @@
   color: #94a3b8;
 }
 
+.clear-search-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.clear-search-btn:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
 .team-sidebar-header-row {
   display: flex;
   align-items: center;
@@ -914,6 +933,7 @@
 .team-sidebar-title-wrap {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .team-sidebar-title {
@@ -923,12 +943,178 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  user-select: none;
 }
 
-.team-sidebar-subtitle {
+.team-sidebar-title:hover {
+  color: #0284c7;
+}
+
+.team-status-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.team-sidebar-subtitle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11.5px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  text-align: left;
+}
+
+.team-sidebar-subtitle-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.dropdown-caret {
   font-size: 11px;
-  color: #64748b;
-  margin-top: 1px;
+  color: #0284c7;
+  font-weight: 800;
+}
+
+.subtitle-text {
+  font-weight: 500;
+}
+
+.team-status-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
+  min-width: 185px;
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.team-status-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: #334155;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.team-status-dropdown-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.team-status-dropdown-item.active {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+}
+
+.dropdown-check {
+  width: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #0284c7;
+}
+
+/* Sidebar Collapsed State */
+.team-sidebar-panel.collapsed {
+  width: 52px;
+  min-width: 52px;
+}
+
+.team-sidebar-panel.collapsed .team-sidebar-search,
+.team-sidebar-panel.collapsed .team-sidebar-title-wrap,
+.team-sidebar-panel.collapsed .team-sidebar-badge,
+.team-sidebar-panel.collapsed .team-section-pill-label,
+.team-sidebar-panel.collapsed .team-subitems-tree,
+.team-sidebar-panel.collapsed .team-sidebar-group-header span:not(:first-child),
+.team-sidebar-panel.collapsed .team-sidebar-breaching-sla span:not(:first-child) {
+  display: none !important;
+}
+
+.team-sidebar-panel.collapsed .team-sidebar-header-row {
+  justify-content: center;
+  padding: 10px 4px;
+}
+
+.team-sidebar-panel.collapsed .collapse-arrow {
+  font-size: 16px;
+  margin: 0 auto;
+}
+
+.team-sidebar-panel.collapsed .team-sidebar-scroll {
+  padding: 8px 4px;
+  align-items: center;
+}
+
+.team-sidebar-panel.collapsed .team-sidebar-group-header,
+.team-sidebar-panel.collapsed .team-subitem-btn,
+.team-sidebar-panel.collapsed .team-sidebar-breaching-sla {
+  justify-content: center;
+  padding: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+/* Table More Options Menu */
+.team-table-options-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.team-table-opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.team-table-opt-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .team-sidebar-scroll {

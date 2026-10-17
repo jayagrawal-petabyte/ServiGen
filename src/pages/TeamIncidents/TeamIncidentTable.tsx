@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import PriorityIndicator from "./PriorityIndicator";
@@ -91,8 +91,29 @@ function TeamIncidentTable({
   // Popover & Drawer States
   const [showKpiDrawer, setShowKpiDrawer] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
-  const [showTimesheetPopover, setShowTimesheetPopover] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("Open incidents");
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState<boolean>(false);
+  const statusMenuRef = useRef<HTMLDivElement>(null);
+
+  const [isTableMenuOpen, setIsTableMenuOpen] = useState<boolean>(false);
+  const tableMenuRef = useRef<HTMLDivElement>(null);
+
+  // Click outside listener for dropdown menus
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target as Node)) {
+        setIsStatusMenuOpen(false);
+      }
+      if (tableMenuRef.current && !tableMenuRef.current.contains(e.target as Node)) {
+        setIsTableMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Team Sidebar Navigation state
   const [firstLineExpanded, setFirstLineExpanded] = useState<boolean>(!isSecondLine);
@@ -147,11 +168,11 @@ function TeamIncidentTable({
     [incidents]
   );
 
-  // Reset page and selection when view or search changes
+  // Reset page and selection when view, search, or status filter changes
   useEffect(() => {
     setCurrentPage(1);
     setSelectedIncidents([]);
-  }, [selectedView, search]);
+  }, [selectedView, search, statusFilter]);
 
   // Get Started & New incident modals
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
@@ -160,9 +181,11 @@ function TeamIncidentTable({
   const [newCategory, setNewCategory] = useState(isSecondLine ? "Hardware>Workstation>Operating System" : "Network>VPN>Connectivity");
   const [newPriority, setNewPriority] = useState<string>("Medium");
 
-  // Filtered incidents based on active sidebar view selection & search query
+  // Filtered incidents based on active sidebar view selection, status filter & search query
   const filteredIncidents = useMemo(() => {
     let base = incidents;
+
+    // View filter
     if (selectedView.kind === "team") {
       base = incidents.filter((i) => i.team === selectedView.team);
     } else if (selectedView.kind === "agent") {
@@ -179,6 +202,19 @@ function TeamIncidentTable({
       base = incidents.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach"));
     }
 
+    // Status filter
+    if (statusFilter === "Open incidents") {
+      base = base.filter((i) => i.status !== "Resolved" && i.status !== "Closed");
+    } else if (statusFilter === "In Progress") {
+      base = base.filter((i) => i.status === "In Progress" || i.status === "Active");
+    } else if (statusFilter === "New / Unassigned") {
+      base = base.filter((i) => i.status === "New" || !i.agent || i.agent === "Unassigned");
+    } else if (statusFilter === "Breaching SLA") {
+      base = base.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach"));
+    } else if (statusFilter === "Resolved / Closed") {
+      base = base.filter((i) => i.status === "Resolved" || i.status === "Closed");
+    }
+
     if (!search.trim()) return base;
     const q = search.toLowerCase();
     return base.filter(
@@ -188,7 +224,31 @@ function TeamIncidentTable({
         incident.category.toLowerCase().includes(q) ||
         incident.agent.toLowerCase().includes(q)
     );
-  }, [incidents, selectedView, search]);
+  }, [incidents, selectedView, statusFilter, search]);
+
+  const handleExportCSV = () => {
+    if (filteredIncidents.length === 0) return;
+    const headers = ["ID", "Priority", "Summary", "Category", "Agent", "Team", "Status", "SLA", "Date Logged"];
+    const rows = filteredIncidents.map((i) => [
+      i.id,
+      i.priority,
+      `"${(i.summary || '').replace(/"/g, '""')}"`,
+      `"${(i.category || '').replace(/"/g, '""')}"`,
+      i.agent,
+      i.team,
+      i.status,
+      i.sla,
+      i.dateLogged,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `incidents_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const itemsPerPage = 50;
   const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage) || 1;
@@ -329,28 +389,83 @@ function TeamIncidentTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#00bcd4" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            {search ? (
+              <button
+                type="button"
+                className="clear-search-btn"
+                onClick={() => setSearch("")}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            ) : (
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#00bcd4" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            )}
           </div>
 
           {/* Heading */}
           <div className="team-sidebar-header-row">
             <div className="team-sidebar-title-wrap">
-              <div className="team-sidebar-title">
+              <div
+                className="team-sidebar-title cursor-pointer hover:text-cyan-600 transition-colors"
+                onClick={() => {
+                  setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
+                  setStatusFilter("Open incidents");
+                }}
+                title="Reset to team open incidents"
+              >
                 <span style={{ fontSize: 15 }}>👥</span>
                 <span>Incidents by Team</span>
               </div>
-              <span className="team-sidebar-subtitle">▽ Open incidents</span>
+              <div className="team-status-menu-container" ref={statusMenuRef}>
+                <button
+                  type="button"
+                  className="team-sidebar-subtitle-btn"
+                  onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                  title="Click to filter by status"
+                >
+                  <span className="dropdown-caret">{isStatusMenuOpen ? "▴" : "▾"}</span>
+                  <span className="subtitle-text">{statusFilter}</span>
+                </button>
+                {isStatusMenuOpen && (
+                  <div className="team-status-dropdown-menu animate-fadeIn">
+                    {[
+                      "Open incidents",
+                      "All incidents",
+                      "In Progress",
+                      "New / Unassigned",
+                      "Breaching SLA",
+                      "Resolved / Closed",
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={`team-status-dropdown-item ${statusFilter === opt ? "active" : ""}`}
+                        onClick={() => {
+                          setStatusFilter(opt);
+                          setIsStatusMenuOpen(false);
+                        }}
+                      >
+                        <span className="dropdown-check">{statusFilter === opt ? "✓" : ""}</span>
+                        <span>{opt}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <span
-              className="collapse-arrow cursor-pointer select-none text-gray-500 hover:text-black font-bold"
+            <button
+              type="button"
+              className="collapse-arrow cursor-pointer select-none text-gray-500 hover:text-black font-bold p-1 rounded hover:bg-slate-100 transition-colors border-0 bg-transparent"
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isSidebarCollapsed ? "»" : "«"}
-            </span>
+            </button>
           </div>
 
           {/* Teams Navigation Tree */}
@@ -678,14 +793,55 @@ function TeamIncidentTable({
                 <span>New</span>
               </button>
 
-              <button
-                type="button"
-                className="tb-nav-btn"
-                title="Table actions"
-                onClick={() => alert("Table View Options: Column configuration, export data")}
-              >
-                <span style={{ fontSize: 16, lineHeight: 1, letterSpacing: '2px', color: '#64748b' }}>···</span>
-              </button>
+              <div className="relative" ref={tableMenuRef}>
+                <button
+                  type="button"
+                  className="tb-nav-btn"
+                  title="Table actions"
+                  onClick={() => setIsTableMenuOpen(!isTableMenuOpen)}
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1, letterSpacing: '2px', color: '#64748b' }}>···</span>
+                </button>
+                {isTableMenuOpen && (
+                  <div className="team-table-options-menu animate-fadeIn">
+                    <button
+                      type="button"
+                      className="team-table-opt-btn"
+                      onClick={() => {
+                        handleExportCSV();
+                        setIsTableMenuOpen(false);
+                      }}
+                    >
+                      <span>📥</span>
+                      <span>Export to CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="team-table-opt-btn"
+                      onClick={() => {
+                        toggleSelectAll();
+                        setIsTableMenuOpen(false);
+                      }}
+                    >
+                      <span>☑️</span>
+                      <span>{allFilteredSelected ? "Deselect All" : "Select All on Page"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="team-table-opt-btn"
+                      onClick={() => {
+                        setSearch("");
+                        setStatusFilter("Open incidents");
+                        setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
+                        setIsTableMenuOpen(false);
+                      }}
+                    >
+                      <span>🔄</span>
+                      <span>Reset Filters</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
