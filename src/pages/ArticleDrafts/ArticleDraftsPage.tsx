@@ -219,7 +219,7 @@ export default function ArticleDraftsPage() {
 
   return (
     <div className="article-drafts-page-wrapper">
-      {/* Top Application Navbar matching UI/UX design */}
+      {/* Top Application Navbar with Unified Global Actions */}
       <header className="article-drafts-top-navbar">
         <GlobalNavbarActions onNewTicket={() => setIsCreateModalOpen(true)} />
       </header>
