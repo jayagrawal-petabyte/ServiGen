@@ -73,7 +73,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     checkBackendHealth();
-    if (!getStoredToken()) {
+    
+    // Sync active session with backend API if a token exists
+    const activeToken = getStoredToken();
+    if (activeToken) {
+      api.get('/api/auth/session')
+        .then((res) => {
+          const sessionUser = res?.data || res;
+          if (sessionUser && (sessionUser.id || sessionUser.username)) {
+            const normalized = normalizeUser(sessionUser);
+            setStoredUser(normalized);
+            setAuthState({
+              isAuthenticated: true,
+              user: normalized,
+              loading: false,
+              error: null,
+            });
+            setBackendConnected(true);
+          }
+        })
+        .catch(() => {
+          // Keep current stored user if backend session is unavailable
+        });
+    } else {
       obtainDevAuthToken().then((tok) => {
         if (tok) setToken(tok);
       });

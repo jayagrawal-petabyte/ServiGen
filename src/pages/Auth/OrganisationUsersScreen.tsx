@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from './types';
-import { MOCK_ORGANISATION_USERS } from './mockAuthData';
+import { fetchOrganisationUsers } from '../../services/organisationsService';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './OrganisationUsersScreen.css';
@@ -11,10 +11,10 @@ interface OrganisationUsersScreenProps {
 }
 
 export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = ({
-  users = MOCK_ORGANISATION_USERS,
+  users,
 }) => {
   const navigate = useNavigate();
-  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users);
+  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users || []);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSite, setSelectedSite] = useState<string>('ALL');
   const [selectedOrganisation, setSelectedOrganisation] = useState<string>('ALL');
@@ -23,6 +23,28 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState<boolean>(false);
+
+  // Fetch users from live backend on mount or when organization filter changes
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    fetchOrganisationUsers(selectedOrganisation !== 'ALL' ? selectedOrganisation : undefined)
+      .then((data) => {
+        if (isMounted && data && data.length > 0) {
+          setUserList(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('[OrganisationUsersScreen] Error fetching users from backend:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedOrganisation]);
 
   // New User Form State
   const [newFirstName, setNewFirstName] = useState('');
@@ -68,11 +90,18 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     });
   }, [userList, searchQuery, selectedSite, selectedOrganisation, selectedRegion, selectedStatus, selectedRole]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const data = await fetchOrganisationUsers(selectedOrganisation !== 'ALL' ? selectedOrganisation : undefined);
+      if (data && data.length > 0) {
+        setUserList(data);
+      }
+    } catch (err) {
+      console.warn('[OrganisationUsersScreen] Refresh failed:', err);
+    } finally {
       setIsLoading(false);
-    }, 450);
+    }
   };
 
   const handleCreateUser = (e: React.FormEvent) => {
