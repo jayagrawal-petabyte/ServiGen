@@ -17,7 +17,7 @@ export interface CustomListFormData {
   displayType: string;
   showChangeFreeze: boolean;
   showByTeam: boolean;
-  haloApi: boolean;
+  servigenApi: boolean;
 }
 
 export interface BackendCustomList {
@@ -53,7 +53,7 @@ export interface CreateCustomListPayload {
     showCounts?: boolean;
     showChangeFreeze?: boolean;
     showByTeam?: boolean;
-    haloApi?: boolean;
+    servigenApi?: boolean;
   };
 }
 
@@ -156,7 +156,7 @@ export async function saveCustomList(
       showCounts: formData.showCounts,
       showChangeFreeze: formData.showChangeFreeze,
       showByTeam: formData.showByTeam,
-      haloApi: formData.haloApi,
+      servigenApi: formData.servigenApi,
     },
   };
 

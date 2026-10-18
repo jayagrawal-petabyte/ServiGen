@@ -22,7 +22,7 @@ const CustomLists: React.FC = () => {
     displayType: 'Default',
     showChangeFreeze: false,
     showByTeam: false,
-    haloApi: false
+    servigenApi: false
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -225,7 +225,7 @@ const CustomLists: React.FC = () => {
 
               <div className="cl-checkbox-group">
                 <label className="cl-checkbox-label">
-                  <input type="checkbox" checked={formData.haloApi} onChange={(e) => handleModalChange('haloApi', e.target.checked)} />
+                  <input type="checkbox" checked={formData.servigenApi} onChange={(e) => handleModalChange('servigenApi', e.target.checked)} />
                   ServiGen API
                 </label>
               </div>
