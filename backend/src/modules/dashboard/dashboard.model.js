@@ -215,8 +215,9 @@ const getKpis = async (userId = null) => {
       avgResponseTimeMinutes: avgResponseTime,
       lastUpdatedAt: new Date().toISOString(),
     };
-  } catch (_err) {
-    // Database connection fallback
+  } catch (err) {
+    // Database connection fallback — log so it is visible in dev
+    if (process.env.NODE_ENV !== "test") console.error("[dashboard] getKpis DB error:", err.message);
     return { ...kpiData };
   }
 };
