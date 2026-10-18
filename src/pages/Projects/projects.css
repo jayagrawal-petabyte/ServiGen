@@ -21,11 +21,12 @@
   --pj-hold: #ffad0d;
   --pj-new: #1e6b35;
 
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 40px;
-  padding: 24px 32px 24px 24px;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   box-sizing: border-box;
   background: var(--pj-bg);
   color: var(--pj-ink);
@@ -66,10 +67,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  align-self: start;
-  position: sticky;
-  top: 16px;
-  min-height: 620px;
+  margin: 12px 0 12px 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .pj-search {
@@ -205,8 +205,10 @@
 /* ---------- header ---------- */
 
 .pj-main {
+  flex: 1;
   min-width: 0;
-  padding-top: 56px;
+  overflow-y: auto;
+  padding: 20px 24px 40px 16px;
 }
 
 .pj-header {

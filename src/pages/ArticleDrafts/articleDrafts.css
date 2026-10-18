@@ -7,7 +7,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   background-color: #faf8f5;
 }
 
@@ -34,9 +36,11 @@
 
 /* Main Layout Container (Sidebar + Content) */
 .article-drafts-main-layout {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   gap: 20px;
-  padding: 20px 24px 40px;
   width: 100%;
   align-items: stretch;
   box-sizing: border-box;
@@ -45,8 +49,8 @@
 /* --- Peach Sub-Navigation Panel --- */
 .article-drafts-subnav {
   width: 250px;
-  min-height: calc(100vh - 120px);
-  min-height: 720px;
+  margin: 12px 0 12px 12px;
+  overflow-y: auto;
   background-color: #e49b8e;
   border: 1px solid #d4887b;
   border-radius: 20px;
@@ -164,6 +168,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow-y: auto;
+  padding: 20px 24px 40px;
 }
 
 /* Page Title */

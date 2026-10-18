@@ -15,11 +15,12 @@
   --cal-muted: #6b6f7b;
   --cal-line: #f1e3dc;
 
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 16px;
-  padding: 24px;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   box-sizing: border-box;
   background: var(--cal-bg);
   color: var(--cal-ink);
@@ -50,9 +51,9 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  align-self: start;
-  position: sticky;
-  top: 16px;
+  margin: 12px 0 12px 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .cal-search {
@@ -259,10 +260,13 @@
 /* ---------- toolbar ---------- */
 
 .cal-main {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
+  padding: 20px 20px 20px 16px;
 }
 
 .cal-toolbar {
@@ -968,10 +972,11 @@
 
 @media (max-width: 1000px) {
   .calendar-page {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
   .cal-side {
-    position: static;
+    width: 100% !important;
+    margin: 12px 12px 0 12px;
   }
   .cal-title {
     order: -1;
