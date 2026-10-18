@@ -34,30 +34,6 @@ interface TaskRow {
   dueDate: string;
 }
 
-const DEFAULT_RECENT_TICKETS: RecentTicketRow[] = [
-  { id: '1', ticketNumber: '#TK-1024', subject: 'Unable to access email', status: 'Open', priority: 'High', date: 'Sep 12' },
-  { id: '2', ticketNumber: '#TK-1023', subject: 'Laptop running slow', status: 'In Progress', priority: 'Medium', date: 'Sep 12' },
-  { id: '3', ticketNumber: '#TK-1022', subject: 'VPN connection issue', status: 'Resolved', priority: 'Low', date: 'Sep 11' },
-  { id: '4', ticketNumber: '#TK-1021', subject: 'Software Installation request', status: 'On Hold', priority: 'Medium', date: 'Sep 11' },
-  { id: '5', ticketNumber: '#TK-1020', subject: 'Password reset request', status: 'Resolved', priority: 'Low', date: 'Sep 10' },
-];
-
-const DEFAULT_UPCOMING_APPROVALS: ApprovalRow[] = [
-  { id: 'a1', requestId: 'REQ000231', item: 'Server upgrade', requestedBy: 'Alex Morgan', date: '09 Sep 2026' },
-  { id: 'a2', requestId: 'REQ000199', item: 'Software licence', requestedBy: 'Taylor Kim', date: '08 Sep 2026' },
-  { id: 'a3', requestId: 'CHG000230', item: 'Network change', requestedBy: 'Jordan Lee', date: '07 Sep 2026' },
-  { id: 'a4', requestId: 'REQ000198', item: 'Monitor request', requestedBy: 'Casey Patel', date: '06 Sep 2026' },
-  { id: 'a5', requestId: 'CHG000229', item: 'Firewall rule', requestedBy: 'Riley Chen', date: '05 Sep 2026' },
-];
-
-const DEFAULT_MY_TASKS: TaskRow[] = [
-  { id: 't1', task: 'Update user access', description: 'Update access permissions', priority: 'High', dueDate: '09 Sep 2026' },
-  { id: 't2', task: 'Review security policy', description: 'Review latest security policy', priority: 'Medium', dueDate: '08 Sep 2026' },
-  { id: 't3', task: 'Prepare system report', description: 'Prepare monthly system report', priority: 'High', dueDate: '07 Sep 2026' },
-  { id: 't4', task: 'Check backup status', description: 'Verify backup completion', priority: 'Low', dueDate: '06 Sep 2026' },
-  { id: 't5', task: 'Update knowledge article', description: 'Add troubleshooting guide', priority: 'Medium', dueDate: '05 Sep 2026' },
-];
-
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning';
@@ -69,6 +45,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Loading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Metrics state
   const [kpis, setKpis] = useState<DashboardKpis | null>(null);
   const [kpisError, setKpisError] = useState(false);
@@ -77,9 +56,9 @@ export default function Dashboard() {
   const [myAssignmentsCount, setMyAssignmentsCount] = useState<number | null>(null);
 
   // Lists state
-  const [recentTickets, setRecentTickets] = useState<RecentTicketRow[]>(DEFAULT_RECENT_TICKETS);
-  const [approvals, setApprovals] = useState<ApprovalRow[]>(DEFAULT_UPCOMING_APPROVALS);
-  const [tasks] = useState<TaskRow[]>(DEFAULT_MY_TASKS);
+  const [recentTickets, setRecentTickets] = useState<RecentTicketRow[]>([]);
+  const [approvals, setApprovals] = useState<ApprovalRow[]>([]);
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
 
   // Mood state
   const [selectedMood, setSelectedMood] = useState<string>('Great');
@@ -101,6 +80,7 @@ export default function Dashboard() {
     let mounted = true;
 
     async function loadDashboardData() {
+      setIsLoading(true);
       try {
         const [kpiRes, sumRes, moodRes, tickRes, appRes] = await Promise.allSettled([
           dashboardService.getKpis(),
@@ -127,7 +107,7 @@ export default function Dashboard() {
           setSelectedMood(moodRes.value);
         }
 
-        if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data) && tickRes.value.data.length > 0) {
+        if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
           const mapped: RecentTicketRow[] = tickRes.value.data.slice(0, 5).map((t: any, index: number) => {
             const statusStr = (t.status || 'Open').toLowerCase();
             let normStatus: RecentTicketRow['status'] = 'Open';
@@ -154,13 +134,9 @@ export default function Dashboard() {
             };
           });
 
-          // Fill up to 5 items if fewer
-          if (mapped.length < 5) {
-            const combined = [...mapped, ...DEFAULT_RECENT_TICKETS.slice(mapped.length)];
-            setRecentTickets(combined);
-          } else {
-            setRecentTickets(mapped);
-          }
+          setRecentTickets(mapped);
+        } else {
+          setRecentTickets([]);
         }
 
         if (appRes.status === 'fulfilled' && appRes.value) {
@@ -173,11 +149,34 @@ export default function Dashboard() {
               requestedBy: a.requester || 'Team Member',
               date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
             }));
-            setApprovals(mappedApp.length < 5 ? [...mappedApp, ...DEFAULT_UPCOMING_APPROVALS.slice(mappedApp.length)] : mappedApp);
+            setApprovals(mappedApp);
 
             const pendingList = appData.filter((a: any) => !a.status || a.status.toLowerCase() === 'pending');
             setPendingApprovalsCount(pendingList.length);
+          } else {
+            setApprovals([]);
           }
+        } else {
+          setApprovals([]);
+        }
+
+        try {
+          const taskRes: any = await api.get('/api/tasks');
+          const taskData = Array.isArray(taskRes?.data) ? taskRes.data : Array.isArray(taskRes) ? taskRes : [];
+          if (taskData.length > 0) {
+            const mappedTasks: TaskRow[] = taskData.slice(0, 5).map((t: any, idx: number) => ({
+              id: String(t.id || idx),
+              task: t.title || t.name || t.task || 'Task',
+              description: t.description || '',
+              priority: (t.priority || 'Medium') as TaskRow['priority'],
+              dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No due date',
+            }));
+            setTasks(mappedTasks);
+          } else {
+            setTasks([]);
+          }
+        } catch {
+          setTasks([]);
         }
 
         try {
@@ -190,6 +189,10 @@ export default function Dashboard() {
         }
       } catch (err) {
         console.warn('Dashboard live fetch error, using fallbacks:', err);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -628,47 +631,65 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-xs">
-                {filteredRecentTickets.map((t) => (
-                  <tr
-                    key={t.id}
-                    onClick={() => navigate('/incidents')}
-                    className="hover:bg-gray-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{t.ticketNumber}</td>
-                    <td className="py-2.5 text-gray-900 max-w-[180px] truncate pr-2" title={t.subject}>
-                      {t.subject}
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={`skel-tick-${i}`} className="animate-pulse">
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-16" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-36" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-14" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-12" /></td>
+                      <td className="py-2.5 text-right"><div className="h-4 bg-gray-200 rounded w-10 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : filteredRecentTickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-6 text-center text-gray-400">
+                      No recent tickets found
                     </td>
-                    <td className="py-2.5">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium leading-tight whitespace-nowrap ${
-                          t.status === 'Open'
-                            ? 'bg-[#E0F2FE] text-[#0369A1]'
-                            : t.status === 'In Progress'
-                            ? 'bg-[#DBEAFE] text-[#1D4ED8]'
-                            : t.status === 'On Hold'
-                            ? 'bg-[#FEF3C7] text-[#B45309]'
-                            : 'bg-[#DCFCE7] text-[#15803D]'
-                        }`}
-                      >
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5">
-                      <span
-                        className={`text-xs font-medium ${
-                          t.priority === 'High'
-                            ? 'text-[#DC2626]'
-                            : t.priority === 'Medium'
-                            ? 'text-[#D97706]'
-                            : 'text-[#16A34A]'
-                        }`}
-                      >
-                        {t.priority}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{t.date}</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredRecentTickets.map((t) => (
+                    <tr
+                      key={t.id}
+                      onClick={() => navigate('/incidents')}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                    >
+                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{t.ticketNumber}</td>
+                      <td className="py-2.5 text-gray-900 max-w-[180px] truncate pr-2" title={t.subject}>
+                        {t.subject}
+                      </td>
+                      <td className="py-2.5">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium leading-tight whitespace-nowrap ${
+                            t.status === 'Open'
+                              ? 'bg-[#E0F2FE] text-[#0369A1]'
+                              : t.status === 'In Progress'
+                              ? 'bg-[#DBEAFE] text-[#1D4ED8]'
+                              : t.status === 'On Hold'
+                              ? 'bg-[#FEF3C7] text-[#B45309]'
+                              : 'bg-[#DCFCE7] text-[#15803D]'
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-xs font-medium ${
+                            t.priority === 'High'
+                              ? 'text-[#DC2626]'
+                              : t.priority === 'Medium'
+                              ? 'text-[#D97706]'
+                              : 'text-[#16A34A]'
+                          }`}
+                        >
+                          {t.priority}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{t.date}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -699,20 +720,37 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-xs">
-                {approvals.map((app) => (
-                  <tr
-                    key={app.id}
-                    onClick={() => navigate('/approvals')}
-                    className="hover:bg-gray-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{app.requestId}</td>
-                    <td className="py-2.5 text-gray-900 max-w-[160px] truncate pr-2" title={app.item}>
-                      {app.item}
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={`skel-app-${i}`} className="animate-pulse">
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-16" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-28" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-20" /></td>
+                      <td className="py-2.5 text-right"><div className="h-4 bg-gray-200 rounded w-16 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : approvals.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-gray-400">
+                      No upcoming approvals
                     </td>
-                    <td className="py-2.5 text-gray-600 whitespace-nowrap">{app.requestedBy}</td>
-                    <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{app.date}</td>
                   </tr>
-                ))}
+                ) : (
+                  approvals.map((app) => (
+                    <tr
+                      key={app.id}
+                      onClick={() => navigate('/approvals')}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                    >
+                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{app.requestId}</td>
+                      <td className="py-2.5 text-gray-900 max-w-[160px] truncate pr-2" title={app.item}>
+                        {app.item}
+                      </td>
+                      <td className="py-2.5 text-gray-600 whitespace-nowrap">{app.requestedBy}</td>
+                      <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{app.date}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -731,32 +769,49 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-xs">
-                {tasks.map((task) => (
-                  <tr
-                    key={task.id}
-                    onClick={() => navigate('/my-work')}
-                    className="hover:bg-gray-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 font-medium text-gray-900 whitespace-nowrap">{task.task}</td>
-                    <td className="py-2.5 text-gray-600 max-w-[180px] truncate pr-2" title={task.description}>
-                      {task.description}
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={`skel-task-${i}`} className="animate-pulse">
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-24" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-32" /></td>
+                      <td className="py-2.5"><div className="h-4 bg-gray-200 rounded w-14" /></td>
+                      <td className="py-2.5 text-right"><div className="h-4 bg-gray-200 rounded w-16 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : tasks.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-gray-400">
+                      No tasks assigned
                     </td>
-                    <td className="py-2.5">
-                      <span
-                        className={`text-xs font-medium ${
-                          task.priority === 'High'
-                            ? 'text-[#DC2626]'
-                            : task.priority === 'Medium'
-                            ? 'text-[#D97706]'
-                            : 'text-[#16A34A]'
-                        }`}
-                      >
-                        {task.priority}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{task.dueDate}</td>
                   </tr>
-                ))}
+                ) : (
+                  tasks.map((task) => (
+                    <tr
+                      key={task.id}
+                      onClick={() => navigate('/my-work')}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                    >
+                      <td className="py-2.5 font-medium text-gray-900 whitespace-nowrap">{task.task}</td>
+                      <td className="py-2.5 text-gray-600 max-w-[180px] truncate pr-2" title={task.description}>
+                        {task.description}
+                      </td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-xs font-medium ${
+                            task.priority === 'High'
+                              ? 'text-[#DC2626]'
+                              : task.priority === 'Medium'
+                              ? 'text-[#D97706]'
+                              : 'text-[#16A34A]'
+                          }`}
+                        >
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-gray-500 text-right whitespace-nowrap">{task.dueDate}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
