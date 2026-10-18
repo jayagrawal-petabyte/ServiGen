@@ -273,7 +273,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 45%;
+  width: 44%;
   height: 100%;
   pointer-events: none;
   z-index: 1;
@@ -281,7 +281,7 @@
 
 @media (max-width: 768px) {
   .splash-teal-curve {
-    width: 60%;
+    width: 58%;
   }
 }
 
@@ -296,27 +296,28 @@
 }
 
 .splash-welcome-heading {
-  font-size: 24px;
+  font-size: 23px;
   font-weight: 500;
-  color: #1F1F1F;
-  margin: 0 0 32px 0;
-  letter-spacing: -0.01em;
+  color: #111827;
+  margin: 0 0 36px 0;
+  letter-spacing: -0.015em;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .splash-logo-container {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 114px;
+  height: 114px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 .splash-loader-orbit {
   position: absolute;
-  inset: -12px;
-  animation: splashSpin 1.8s linear infinite;
+  inset: -10px;
+  animation: splashSpin 2s linear infinite;
 }
 
 @keyframes splashSpin {
@@ -325,11 +326,12 @@
 }
 
 .splash-subtext {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1F1F1F;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #111827;
   margin: 0;
   letter-spacing: -0.01em;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* ==========================================================================
