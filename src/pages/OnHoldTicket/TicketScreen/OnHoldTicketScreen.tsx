@@ -33,21 +33,6 @@ export interface Ticket {
   targetSla?: string;
 }
 
-export const NEW_TICKETS_DATA: Ticket[] = [
-  { id: "0003012", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/Admin", summary: "Request external monitor", status: "New", type: "Service Request", targetSla: "-40:01", description: "Standard external monitor requisition for developer workstation." },
-  { id: "0003011", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Install Adobe Acrobat Pro", status: "New", type: "Service Request", targetSla: "-88:01", description: "Software deployment request for Adobe Creative Suite licensing." },
-  { id: "0003010", priority: "Medium", priorityColor: "yellow", org: "consultancy/EMEA/Mary Johnson", summary: "Access request for shared folder", status: "New", type: "Service Request", targetSla: "-64:00", description: "Permission escalation for departmental network share drive." },
-  { id: "0003009", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/James Brown", summary: "Request new laptop for new sta...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Hardware provisioning for incoming technical consultant." },
-  { id: "0002237", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Request Addition of New Printer ...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Network printer IP assignment and CUPS queue mapping." },
-  { id: "0002236", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Request Printer Maintenance Se...", status: "New", type: "Service Request", targetSla: "-40:01", description: "Quarterly preventative maintenance service for 3rd floor MFP." },
-  { id: "0002235", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Access for New Employee", status: "New", type: "Service Request", targetSla: "-88:01", description: "Active Directory security group membership for secure badge printing." },
-  { id: "0002234", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Configuration Change", status: "New", type: "Service Request", targetSla: "-64:00", description: "Duplex and color profile preset configuration update." },
-  { id: "0002233", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Printer Toner Replacement", status: "New", type: "Service Request", targetSla: "-40:01", description: "Consumable cartridge replacement request for finance queue." },
-  { id: "0002232", priority: "Low", priorityColor: "green", org: "consultancy/EMEA/General User", summary: "Office 365 License Activation", status: "New", type: "Service Request", targetSla: "-40:01", description: "M365 E5 license assignment for newly onboarded team member." },
-  { id: "0002231", priority: "Medium", priorityColor: "yellow", org: "consultancy/EMEA/General User", summary: "VPN Certificate Renewal", status: "New", type: "Service Request", targetSla: "-40:01", description: "User client TLS certificate expired on macOS workstation." },
-  { id: "0002230", priority: "High", priorityColor: "orange", org: "consultancy/EMEA/General User", summary: "Production Database Access", status: "New", type: "Service Request", targetSla: "-40:01", description: "Read-only replica access approval for monthly financial audit." },
-];
-
 export const MAJOR_INCIDENT_ROW: Ticket = {
   id: "0002673-P",
   priority: "Critical",
@@ -59,24 +44,6 @@ export const MAJOR_INCIDENT_ROW: Ticket = {
   targetSla: "-179:06",
   description: "Global authentication provider timeout. Users experiencing SSO login failure on primary portal.",
 };
-
-const ALL_TICKETS: Ticket[] = [
-  { id: "0003951", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Liam O'Connor",       summary: "Got an email pretending to be from HR about bonuses...", status: "On H", type: "Incident", description: "Suspicious email received with external phishing links posing as HR compensation review. Account credentials may have been targeted; security quarantine requested." },
-  { id: "0003926", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/James Brown",         summary: "Getting a file size error trying to upload client deck...", status: "With", type: "Incident", description: "Upload to SharePoint portal fails with HTTP 413 Payload Too Large. Presentation file is 85MB; requesting quota expansion or alternative transfer link." },
-  { id: "0003841", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Kaleem Smith",        summary: "VPN connects for a few seconds then drops...", status: "With", type: "Incident", description: "Cisco AnyConnect establishes connection but disconnects within 15 seconds with gateway timeout error. Multiple EMEA consultants reporting identical behavior." },
-  { id: "0003816", priority: "Critical", priorityColor: "red",    org: "consultancy/Americas/Fatima Al-Mansoor", summary: "Trading desk computer won't boot past BIOS...", status: "With", type: "Incident", description: "Workstation workstation-NY-44 powers on but hangs at vendor BIOS screen. No bootable device found error. Urgent priority for market open." },
-  { id: "0003801", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/Aisha Khan",          summary: "Teams meeting invites to external clients failing...", status: "With", type: "Incident", description: "Calendar synchronization failure when generating Teams invite links for external partner domain. Meeting scheduled for 3 PM GMT." },
-  { id: "0003701", priority: "Low",      priorityColor: "green",  org: "consultancy/Americas/Kwame Mensah",   summary: "Other people on Zoom calls say my audio echo is severe...", status: "On H", type: "Incident", description: "Poly headset microphone feedback loop during client presentation calls. Driver updates and audio filter configurations required." },
-  { id: "0003693", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Liam O'Connor",      summary: "Computer has gotten noticeably slow after Windows update...", status: "With", type: "Incident", description: "System performance degraded after KB5034441 update. High CPU and disk usage observed from Windows Search Indexer service." },
-  { id: "0003885", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/Mateo Fernandez",    summary: "Nobody in customer support can access CRM records...", status: "With", type: "Incident", description: "CRM gateway timeout for Sydney support queue. Support team currently unable to log customer inquiries." },
-  { id: "0003868", priority: "High",     priorityColor: "orange", org: "consultancy/Americas/Lucas Oliveira", summary: "VPN disconnects constantly while roaming...", status: "On H", type: "Incident", description: "Remote access VPN disconnects when user roams between Wi-Fi and mobile tethering in Americas region." },
-  { id: "0003637", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Goals I set for this quarter never saved in HR portal...", status: "With", type: "Incident", description: "Quarterly review objective entries disappeared upon form submission in SuccessFactors portal." },
-  { id: "0003549", priority: "Low",      priorityColor: "green",  org: "consultancy/EMEA/Kaleem Smith",       summary: "Getting a warning banner about expiring security token...", status: "On H", type: "Incident", description: "Kerberos token renewal banner appearing in Outlook. User password not due for renewal for 45 days." },
-  { id: "0003450", priority: "High",     priorityColor: "orange", org: "consultancy/EMEA/James Brown",        summary: "Can't connect to virtual machine lab environment...", status: "With", type: "Incident", description: "Remote Desktop connection to Azure VM lab timed out. VM status shows running but network security group rules may be blocking port 3389." },
-  { id: "0003373", priority: "Medium",   priorityColor: "yellow", org: "consultancy/EMEA/Jennifer Williams",  summary: "Broke my phone screen, authenticator app inaccessible...", status: "With", type: "Incident", description: "Corporate iPhone screen cracked and touch input unresponsive. Needs temporary MFA bypass code or phone replacement." },
-  { id: "0003157", priority: "High",     priorityColor: "orange", org: "consultancy/APAC/John Smith",         summary: "Laptop battery percentage jumps from 90% to 10%...", status: "On H", type: "Incident", description: "Battery hardware failure on ThinkPad T14. Device abruptly powers down during client meetings without charger." },
-  { id: "0003947", priority: "Low",      priorityColor: "green",  org: "consultancy/APAC/Diego Morales",      summary: "Requesting approval to install Python and VS Code...", status: "With", type: "Service Request", description: "Data analyst requesting development environment installation for local Python ETL scripts and Jupyter notebooks." },
-];
 
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
   red: "#ef4444",
@@ -497,11 +464,13 @@ const OnHoldTicketScreen: React.FC = () => {
           </div>
           <div className="topnav-right">
             <GlobalNavbarActions
-              onGetStarted={() => setShowGetStartedModal(true)}
-              onNewTicket={handleOpenNewModal} onOpenTicket={(id) => {
-              const match = NEW_TICKETS_DATA.find((t) => t.id === id) || tickets.find((t) => t.id === id);
-              if (match) setSelectedTicket(match);
-            }} /></div>
+              onNewTicket={handleOpenNewModal}
+              onOpenTicket={(id) => {
+                const match = tickets.find((t) => t.id === id);
+                if (match) setSelectedTicket(match);
+              }}
+            />
+          </div>
         </div>
 
 
@@ -836,7 +805,7 @@ const OnHoldTicketScreen: React.FC = () => {
             description: selectedTicket.description,
             requester: selectedTicket.org,
             department: "Consultancy Support",
-            createdAt: selectedTicket.createdAt || "12 Oct 2026",
+            createdAt: selectedTicket.createdAt || "Just now",
             targetSla: selectedTicket.targetSla || "Target: 4 hours remaining",
           }}
           currentUser={currentUserName}

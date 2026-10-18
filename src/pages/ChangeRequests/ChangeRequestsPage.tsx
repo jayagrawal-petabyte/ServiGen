@@ -109,7 +109,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   };
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
+    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] select-none">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -138,7 +138,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
             title="Fetch latest from backend API"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
             Refresh
           </button>
 
@@ -146,7 +146,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
           <Button
             variant="primary"
             onClick={onOpenCreateModal}
-            className="flex items-center gap-2 cursor-pointer shadow-md shadow-[#E87A5D]/20 text-xs py-2 px-4 rounded-xl"
+            className="flex items-center gap-2 cursor-pointer shadow-md shadow-[#eb6a47]/20 text-xs py-2 px-4 rounded-xl"
           >
             <Plus className="w-4 h-4" />
             New Change Request
@@ -197,7 +197,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 filterMode === 'active'
-                  ? 'bg-[#E87A5D] text-white shadow-2xs'
+                  ? 'bg-[#eb6a47] text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -214,7 +214,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               setSelectedType(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
           >
             <option value="ALL">All Change Types</option>
             <option value="Normal">Normal</option>
@@ -229,7 +229,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               setSelectedStatus(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
           >
             <option value="ALL">All Statuses</option>
             <option value="In Progress">In Progress</option>
@@ -247,7 +247,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white text-[#E87A5D] shadow-2xs'
+                  ? 'bg-white text-[#eb6a47] shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Grid view"
@@ -258,7 +258,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-[#E87A5D] shadow-2xs'
+                  ? 'bg-white text-[#eb6a47] shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Table view"
@@ -282,15 +282,15 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               <Card
                 key={cr.id}
                 onClick={() => onSelectChangeRequest(cr)}
-                className="group hover:border-[#E87A5D]/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                className="group hover:border-[#eb6a47]/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <span className="text-xs font-extrabold text-[#E87A5D] tracking-wider block mb-1">
+                      <span className="text-xs font-extrabold text-[#eb6a47] tracking-wider block mb-1">
                         {cr.id}
                       </span>
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#E87A5D] transition-colors">
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#eb6a47] transition-colors">
                         {cr.title}
                       </h3>
                     </div>
@@ -327,7 +327,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                       </div>
                       <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#E87A5D] h-full rounded-full transition-all duration-300"
+                          className="bg-[#eb6a47] h-full rounded-full transition-all duration-300"
                           style={{ width: `${cr.completionPercent}%` }}
                         />
                       </div>
@@ -399,7 +399,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                     onClick={() => onSelectChangeRequest(cr)}
                     className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-4 font-extrabold text-[#E87A5D]">{cr.id}</td>
+                    <td className="py-3 px-4 font-extrabold text-[#eb6a47]">{cr.id}</td>
                     <td className="py-3 px-4 font-bold text-slate-800 max-w-[220px] truncate">
                       {cr.title}
                     </td>
@@ -435,7 +435,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                       <div className="flex items-center gap-2">
                         <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
                           <div
-                            className="bg-[#E87A5D] h-full rounded-full"
+                            className="bg-[#eb6a47] h-full rounded-full"
                             style={{ width: `${cr.completionPercent}%` }}
                           />
                         </div>

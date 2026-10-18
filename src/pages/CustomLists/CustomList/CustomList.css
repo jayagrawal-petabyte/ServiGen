@@ -2,7 +2,7 @@
 
 .cl-page {
   min-height: 100vh;
-  background-color: #faf5ef;
+  background-color: var(--bg-canvas);
   padding: 36px 40px 60px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #1e293b;
@@ -77,7 +77,7 @@
 
 .cl-pill-tab.active {
   color: #1e2022;
-  border-color: #e5905c;
+  border-color: var(--border-focus);
   background-color: transparent;
   font-weight: 600;
 }
@@ -111,7 +111,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background-color: #ea8a54;
+  background-color: var(--accent-coral);
   border: none;
   border-radius: 9999px;
   padding: 7px 22px;
@@ -123,7 +123,7 @@
 }
 
 .cl-btn-save:hover:not(:disabled) {
-  background-color: #dc7c46;
+  background-color: var(--accent-coral-hover);
 }
 
 .cl-btn-save:disabled {
@@ -217,7 +217,7 @@
 }
 
 .cl-input-curved:focus {
-  border-color: #ea8a54;
+  border-color: var(--accent-coral);
   box-shadow: 0 0 0 2px rgba(234, 138, 84, 0.15);
 }
 
@@ -256,7 +256,7 @@
 }
 
 .cl-select-curved:focus {
-  border-color: #ea8a54;
+  border-color: var(--accent-coral);
   box-shadow: 0 0 0 2px rgba(234, 138, 84, 0.15);
 }
 
@@ -312,7 +312,7 @@
 .cl-checkbox {
   width: 14px;
   height: 14px;
-  accent-color: #ea8a54;
+  accent-color: var(--accent-coral);
   border-radius: 3px;
   cursor: pointer;
   margin: 0;

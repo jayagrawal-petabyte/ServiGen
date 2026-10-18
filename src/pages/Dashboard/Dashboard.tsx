@@ -59,6 +59,7 @@ export default function Dashboard() {
   const [recentTickets, setRecentTickets] = useState<RecentTicketRow[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [ticketStatusMap, setTicketStatusMap] = useState<{open:number;inProgress:number;onHold:number;resolved:number}>({open:0,inProgress:0,onHold:0,resolved:0});
 
   // Mood state
   const [selectedMood, setSelectedMood] = useState<string>('Great');
@@ -108,7 +109,20 @@ export default function Dashboard() {
         }
 
         if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
-          const mapped: RecentTicketRow[] = tickRes.value.data.slice(0, 5).map((t: any, index: number) => {
+          const allTicketData = tickRes.value.data;
+
+          // Compute status breakdown from ALL fetched tickets for donut chart
+          const sMap = {open:0, inProgress:0, onHold:0, resolved:0};
+          allTicketData.forEach((t: any) => {
+            const s = (t.status || 'Open').toLowerCase();
+            if (s.includes('progress') || s === 'active') sMap.inProgress++;
+            else if (s.includes('hold')) sMap.onHold++;
+            else if (s.includes('resolve') || s.includes('close') || s.includes('actioned')) sMap.resolved++;
+            else sMap.open++;
+          });
+          setTicketStatusMap(sMap);
+
+          const mapped: RecentTicketRow[] = allTicketData.slice(0, 5).map((t: any, index: number) => {
             const statusStr = (t.status || 'Open').toLowerCase();
             let normStatus: RecentTicketRow['status'] = 'Open';
             if (statusStr.includes('progress') || statusStr.includes('active')) normStatus = 'In Progress';
@@ -257,13 +271,21 @@ export default function Dashboard() {
 
   // Status breakdown numbers
   const statusCounts = useMemo(() => {
-    const open = summary?.tickets?.active ?? kpis?.openIncidents ?? 12;
-    const inProgress = summary?.tickets?.pending ?? 10;
-    const onHold = summary?.tickets?.onHold ?? 8;
-    const resolved = summary?.tickets?.actioned ?? 15;
+    // Prefer kpis (Prisma counts, no org filter) for open/resolved totals
+    // Prefer ticketStatusMap (computed from fetched tickets) for per-status breakdown
+    // Fall back to summary if available
+    const hasTicketData = ticketStatusMap.open > 0 || ticketStatusMap.inProgress > 0 || ticketStatusMap.onHold > 0 || ticketStatusMap.resolved > 0;
+    const open = kpis?.openIncidents != null
+      ? kpis.openIncidents
+      : (hasTicketData ? ticketStatusMap.open : (summary?.tickets?.active ?? 0));
+    const resolved = kpis?.resolvedIncidents != null
+      ? kpis.resolvedIncidents
+      : (hasTicketData ? ticketStatusMap.resolved : (summary?.tickets?.actioned ?? 0));
+    const inProgress = hasTicketData ? ticketStatusMap.inProgress : (summary?.tickets?.pending ?? 0);
+    const onHold = hasTicketData ? ticketStatusMap.onHold : (summary?.tickets?.onHold ?? 0);
     const total = open + inProgress + onHold + resolved;
     return { open, inProgress, onHold, resolved, total };
-  }, [summary, kpis]);
+  }, [summary, kpis, ticketStatusMap]);
 
   // Donut chart calculations
   const donutGeometry = useMemo(() => {

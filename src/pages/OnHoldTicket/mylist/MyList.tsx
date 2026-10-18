@@ -21,21 +21,21 @@ const DEFAULT_LIST_ITEMS: MyListItem[] = [
     id: 'my-new-tickets',
     label: 'My New Tickets',
     icon: '📰',
-    badge: 12,
+    badge: 0,
     category: 'Active',
   },
   {
     id: 'my-on-hold-tickets',
     label: 'My On Hold Tickets',
     icon: '⛔',
-    badge: 24,
+    badge: 0,
     category: 'Pending',
   },
   {
     id: 'my-closed-tickets',
     label: 'My Closed Tickets',
     icon: '✓',
-    badge: 84,
+    badge: 0,
     category: 'Actioned',
   },
   {
@@ -101,16 +101,16 @@ const MyList: React.FC<MyListProps> = ({
   const items: MyListItem[] = DEFAULT_LIST_ITEMS.map((item) => {
     if (counts) {
       if (item.id === 'my-new-tickets') {
-        return { ...item, badge: counts.active };
+        return { ...item, badge: counts.active ?? 0 };
       }
       if (item.id === 'my-on-hold-tickets') {
-        return { ...item, badge: counts.onHold || counts.pending };
+        return { ...item, badge: counts.onHold ?? counts.pending ?? 0 };
       }
       if (item.id === 'my-closed-tickets') {
-        return { ...item, badge: counts.actioned };
+        return { ...item, badge: counts.actioned ?? 0 };
       }
     }
-    return item;
+    return { ...item, badge: item.badge !== undefined ? 0 : undefined };
   });
 
   // Append any user-created lists from backend list-builder under "Views"

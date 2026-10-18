@@ -11,13 +11,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: #f1f5f9;
+  background: var(--bg-canvas);
 }
 
 /* ── Left Sidebar ──────────────────────────────────────────────────── */
 .oh-sidebar {
   width: 72px;
-  background: #0b2239;
+  background: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -71,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 .oh-nav-active {
   color: #ffffff !important;
-  background: #e8855e !important;
+  background: var(--accent-coral) !important;
   border-radius: 14px !important;
   margin: 0 6px !important;
 }
@@ -114,7 +114,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-topbar-right  { display: flex; align-items: center; gap: 4px; margin-left: 10px; }
 
 .oh-btn-get-started {
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   color: #334155;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
@@ -128,7 +128,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-btn-get-started:hover { background: #e2e8f0; }
 
 .oh-btn-new-ticket {
-  background: #e8855e;
+  background: var(--accent-coral);
   color: white;
   border: none;
   border-radius: 20px;
@@ -142,7 +142,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   white-space: nowrap;
   transition: background 0.15s;
 }
-.oh-btn-new-ticket:hover { background: #d4714c; }
+.oh-btn-new-ticket:hover { background: var(--accent-coral-hover); }
 
 .oh-icon-btn {
   position: relative;
@@ -158,7 +158,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   border-radius: 50%;
   transition: background 0.15s;
 }
-.oh-icon-btn:hover { background: #f1f5f9; color: #0f172a; }
+.oh-icon-btn:hover { background: var(--bg-canvas); color: #0f172a; }
 
 .oh-icon-btn-notif { position: relative; }
 .oh-notif-dot {
@@ -178,7 +178,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-avatar {
   width: 30px;
   height: 30px;
-  background: #e8855e;
+  background: var(--accent-coral);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -323,7 +323,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   background: rgba(255, 255, 255, 0.45);
 }
 .oh-view-item-active {
-  background: #e8855e !important;
+  background: var(--accent-coral) !important;
   color: #ffffff !important;
   border-radius: 24px !important;
   box-shadow: 0 4px 14px rgba(232, 133, 94, 0.35);
@@ -378,7 +378,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   right: 0;
   top: 0;
   height: 14px;
-  background: #f1f5f9;
+  background: var(--bg-canvas);
 }
 
 /* Table scroll */
@@ -545,7 +545,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   color: white;
   white-space: nowrap;
 }
-.oh-status-onhold  { background: #e8855e; }
+.oh-status-onhold  { background: var(--accent-coral); }
 .oh-status-withsup { background: #1c334f; }
 
 /* Checkboxes */
@@ -610,10 +610,10 @@ input[type="checkbox"] {
 }
 .oh-page-btn:hover { background: #f8fafc; }
 .oh-page-btn-active {
-  background: #e8855e;
+  background: var(--accent-coral);
   color: white;
   border-color: #e8855e;
 }
-.oh-page-btn-active:hover { background: #d4714c; }
+.oh-page-btn-active:hover { background: var(--accent-coral-hover); }
 .oh-page-btn-disabled { color: #94a3b8; cursor: default; }
 .oh-page-btn-disabled:hover { background: white; }

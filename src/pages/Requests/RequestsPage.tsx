@@ -151,13 +151,13 @@ export const RequestsPage: React.FC = () => {
     const infraTotal = requestsList.filter((r) => r.team === 'Infrastructure').length;
 
     return {
-      unassigned: unassignedCount || 12,
-      demoUser: demoUserCount || 18,
-      jamesBrown: jamesBrownCount || 20,
-      jennifer: jenniferCount || 7,
-      firstLine: firstLineTotal || 57,
-      secondLine: secondLineTotal || 16,
-      infra: infraTotal || 11,
+      unassigned: unassignedCount,
+      demoUser: demoUserCount,
+      jamesBrown: jamesBrownCount,
+      jennifer: jenniferCount,
+      firstLine: firstLineTotal,
+      secondLine: secondLineTotal,
+      infra: infraTotal,
     };
   }, [requestsList]);
 

@@ -226,10 +226,33 @@ export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
         total: counts.total ?? 0,
       };
     }
-    throw new Error('Failed to retrieve ticket queue counts');
+    // Fallback: fetch ticket counts directly from /api/my-work endpoints
+    const [activeRes, onHoldRes, actionedRes] = await Promise.all([
+      apiClient.get<any>('/api/my-work/active').catch(() => null),
+      apiClient.get<any>('/api/my-work/on-hold').catch(() => null),
+      apiClient.get<any>('/api/my-work/actioned').catch(() => null),
+    ]);
+
+    const activeCount = Array.isArray(activeRes?.data) ? activeRes.data.length : Array.isArray(activeRes) ? activeRes.length : 0;
+    const onHoldCount = Array.isArray(onHoldRes?.data) ? onHoldRes.data.length : Array.isArray(onHoldRes) ? onHoldRes.length : 0;
+    const actionedCount = Array.isArray(actionedRes?.data) ? actionedRes.data.length : Array.isArray(actionedRes) ? actionedRes.length : 0;
+
+    return {
+      active: activeCount,
+      onHold: onHoldCount,
+      actioned: actionedCount,
+      pending: onHoldCount,
+      total: activeCount + onHoldCount + actionedCount,
+    };
   } catch (error) {
-    console.warn('[OnHoldApi] Live dashboard summary unavailable:', error);
-    throw error;
+    console.warn('[OnHoldApi] Live queue counts unavailable, defaulting to 0:', error);
+    return {
+      active: 0,
+      onHold: 0,
+      actioned: 0,
+      pending: 0,
+      total: 0,
+    };
   }
 }
 

@@ -117,12 +117,12 @@
 }
 
 .my-list-nav-item:hover {
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   color: #0f172a;
 }
 
 .my-list-nav-item.active {
-  background: #00bcd4;
+  background: var(--accent-coral);
   color: #ffffff;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
@@ -150,7 +150,7 @@
 .my-list-badge {
   font-size: 11px;
   font-weight: 700;
-  background: #00bcd4;
+  background: var(--accent-coral);
   color: #ffffff;
   padding: 2px 7px;
   border-radius: 12px;
@@ -161,7 +161,7 @@
 
 .my-list-nav-item.active .my-list-badge {
   background: #ffffff;
-  color: #00bcd4;
+  color: var(--accent-coral);
 }
 
 /* Create New List Button */
@@ -178,7 +178,7 @@
   width: 100%;
   padding: 8px 14px;
   border-radius: 20px;
-  background: #00bcd4;
+  background: var(--accent-coral);
   color: #ffffff;
   font-size: 12.5px;
   font-weight: 600;
