@@ -23,10 +23,10 @@ const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
   switch (listId) {
-    case 'update-required': return incidents.filter((i) => !i.lifecycleStages[5]?.isCompleted);
+    case 'update-required': return incidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive));
     case 'my-team':         return incidents.filter((i) => i.assignee !== 'Unassigned');
     case 'critical':        return incidents.filter((i) => i.priority === 'Critical');
-    case 'closed':          return incidents.filter((i) => i.lifecycleStages[5]?.isCompleted);
+    case 'closed':          return incidents.filter((i) => (i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive));
     default:                return incidents;
   }
 };
@@ -292,10 +292,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const sidebarCounts = useMemo(() => {
     return {
-      'update-required': allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length,
+      'update-required': allIncidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length,
       'my-team': allIncidents.filter((i) => i.assignee !== 'Unassigned').length,
       'critical': allIncidents.filter((i) => i.priority === 'Critical').length,
-      'closed': allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length,
+      'closed': allIncidents.filter((i) => (i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length,
       'board': allIncidents.length,
       'dashboard': allIncidents.length,
     };
@@ -824,7 +824,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Major Incidents</span>
                     <div className="text-2xl font-black text-rose-600 mt-1">
-                      {allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length}
+                      {allIncidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length}
                     </div>
                     <span className="text-[11px] text-gray-400 mt-0.5 block">High &amp; Critical Priority</span>
                   </div>
@@ -845,7 +845,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resolved Today</span>
                     <div className="text-2xl font-black text-emerald-600 mt-1">
-                      {allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length}
+                      {allIncidents.filter((i) => (i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length}
                     </div>
                     <span className="text-[11px] text-emerald-600 font-medium mt-0.5 block">SLA met</span>
                   </div>

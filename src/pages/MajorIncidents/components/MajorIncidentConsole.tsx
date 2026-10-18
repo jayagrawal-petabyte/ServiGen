@@ -227,7 +227,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     const targetLabel = currentStages[targetIndex]?.label;
     const newStages = currentStages.map((s, idx) => ({
       ...s,
-      isCompleted: idx < targetIndex,
+      isCompleted: idx < targetIndex || (targetIndex === currentStages.length - 1 && idx === targetIndex),
       isActive: idx === targetIndex,
       timestamp: idx === targetIndex ? (s.timestamp || now) : s.timestamp,
     }));

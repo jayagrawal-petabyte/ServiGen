@@ -104,7 +104,7 @@ function buildLifecycleStages(
   return STAGE_LABELS.map((label, idx) => ({
     label,
     isActive: idx === activeIndex,
-    isCompleted: idx < activeIndex || (idx === 5 && backendStatus === 'Closed'),
+    isCompleted: idx < activeIndex || (activeIndex === 5 && idx === 5),
     timestamp: idx === 0 ? formattedStarted : idx === 4 || idx === 5 ? formattedResolved : undefined,
   }));
 }
