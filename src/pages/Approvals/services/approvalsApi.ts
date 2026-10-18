@@ -404,12 +404,4 @@ export const approvalsApi = {
 
     return succeeded;
   },
-
-  /**
-   * Reset session cache
-   */
-  async resetMockData(): Promise<Approval[]> {
-    localStorage.removeItem(STORAGE_KEY);
-    return [];
-  },
 };

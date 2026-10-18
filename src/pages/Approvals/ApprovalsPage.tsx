@@ -153,15 +153,10 @@ export default function ApprovalsPage() {
   };
 
   const handleRefresh = async () => {
-    await loadData();
-    showToast('Approvals list refreshed.', 'info');
-  };
-
-  const handleResetData = async () => {
     setIsLoading(true);
     try {
       await loadData();
-      showToast('Approvals reloaded from server.', 'info');
+      showToast('Approvals list refreshed.', 'info');
     } catch {
       showToast('Failed to refresh approvals.', 'error');
     } finally {
@@ -326,8 +321,8 @@ export default function ApprovalsPage() {
             <h3>You're all caught up!</h3>
             <p>There are no pending requests awaiting your review at the moment.</p>
 
-            <button className="btn-reset-approvals" type="button" onClick={handleResetData}>
-              Load Sample Data
+            <button className="btn-reset-approvals" type="button" onClick={handleRefresh}>
+              Refresh Approvals
             </button>
           </div>
         ) : (

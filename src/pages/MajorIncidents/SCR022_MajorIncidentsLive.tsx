@@ -656,7 +656,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setIsFeedOpen(false);
             loadLiveIncidents();
           }}
-          onResetDemo={handleResetDemoIncidents}
           onToggleFeed={() => {
             setIsFeedOpen((v) => {
               const next = !v;
