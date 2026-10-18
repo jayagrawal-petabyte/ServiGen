@@ -194,14 +194,29 @@ export async function fetchSupportAgents(
   }
 }
 
-/**
- * Fetch all support incidents and agent rosters across all support teams
- */
-export async function fetchAllTeamIncidents(): Promise<{
+interface AllTeamIncidentsResult {
   incidents: TeamIncident[];
   firstLineAgents: SupportAgent[];
   secondLineAgents: SupportAgent[];
-}> {
+}
+
+let cachedTeamIncidents: {
+  data: AllTeamIncidentsResult;
+  timestamp: number;
+} | null = null;
+
+let inFlightTeamIncidentsPromise: Promise<AllTeamIncidentsResult> | null = null;
+
+const CACHE_TTL_MS = 15000; // 15-second client cache
+
+export function invalidateTeamIncidentsCache(): void {
+  cachedTeamIncidents = null;
+}
+
+/**
+ * Fetch all support incidents and agent rosters across all support teams
+ */
+export async function fetchAllTeamIncidents(forceRefresh = false): Promise<AllTeamIncidentsResult> {
   if (!getAuthToken()) {
     return {
       incidents: [],
@@ -210,33 +225,55 @@ export async function fetchAllTeamIncidents(): Promise<{
     };
   }
 
-  try {
-    const [firstLineRes, secondLineRes, firstLineAgents, secondLineAgents] = await Promise.all([
-      fetchSupportIncidents('1st Line Support', { limit: 100 }),
-      fetchSupportIncidents('2nd Line Support', { limit: 100 }),
-      fetchSupportAgents('1st Line Support'),
-      fetchSupportAgents('2nd Line Support'),
-    ]);
-
-    const combinedMap = new Map<string, TeamIncident>();
-    (firstLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
-    (secondLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
-
-    return {
-      incidents: Array.from(combinedMap.values()),
-      firstLineAgents,
-      secondLineAgents,
-    };
-  } catch (err: any) {
-    if (err?.statusCode !== 401) {
-      console.error('[teamIncidentsService] Failed to fetch all team incidents:', err);
-    }
-    return {
-      incidents: [],
-      firstLineAgents: [],
-      secondLineAgents: [],
-    };
+  const now = Date.now();
+  if (!forceRefresh && cachedTeamIncidents && now - cachedTeamIncidents.timestamp < CACHE_TTL_MS) {
+    return cachedTeamIncidents.data;
   }
+
+  if (inFlightTeamIncidentsPromise) {
+    return inFlightTeamIncidentsPromise;
+  }
+
+  inFlightTeamIncidentsPromise = (async () => {
+    try {
+      const [firstLineRes, secondLineRes, firstLineAgents, secondLineAgents] = await Promise.all([
+        fetchSupportIncidents('1st Line Support', { limit: 100 }),
+        fetchSupportIncidents('2nd Line Support', { limit: 100 }),
+        fetchSupportAgents('1st Line Support'),
+        fetchSupportAgents('2nd Line Support'),
+      ]);
+
+      const combinedMap = new Map<string, TeamIncident>();
+      (firstLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
+      (secondLineRes.incidents || []).forEach((inc) => combinedMap.set(inc.id, inc));
+
+      const result: AllTeamIncidentsResult = {
+        incidents: Array.from(combinedMap.values()),
+        firstLineAgents,
+        secondLineAgents,
+      };
+
+      cachedTeamIncidents = {
+        data: result,
+        timestamp: Date.now(),
+      };
+
+      return result;
+    } catch (err: any) {
+      if (err?.statusCode !== 401) {
+        console.error('[teamIncidentsService] Failed to fetch all team incidents:', err);
+      }
+      return {
+        incidents: [],
+        firstLineAgents: [],
+        secondLineAgents: [],
+      };
+    } finally {
+      inFlightTeamIncidentsPromise = null;
+    }
+  })();
+
+  return inFlightTeamIncidentsPromise;
 }
 
 /**
@@ -252,6 +289,7 @@ export async function updateSupportIncidentStatus(
       status,
       holdReason,
     });
+    invalidateTeamIncidentsCache();
     return true;
   } catch (err) {
     console.warn(`[teamIncidentsService] PATCH status for ${ticketId} failed:`, err);

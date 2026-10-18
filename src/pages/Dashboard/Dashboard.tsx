@@ -175,31 +175,34 @@ export default function Dashboard() {
         }
 
         try {
-          const taskRes: any = await api.get('/api/tasks');
-          const taskData = Array.isArray(taskRes?.data) ? taskRes.data : Array.isArray(taskRes) ? taskRes : [];
-          if (taskData.length > 0) {
-            const mappedTasks: TaskRow[] = taskData.slice(0, 5).map((t: any, idx: number) => ({
-              id: String(t.id || idx),
-              task: t.title || t.name || t.task || 'Task',
-              description: t.description || '',
-              priority: (t.priority || 'Medium') as TaskRow['priority'],
-              dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No due date',
-            }));
-            setTasks(mappedTasks);
-          } else {
-            setTasks([]);
-          }
-        } catch {
-          setTasks([]);
-        }
-
-        try {
           const myWorkTickets = await myWorkService.getMyWorkTickets();
           if (mounted && Array.isArray(myWorkTickets)) {
             setMyAssignmentsCount(myWorkTickets.length);
+            if (myWorkTickets.length > 0) {
+              const mappedTasks: TaskRow[] = myWorkTickets.slice(0, 5).map((t: any, idx: number) => ({
+                id: String(t.id || idx),
+                task: t.summary || 'Assigned Ticket',
+                description: `${t.organisation || 'ServiGen Internal'} • ${t.status || 'Active'}`,
+                priority: (
+                  t.priority?.toLowerCase().includes('high') || t.priority?.toLowerCase().includes('critical') || t.priority?.toLowerCase().includes('p1') || t.priority?.toLowerCase().includes('p2')
+                    ? 'High'
+                    : t.priority?.toLowerCase().includes('low') || t.priority?.toLowerCase().includes('p4')
+                    ? 'Low'
+                    : 'Medium'
+                ) as TaskRow['priority'],
+                dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
+              }));
+              setTasks(mappedTasks);
+            } else {
+              setTasks([]);
+            }
+          } else if (mounted) {
+            setTasks([]);
           }
         } catch {
-          // fallback gracefully
+          if (mounted) {
+            setTasks([]);
+          }
         }
       } catch (err) {
         console.warn('Dashboard live fetch error, using fallbacks:', err);
