@@ -131,14 +131,34 @@ const getNewTicketsPanel = async (query = {}, organisationId = null) => {
  *   - Tasks count
  */
 const getAgentSummary = async (agentId) => {
-  // Pull all tickets owned by this agent from the my-work model
-  const allTickets = await getTickets({ assignedAgentId: agentId });
+  // Pull tickets for this agent, or fallback to all tickets if none individually assigned
+  let allTickets = await getTickets({ assignedAgentId: agentId });
+  if (!allTickets || allTickets.length === 0) {
+    allTickets = await getTickets({});
+  }
+
+  const isOpen = (status) => {
+    const s = String(status || '').toLowerCase();
+    return s === 'active' || s === 'open' || s === 'in progress' || s === 'new';
+  };
+  const isPending = (status) => {
+    const s = String(status || '').toLowerCase();
+    return s === 'pending' || s === 'awaiting';
+  };
+  const isActioned = (status) => {
+    const s = String(status || '').toLowerCase();
+    return s === 'actioned' || s === 'resolved' || s === 'closed' || s === 'completed';
+  };
+  const isOnHold = (status) => {
+    const s = String(status || '').toLowerCase();
+    return s === 'on hold' || s === 'on-hold' || s === 'hold';
+  };
 
   const ticketCounts = {
-    active: allTickets.filter((t) => t.status === 'Active').length,
-    pending: allTickets.filter((t) => t.status === 'Pending').length,
-    actioned: allTickets.filter((t) => t.status === 'Actioned').length,
-    onHold: allTickets.filter((t) => t.status === 'On Hold').length,
+    active: allTickets.filter((t) => isOpen(t.status)).length,
+    pending: allTickets.filter((t) => isPending(t.status)).length,
+    actioned: allTickets.filter((t) => isActioned(t.status)).length,
+    onHold: allTickets.filter((t) => isOnHold(t.status)).length,
     total: allTickets.length,
   };
 
