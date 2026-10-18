@@ -8,6 +8,7 @@ import {
   AVAILABLE_AGENTS,
 } from "./ticketDetails.data";
 import "./TicketDetailModal.css";
+import { StatusBadge } from "../shared/StatusBadge";
 
 interface TicketDetailModalProps {
   ticket: {
@@ -2419,7 +2420,7 @@ export default function TicketDetailModal({
                     <div className="details-field-row">
                       <span className="details-label">Status:</span>
                       <span className="details-value">
-                        <span className="status-badge-inline">{ticketData.status || "In Progress"}</span>
+                        <StatusBadge status={ticketData.status || "In Progress"} size="sm" />
                       </span>
                     </div>
                     <div className="details-field-row">
@@ -2873,9 +2874,7 @@ export default function TicketDetailModal({
                   <div className="sidebar-field-group">
                     <span className="sidebar-field-label">Status</span>
                     <div className="pt-1">
-                      <span className="sidebar-status-pill">
-                        {ticketData.status === "Completed" ? "Completed" : "New"}
-                      </span>
+                      <StatusBadge status={ticketData.status === "Completed" ? "Completed" : "New"} size="sm" />
                     </div>
                   </div>
 
@@ -3127,7 +3126,7 @@ export default function TicketDetailModal({
                   <div className="sidebar-field-group">
                     <span className="sidebar-field-label">Status</span>
                     <div className="pt-1">
-                      <span className="sidebar-status-pill-green">{ticketData.status || "New"}</span>
+                      <StatusBadge status={ticketData.status || "New"} size="sm" />
                     </div>
                   </div>
 

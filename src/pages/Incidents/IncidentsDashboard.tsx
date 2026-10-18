@@ -16,6 +16,7 @@ import NewTickets from "./NewTickets";
 import StatisticsCards, { type Statistic } from "./StatisticsCards";
 import AllIncidentsModal from "./AllIncidentsModal";
 import { SlaBadge } from "../../components/shared/SlaBadge";
+import { StatusBadge } from "../../components/shared/StatusBadge";
 
 import type {
   ChartItem,
@@ -687,13 +688,7 @@ export default function IncidentsDashboard() {
                   {selectedIncident.priority}
                 </span>
 
-                <span
-                  className={`incident-pill ${getStatusClass(
-                    selectedIncident.status
-                  )}`}
-                >
-                  {selectedIncident.status}
-                </span>
+                <StatusBadge status={selectedIncident.status} />
               </div>
             </div>
 

@@ -11,6 +11,7 @@ import {
 } from "../../services/myWorkService";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import { SlaBadge } from "../../components/shared/SlaBadge";
+import { StatusPill } from "../../components/shared/StatusBadge";
 
 export type Ticket = MyWorkTicket;
 
@@ -27,13 +28,6 @@ const PRIORITY_STYLES: Record<string, string> = {
   "P2 - High": "bg-amber-50 text-amber-800 border-amber-200",
   "P3 - Medium": "bg-sky-50 text-sky-700 border-sky-200",
   "P4 - Low": "bg-slate-100 text-slate-600 border-slate-300",
-};
-
-const STATUS_STYLES: Record<TicketStatus, string> = {
-  Active: "bg-green-50 text-green-700 border-green-200",
-  Pending: "bg-amber-50 text-amber-700 border-amber-200",
-  Actioned: "bg-slate-100 text-slate-600 border-slate-300",
-  "On Hold": "bg-purple-50 text-purple-700 border-purple-200",
 };
 
 const PRIORITY_ORDER = [
@@ -120,22 +114,6 @@ function PriorityPill({ priority }: PriorityPillProps) {
   );
 }
 
-type StatusPillProps = {
-  status: TicketStatus;
-};
-
-function StatusPill({ status }: StatusPillProps) {
-  return (
-    <span
-      className={
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium " +
-        STATUS_STYLES[status]
-      }
-    >
-      {status}
-    </span>
-  );
-}
 
 export default function MyWork() {
   const { user } = useAuth();

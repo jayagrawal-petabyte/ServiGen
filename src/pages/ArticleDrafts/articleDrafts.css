@@ -468,23 +468,23 @@
 }
 
 .status-pill.draft {
-  background-color: #fde8e3;
-  color: #c2593f;
+  background-color: var(--badge-draft-bg, #fdeee8);
+  color: var(--badge-draft-text, #b84c2a);
 }
 
 .status-pill.awaiting {
-  background-color: #2b3d5b;
-  color: #ffffff;
+  background-color: var(--badge-awaiting-bg, #1e293b);
+  color: var(--badge-awaiting-text, #ffffff);
 }
 
 .status-pill.rejected {
-  background-color: #ffeceb;
-  color: #e11d48;
+  background-color: var(--badge-rejected-bg, #fee2e2);
+  color: var(--badge-rejected-text, #dc2626);
 }
 
 .status-pill.published {
-  background-color: #dcfce7;
-  color: #16a34a;
+  background-color: var(--badge-approved-bg, #dcfce7);
+  color: var(--badge-approved-text, #16a34a);
 }
 
 /* Type & Date */

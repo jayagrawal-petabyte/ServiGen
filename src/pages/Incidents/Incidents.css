@@ -1039,27 +1039,27 @@
 }
 
 .status-progress {
-  border-color: #ccdced;
-  background: #eef5ff;
-  color: #4669a9;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #4338ca;
 }
 
 .status-open {
-  border-color: #eed4be;
-  background: #fff5eb;
-  color: #b77334;
+  border-color: #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
 }
 
 .status-resolved {
-  border-color: #cce3d4;
-  background: #edf8f0;
-  color: #397e50;
+  border-color: #bbf7d0;
+  background-color: var(--badge-approved-bg, #dcfce7);
+  color: var(--badge-approved-text, #16a34a);
 }
 
 .status-hold {
-  border-color: #d9dee5;
-  background: #f2f4f6;
-  color: #6d7783;
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #b45309;
 }
 
 .chart-action-button {

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ArticleDraft } from './articleDrafts.types';
 import { SlaBadge } from '../../components/shared/SlaBadge';
+import { StatusBadge } from '../../components/shared/StatusBadge';
 
 interface ArticleDraftsDesignViewProps {
   drafts: ArticleDraft[];
@@ -239,15 +240,7 @@ export default function ArticleDraftsDesignView({
 
                   {/* STATUS Cell */}
                   <td>
-                    <span
-                      className={`status-pill ${
-                        draft.status === 'Awaiting Approval'
-                          ? 'awaiting'
-                          : draft.status.toLowerCase()
-                      }`}
-                    >
-                      {draft.status}
-                    </span>
+                    <StatusBadge status={draft.status} />
                   </td>
 
                   {/* TYPE Cell */}

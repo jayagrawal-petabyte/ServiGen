@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { ArticleDraft, ArticleDraftStatus } from './articleDrafts.types';
 import { SlaBadge } from '../../components/shared/SlaBadge';
+import { StatusBadge } from '../../components/shared/StatusBadge';
 
 interface ArticleDraftsLiveViewProps {
   drafts: ArticleDraft[];
@@ -131,20 +132,7 @@ export default function ArticleDraftsLiveView({
 
                   <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
 
-                  <span
-                    className={`status-pill ${
-                      draft.status ===
-                      'Awaiting Approval'
-                        ? 'awaiting'
-                        : draft.status.toLowerCase()
-                    }`}
-                    style={{
-                      fontSize: '11px',
-                      padding: '2px 8px',
-                    }}
-                  >
-                    {draft.status}
-                  </span>
+                  <StatusBadge status={draft.status} size="sm" />
 
                 </div>
 

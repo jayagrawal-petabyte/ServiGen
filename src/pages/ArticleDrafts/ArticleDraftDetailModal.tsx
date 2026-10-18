@@ -3,6 +3,7 @@ import type {
   ArticleDraft,
   ArticleDraftStatus,
 } from './articleDrafts.types';
+import { StatusBadge } from '../../components/shared/StatusBadge';
 
 interface ArticleDraftDetailModalProps {
   article: ArticleDraft;
@@ -180,15 +181,7 @@ export default function ArticleDraftDetailModal({
               {article.id}
             </span>
 
-            <span
-              className={`status-pill ${
-                article.status === 'Awaiting Approval'
-                  ? 'awaiting'
-                  : article.status.toLowerCase()
-              }`}
-            >
-              {article.status}
-            </span>
+            <StatusBadge status={article.status} />
           </div>
 
           <button
