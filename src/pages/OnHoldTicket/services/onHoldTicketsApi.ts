@@ -53,8 +53,8 @@ export function adaptBackendTicket(b: BackendOnHoldTicket): Ticket {
 
   const orgPart = b.organisation || 'consultancy';
   const sitePart = b.site || 'EMEA';
-  const agentPart = b.assignedAgentId || 'Support Agent';
-  const org = `${orgPart}/${sitePart}/${agentPart}`;
+  const agentPart = b.assignedAgentId || '';
+  const org = agentPart ? `${orgPart}/${sitePart}/${agentPart}` : `${orgPart}/${sitePart}`;
 
   const statusLower = b.status?.toLowerCase() || '';
   let status: 'On H' | 'With' | 'New' | 'Actioned' = 'New';
@@ -214,14 +214,6 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promis
  * Fetch queue counts from backend GET /api/dashboard/summary
  */
 export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
-  const emptyCounts: QueueCounts = {
-    active: 0,
-    onHold: 0,
-    actioned: 0,
-    pending: 0,
-    total: 0,
-  };
-
   try {
     const response = await apiClient.get<any>('/api/dashboard/summary');
     const counts = response?.data?.tickets;
@@ -234,10 +226,10 @@ export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
         total: counts.total ?? 0,
       };
     }
-    return emptyCounts;
+    throw new Error('Failed to retrieve ticket queue counts');
   } catch (error) {
     console.warn('[OnHoldApi] Live dashboard summary unavailable:', error);
-    return emptyCounts;
+    throw error;
   }
 }
 
