@@ -368,18 +368,21 @@
 }
 
 .sla-pill.warning {
-  background-color: #fefce8;
-  color: #ca8a04;
+  background-color: var(--badge-draft-bg, #fefce8);
+  color: var(--text-sidebar-active, #b45309);
+  border: 1px solid var(--accent-tan, #fde68a);
 }
 
 .sla-pill.safe {
-  background-color: #e6f9ed;
-  color: #059669;
+  background-color: var(--badge-approved-bg, #dcfce7);
+  color: var(--badge-approved-text, #16a34a);
+  border: 1px solid var(--badge-approved-bg, #bbf7d0);
 }
 
 .sla-pill.overdue {
-  background-color: #ffeceb;
-  color: #e11d48;
+  background-color: var(--badge-overdue-bg, #ffe4e6);
+  color: var(--badge-overdue-text, #e11d48);
+  border: 1px solid var(--badge-overdue-bg, #fecdd3);
 }
 
 .sla-dot {
@@ -390,15 +393,15 @@
 }
 
 .sla-dot.warning {
-  background-color: #ca8a04;
+  background-color: var(--text-sidebar-active, #d97706);
 }
 
 .sla-dot.safe {
-  background-color: #059669;
+  background-color: var(--badge-approved-text, #16a34a);
 }
 
 .sla-dot.overdue {
-  background-color: #e11d48;
+  background-color: var(--badge-overdue-text, #e11d48);
 }
 
 /* Summary Cell */

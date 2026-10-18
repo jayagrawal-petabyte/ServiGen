@@ -10,6 +10,7 @@ import {
   type MyWorkTicket,
 } from "../../services/myWorkService";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
+import { SlaBadge } from "../../components/shared/SlaBadge";
 
 export type Ticket = MyWorkTicket;
 
@@ -376,6 +377,15 @@ export default function MyWork() {
                   {selectedTicket.timeRecord}
                 </p>
               </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  SLA Time Left
+                </p>
+                <div className="mt-1">
+                  <SlaBadge slaTimeLeft={selectedTicket.slaTimeLeft} slaFormatted={selectedTicket.slaFormatted} />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -571,6 +581,7 @@ export default function MyWork() {
                 <th className="px-4 py-3">Organisation</th>
                 <th className="px-4 py-3">Summary</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">SLA Time Left</th>
                 <th className="px-4 py-3">Time Record</th>
               </tr>
             </thead>
@@ -602,6 +613,10 @@ export default function MyWork() {
                     <StatusPill status={ticket.status} />
                   </td>
 
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <SlaBadge slaTimeLeft={ticket.slaTimeLeft} slaFormatted={ticket.slaFormatted} />
+                  </td>
+
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                     {ticket.timeRecord}
                   </td>
@@ -611,7 +626,7 @@ export default function MyWork() {
               {filteredTickets.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-10 text-center text-sm text-slate-400"
                   >
                     No {activeTab.toLowerCase()} tickets match your

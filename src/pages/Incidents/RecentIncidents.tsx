@@ -2,6 +2,7 @@
 import type { KeyboardEvent } from "react";
 import type { RecentIncident } from "./incidents.data";
 import { PriorityPill, StatusPill } from "./Badges";
+import { SlaBadge } from "../../components/shared/SlaBadge";
 
 type RecentIncidentsProps = {
   incidents: RecentIncident[];
@@ -89,6 +90,7 @@ export default function RecentIncidents({
                 <th scope="col">Subject</th>
                 <th scope="col">Priority</th>
                 <th scope="col">Status</th>
+                <th scope="col">SLA Time Left</th>
                 <th scope="col">Date</th>
               </tr>
             </thead>
@@ -118,6 +120,10 @@ export default function RecentIncidents({
 
                   <td>
                     <StatusPill status={incident.status} />
+                  </td>
+
+                  <td>
+                    <SlaBadge slaTimeLeft={incident.slaTimeLeft} />
                   </td>
 
                   <td>{formatDate(incident.date)}</td>

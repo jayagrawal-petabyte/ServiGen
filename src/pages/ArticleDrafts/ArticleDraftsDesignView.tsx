@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ArticleDraft } from './articleDrafts.types';
+import { SlaBadge } from '../../components/shared/SlaBadge';
 
 interface ArticleDraftsDesignViewProps {
   drafts: ArticleDraft[];
@@ -195,17 +196,7 @@ export default function ArticleDraftsDesignView({
 
                   {/* SLA TIME LEFT Cell */}
                   <td className="sla-cell">
-                    {draft.slaStatus === 'overdue' ? (
-                      <span className="sla-pill overdue">
-                        <span className="sla-dot overdue" />
-                        <span>Overdue SLA</span>
-                      </span>
-                    ) : (
-                      <span className={`sla-pill ${draft.slaStatus}`}>
-                        <span className={`sla-dot ${draft.slaStatus}`} />
-                        <span>{draft.slaTimeLeft}</span>
-                      </span>
-                    )}
+                    <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
                   </td>
 
                   {/* SUMMARY Cell */}

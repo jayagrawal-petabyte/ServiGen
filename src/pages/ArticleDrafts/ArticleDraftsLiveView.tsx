@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { ArticleDraft, ArticleDraftStatus } from './articleDrafts.types';
+import { SlaBadge } from '../../components/shared/SlaBadge';
 
 interface ArticleDraftsLiveViewProps {
   drafts: ArticleDraft[];
@@ -128,31 +129,7 @@ export default function ArticleDraftsLiveView({
                   }}
                 >
 
-                  {draft.slaStatus ===
-                  'overdue' ? (
-
-                    <span className="sla-pill-overdue">
-                      Overdue SLA
-                    </span>
-
-                  ) : (
-
-                    <span
-                      className="sla-dot-text"
-                      style={{
-                        fontSize: '11.5px',
-                      }}
-                    >
-                      <span
-                        className={`sla-dot ${draft.slaStatus}`}
-                      />
-
-                      <span>
-                        {draft.slaTimeLeft}
-                      </span>
-                    </span>
-
-                  )}
+                  <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
 
                   <span
                     className={`status-pill ${

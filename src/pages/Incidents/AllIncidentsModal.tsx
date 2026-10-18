@@ -5,6 +5,7 @@ import type {
   RecentIncident,
 } from "./incidents.data";
 import { PriorityPill, StatusPill } from "./Badges";
+import { SlaBadge } from "../../components/shared/SlaBadge";
 
 interface AllIncidentsModalProps {
   isOpen: boolean;
@@ -245,6 +246,7 @@ export default function AllIncidentsModal({
                   <th scope="col" className="py-3 px-3">Subject</th>
                   <th scope="col" className="py-3 px-3">Priority</th>
                   <th scope="col" className="py-3 px-3">Status</th>
+                  <th scope="col" className="py-3 px-3">SLA Time Left</th>
                   <th scope="col" className="py-3 px-3">Assigned To</th>
                   <th scope="col" className="py-3 px-3">Organisation</th>
                   <th scope="col" className="py-3 px-3 text-right">Date</th>
@@ -275,6 +277,9 @@ export default function AllIncidentsModal({
                     </td>
                     <td className="py-3 px-3">
                       <StatusPill status={incident.status} />
+                    </td>
+                    <td className="py-3 px-3">
+                      <SlaBadge slaTimeLeft={incident.slaTimeLeft} />
                     </td>
                     <td className="py-3 px-3 text-slate-600">{incident.assignedTo || "Unassigned"}</td>
                     <td className="py-3 px-3 text-slate-500 max-w-[140px] truncate" title={incident.organisation}>

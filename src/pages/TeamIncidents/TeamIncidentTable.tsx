@@ -13,6 +13,7 @@ import {
 } from "../../services/teamIncidentsService";
 
 import type { TeamIncident } from "./teamIncidents.types";
+import { SlaBadge } from "../../components/shared/SlaBadge";
 
 export type Incident = TeamIncident;
 
@@ -978,9 +979,7 @@ function TeamIncidentTable({
                           {incident.id}
                         </td>
                         <td>
-                          <span className={incident.sla.startsWith("-") || incident.sla.includes("Breach") ? "sla-bar-red" : "sla-bar-green"}>
-                            {incident.sla}
-                          </span>
+                          <SlaBadge slaTimeLeft={incident.sla} />
                         </td>
                         <td className="team-table-summary-link font-medium">
                           {incident.summary}

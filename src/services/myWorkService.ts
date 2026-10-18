@@ -37,6 +37,7 @@ export interface MyWorkTicket {
   status: TicketStatus;
   holdReason?: string | null;
   slaFormatted?: string;
+  slaTimeLeft?: number;
   needsEscalation?: boolean;
 }
 
@@ -140,6 +141,7 @@ export const myWorkService = {
           status: t.status,
           holdReason: t.holdReason,
           slaFormatted: t.slaFormatted,
+          slaTimeLeft: t.slaTimeLeft,
           needsEscalation: t.needsEscalation,
         }));
       }
@@ -178,6 +180,7 @@ export const myWorkService = {
           status: t.status,
           holdReason: t.holdReason,
           slaFormatted: t.slaFormatted,
+          slaTimeLeft: t.slaTimeLeft,
           needsEscalation: t.needsEscalation,
         };
       }
