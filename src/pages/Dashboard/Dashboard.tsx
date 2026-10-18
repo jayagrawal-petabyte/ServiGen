@@ -5,6 +5,7 @@ import dashboardService, {
   type DashboardKpis,
   type DashboardSummary,
 } from '../../services/dashboardService';
+import { myWorkService } from '../../services/myWorkService';
 import { api } from '../../services/apiClient';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
@@ -72,6 +73,8 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState<DashboardKpis | null>(null);
   const [kpisError, setKpisError] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number | null>(null);
+  const [myAssignmentsCount, setMyAssignmentsCount] = useState<number | null>(null);
 
   // Lists state
   const [recentTickets, setRecentTickets] = useState<RecentTicketRow[]>(DEFAULT_RECENT_TICKETS);
@@ -160,15 +163,30 @@ export default function Dashboard() {
           }
         }
 
-        if (appRes.status === 'fulfilled' && Array.isArray(appRes.value?.data) && appRes.value.data.length > 0) {
-          const mappedApp: ApprovalRow[] = appRes.value.data.slice(0, 5).map((a: any, idx: number) => ({
-            id: String(a.id || idx),
-            requestId: `REQ000${231 - idx}`,
-            item: a.title || a.service || 'Service Request',
-            requestedBy: a.requester || 'Team Member',
-            date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
-          }));
-          setApprovals(mappedApp.length < 5 ? [...mappedApp, ...DEFAULT_UPCOMING_APPROVALS.slice(mappedApp.length)] : mappedApp);
+        if (appRes.status === 'fulfilled' && appRes.value) {
+          const appData = Array.isArray(appRes.value?.data) ? appRes.value.data : Array.isArray(appRes.value) ? appRes.value : [];
+          if (appData.length > 0) {
+            const mappedApp: ApprovalRow[] = appData.slice(0, 5).map((a: any, idx: number) => ({
+              id: String(a.id || idx),
+              requestId: `REQ000${231 - idx}`,
+              item: a.title || a.service || 'Service Request',
+              requestedBy: a.requester || 'Team Member',
+              date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
+            }));
+            setApprovals(mappedApp.length < 5 ? [...mappedApp, ...DEFAULT_UPCOMING_APPROVALS.slice(mappedApp.length)] : mappedApp);
+
+            const pendingList = appData.filter((a: any) => !a.status || a.status.toLowerCase() === 'pending');
+            setPendingApprovalsCount(pendingList.length);
+          }
+        }
+
+        try {
+          const myWorkTickets = await myWorkService.getMyWorkTickets();
+          if (mounted && Array.isArray(myWorkTickets)) {
+            setMyAssignmentsCount(myWorkTickets.length);
+          }
+        } catch {
+          // fallback gracefully
         }
       } catch (err) {
         console.warn('Dashboard live fetch error, using fallbacks:', err);
@@ -405,72 +423,72 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 3. 4 KPI STAT CARDS */}
+        {/* 3. 4 KPI STAT TILES */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Open Tickets */}
+          {/* Tile 1: Open Tickets */}
           <div
             onClick={() => navigate('/incidents')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
           >
-            <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center text-[#0284C7] flex-shrink-0">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center text-[#0284C7] flex-shrink-0">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-6l-2 3h-4l-2-3H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7Z" />
                 <path d="M5.45 5.11 2 12v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">
-                {kpis?.openIncidents != null ? kpis.openIncidents : (kpisError ? '—' : statusCounts.open)}
+              <div className="text-2xl font-bold text-gray-900 leading-none">
+                {kpis?.openIncidents != null ? kpis.openIncidents : (summary?.tickets?.active != null ? summary.tickets.active : (kpisError ? '—' : statusCounts.open))}
               </div>
-              <div className="text-xs text-gray-500 font-medium mt-1">Open Tickets</div>
+              <div className="text-xs text-gray-500 font-medium mt-1.5">Open Tickets</div>
             </div>
           </div>
 
-          {/* Card 2: Resolved Tickets */}
+          {/* Tile 2: Resolved Tickets */}
           <div
             onClick={() => navigate('/incidents')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
           >
-            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[#16A34A] flex-shrink-0">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="w-11 h-11 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[#16A34A] flex-shrink-0">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">
-                {kpis?.resolvedIncidents != null ? kpis.resolvedIncidents : (kpisError ? '—' : statusCounts.resolved)}
+              <div className="text-2xl font-bold text-gray-900 leading-none">
+                {kpis?.resolvedIncidents != null ? kpis.resolvedIncidents : (summary?.tickets?.actioned != null ? summary.tickets.actioned : (kpisError ? '—' : statusCounts.resolved))}
               </div>
-              <div className="text-xs text-gray-500 font-medium mt-1">Resolved Tickets</div>
+              <div className="text-xs text-gray-500 font-medium mt-1.5">Resolved Tickets</div>
             </div>
           </div>
 
-          {/* Card 3: Pending Approvals */}
+          {/* Tile 3: Pending Approvals */}
           <div
             onClick={() => navigate('/approvals')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
           >
-            <div className="w-10 h-10 rounded-full bg-[#FFEDD5] flex items-center justify-center text-[#EA580C] flex-shrink-0">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="w-11 h-11 rounded-full bg-[#FFEDD5] flex items-center justify-center text-[#EA580C] flex-shrink-0">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">
-                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (summary?.approvals?.pending ?? (kpisError ? '—' : 5))}
+              <div className="text-2xl font-bold text-gray-900 leading-none">
+                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (pendingApprovalsCount != null ? pendingApprovalsCount : (summary?.approvals?.pending != null ? summary.approvals.pending : (kpisError ? '—' : 5)))}
               </div>
-              <div className="text-xs text-gray-500 font-medium mt-1">Pending Approvals</div>
+              <div className="text-xs text-gray-500 font-medium mt-1.5">Pending Approvals</div>
             </div>
           </div>
 
-          {/* Card 4: My Assignments */}
+          {/* Tile 4: My Assignments */}
           <div
             onClick={() => navigate('/my-work')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
           >
-            <div className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9333EA] flex-shrink-0">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="w-11 h-11 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9333EA] flex-shrink-0">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -478,10 +496,10 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">
-                {kpis?.myAssignments != null ? kpis.myAssignments : (summary?.assignments?.total ?? (kpisError ? '—' : 3))}
+              <div className="text-2xl font-bold text-gray-900 leading-none">
+                {kpis?.myAssignments != null ? kpis.myAssignments : (myAssignmentsCount != null ? myAssignmentsCount : (summary?.assignments?.total != null ? summary.assignments.total : (kpisError ? '—' : 3)))}
               </div>
-              <div className="text-xs text-gray-500 font-medium mt-1">My Assignments</div>
+              <div className="text-xs text-gray-500 font-medium mt-1.5">My Assignments</div>
             </div>
           </div>
         </section>
