@@ -6,6 +6,7 @@ import dashboardService, {
   type DashboardSummary,
 } from '../../services/dashboardService';
 import { api } from '../../services/apiClient';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
 interface RecentTicketRow {
   id: string;
@@ -291,77 +292,13 @@ export default function Dashboard() {
   return (
     <div className="w-full min-h-screen bg-[#FAF7F5] text-gray-800 pb-16 font-sans">
       {/* ─── TOP NAVBAR ─── */}
-      <header className="w-full bg-[#FAF7F5] border-b border-[#EFEAE4] px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#ECA58D] flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            D
-          </div>
-          <h1 className="text-lg font-bold text-gray-900 tracking-tight">Dashboard</h1>
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            Halo AI Service Desk • ITSM Portal
+          </span>
         </div>
-
-        <div className="flex items-center gap-3.5">
-          {/* Search input */}
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-4 py-1.5 rounded-full border border-gray-200 bg-white text-xs text-gray-700 w-56 focus:outline-none focus:ring-1 focus:ring-gray-300 shadow-sm"
-            />
-          </div>
-
-          {/* Notifications icon */}
-          <button
-            type="button"
-            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-            title="Notifications"
-            onClick={() => navigate('/incidents')}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-
-          {/* Help icon */}
-          <button
-            type="button"
-            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-            title="Help"
-            onClick={() => window.open('https://servigen.io/docs', '_blank')}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </button>
-
-          {/* User Initials Circle */}
-          <div
-            className="w-7 h-7 rounded-full bg-[#FFEDD5] text-[#C2410C] font-semibold text-xs flex items-center justify-center cursor-pointer"
-            title={fullName}
-          >
-            {userInitials}
-          </div>
-
-          {/* New Ticket Button */}
-          <button
-            type="button"
-            onClick={() => setIsNewTicketOpen(true)}
-            className="bg-[#D97757] hover:bg-[#C86A4C] text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
-          >
-            <span className="text-sm font-bold leading-none">+</span>
-            <span>New Ticket</span>
-          </button>
-        </div>
+        <GlobalNavbarActions />
       </header>
 
       {/* ─── MAIN CONTENT ─── */}
