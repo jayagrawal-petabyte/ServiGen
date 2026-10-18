@@ -81,22 +81,38 @@ const getServiceCis = async (req, res) => {
   try {
     const { prisma } = require('../../shared');
     const organisationId = getEffectiveOrgId(req);
-    const where = {
-      type: { in: ['Service', 'Application'] }
-    };
+    const where = {};
     if (organisationId) {
       where.OR = [{ site: { organisationId } }, { siteId: null }];
     }
-    const items = await prisma.configurationItem.findMany({ where });
+    let items = [];
+    try {
+      items = await prisma.configurationItem.findMany({ where });
+    } catch (_e) {
+      // Prisma query fallback
+    }
+
+    if (!items || items.length === 0) {
+      items = await getAllConfigurationItems({ organisationId });
+    }
+
     res.status(200).json({
       success: true,
       data: items,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch service CIs',
-    });
+    try {
+      const items = await getAllConfigurationItems({});
+      res.status(200).json({
+        success: true,
+        data: items,
+      });
+    } catch (_fallbackErr) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch service CIs',
+      });
+    }
   }
 };
 

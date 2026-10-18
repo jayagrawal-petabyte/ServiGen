@@ -54,47 +54,56 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
     : '99.9';
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] select-none">
-      {/* Header with Navigation Pills */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Service CIs — Live Service Health
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            CMDB: Service CIs (Live) — Real-time service health & SLA monitoring
-          </p>
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#faf6f2] select-none">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>CMDB</span>
+          <span>/</span>
+          <span className="text-gray-900">Service CIs (Live Health)</span>
         </div>
+        <GlobalNavbarActions />
+      </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Main Module Tabs (Configuration Items vs Live Service Health) */}
-          <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
-            <button
-              onClick={() => navigate('/cmdb')}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
-            >
-              Configuration Items (CIs)
-            </button>
-            <button
-              onClick={() => navigate('/cmdb/services')}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#eb6a47] text-white shadow-2xs cursor-pointer transition-all"
-            >
-              Service CIs (Live Health)
-            </button>
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        {/* Header with Navigation Pills */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Service CIs — Live Service Health
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              CMDB: Service CIs (Live) — Real-time service health & SLA monitoring
+            </p>
           </div>
 
-          <button
-            onClick={() => loadData()}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
-            Refresh Live Health
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Main Module Tabs (Configuration Items vs Live Service Health) */}
+            <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+              <button
+                onClick={() => navigate('/cmdb')}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+              >
+                Configuration Items (CIs)
+              </button>
+              <button
+                onClick={() => navigate('/cmdb/services')}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#eb6a47] text-white shadow-2xs cursor-pointer transition-all"
+              >
+                Service CIs (Live Health)
+              </button>
+            </div>
 
-          <GlobalNavbarActions />
+            <button
+              onClick={() => loadData()}
+              disabled={isLoading}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
+              Refresh Live Health
+            </button>
+          </div>
         </div>
-      </div>
 
       {error && (
         <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
@@ -237,6 +246,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -163,24 +163,34 @@ export default function ServiceCatalogue() {
   };
 
   return (
-    <main className="services-page">
-      <div className="services-container">
-        <header className="services-header">
-          <div className="services-heading">
-            <h1>Services Catalogue</h1>
-            <p>Browse available services, check SLAs, and submit service requests</p>
-          </div>
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fffaf7]">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Services Catalogue</span>
+        </div>
+        <GlobalNavbarActions
+          onNewTicket={() => openRequest(servicesList[0])}
+        />
+      </header>
 
-          <div className="header-actions">
-            <div className="service-count">
-              <strong>{filteredServices.length}</strong>
-              <span>services</span>
+      <main className="services-page flex-1">
+        <div className="services-container">
+          <header className="services-header">
+            <div className="services-heading">
+              <h1>Services Catalogue</h1>
+              <p>Browse available services, check SLAs, and submit service requests</p>
             </div>
-            <GlobalNavbarActions
-              onNewTicket={() => openRequest(servicesList[0])}
-            />
-          </div>
-        </header>
+
+            <div className="header-actions">
+              <div className="service-count">
+                <strong>{filteredServices.length}</strong>
+                <span>services</span>
+              </div>
+            </div>
+          </header>
 
         <div className="catalogue-layout">
           <aside className="category-sidebar">
@@ -389,6 +399,7 @@ export default function ServiceCatalogue() {
           </section>
         </div>
       )}
-    </main>
+      </main>
+    </div>
   );
 }

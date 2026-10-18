@@ -92,7 +92,7 @@
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* CATEGORY SIDEBAR */
@@ -101,6 +101,8 @@
   border-radius: 28px;
   background: #ffc2b0;
   box-sizing: border-box;
+  align-self: stretch;
+  min-height: calc(100vh - 220px);
 }
 
 .sidebar-search {
