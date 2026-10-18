@@ -44,55 +44,6 @@ const STATUS_TABS: TicketStatus[] = [
   "On Hold",
 ];
 
-const MOCK_TIME_LOGS: Record<string, TimeLog[]> = {
-  "TCK-30291": [
-    {
-      id: 1,
-      date: "2026-10-05",
-      duration: "1h 15m",
-      note: "Investigated POS to ERP sync failure",
-    },
-    {
-      id: 2,
-      date: "2026-10-06",
-      duration: "1h",
-      note: "Checked integration logs and retry process",
-    },
-  ],
-  "TCK-30288": [
-    {
-      id: 3,
-      date: "2026-10-05",
-      duration: "45m",
-      note: "Reviewed scanner firmware request",
-    },
-  ],
-  "TCK-30271": [
-    {
-      id: 4,
-      date: "2026-10-04",
-      duration: "1h 05m",
-      note: "Created access request for imaging system",
-    },
-  ],
-  "TCK-30260": [
-    {
-      id: 5,
-      date: "2026-10-03",
-      duration: "3h 40m",
-      note: "Investigated checkout discount-code error",
-    },
-  ],
-  "TCK-30254": [
-    {
-      id: 6,
-      date: "2026-10-02",
-      duration: "12m",
-      note: "Updated internal knowledge base signage",
-    },
-  ],
-};
-
 type PriorityPillProps = {
   priority: string;
 };
@@ -200,7 +151,7 @@ export default function MyWork() {
   const [isFetchingTickets, setIsFetchingTickets] = useState(false);
   const [timeLogs, setTimeLogs] = usePersistentState<Record<string, TimeLog[]>>(
     "servigen_my_work_time_logs_v1",
-    MOCK_TIME_LOGS
+    {}
   );
   const [showAddTimeLog, setShowAddTimeLog] = useState(false);
   const [newDuration, setNewDuration] = useState("");

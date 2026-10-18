@@ -1,8 +1,7 @@
 import { apiClient, ApiError } from '../../../services/apiClient';
-import { INITIAL_APPROVALS } from '../mockApprovalsData';
 import type { Approval, TicketDetails } from '../ApprovalCard';
 import { articleDraftsApi } from '../../ArticleDrafts/services/articleDraftsApi';
-import type { ArticleDraft } from '../../ArticleDrafts/mockArticleDraftsData';
+import type { ArticleDraft } from '../../ArticleDrafts/articleDrafts.types';
 
 export interface BackendApproval {
   id: string;
@@ -167,7 +166,7 @@ function getMockApprovals(): Approval[] {
   } catch {
     // fallback
   }
-  return [...INITIAL_APPROVALS];
+  return [];
 }
 
 function setMockApprovals(list: Approval[]): void {
@@ -517,8 +516,8 @@ export const approvalsApi = {
    */
   async resetMockData(): Promise<Approval[]> {
     await new Promise((r) => setTimeout(r, 150));
-    setMockApprovals([...INITIAL_APPROVALS]);
+    setMockApprovals([]);
     localStorage.removeItem(STORAGE_KEY);
-    return [...INITIAL_APPROVALS];
+    return [];
   },
 };

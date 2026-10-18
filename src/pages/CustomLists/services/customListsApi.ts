@@ -59,39 +59,6 @@ export interface CreateCustomListPayload {
 
 const STORAGE_KEY = 'servigen_custom_lists_cache';
 
-const INITIAL_MOCK_LISTS: BackendCustomList[] = [
-  {
-    id: 'LIST-001',
-    name: 'Active Servers',
-    description: 'List of all active servers',
-    status: 'Draft',
-    fields: ['name', 'type', 'site', 'status'],
-    scope: 'Tickets (All Areas)',
-    group: 'Incident Management',
-    sequence: 10,
-    columnProfile: '*Use Default Column Profile (No Override)*',
-    displayType: 'Default',
-    filterCriteria: [],
-    createdBy: 'Admin',
-    organisationId: 'org-001',
-  },
-  {
-    id: 'LIST-002',
-    name: 'Critical Applications',
-    description: 'List of critical business applications',
-    status: 'Published',
-    fields: ['name', 'type', 'businessOwner', 'status'],
-    scope: 'Tickets (All Areas)',
-    group: 'Incident Management',
-    sequence: 20,
-    columnProfile: '*Use Default Column Profile (No Override)*',
-    displayType: 'Default',
-    filterCriteria: [],
-    createdBy: 'Admin',
-    organisationId: 'org-001',
-  },
-];
-
 /**
  * Retrieve cached custom lists for resilient offline fallback
  */
@@ -105,7 +72,7 @@ function getCachedLists(): BackendCustomList[] {
   } catch {
     // ignore
   }
-  return INITIAL_MOCK_LISTS;
+  return [];
 }
 
 /**

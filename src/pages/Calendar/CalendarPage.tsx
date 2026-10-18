@@ -5,9 +5,8 @@ import {
   APPOINTMENT_TYPES,
   type CalendarEvent,
   type EventType,
-  mockCalendarEvents,
   toDateKey,
-} from "./mockCalendar";
+} from "./calendar.types";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -128,7 +127,7 @@ export default function CalendarPage() {
   const [anchor, setAnchor] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
-  const [events, setEvents] = useState<CalendarEvent[]>(mockCalendarEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [search, setSearch] = useState("");
   const [hiddenTypes, setHiddenTypes] = useState<EventType[]>([]);
   const [hiddenAgents, setHiddenAgents] = useState<string[]>([]);

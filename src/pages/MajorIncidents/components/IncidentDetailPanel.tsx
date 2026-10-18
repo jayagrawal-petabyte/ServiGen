@@ -4,7 +4,6 @@ import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types
 import PriorityBadge from './PriorityBadge';
 import { useAuth } from '../../Auth/AuthContext';
 import { api } from '../../../services/apiClient';
-import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
 interface IncidentDetailPanelProps {
   incident: MajorIncident;

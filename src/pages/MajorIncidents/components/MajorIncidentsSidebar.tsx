@@ -1,8 +1,32 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { SidebarListItem } from '../types/majorIncident.types';
-import { SIDEBAR_GROUPS } from '../data/mockData';
+import type { SidebarListItem, SidebarGroup } from '../types/majorIncident.types';
+
+const SIDEBAR_GROUPS: SidebarGroup[] = [
+  {
+    groupLabel: 'Active',
+    items: [
+      { id: 'update-required', label: 'Update Required', count: 3, isSelected: true, iconKey: 'red-square' },
+      { id: 'my-team', label: 'My Team', count: 3, iconKey: 'clipboard' },
+      { id: 'critical', label: 'Critical Major Incidents', count: 2, iconKey: 'alert' },
+    ],
+  },
+  {
+    groupLabel: 'Actioned',
+    items: [
+      { id: 'closed', label: 'Closed Major Incidents', iconKey: 'check' },
+    ],
+  },
+  {
+    groupLabel: 'Views',
+    items: [
+      { id: 'board', label: 'Major Incident Board', count: 3, iconKey: 'chart' },
+      { id: 'calendar', label: 'Major Incident Calendar', iconKey: 'calendar' },
+      { id: 'dashboard', label: 'Major Incident Dashboard', count: 3, iconKey: 'globe' },
+    ],
+  },
+];
 
 interface MajorIncidentsSidebarProps {
   onSelectList?: (id: string) => void;
