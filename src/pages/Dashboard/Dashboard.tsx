@@ -64,6 +64,36 @@ export default function Dashboard() {
   // Mood state
   const [selectedMood, setSelectedMood] = useState<string>('Great');
 
+  // Presence status state
+  const [presence, setPresence] = useState<'available' | 'away' | 'busy'>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_agent_presence');
+      if (saved === 'away' || saved === 'busy' || saved === 'available') return saved;
+    } catch {}
+    return 'available';
+  });
+
+  useEffect(() => {
+    const handlePresenceEvent = (e: any) => {
+      if (e?.detail && ['available', 'away', 'busy'].includes(e.detail)) {
+        setPresence(e.detail);
+      }
+    };
+    window.addEventListener('servigen-presence-change', handlePresenceEvent);
+    return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
+  }, []);
+
+  const handleTogglePresence = () => {
+    const next: 'available' | 'away' | 'busy' =
+      presence === 'available' ? 'busy' : presence === 'busy' ? 'away' : 'available';
+    setPresence(next);
+    try {
+      localStorage.setItem('servigen_agent_presence', next);
+      window.dispatchEvent(new CustomEvent('servigen-presence-change', { detail: next }));
+      api.patch('/api/users/presence', { presence: next, userId: user?.id }).catch(() => {});
+    } catch {}
+  };
+
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -363,9 +393,23 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-gray-900 leading-tight">{fullName}</span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[11px] text-gray-500">{roleName} - Available</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              <div
+                className="flex items-center gap-1.5 mt-0.5 cursor-pointer select-none group"
+                onClick={handleTogglePresence}
+                title={`Status: ${presence.charAt(0).toUpperCase() + presence.slice(1)} (Click to switch)`}
+              >
+                <span className="text-[11px] text-gray-500 group-hover:text-gray-700 transition-colors capitalize">
+                  {roleName} - {presence}
+                </span>
+                <span
+                  className={`w-2 h-2 rounded-full inline-block transition-colors ${
+                    presence === 'available'
+                      ? 'bg-emerald-500'
+                      : presence === 'away'
+                      ? 'bg-amber-500'
+                      : 'bg-rose-500'
+                  }`}
+                />
               </div>
             </div>
           </div>
