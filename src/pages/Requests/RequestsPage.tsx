@@ -289,7 +289,7 @@ export const RequestsPage: React.FC = () => {
               onChange={(e) => setSearchTree(e.target.value)}
               className="requests-tree-search-input"
             />
-            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="#eb6a47" strokeWidth={2.5}>
+            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
@@ -435,17 +435,17 @@ export const RequestsPage: React.FC = () => {
             </div>
 
             {/* Group 4: Change Requests & Active Changes */}
-            <div className="tree-node-group mt-3 pt-2.5 border-t border-slate-200">
+            <div className="tree-node-group mt-3 pt-2.5 border-t border-[#d4887b]">
               <div
-                className="tree-group-title-row cursor-pointer hover:bg-orange-50 transition-colors rounded-lg py-1 px-2 flex items-center justify-between"
+                className="tree-group-title-row cursor-pointer hover:bg-black/5 transition-colors rounded-lg py-1 px-2 flex items-center justify-between"
                 onClick={() => navigate('/change-requests')}
                 title="Go to Change Requests & Active Changes"
               >
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm">📝</span>
-                  <span className="group-name font-bold text-slate-800">Change Requests</span>
+                  <span className="group-name font-bold text-[#3a201a]">Change Requests</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-orange-100 text-orange-700">5 Active</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#13273e] text-white">5 Active</span>
               </div>
             </div>
           </div>

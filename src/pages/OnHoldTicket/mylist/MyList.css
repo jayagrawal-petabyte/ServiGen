@@ -1,7 +1,7 @@
-/* --- Left Panel (Image 3 Match) --- */
+/* --- Left Panel (Major Incident Sidebar Palette Match) --- */
 .left-panel {
   width: 220px;
-  background: #ffffff;
+  background: #e49b8e;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -9,7 +9,8 @@
   margin: 12px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d4887b;
+  user-select: none;
 }
 
 .search-bar-row {
@@ -17,20 +18,28 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #d4887b;
 }
 
 .search-input {
   flex: 1;
   border: none;
   outline: none;
-  font-size: 13px;
-  color: #334155;
-  background: transparent;
+  font-size: 12px;
+  color: #1e293b;
+  background: #ffffff;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .search-input::placeholder {
   color: #94a3b8;
+}
+
+.search-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 
 .panel-my-lists-row {
@@ -38,14 +47,15 @@
   align-items: center;
   padding: 10px 14px;
   gap: 8px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #d4887b;
 }
 
 .my-lists-icon-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fdede7;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #13273e;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,19 +65,19 @@
 .my-lists-text {
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: #3a201a;
   flex: 1;
 }
 
 .collapse-arrow {
   font-size: 13px;
-  color: #64748b;
+  color: #3a201a;
   cursor: pointer;
   transition: transform 0.15s;
 }
 
 .collapse-arrow:hover {
-  color: #0f172a;
+  color: #1c0f0c;
 }
 
 /* Scroll Area */
@@ -86,11 +96,12 @@
 }
 
 .my-lists-category-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f172a;
+  color: #542d25;
   margin: 0 0 6px 8px;
-  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .my-lists-items-wrap {
@@ -109,7 +120,7 @@
   border: none;
   cursor: pointer;
   font-size: 12.5px;
-  color: #334155;
+  color: #3a201a;
   font-weight: 500;
   transition: all 0.15s ease;
   width: 100%;
@@ -117,15 +128,15 @@
 }
 
 .my-list-nav-item:hover {
-  background: var(--bg-canvas);
-  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1c0f0c;
 }
 
 .my-list-nav-item.active {
-  background: #eb6a47;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(235, 106, 71, 0.3);
+  background: #d28072;
+  color: #1c0f0c;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .my-list-nav-left {
@@ -150,8 +161,8 @@
 .my-list-badge {
   font-size: 11px;
   font-weight: 700;
-  background: #eb6a47;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
   padding: 2px 7px;
   border-radius: 12px;
   flex-shrink: 0;
@@ -160,8 +171,8 @@
 }
 
 .my-list-nav-item.active .my-list-badge {
-  background: #ffffff;
-  color: #eb6a47;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1c0f0c;
 }
 
 /* Create New List Button */
@@ -178,19 +189,19 @@
   width: 100%;
   padding: 8px 14px;
   border-radius: 20px;
-  background: #eb6a47;
+  background: #13273e;
   color: #ffffff;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.25);
+  box-shadow: 0 2px 6px rgba(19, 39, 62, 0.25);
 }
 
 .my-lists-create-btn:hover {
-  background: #db5936;
-  box-shadow: 0 4px 10px rgba(235, 106, 71, 0.35);
+  background: #0c1a2b;
+  box-shadow: 0 4px 10px rgba(19, 39, 62, 0.35);
 }
 
 .create-plus-icon {
