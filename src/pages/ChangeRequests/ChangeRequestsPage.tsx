@@ -20,7 +20,6 @@ import {
   RefreshCw,
   Flame,
   ListFilter,
-  Layers,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
@@ -121,35 +120,27 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Quick link to CMDB */}
-          <button
-            onClick={() => navigate('/cmdb')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
-            title="Inspect related Configuration Items in CMDB"
-          >
-            <Layers className="w-3.5 h-3.5" /> CMDB CIs
-          </button>
-
+        <div className="flex items-center gap-2.5">
           {/* Refresh button */}
           <button
+            type="button"
             onClick={() => loadData()}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
             title="Fetch latest from backend API"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
-            Refresh
+            <span>Refresh</span>
           </button>
 
           {/* New Change Request Button */}
           <Button
             variant="primary"
             onClick={onOpenCreateModal}
-            className="flex items-center gap-2 cursor-pointer shadow-md shadow-[#eb6a47]/20 text-xs py-2 px-4 rounded-xl"
+            className="shadow-md shadow-[#eb6a47]/20 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" />
-            New Change Request
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>New Change Request</span>
           </Button>
 
           <GlobalNavbarActions />
