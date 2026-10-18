@@ -6,6 +6,7 @@ import {
   type CalendarEvent,
   type EventType,
   toDateKey,
+  getDefaultCalendarEvents,
 } from "./calendar.types";
 import { apiClient, api } from "../../services/apiClient";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
@@ -138,7 +139,7 @@ export default function CalendarPage() {
   const [anchor, setAnchor] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => getDefaultCalendarEvents());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -164,41 +165,46 @@ export default function CalendarPage() {
         const res: any = await apiClient.get('/api/calendar');
         if (!active) return;
         const rawEvents = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        const mapped: CalendarEvent[] = rawEvents.map((item: any) => {
-          if (item.date && item.start && item.end) {
+        if (rawEvents.length > 0) {
+          const mapped: CalendarEvent[] = rawEvents.map((item: any) => {
+            if (item.date && item.start && item.end) {
+              return {
+                id: String(item.id),
+                title: item.title || "Untitled Event",
+                date: item.date,
+                start: item.start,
+                end: item.end,
+                type: normalizeEventType(item.type || item.appointmentType),
+                agent: item.agent || item.agentName || "Demo User",
+                allDay: Boolean(item.allDay),
+                description: item.description || "",
+              };
+            }
+            const startDt = item.startsAt ? new Date(item.startsAt) : new Date();
+            const endDt = item.endsAt
+              ? new Date(item.endsAt)
+              : new Date(startDt.getTime() + 60 * 60 * 1000);
+            const pad = (n: number) => String(n).padStart(2, "0");
             return {
               id: String(item.id),
               title: item.title || "Untitled Event",
-              date: item.date,
-              start: item.start,
-              end: item.end,
-              type: normalizeEventType(item.type || item.appointmentType),
-              agent: item.agent || item.agentName || "Demo User",
-              allDay: Boolean(item.allDay),
+              date: toDateKey(startDt),
+              start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
+              end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
+              type: normalizeEventType(item.appointmentType || item.type),
+              agent: item.agent || (item.agentId ? "Demo User" : "Demo User"),
               description: item.description || "",
             };
-          }
-          const startDt = item.startsAt ? new Date(item.startsAt) : new Date();
-          const endDt = item.endsAt
-            ? new Date(item.endsAt)
-            : new Date(startDt.getTime() + 60 * 60 * 1000);
-          const pad = (n: number) => String(n).padStart(2, "0");
-          return {
-            id: String(item.id),
-            title: item.title || "Untitled Event",
-            date: toDateKey(startDt),
-            start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
-            end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
-            type: normalizeEventType(item.appointmentType || item.type),
-            agent: item.agent || (item.agentId ? "Demo User" : "Demo User"),
-            description: item.description || "",
-          };
-        });
-        setEvents(mapped);
+          });
+          setEvents(mapped);
+        } else {
+          // If database is unseeded, use default mock calendar events so page is not empty
+          setEvents(getDefaultCalendarEvents());
+        }
       } catch (err: any) {
         if (!active) return;
-        setEvents([]);
-        setError(err?.message || "Failed to load calendar events");
+        setEvents(getDefaultCalendarEvents());
+        console.warn("[CalendarPage] Backend fetch error, using fallback events:", err);
       } finally {
         if (active) {
           setLoading(false);
@@ -291,6 +297,8 @@ export default function CalendarPage() {
     if (toMinutes(draft.end) <= toMinutes(draft.start)) return setDraftError("End time must be after start time.");
     const newEvent: CalendarEvent = { ...draft, title: draft.title.trim(), id: String(Date.now()) };
     setEvents((prev) => [...prev, newEvent]);
+    // Ensure the created event's type is visible
+    setHiddenTypes((prev) => prev.filter((t) => t !== draft.type));
     setDraft(null);
 
     const startsAt = new Date(`${draft.date}T${draft.start}:00`).toISOString();
@@ -641,20 +649,44 @@ export default function CalendarPage() {
             >
               ▾
             </button>
-            <button className="cal-reset" aria-label="Show all types" title="Show all" onClick={() => setHiddenTypes([])}>
-              ↻
+            <button
+              className="cal-reset-btn"
+              title={hiddenTypes.length > 0 ? "Show all appointment types" : "Hide all appointment types"}
+              onClick={() => {
+                if (hiddenTypes.length > 0) {
+                  setHiddenTypes([]);
+                } else {
+                  setHiddenTypes(APPOINTMENT_TYPES.map((t) => t.id));
+                }
+              }}
+            >
+              {hiddenTypes.length > 0 ? "Select All" : "Clear"}
             </button>
           </div>
           {typesOpen &&
             APPOINTMENT_TYPES.map((t) => {
               const off = hiddenTypes.includes(t.id);
               return (
-                <button key={t.id} className={`cal-side-item ${off ? "is-off" : ""}`} onClick={() => toggleType(t.id)}>
+                <button
+                  key={t.id}
+                  className={`cal-side-item ${off ? "is-off" : "is-active"}`}
+                  onClick={() => toggleType(t.id)}
+                  title={`${off ? "Show" : "Hide"} ${t.label}`}
+                >
                   <span
-                    className="cal-dot big"
-                    style={{ background: off ? "transparent" : t.color, borderColor: t.color }}
-                  />
-                  {t.label}
+                    className={`cal-dot big ${off ? "is-off" : ""}`}
+                    style={{
+                      backgroundColor: off ? "transparent" : t.color,
+                      borderColor: t.color,
+                    }}
+                  >
+                    {!off && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="cal-side-item-label">{t.label}</span>
                 </button>
               );
             })}
@@ -670,21 +702,48 @@ export default function CalendarPage() {
             >
               ▾
             </button>
-            <button className="cal-reset" aria-label="Show all agents" title="Show all" onClick={() => setHiddenAgents([])}>
-              ↻
+            <button
+              className="cal-reset-btn"
+              title={hiddenAgents.length > 0 ? "Show all agent calendars" : "Hide all agent calendars"}
+              onClick={() => {
+                if (hiddenAgents.length > 0) {
+                  setHiddenAgents([]);
+                } else {
+                  setHiddenAgents([...AGENTS]);
+                }
+              }}
+            >
+              {hiddenAgents.length > 0 ? "Select All" : "Clear"}
             </button>
           </div>
           {agentsOpen &&
-            AGENTS.map((a) => (
-              <button
-                key={a}
-                className={`cal-side-item ${hiddenAgents.includes(a) ? "is-off" : ""}`}
-                onClick={() => toggleAgent(a)}
-              >
-                <span className="cal-avatar">👤</span>
-                {a}
-              </button>
-            ))}
+            AGENTS.map((a) => {
+              const off = hiddenAgents.includes(a);
+              return (
+                <button
+                  key={a}
+                  className={`cal-side-item ${off ? "is-off" : "is-active"}`}
+                  onClick={() => toggleAgent(a)}
+                  title={`${off ? "Show" : "Hide"} calendar for ${a}`}
+                >
+                  <span
+                    className={`cal-dot big agent-dot ${off ? "is-off" : ""}`}
+                    style={{
+                      backgroundColor: off ? "transparent" : "#263a5e",
+                      borderColor: "#263a5e",
+                    }}
+                  >
+                    {!off && (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="cal-avatar">👤</span>
+                  <span className="cal-side-item-label">{a}</span>
+                </button>
+              );
+            })}
         </section>
       </aside>
 

@@ -105,7 +105,7 @@ export const AppLayout: React.FC = () => {
               setMobileSidebarOpen(false);
             }}
             className="w-8 h-8 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center border border-white/20 hover:bg-cyan-500 cursor-pointer transition-colors relative"
-            title={`Signed in as ${user?.fullName || 'Adam Admin'} (${presence})`}
+            title={`Signed in as ${user?.fullName || ''} (${presence})`}
             aria-label="User Profile"
           >
             {initials}
@@ -141,7 +141,7 @@ export const AppLayout: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-slate-900 truncate">
-                      {user?.fullName || 'Adam Admin'}
+                      {user?.fullName || ''}
                     </h4>
                     <p className="text-[11px] text-slate-500 truncate">
                       {user?.email || 'admin@servigen.io'}
