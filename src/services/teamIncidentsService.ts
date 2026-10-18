@@ -12,7 +12,7 @@
  * - PATCH /api/tickets/:id/status               : Update ticket status
  */
 
-import { api } from './apiClient';
+import { api, getAuthToken } from './apiClient';
 import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.types';
 
 export interface SupportAgent {
@@ -108,6 +108,15 @@ export async function fetchSupportIncidents(
     search?: string;
   }
 ): Promise<SupportIncidentsResponse> {
+  if (!getAuthToken()) {
+    return {
+      incidents: [],
+      total: 0,
+      page: 1,
+      totalPages: 1,
+    };
+  }
+
   const isSecondLine = teamName.toLowerCase().includes('2nd');
   const endpoint = isSecondLine
     ? '/api/incidents/support/second-line'
@@ -135,8 +144,10 @@ export async function fetchSupportIncidents(
       page: typeof payload?.page === 'number' ? payload.page : 1,
       totalPages: typeof payload?.totalPages === 'number' ? payload.totalPages : 1,
     };
-  } catch (err) {
-    console.warn(`[teamIncidentsService] Failed to fetch incidents from ${endpoint}:`, err);
+  } catch (err: any) {
+    if (err?.statusCode !== 401) {
+      console.warn(`[teamIncidentsService] Failed to fetch incidents from ${endpoint}:`, err);
+    }
     return {
       incidents: [],
       total: 0,
@@ -152,6 +163,10 @@ export async function fetchSupportIncidents(
 export async function fetchSupportAgents(
   teamName: '1st Line Support' | '2nd Line Support'
 ): Promise<SupportAgent[]> {
+  if (!getAuthToken()) {
+    return [];
+  }
+
   const isSecondLine = teamName.toLowerCase().includes('2nd');
   const endpoint = isSecondLine
     ? '/api/incidents/support/second-line/agents'
@@ -168,8 +183,10 @@ export async function fetchSupportAgents(
       email: a.email || '',
       availability: a.availability || 'Available',
     }));
-  } catch (err) {
-    console.warn(`[teamIncidentsService] Failed to fetch agents from ${endpoint}:`, err);
+  } catch (err: any) {
+    if (err?.statusCode !== 401) {
+      console.warn(`[teamIncidentsService] Failed to fetch agents from ${endpoint}:`, err);
+    }
     return [];
   }
 }
@@ -182,6 +199,14 @@ export async function fetchAllTeamIncidents(): Promise<{
   firstLineAgents: SupportAgent[];
   secondLineAgents: SupportAgent[];
 }> {
+  if (!getAuthToken()) {
+    return {
+      incidents: [],
+      firstLineAgents: [],
+      secondLineAgents: [],
+    };
+  }
+
   try {
     const [firstLineRes, secondLineRes, firstLineAgents, secondLineAgents] = await Promise.all([
       fetchSupportIncidents('1st Line Support', { limit: 100 }),
@@ -199,8 +224,10 @@ export async function fetchAllTeamIncidents(): Promise<{
       firstLineAgents,
       secondLineAgents,
     };
-  } catch (err) {
-    console.error('[teamIncidentsService] Failed to fetch all team incidents:', err);
+  } catch (err: any) {
+    if (err?.statusCode !== 401) {
+      console.error('[teamIncidentsService] Failed to fetch all team incidents:', err);
+    }
     return {
       incidents: [],
       firstLineAgents: [],

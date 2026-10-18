@@ -18,7 +18,18 @@ const {
 
 const { getTickets } = require('../my-work/my-work.model');
 
-const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
+const CANONICAL_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
+const MOOD_SYNONYMS = {
+  'okay': 'Neutral',
+  'neutral': 'Neutral',
+  'not good': 'Struggling',
+  'struggling': 'Struggling',
+  'stressed': 'Overwhelmed',
+  'overwhelmed': 'Overwhelmed',
+  'great': 'Great',
+  'good': 'Good',
+};
+const VALID_MOODS = [...CANONICAL_MOODS, 'Okay', 'Not Good', 'Stressed'];
 
 // ─── SCR-014: KPI Aggregation ─────────────────────────────────────────────────
 
@@ -69,9 +80,8 @@ const submitMood = async (agentId, mood) => {
     throw error;
   }
 
-  const matched = VALID_MOODS.find(
-    (m) => m.toLowerCase() === mood.trim().toLowerCase()
-  );
+  const normalizedKey = mood.trim().toLowerCase();
+  const matched = MOOD_SYNONYMS[normalizedKey] || CANONICAL_MOODS.find((m) => m.toLowerCase() === normalizedKey);
 
   if (!matched) {
     const error = new Error(`mood must be one of: ${VALID_MOODS.join(', ')}`);

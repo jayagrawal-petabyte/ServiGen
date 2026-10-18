@@ -443,11 +443,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const handleResetDemoIncidents = async () => {
     localStorage.removeItem('servigen_major_incidents_live_v1');
     setLocalIncidents([]);
-    try {
-      await majorIncidentsService.updateMajorIncident('0002671', { status: 'Investigating', commander: 'Unassigned', priority: 'P1' });
-      await majorIncidentsService.updateMajorIncident('0002672', { status: 'Investigating', commander: 'Jennifer Williams', priority: 'P2' });
-      await majorIncidentsService.updateMajorIncident('0002673', { status: 'Investigating', commander: 'Demo User', priority: 'P1' });
-    } catch {}
     await loadLiveIncidents();
   };
 
