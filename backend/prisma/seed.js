@@ -316,11 +316,84 @@ async function main() {
     },
   });
 
+  await db.ticket.upsert({
+    where: { id: 'INC-1003' },
+    update: { slaTimeLeft: -120 },
+    create: {
+      id: 'INC-1003',
+      summary: 'Payment gateway timeout during checkout processing',
+      priority: 'Critical',
+      status: 'Active',
+      ticketType: 'Incident',
+      organisationId: acme.id,
+      siteName: 'London HQ',
+      assignedAgentId: agent1.id,
+      slaTimeLeft: -120,
+      timeRecord: 75,
+    },
+  });
+
+  await db.ticket.upsert({
+    where: { id: 'INC-1004' },
+    update: { slaTimeLeft: -45 },
+    create: {
+      id: 'INC-1004',
+      summary: 'Authentication service latency spike exceeding threshold',
+      priority: 'High',
+      status: 'Active',
+      ticketType: 'Incident',
+      organisationId: globex.id,
+      siteName: 'New York',
+      assignedAgentId: agent1.id,
+      slaTimeLeft: -45,
+      timeRecord: 60,
+    },
+  });
+
+  await db.ticket.upsert({
+    where: { id: 'INC-1005' },
+    update: { slaTimeLeft: -30 },
+    create: {
+      id: 'INC-1005',
+      summary: 'Core customer database connection pool exhausted',
+      priority: 'Critical',
+      status: 'Active',
+      ticketType: 'Incident',
+      organisationId: acme.id,
+      siteName: 'London HQ',
+      assignedAgentId: agent1.id,
+      slaTimeLeft: -30,
+      timeRecord: 40,
+    },
+  });
+
+  await db.ticket.upsert({
+    where: { id: 'INC-1006' },
+    update: { slaTimeLeft: -90 },
+    create: {
+      id: 'INC-1006',
+      summary: 'Production cluster disk storage nearing full capacity',
+      priority: 'High',
+      status: 'Pending',
+      ticketType: 'Incident',
+      organisationId: globex.id,
+      siteName: 'New York',
+      assignedAgentId: agent1.id,
+      slaTimeLeft: -90,
+      timeRecord: 30,
+    },
+  });
 
   await db.team.upsert({where:{name:'1st Line Support'},update:{},create:{id:'team-001',name:'1st Line Support'}});
   await db.teamMembership.upsert({where:{teamId_userId:{teamId:'team-001',userId:agent1.id}},update:{},create:{teamId:'team-001',userId:agent1.id}});
   await db.ticket.update({where:{id:'INC-1001'},data:{teamId:'team-001'}});
+  await db.ticket.update({where:{id:'INC-1003'},data:{teamId:'team-001'}});
+  await db.ticket.update({where:{id:'INC-1005'},data:{teamId:'team-001'}});
   await db.incident.upsert({where:{ticketId:'INC-1001'},update:{},create:{id:'incident-001',ticketId:'INC-1001',category:'Network'}});
+  await db.incident.upsert({where:{ticketId:'INC-1003'},update:{},create:{id:'incident-003',ticketId:'INC-1003',category:'Software',impact:'High',urgency:'Critical'}});
+  await db.incident.upsert({where:{ticketId:'INC-1004'},update:{},create:{id:'incident-004',ticketId:'INC-1004',category:'Access & Identity',impact:'High',urgency:'High'}});
+  await db.incident.upsert({where:{ticketId:'INC-1005'},update:{},create:{id:'incident-005',ticketId:'INC-1005',category:'Hardware',impact:'Critical',urgency:'Critical'}});
+  await db.incident.upsert({where:{ticketId:'INC-1006'},update:{},create:{id:'incident-006',ticketId:'INC-1006',category:'Network',impact:'High',urgency:'High'}});
   const serviceCatalogueSeeds = [
     { id: 'service-admin-rights', name: 'Administrator Rights', description: 'Request administrator access to your device.', icon: '⚙️', category: 'End-User Catalogue', requiresApproval: true },
     { id: 'service-laptop', name: 'Request a Laptop', description: 'Standard high-performance laptop for developers.', icon: '🖥️', category: 'End-User Catalogue', requiresApproval: true },
