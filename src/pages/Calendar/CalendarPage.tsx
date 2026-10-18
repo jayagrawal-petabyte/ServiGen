@@ -8,6 +8,7 @@ import {
   toDateKey,
 } from "./calendar.types";
 import { apiClient, api } from "../../services/apiClient";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -570,8 +571,19 @@ export default function CalendarPage() {
   const anchorWeek = startOfWeek(anchor);
 
   return (
-    <div className="calendar-page">
-      <aside className="cal-side">
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fff7f3]">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Calendar & Appointments</span>
+        </div>
+        <GlobalNavbarActions />
+      </header>
+
+      <div className="calendar-page flex-1">
+        <aside className="cal-side">
         <div className="cal-search">
           <input
             ref={searchRef}
@@ -862,6 +874,7 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

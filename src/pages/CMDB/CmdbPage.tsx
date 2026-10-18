@@ -170,75 +170,84 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   );
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] select-none">
-      {/* Header & Sub-navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Configuration Management Database (CMDB)
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            CMDB: Asset registry, infrastructure mapping, site locations, and technical owners
-          </p>
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#faf6f2] select-none">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>CMDB</span>
+          <span>/</span>
+          <span className="text-gray-900">Configuration Items</span>
         </div>
+        <GlobalNavbarActions />
+      </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Main Module Tabs (Configuration Items vs Live Service Health) */}
-          <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
-            <button
-              onClick={() => navigate('/cmdb')}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#eb6a47] text-white shadow-2xs cursor-pointer transition-all"
-            >
-              Configuration Items (CIs)
-            </button>
-            <button
-              onClick={() => navigate('/cmdb/services')}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
-            >
-              Service CIs (Live Health)
-            </button>
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        {/* Header & Sub-navigation */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Configuration Management Database (CMDB)
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              CMDB: Asset registry, infrastructure mapping, site locations, and technical owners
+            </p>
           </div>
 
-          {/* View switcher between All and Grouped */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Main Module Tabs (Configuration Items vs Live Service Health) */}
+            <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
+              <button
+                onClick={() => navigate('/cmdb')}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#eb6a47] text-white shadow-2xs cursor-pointer transition-all"
+              >
+                Configuration Items (CIs)
+              </button>
+              <button
+                onClick={() => navigate('/cmdb/services')}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white/60 cursor-pointer transition-all"
+              >
+                Service CIs (Live Health)
+              </button>
+            </div>
+
+            {/* View switcher between All and Grouped */}
+            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+              <button
+                onClick={() => setViewGrouping('all')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewGrouping === 'all'
+                    ? 'bg-[#1c2b3d] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="GET /api/cmdb/configuration-items"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> All CIs
+              </button>
+              <button
+                onClick={() => setViewGrouping('grouped')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewGrouping === 'grouped'
+                    ? 'bg-[#1c2b3d] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="GET /api/cmdb/configuration-items/grouped-by-type"
+              >
+                <Layers className="w-3.5 h-3.5" /> Grouped by Type
+              </button>
+            </div>
+
+            {/* Refresh button */}
             <button
-              onClick={() => setViewGrouping('all')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewGrouping === 'all'
-                  ? 'bg-[#1c2b3d] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="GET /api/cmdb/configuration-items"
+              onClick={() => loadData()}
+              disabled={isLoading}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              title="Refresh from backend API"
             >
-              <LayoutGrid className="w-3.5 h-3.5" /> All CIs
-            </button>
-            <button
-              onClick={() => setViewGrouping('grouped')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewGrouping === 'grouped'
-                  ? 'bg-[#1c2b3d] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="GET /api/cmdb/configuration-items/grouped-by-type"
-            >
-              <Layers className="w-3.5 h-3.5" /> Grouped by Type
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
+              Refresh
             </button>
           </div>
-
-          {/* Refresh button */}
-          <button
-            onClick={() => loadData()}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
-            title="Refresh from backend API"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
-            Refresh
-          </button>
-
-          <GlobalNavbarActions />
         </div>
-      </div>
 
       {/* Error state */}
       {error && (
@@ -348,6 +357,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 };

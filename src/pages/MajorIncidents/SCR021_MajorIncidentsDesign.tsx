@@ -86,67 +86,66 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden font-sans relative">
-      {/* ── Main Layout (Sidebar + Header + Content) ── */}
-      <MajorIncidentsSidebar
-        onSelectList={(id) => {
-          setSelectedListId(id);
-          setPage(1);
-        }}
-      />
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-100 overflow-hidden font-sans relative">
+      {/* Top Navbar */}
+      <header className="flex items-center justify-between px-6 py-2 bg-white border-b border-gray-200 shrink-0 min-h-[50px] w-full z-10">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span
+            onClick={() => navigate('/major-incidents/live')}
+            className="cursor-pointer hover:text-[#eb6a47] transition-colors"
+          >
+            Major Incidents
+          </span>
+          <span className="text-gray-400">&gt;</span>
+          <div className="flex items-center gap-1.5 text-gray-900 font-semibold">
+            <div className="w-3 h-3 bg-red-500 rounded-sm" />
+            Update Required (Design Preview)
+          </div>
+        </div>
 
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Top Navbar */}
-        <header className="flex items-center justify-between px-6 py-2 bg-white border-b border-gray-200 shrink-0">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span
-              onClick={() => navigate('/major-incidents/live')}
-              className="cursor-pointer hover:text-[#eb6a47] transition-colors"
-            >
-              Major Incidents
-            </span>
-            <span className="text-gray-400">&gt;</span>
-            <div className="flex items-center gap-1.5 text-gray-900 font-semibold">
-              <div className="w-3 h-3 bg-red-500 rounded-sm" />
-              Update Required (Design Preview)
+        <div className="flex items-center gap-3">
+          {/* Search Input (Expandable) */}
+          {isSearchOpen && (
+            <div className="relative flex items-center animate-fadeIn">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search incidents, ID, service..."
+                className="w-56 text-xs pl-7 pr-7 py-1.5 border border-[#f8c5b1] rounded-full outline-none focus:ring-1 focus:ring-[#eb6a47] bg-white"
+                autoFocus
+              />
+              <span className="absolute left-2.5 text-gray-400 text-xs">🔍</span>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center gap-3">
-            {/* Search Input (Expandable) */}
-            {isSearchOpen && (
-              <div className="relative flex items-center animate-fadeIn">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Search incidents, ID, service..."
-                  className="w-56 text-xs pl-7 pr-7 py-1.5 border border-[#f8c5b1] rounded-full outline-none focus:ring-1 focus:ring-[#eb6a47] bg-white"
-                  autoFocus
-                />
-                <span className="absolute left-2.5 text-gray-400 text-xs">🔍</span>
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            )}
+          <GlobalNavbarActions onNewTicket={() => setShowNewModal(true)} />
+        </div>
+      </header>
 
-            <GlobalNavbarActions onNewTicket={() => setShowNewModal(true)} />
-          </div>
-        </header>
+      {/* ── Main Layout (Sidebar + Content) ── */}
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+        <MajorIncidentsSidebar
+          onSelectList={(id) => {
+            setSelectedListId(id);
+            setPage(1);
+          }}
+        />
 
         {/* Workspace Area (List) */}
-        <div className="flex flex-1 min-h-0">
-          <main className="flex-1 flex flex-col min-w-0 bg-gray-50">
+        <main className="flex-1 flex flex-col min-w-0 bg-gray-50">
             {/* Toolbar */}
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200 shrink-0">
               <button
@@ -325,7 +324,6 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
             </div>
           </main>
         </div>
-      </div>
 
       {/* Floating Modals and Panels */}
       {showNewModal && (

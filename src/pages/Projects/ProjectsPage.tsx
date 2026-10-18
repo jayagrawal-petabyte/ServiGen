@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Project, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
 import { getSessionUserName, loadProjectsScreen } from "./projectsApi";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./projects.css";
 
 type View = "active" | "board" | "task-calendar" | "gantt" | "my-tasks" | "my-calendar" | "overdue";
@@ -453,8 +454,19 @@ export default function ProjectsPage() {
   const [title, subtitle] = viewTitles[activeView];
 
   return (
-    <div className="projects-page">
-      <aside className="pj-side">
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fff7f3]">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Projects</span>
+          <span>/</span>
+          <span className="text-gray-900">{title}</span>
+        </div>
+        <GlobalNavbarActions />
+      </header>
+
+      <div className="projects-page flex-1">
+        <aside className="pj-side">
         <div className="pj-search">
           <input
             ref={searchRef}
@@ -665,6 +677,7 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

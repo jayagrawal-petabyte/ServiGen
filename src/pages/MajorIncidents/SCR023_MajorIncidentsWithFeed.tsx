@@ -6,6 +6,7 @@ import ActivityFeed from './components/ActivityFeed';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
 import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { majorIncidentsService } from '../../services/majorIncidentsService';
 import type { MajorIncident, ActivityFeedEntry, FeedEntryType } from './types/majorIncident.types';
 
@@ -165,56 +166,80 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+      {/* Full-width top navbar */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+          <span
+            className="text-gray-400 hover:text-gray-700 cursor-pointer"
+            onClick={() => setSelectedListId('update-required')}
+          >
+            Major Incidents
+          </span>
+          <span className="text-gray-300">›</span>
+          <span className="flex items-center gap-1.5 font-bold text-gray-900">
+            <span className="w-2.5 h-2.5 bg-red-500 rounded-xs inline-block shrink-0" />
+            Update Required + Feed
+          </span>
+        </div>
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <PageHeader
-          totalCount={displayedIncidents.length}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onRefresh={() => { setSearchQuery(''); loadLiveIncidents(); }}
-          onToggleFeed={isFeedOpen ? () => setIsFeedOpen(false) : handleFeedOpen}
-          feedNewCount={newCount}
-          onNew={() => setShowNewModal(true)}
-          breadcrumb="Update Required + Feed"
+        <GlobalNavbarActions
+          onNewTicket={() => setShowNewModal(true)}
         />
+      </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                <span className="font-semibold text-gray-800 text-sm">Major Incidents + Feed</span>
-                <span className="text-gray-300">·</span>
-                <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
+      {/* Two-Column Body below top navbar */}
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+        <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
+
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <PageHeader
+            totalCount={displayedIncidents.length}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onRefresh={() => { setSearchQuery(''); loadLiveIncidents(); }}
+            onToggleFeed={isFeedOpen ? () => setIsFeedOpen(false) : handleFeedOpen}
+            feedNewCount={newCount}
+            onNew={() => setShowNewModal(true)}
+            breadcrumb="Update Required + Feed"
+          />
+
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="font-semibold text-gray-800 text-sm">Major Incidents + Feed</span>
+                  <span className="text-gray-300">·</span>
+                  <span>{displayedIncidents.length === 0 ? '0' : `1–${displayedIncidents.length}`} of {displayedIncidents.length}</span>
+                </div>
               </div>
+
+              {displayedIncidents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+                  <p className="text-sm">No major incidents found</p>
+                </div>
+              ) : (
+                displayedIncidents.map((incident) => (
+                  <IncidentCard
+                    key={incident.id}
+                    incident={incident}
+                    onClick={() => setSelectedTicketForModal(incident)}
+                  />
+                ))
+              )}
             </div>
 
-            {displayedIncidents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-gray-400">
-                <p className="text-sm">No major incidents found</p>
-              </div>
-            ) : (
-              displayedIncidents.map((incident) => (
-                <IncidentCard
-                  key={incident.id}
-                  incident={incident}
-                  onClick={() => setSelectedTicketForModal(incident)}
-                />
-              ))
+            {isFeedOpen && (
+              <LiveActivityFeed
+                entries={feedEntries}
+                isLive={isLive}
+                onToggleLive={() => setIsLive((v) => !v)}
+                onClose={() => setIsFeedOpen(false)}
+              />
             )}
           </div>
-
-          {isFeedOpen && (
-            <LiveActivityFeed
-              entries={feedEntries}
-              isLive={isLive}
-              onToggleLive={() => setIsLive((v) => !v)}
-              onClose={() => setIsFeedOpen(false)}
-            />
-          )}
-        </div>
-      </main>
+        </main>
+      </div>
 
       {showNewModal && (
         <NewIncidentModal

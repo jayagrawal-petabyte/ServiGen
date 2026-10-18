@@ -145,39 +145,49 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   };
 
   return (
-    <div className="org-users-page">
-      {/* Header Section */}
-      <div className="org-users-header-row">
-        <div className="org-users-title-col">
-          <h1>Organisations - Users List</h1>
-          <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC &amp; Americas</p>
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fffaf7]">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Administration</span>
+          <span>/</span>
+          <span className="text-gray-900">Organisations & Users</span>
         </div>
+        <GlobalNavbarActions />
+      </header>
 
-        <div className="org-users-header-right">
-          {/* Sub actions */}
-          <div className="org-users-actions-row">
-            <button
-              type="button"
-              className="org-btn-refresh"
-              onClick={handleRefresh}
-              title="Refresh users directory"
-            >
-              <span>{isLoading ? '⏳' : '🔄'}</span>
-              <span>Refresh</span>
-            </button>
-            <button
-              type="button"
-              className="org-btn-add-user"
-              onClick={() => setIsAddUserModalOpen(true)}
-              title="Add a new organisation user"
-            >
-              <span>+</span>
-              <span>Add User</span>
-            </button>
-            <GlobalNavbarActions />
+      <div className="org-users-page flex-1">
+        {/* Header Section */}
+        <div className="org-users-header-row">
+          <div className="org-users-title-col">
+            <h1>Organisations - Users List</h1>
+            <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC &amp; Americas</p>
+          </div>
+
+          <div className="org-users-header-right">
+            {/* Sub actions */}
+            <div className="org-users-actions-row">
+              <button
+                type="button"
+                className="org-btn-refresh"
+                onClick={handleRefresh}
+                title="Refresh users directory"
+              >
+                <span>{isLoading ? '⏳' : '🔄'}</span>
+                <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                className="org-btn-add-user"
+                onClick={() => setIsAddUserModalOpen(true)}
+                title="Add a new organisation user"
+              >
+                <span>+</span>
+                <span>Add User</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Region Tabs */}
       <div className="org-region-tabs-row">
@@ -461,6 +471,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
