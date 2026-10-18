@@ -14,6 +14,8 @@ const db = require('../../config/db');
 const kpiData = {
   openIncidents: 42,
   resolvedIncidents: 128,
+  pendingApprovals: 5,
+  myAssignments: 3,
   majorIncidents: 4,
   unassignedIncidents: 16,
   avgResponseTimeMinutes: 144,
@@ -106,42 +108,84 @@ const newTickets = [
 
 // ─── Accessor Functions ───────────────────────────────────────────────────────
 
-const getKpis = async () => {
+const getOpenIncidents = async () => {
+  return await db.ticket.count({
+    where: {
+      status: {
+        notIn: ['Resolved', 'Closed', 'resolved', 'closed'],
+      },
+    },
+  });
+};
+
+const getResolvedIncidents = async () => {
+  return await db.ticket.count({
+    where: {
+      status: {
+        in: ['Resolved', 'Closed', 'resolved', 'closed'],
+      },
+    },
+  });
+};
+
+const getPendingApprovals = async () => {
+  return await db.approval.count({
+    where: {
+      status: {
+        in: ['Pending', 'pending'],
+      },
+    },
+  });
+};
+
+const getMyAssignments = async (userId) => {
+  if (userId) {
+    return await db.ticket.count({
+      where: {
+        assignedAgentId: userId,
+      },
+    });
+  }
+  return await db.ticket.count({
+    where: {
+      assignedAgentId: { not: null },
+    },
+  });
+};
+
+const getKpis = async (userId = null) => {
   try {
-    const [openCount, resolvedCount, majorCount, unassignedCount, ticketsForResponseTime] =
-      await Promise.all([
-        db.ticket.count({
-          where: {
-            status: {
-              notIn: ['Resolved', 'Closed', 'resolved', 'closed'],
-            },
-          },
-        }),
-        db.ticket.count({
-          where: {
-            status: {
-              in: ['Resolved', 'Closed', 'resolved', 'closed'],
-            },
-          },
-        }),
-        db.ticket.count({
-          where: {
-            OR: [
-              { ticketType: { in: ['Major Incident', 'MajorIncident'] } },
-              { priority: { in: ['Critical', 'P1', 'critical', 'p1'] } },
-            ],
-          },
-        }),
-        db.ticket.count({
-          where: {
-            assignedAgentId: null,
-          },
-        }),
-        db.ticket.findMany({
-          select: { createdAt: true, updatedAt: true },
-          take: 100,
-        }),
-      ]);
+    const [
+      openCount,
+      resolvedCount,
+      pendingApprovalsCount,
+      myAssignmentsCount,
+      majorCount,
+      unassignedCount,
+      ticketsForResponseTime,
+    ] = await Promise.all([
+      getOpenIncidents(),
+      getResolvedIncidents(),
+      getPendingApprovals(),
+      getMyAssignments(userId),
+      db.ticket.count({
+        where: {
+          OR: [
+            { ticketType: { in: ['Major Incident', 'MajorIncident'] } },
+            { priority: { in: ['Critical', 'P1', 'critical', 'p1'] } },
+          ],
+        },
+      }),
+      db.ticket.count({
+        where: {
+          assignedAgentId: null,
+        },
+      }),
+      db.ticket.findMany({
+        select: { createdAt: true, updatedAt: true },
+        take: 100,
+      }),
+    ]);
 
     let avgResponseTime = kpiData.avgResponseTimeMinutes;
     if (Array.isArray(ticketsForResponseTime) && ticketsForResponseTime.length > 0) {
@@ -164,6 +208,8 @@ const getKpis = async () => {
       ...kpiData,
       openIncidents: openCount,
       resolvedIncidents: resolvedCount,
+      pendingApprovals: pendingApprovalsCount,
+      myAssignments: myAssignmentsCount,
       majorIncidents: majorCount,
       unassignedIncidents: unassignedCount,
       avgResponseTimeMinutes: avgResponseTime,
@@ -272,6 +318,10 @@ const getAgentSummaryData = async (agentId) => {
 
 module.exports = {
   getKpis,
+  getOpenIncidents,
+  getResolvedIncidents,
+  getPendingApprovals,
+  getMyAssignments,
   getMoodEntries,
   saveMoodEntry,
   getTeamBreakdown,

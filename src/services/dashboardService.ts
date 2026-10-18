@@ -15,6 +15,8 @@ import type {
 export interface DashboardKpis {
   openIncidents: number;
   resolvedIncidents?: number;
+  pendingApprovals?: number;
+  myAssignments?: number;
   majorIncidents?: number;
   unassignedIncidents?: number;
   avgResponseTimeMinutes?: number;

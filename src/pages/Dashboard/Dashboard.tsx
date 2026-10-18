@@ -69,6 +69,7 @@ export default function Dashboard() {
 
   // Metrics state
   const [kpis, setKpis] = useState<DashboardKpis | null>(null);
+  const [kpisError, setKpisError] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
   // Lists state
@@ -109,6 +110,9 @@ export default function Dashboard() {
 
         if (kpiRes.status === 'fulfilled' && kpiRes.value) {
           setKpis(kpiRes.value);
+          setKpisError(false);
+        } else {
+          setKpisError(true);
         }
 
         if (sumRes.status === 'fulfilled' && sumRes.value) {
@@ -478,7 +482,9 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">{statusCounts.open}</div>
+              <div className="text-xl font-bold text-gray-900 leading-none">
+                {kpis?.openIncidents != null ? kpis.openIncidents : (kpisError ? '—' : statusCounts.open)}
+              </div>
               <div className="text-xs text-gray-500 font-medium mt-1">Open Tickets</div>
             </div>
           </div>
@@ -495,7 +501,9 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">{statusCounts.resolved}</div>
+              <div className="text-xl font-bold text-gray-900 leading-none">
+                {kpis?.resolvedIncidents != null ? kpis.resolvedIncidents : (kpisError ? '—' : statusCounts.resolved)}
+              </div>
               <div className="text-xs text-gray-500 font-medium mt-1">Resolved Tickets</div>
             </div>
           </div>
@@ -512,7 +520,9 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">{summary?.approvals?.pending ?? 5}</div>
+              <div className="text-xl font-bold text-gray-900 leading-none">
+                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (summary?.approvals?.pending ?? (kpisError ? '—' : 5))}
+              </div>
               <div className="text-xs text-gray-500 font-medium mt-1">Pending Approvals</div>
             </div>
           </div>
@@ -531,7 +541,9 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900 leading-none">{summary?.assignments?.total ?? 3}</div>
+              <div className="text-xl font-bold text-gray-900 leading-none">
+                {kpis?.myAssignments != null ? kpis.myAssignments : (summary?.assignments?.total ?? (kpisError ? '—' : 3))}
+              </div>
               <div className="text-xs text-gray-500 font-medium mt-1">My Assignments</div>
             </div>
           </div>

@@ -26,8 +26,8 @@ const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
  * Return live KPI metrics: open incidents, SLA breaches, average resolution time.
  * Formatted resolution time is appended for UI convenience.
  */
-const getDashboardKpis = async () => {
-  const kpis = await getKpis();
+const getDashboardKpis = async (userId = null) => {
+  const kpis = await getKpis(userId);
   const { avgResolutionTimeMinutes, avgResponseTimeMinutes } = kpis;
   const hours = Math.floor(avgResolutionTimeMinutes / 60);
   const minutes = avgResolutionTimeMinutes % 60;
