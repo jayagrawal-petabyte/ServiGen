@@ -12,8 +12,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onForgotPasswordClick,
 }) => {
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: '',
-    password: '',
+    username: 'agent001',
+    password: 'password',
     rememberMe: false,
   });
 
@@ -85,6 +85,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
         <div className="figma-card-box">
           {errorMessage && <div className="figma-error-msg">{errorMessage}</div>}
+
+          {/* Preset Demo Access Banner */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 12px',
+            marginBottom: '14px',
+            backgroundColor: '#fef3c7',
+            border: '1px solid #fde68a',
+            borderRadius: '10px',
+            fontSize: '11px',
+            color: '#92400e',
+          }}>
+            <span>Demo: <strong>agent001</strong> / <strong>password</strong></span>
+            <button
+              type="button"
+              onClick={() => setCredentials({ username: 'agent001', password: 'password', rememberMe: false })}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#78350f',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '11px',
+              }}
+            >
+              Auto-fill
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} noValidate>
             {/* User Name */}
