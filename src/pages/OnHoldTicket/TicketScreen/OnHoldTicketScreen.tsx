@@ -440,24 +440,10 @@ const OnHoldTicketScreen: React.FC = () => {
 
         {/* Top Nav */}
         <div className="top-navbar">
-          <div className="topnav-left">
-            <span className="breadcrumb">
-              <span className="bc-item">Tickets</span>
-              <span className="bc-sep">›</span>
-              <span className="bc-active">
-                {activeView === "My New Tickets" ? (
-                  <>
-                    <span style={{ marginRight: 5 }}>📰</span>
-                    My New Tickets
-                  </>
-                ) : (
-                  <>
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="#ef4444" style={{marginRight:5,flexShrink:0}}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                    {activeView}
-                  </>
-                )}
-              </span>
-            </span>
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <span>Service Desk</span>
+            <span>/</span>
+            <span className="text-gray-900">On-Hold Tickets</span>
           </div>
           <div className="topnav-tab-bar">
             <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>

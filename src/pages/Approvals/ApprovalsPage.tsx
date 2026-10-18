@@ -184,6 +184,11 @@ export default function ApprovalsPage() {
     <div className="approvals-page-wrapper">
       {/* Top Application Navbar matching UI/UX design */}
       <header className="approvals-top-navbar">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Approvals</span>
+        </div>
         <GlobalNavbarActions />
       </header>
 

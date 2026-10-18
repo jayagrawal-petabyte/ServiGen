@@ -108,9 +108,11 @@ const CustomLists: React.FC = () => {
   return (
     <div className="cl-modal-overlay flex flex-col">
       <div className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 shadow-xs">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-          Custom Lists Designer • ServiGen
-        </span>
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Custom Lists</span>
+        </div>
         <GlobalNavbarActions />
       </div>
       <div className="cl-modal">

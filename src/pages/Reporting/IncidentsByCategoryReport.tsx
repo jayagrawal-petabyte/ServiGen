@@ -224,29 +224,37 @@ export default function IncidentsByCategoryReport() {
 
       {/* ── Top Browser Navigation Bar (matching Image 2) ── */}
       <div className="reporting-top-nav-bar">
-        <div className="reporting-tabs-group">
-          <div className="reporting-active-tab">
-            <span className="tab-title">Reporting</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <span>Service Desk</span>
+            <span>/</span>
+            <span className="text-gray-900">Reporting</span>
+          </div>
+
+          <div className="reporting-tabs-group">
+            <div className="reporting-active-tab">
+              <span className="tab-title">Reporting</span>
+              <button
+                type="button"
+                className="tab-close-btn"
+                onClick={handleCloseTab}
+                title="Close Reporting Tab"
+              >
+                ✕
+              </button>
+            </div>
             <button
               type="button"
-              className="tab-close-btn"
-              onClick={handleCloseTab}
-              title="Close Reporting Tab"
+              className="reporting-new-tab-btn"
+              title="Open New Tab"
+              onClick={() => {
+                setStatusMessage('New report workspace opened');
+                setTimeout(() => setStatusMessage(null), 2000);
+              }}
             >
-              ✕
+              +
             </button>
           </div>
-          <button
-            type="button"
-            className="reporting-new-tab-btn"
-            title="Open New Tab"
-            onClick={() => {
-              setStatusMessage('New report workspace opened');
-              setTimeout(() => setStatusMessage(null), 2000);
-            }}
-          >
-            +
-          </button>
         </div>
 
         {/* Right utility items from Image 2 */}

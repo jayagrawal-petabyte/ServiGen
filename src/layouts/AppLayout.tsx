@@ -24,7 +24,7 @@ export const AppLayout: React.FC = () => {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#faf6f2]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-semibold text-slate-500">Authenticating ServiGen...</span>
         </div>
       </div>
@@ -66,7 +66,7 @@ export const AppLayout: React.FC = () => {
           </button>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm tracking-wide text-white">ServiGen</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-600/60 text-white font-medium">ITSM</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#eb6a47]/70 text-white font-medium">ITSM</span>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ export const AppLayout: React.FC = () => {
               setProfileMenuOpen((prev) => !prev);
               setMobileSidebarOpen(false);
             }}
-            className="w-8 h-8 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center border border-white/20 hover:bg-cyan-500 cursor-pointer transition-colors relative"
+            className="w-8 h-8 rounded-full bg-[#eb6a47] text-white font-bold text-xs flex items-center justify-center border border-white/20 hover:bg-[#d28072] cursor-pointer transition-colors relative"
             title={`Signed in as ${user?.fullName || 'Adam Admin'} (${presence})`}
             aria-label="User Profile"
           >
@@ -120,7 +120,7 @@ export const AppLayout: React.FC = () => {
                     <p className="text-[11px] text-slate-500 truncate">
                       {user?.email || 'admin@servigen.io'}
                     </p>
-                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#fff5f2] text-[#eb6a47] border border-[#f7c9bc]">
                       {user?.role || 'Administrator'}
                     </span>
                   </div>

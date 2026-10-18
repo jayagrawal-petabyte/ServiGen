@@ -298,8 +298,8 @@
 }
 
 .request-button {
-  border: 1.5px solid #00bcd4;
-  background: #00bcd4;
+  border: 1.5px solid #e49b8e;
+  background: #e49b8e;
   color: #fff;
 }
 
@@ -309,8 +309,8 @@
 }
 
 .request-button:hover {
-  background: #00acc1;
-  border-color: #00acc1;
+  background: #d28072;
+  border-color: #d28072;
 }
 
 /* EMPTY STATE */

@@ -225,6 +225,12 @@ export const RequestsPage: React.FC = () => {
       {/* ── Global Header Bar matching Image 2 ── */}
       <header className="requests-top-header">
         <div className="requests-breadcrumb-group">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mr-4">
+            <span>Service Desk</span>
+            <span>/</span>
+            <span className="text-gray-900">Requests</span>
+          </div>
+
           <div className="flex items-center gap-1 bg-slate-200/80 p-0.5 rounded-lg mr-2 text-xs">
             <button
               type="button"
@@ -243,22 +249,6 @@ export const RequestsPage: React.FC = () => {
               <span>Change Requests</span>
             </button>
           </div>
-
-          <span className="breadcrumb-link" onClick={() => { setSelectedTeam('All Teams'); setSelectedAgent('All Agents'); }}>
-            Requests
-          </span>
-          <span className="breadcrumb-sep">&gt;</span>
-          <span className="breadcrumb-link" onClick={() => setSelectedAgent('All Agents')}>
-            {selectedTeam}
-          </span>
-          {selectedAgent && selectedAgent !== 'All Agents' && (
-            <>
-              <span className="breadcrumb-sep">&gt;</span>
-              <span className="breadcrumb-current font-bold text-gray-800">
-                {selectedAgent === 'Demo User' ? 'Demo User' : selectedAgent}
-              </span>
-            </>
-          )}
         </div>
 
         <div className="requests-header-right-actions">

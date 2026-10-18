@@ -338,31 +338,10 @@ function TeamIncidentTable({
     <div className="team-shell">
       {/* Top Navbar Header */}
       <header className="team-top-navbar">
-        <div className="team-breadcrumb">
-          <span className="team-bc-link cursor-pointer hover:underline" onClick={() => navigate('/incidents')}>Incidents</span>
-          <span className="team-bc-sep">›</span>
-          {selectedView.kind === "breaching-sla" ? (
-            <span className="team-bc-active font-semibold text-slate-800 flex items-center gap-1.5">
-              <span style={{ fontSize: 13 }}>⏰</span> Breaching SLA
-            </span>
-          ) : (
-            <>
-              <span
-                className="team-bc-link cursor-pointer hover:underline"
-                onClick={() => setSelectedView({ kind: "team", team: selectedView.team })}
-              >
-                {selectedView.team}
-              </span>
-              {selectedView.kind === "agent" && (
-                <>
-                  <span className="team-bc-sep">›</span>
-                  <span className="team-bc-active font-semibold text-slate-800">
-                    {selectedView.agent}
-                  </span>
-                </>
-              )}
-            </>
-          )}
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Incidents</span>
         </div>
 
         <div className="team-header-actions">
