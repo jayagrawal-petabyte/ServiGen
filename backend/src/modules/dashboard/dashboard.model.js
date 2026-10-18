@@ -7,6 +7,8 @@
  * to Supabase/Prisma without changing the service layer.
  */
 
+const db = require('../../config/db');
+
 // ─── KPI Seed Data ────────────────────────────────────────────────────────────
 
 const kpiData = {
@@ -105,26 +107,72 @@ const newTickets = [
 // ─── Accessor Functions ───────────────────────────────────────────────────────
 
 const getKpis = async () => {
-  if (process.env.NODE_ENV !== 'test') {
-    try {
-      const [openCount, resolvedCount, majorCount, unassignedCount] = await Promise.all([
-        db.ticket.count({ where: { status: { in: ['Active', 'Pending', 'Open'] } } }),
-        db.ticket.count({ where: { status: { in: ['Actioned', 'Resolved', 'Closed'] } } }),
-        db.ticket.count({ where: { priority: { in: ['Critical', 'P1'] } } }),
-        db.ticket.count({ where: { assignedAgentId: null } }),
+  try {
+    const [openCount, resolvedCount, majorCount, unassignedCount, ticketsForResponseTime] =
+      await Promise.all([
+        db.ticket.count({
+          where: {
+            status: {
+              notIn: ['Resolved', 'Closed', 'resolved', 'closed'],
+            },
+          },
+        }),
+        db.ticket.count({
+          where: {
+            status: {
+              in: ['Resolved', 'Closed', 'resolved', 'closed'],
+            },
+          },
+        }),
+        db.ticket.count({
+          where: {
+            OR: [
+              { ticketType: { in: ['Major Incident', 'MajorIncident'] } },
+              { priority: { in: ['Critical', 'P1', 'critical', 'p1'] } },
+            ],
+          },
+        }),
+        db.ticket.count({
+          where: {
+            assignedAgentId: null,
+          },
+        }),
+        db.ticket.findMany({
+          select: { createdAt: true, updatedAt: true },
+          take: 100,
+        }),
       ]);
-      return {
-        ...kpiData,
-        openIncidents: openCount,
-        resolvedIncidents: resolvedCount,
-        majorIncidents: majorCount,
-        unassignedIncidents: unassignedCount,
-      };
-    } catch (_err) {
-      // Return static seed on DB unavailability
+
+    let avgResponseTime = kpiData.avgResponseTimeMinutes;
+    if (Array.isArray(ticketsForResponseTime) && ticketsForResponseTime.length > 0) {
+      const durations = ticketsForResponseTime
+        .map((t) => {
+          const created = new Date(t.createdAt).getTime();
+          const updated = new Date(t.updatedAt).getTime();
+          return Math.round((updated - created) / 60000);
+        })
+        .filter((d) => d > 0);
+
+      if (durations.length > 0) {
+        avgResponseTime = Math.round(
+          durations.reduce((sum, d) => sum + d, 0) / durations.length
+        );
+      }
     }
+
+    return {
+      ...kpiData,
+      openIncidents: openCount,
+      resolvedIncidents: resolvedCount,
+      majorIncidents: majorCount,
+      unassignedIncidents: unassignedCount,
+      avgResponseTimeMinutes: avgResponseTime,
+      lastUpdatedAt: new Date().toISOString(),
+    };
+  } catch (_err) {
+    // Database connection fallback
+    return { ...kpiData };
   }
-  return { ...kpiData };
 };
 
 /**
@@ -136,8 +184,6 @@ const getMoodEntries = async (agentId = null) => {
   }
   return [...moodEntries];
 };
-
-const db = require('../../config/db');
 
 /**
  * Save a new mood check-in for an agent. Replaces any existing entry for today (SCR-014)
