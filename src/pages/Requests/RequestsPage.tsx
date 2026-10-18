@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { api } from '../../services/apiClient';
 import './RequestsPage.css';
 
 export interface RequestItem {
@@ -370,6 +371,40 @@ export const RequestsPage: React.FC = () => {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadLiveRequests() {
+      try {
+        const res: any = await api.get('/api/tickets', { params: { ticketType: 'Service Request' } });
+        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (!active) return;
+        if (items.length > 0) {
+          const mapped: RequestItem[] = items.map((t: any) => ({
+            id: String(t.id).padStart(7, '0'),
+            slaTimeLeft: t.slaTimeLeft || '-12:00',
+            summary: t.summary || t.title || 'Service Request',
+            category: t.category || 'General Access',
+            priority: (t.priority || 'Medium') as RequestItem['priority'],
+            status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
+            type: t.ticketType || 'Service Request',
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
+            agent: typeof t.assignedAgent === 'string' ? t.assignedAgent : t.assignedAgent?.fullName || 'Support Agent',
+            team: t.assignedTeam || '1st Line Support',
+            requester: t.requester || 'User',
+            description: t.description || t.summary,
+          }));
+          setRequestsList(mapped);
+        }
+      } catch (err) {
+        console.warn('[RequestsPage] Live service requests fetch error, fallback active:', err);
+      }
+    }
+    void loadLiveRequests();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Auto-open modal if ?id= query param is specified
   useEffect(() => {

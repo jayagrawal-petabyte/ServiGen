@@ -160,11 +160,10 @@ export default function ApprovalsPage() {
   const handleResetData = async () => {
     setIsLoading(true);
     try {
-      const data = await approvalsApi.resetMockData();
-      setApprovals(data);
-      showToast('Reset sample approvals.', 'info');
+      await loadData();
+      showToast('Approvals reloaded from server.', 'info');
     } catch {
-      showToast('Failed to reset sample data.', 'error');
+      showToast('Failed to refresh approvals.', 'error');
     } finally {
       setIsLoading(false);
     }

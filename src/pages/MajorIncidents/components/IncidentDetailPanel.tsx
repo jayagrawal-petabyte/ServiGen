@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types/majorIncident.types';
 import PriorityBadge from './PriorityBadge';
 import { useAuth } from '../../Auth/AuthContext';
-import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
+import { api } from '../../../services/apiClient';
 import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
 interface IncidentDetailPanelProps {
@@ -37,7 +37,26 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const currentUserName = user?.fullName || 'Inesh Agarwal';
+  const currentUserName = user?.fullName || 'Support Agent';
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
+
+  React.useEffect(() => {
+    let active = true;
+    api.get('/api/users').then((res: any) => {
+      if (!active) return;
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        setOrgUsers(list.map((u: any) => ({
+          id: String(u.id),
+          fullName: u.fullName || u.username || 'Agent',
+          role: u.role || 'Agent',
+        })));
+      }
+    }).catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   const [updateText, setUpdateText] = useState('');
   const [isCustomAssignee, setIsCustomAssignee] = useState(false);
   const [customAssigneeInput, setCustomAssigneeInput] = useState('');
@@ -192,7 +211,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
                   <option value={incident.assignee}>{incident.assignee} (Current)</option>
                   <option value="Unassigned">Unassigned</option>
                   <optgroup label="Organisation Agents">
-                    {MOCK_ORGANISATION_USERS.map((u) => (
+                    {orgUsers.map((u) => (
                       <option key={u.id} value={u.fullName}>
                         {u.fullName} ({u.role})
                       </option>

@@ -803,8 +803,8 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       {activeFlyout === 'profile' && (
         <div className="global-flyout-dropdown global-profile-flyout">
           <div className="global-profile-header-card">
-            <div className="global-profile-name">{user?.fullName || 'Inesh Agarwal'}</div>
-            <div className="global-profile-email">{user?.email || 'inesh@servigen.io'}</div>
+            <div className="global-profile-name">{user?.fullName || 'Demo User'}</div>
+            <div className="global-profile-email">{user?.email || 'user@servigen.io'}</div>
             <span className="global-profile-role-tag">{user?.role || 'Support Lead'}</span>
           </div>
 

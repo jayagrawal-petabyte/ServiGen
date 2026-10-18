@@ -216,9 +216,13 @@ export default function MyWork() {
 
   const allTickets = useMemo(() => {
     const map = new Map<string, Ticket>();
-    MOCK_TICKETS.forEach((t) => map.set(t.id, t));
     serverTickets.forEach((t) => map.set(t.id, t));
-    tickets.forEach((t) => map.set(t.id, t));
+    tickets.forEach((t) => {
+      // Don't let legacy mock tickets leak in if server tickets exist
+      if (!t.id.startsWith('mock-')) {
+        map.set(t.id, t);
+      }
+    });
     return Array.from(map.values());
   }, [serverTickets, tickets]);
 

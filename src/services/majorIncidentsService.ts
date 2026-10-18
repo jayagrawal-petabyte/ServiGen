@@ -146,7 +146,7 @@ export function mapBackendToFrontendIncident(backend: BackendMajorIncident): Maj
 
     let role: UserRole = 'Agent';
     const authorLower = (u.author || '').toLowerCase();
-    if (authorLower.includes('admin') || authorLower.includes('inesh') || authorLower.includes('commander')) {
+    if (authorLower.includes('admin') || authorLower.includes('commander')) {
       role = 'Admin';
     } else if (authorLower.includes('lead') || authorLower.includes('manager')) {
       role = 'Manager';

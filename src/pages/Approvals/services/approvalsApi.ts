@@ -230,7 +230,7 @@ export const approvalsApi = {
       baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
     } else {
       try {
-        const response: any = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
+        const response: any = await apiClient.get<BackendApproval[]>('/api/approvals');
         const backendItems = Array.isArray(response?.data)
           ? response.data
           : Array.isArray(response)
@@ -242,7 +242,7 @@ export const approvalsApi = {
           baseApprovals = [];
         }
       } catch (err) {
-        console.warn('Backend /api/approvals/pending offline or unreachable:', err);
+        console.warn('Backend /api/approvals offline or unreachable:', err);
         baseApprovals = [];
       }
     }

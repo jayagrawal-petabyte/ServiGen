@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/apiClient';
 import { majorIncidentsService } from '../../services/majorIncidentsService';
 import { useAuth } from '../../pages/Auth/AuthContext';
-import { MOCK_ORGANISATION_USERS } from '../../pages/Auth/mockAuthData';
 import './AgentKpiDrawer.css';
 
 interface AgentKpiDrawerProps {
@@ -31,25 +30,12 @@ interface LiveTicketItem {
 
 export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
   const { user } = useAuth();
-  const currentUserName = user?.fullName || 'Inesh Agarwal';
+  const currentUserName = user?.fullName || 'Support Agent';
 
   const [selectedAgent, setSelectedAgent] = useState('All Agents');
   const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
   const [agentSearch, setAgentSearch] = useState('');
-  const [agentList, setAgentList] = useState<string[]>(() => {
-    const names = new Set<string>();
-    names.add('All Agents');
-    names.add('Demo User');
-    names.add('Jennifer Williams');
-    names.add('Inesh Agarwal');
-    names.add('Alex Agent');
-    names.add('Sarah Support');
-    names.add('James Brown');
-    names.add('David Chen');
-    names.add('Elena Rostova');
-    MOCK_ORGANISATION_USERS.forEach((u) => names.add(u.fullName));
-    return Array.from(names);
-  });
+  const [agentList, setAgentList] = useState<string[]>(['All Agents']);
 
   const [isLoading, setIsLoading] = useState(true);
   const [kpis, setKpis] = useState<LiveKpiData | null>(null);
@@ -100,7 +86,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         userRes.value.data.forEach((u: any) => {
           if (u.fullName) fullNames.add(u.fullName);
         });
-        MOCK_ORGANISATION_USERS.forEach((u) => fullNames.add(u.fullName));
         setAgentList(Array.from(fullNames));
       }
 

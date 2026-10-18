@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { MajorIncident, Priority } from '../types/majorIncident.types';
-import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
+import { api } from '../../../services/apiClient';
 import { mockConfigurationItems } from '../../../data/mockCmdbData';
 
 interface NewIncidentModalProps {
@@ -33,10 +33,26 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
   const [product, setProduct]   = useState('');
   const [assignee, setAssignee] = useState('');
   const [errors, setErrors]     = useState<{ title?: string }>({});
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     titleRef.current?.focus();
+    let active = true;
+    api.get('/api/users').then((res: any) => {
+      if (!active) return;
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        setOrgUsers(list.map((u: any) => ({
+          id: String(u.id),
+          fullName: u.fullName || u.username || 'Agent',
+          role: u.role || 'Agent',
+        })));
+      }
+    }).catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   // close on Escape
@@ -182,7 +198,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
             />
             <datalist id="org-users-list">
-              {MOCK_ORGANISATION_USERS.map((u) => (
+              {orgUsers.map((u) => (
                 <option key={u.id} value={u.fullName} label={u.role} />
               ))}
               <option value="Unassigned" />

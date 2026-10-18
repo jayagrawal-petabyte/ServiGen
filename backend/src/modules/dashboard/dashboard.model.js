@@ -104,10 +104,28 @@ const newTickets = [
 
 // ─── Accessor Functions ───────────────────────────────────────────────────────
 
-/**
- * Return the current KPI snapshot (SCR-014)
- */
-const getKpis = async () => ({ ...kpiData });
+const getKpis = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const [openCount, resolvedCount, majorCount, unassignedCount] = await Promise.all([
+        db.ticket.count({ where: { status: { in: ['Active', 'Pending', 'Open'] } } }),
+        db.ticket.count({ where: { status: { in: ['Actioned', 'Resolved', 'Closed'] } } }),
+        db.ticket.count({ where: { priority: { in: ['Critical', 'P1'] } } }),
+        db.ticket.count({ where: { assignedAgentId: null } }),
+      ]);
+      return {
+        ...kpiData,
+        openIncidents: openCount,
+        resolvedIncidents: resolvedCount,
+        majorIncidents: majorCount,
+        unassignedIncidents: unassignedCount,
+      };
+    } catch (_err) {
+      // Return static seed on DB unavailability
+    }
+  }
+  return { ...kpiData };
+};
 
 /**
  * Return all mood entries, optionally scoped to a single agent (SCR-014)

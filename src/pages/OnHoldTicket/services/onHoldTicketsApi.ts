@@ -214,12 +214,12 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promis
  * Fetch queue counts from backend GET /api/dashboard/summary
  */
 export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
-  const fallbackCounts: QueueCounts = {
-    active: 12,
-    onHold: 24,
-    actioned: 84,
-    pending: 24,
-    total: 120,
+  const emptyCounts: QueueCounts = {
+    active: 0,
+    onHold: 0,
+    actioned: 0,
+    pending: 0,
+    total: 0,
   };
 
   try {
@@ -228,16 +228,16 @@ export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
     if (counts && typeof counts.active === 'number') {
       return {
         active: counts.active,
-        onHold: counts.onHold ?? fallbackCounts.onHold,
-        actioned: counts.actioned ?? fallbackCounts.actioned,
-        pending: counts.pending ?? fallbackCounts.pending,
-        total: counts.total ?? fallbackCounts.total,
+        onHold: counts.onHold ?? 0,
+        actioned: counts.actioned ?? 0,
+        pending: counts.pending ?? 0,
+        total: counts.total ?? 0,
       };
     }
-    return fallbackCounts;
+    return emptyCounts;
   } catch (error) {
-    console.warn('[OnHoldApi] Live dashboard summary unavailable, using fallback counts:', error);
-    return fallbackCounts;
+    console.warn('[OnHoldApi] Live dashboard summary unavailable:', error);
+    return emptyCounts;
   }
 }
 

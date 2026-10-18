@@ -44,14 +44,9 @@ export default function IncidentsByCategoryReport() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
   const [tickets, setTickets] = useState<ReportTicketRow[]>([]);
-  const [showTodoPopover, setShowTodoPopover] = useState(false);
   const [showKpiDashboard, setShowKpiDashboard] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
   const [showTimesheetPopover, setShowTimesheetPopover] = useState(false);
-  const [todoDate, setTodoDate] = useState('17/09/2026');
-  const [todoItems, setTodoItems] = useState<Array<{ id: string; text: string; done: boolean }>>([]);
-  const [newTodoText, setNewTodoText] = useState('');
-  const [isAddingTodo, setIsAddingTodo] = useState(false);
 
   React.useEffect(() => {
     let mounted = true;

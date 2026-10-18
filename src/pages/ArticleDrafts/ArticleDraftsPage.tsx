@@ -71,7 +71,7 @@ export default function ArticleDraftsPage() {
         (draft) =>
           draft.author.toLowerCase().includes('demo') ||
           draft.author.toLowerCase().includes('user') ||
-          draft.author.toLowerCase().includes('inesh')
+          draft.author.toLowerCase().includes('admin')
       );
     } else if (activeSubnavView === 'by-agent') {
       result = result.filter((draft) => draft.agent.trim().length > 0);

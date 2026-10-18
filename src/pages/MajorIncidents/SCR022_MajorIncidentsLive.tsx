@@ -90,7 +90,7 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   },
   profile: {
     title: '👤 Your Profile',
-    body: 'Inesh Agarwal\nEmail: inesh@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online',
+    body: 'Support Agent\nEmail: agent@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online',
   },
 };
 
