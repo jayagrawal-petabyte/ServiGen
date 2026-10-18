@@ -4,6 +4,7 @@ import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import PageHeader from './components/PageHeader';
 import NewIncidentModal from './components/NewIncidentModal';
 import TicketDetailModal from '../../components/TicketDetailModal/TicketDetailModal';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { majorIncidentsService } from '../../services/majorIncidentsService';
 import type { MajorIncident, Priority } from './types/majorIncident.types';
 
@@ -219,10 +220,33 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+      {/* Full-width top navbar */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+          <span
+            className="text-gray-400 hover:text-gray-700 cursor-pointer"
+            onClick={() => setSelectedListId('update-required')}
+          >
+            Major Incidents
+          </span>
+          <span className="text-gray-300">›</span>
+          <span className="flex items-center gap-1.5 font-bold text-gray-900">
+            <span className="w-2.5 h-2.5 bg-red-500 rounded-xs inline-block shrink-0" />
+            List View
+          </span>
+        </div>
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <GlobalNavbarActions
+          onNewTicket={() => setShowNewModal(true)}
+        />
+      </header>
+
+      {/* Two-Column Body below top navbar */}
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+        <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
+
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PageHeader
           totalCount={totalCount}
           pageStart={pageStart}
@@ -304,6 +328,7 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
           </div>
         </div>
       </main>
+      </div>
 
       {showNewModal && (
         <NewIncidentModal

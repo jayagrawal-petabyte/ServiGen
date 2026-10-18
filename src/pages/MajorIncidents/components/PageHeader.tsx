@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { GlobalNavbarActions } from '../../../components/shared/GlobalNavbarActions';
 
 interface PageHeaderProps {
   onToggleFeed?: () => void;
@@ -88,51 +87,40 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   };
 
   return (
-    <header className="shrink-0 bg-white border-b border-gray-200 relative">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          {/* Breadcrumb or title context handled below */}
-        </div>
-
-        <GlobalNavbarActions
-          onGetStarted={onGetStarted ?? handleNew}
-          onNewTicket={handleNew}
-        />
-      </div>
-
-      <div className="flex items-center justify-between px-4 py-1.5">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 shrink-0 overflow-hidden">
-          <span className="text-gray-400 hover:text-gray-600 cursor-pointer whitespace-nowrap">Major Incidents</span>
-          <span className="text-gray-300">›</span>
-          <span className="flex items-center gap-1 font-medium text-gray-700 whitespace-nowrap">
-            {!breadcrumb.includes('🌐') && !breadcrumb.includes('📊') && !breadcrumb.includes('📅') && (
-              <span className="w-3 h-3 bg-red-500 rounded-sm inline-block shrink-0" />
-            )}
-            {breadcrumb}
-          </span>
+    <div className="shrink-0 bg-white border-b border-gray-200 relative">
+      <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleNew}
+            className="w-7 h-7 rounded-full border border-[#eb6a47] text-[#eb6a47] flex items-center justify-center bg-white hover:bg-[#fdede7] transition-colors cursor-pointer text-sm font-bold shadow-2xs"
+            title="Create New Major Incident"
+          >
+            +
+          </button>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-gray-500 whitespace-nowrap">
+            {totalCount === 0
+              ? '0-0 of 0'
+              : `${pageStart ?? 1}–${pageEnd ?? totalCount} of ${totalCount}`}
+          </span>
+
           <button
             onClick={onPrev}
             disabled={prevDisabled}
-            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
           >
             ‹
           </button>
           <button
             onClick={onNext}
             disabled={nextDisabled}
-            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
           >
             ›
           </button>
-
-          <span className="text-xs text-gray-500 whitespace-nowrap">
-            {totalCount === 0
-              ? '0 of 0'
-              : `${pageStart ?? 1}–${pageEnd ?? totalCount} of ${totalCount}`}
-          </span>
 
           {onSearchChange && (
             <div className="relative">
@@ -176,7 +164,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
           <button
             onClick={handleNew}
-            className="flex items-center gap-1 bg-[#13273e] hover:bg-[#0c1a2b] text-white text-xs font-semibold px-3.5 py-1 rounded-full transition-colors shadow-xs whitespace-nowrap"
+            className="flex items-center gap-1 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-semibold px-3.5 py-1 rounded-full transition-colors shadow-xs whitespace-nowrap cursor-pointer"
           >
             <span className="text-sm leading-none font-light">+</span> New
           </button>
@@ -206,7 +194,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         </div>
       )}
-    </header>
+    </div>
   );
 };
 
