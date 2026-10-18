@@ -269,23 +269,33 @@ export default function MyWork() {
     const logs = timeLogs[selectedTicket.id] || [];
 
     return (
-      <div className="min-h-full bg-slate-50 px-6 py-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="flex-1 w-full min-h-full flex flex-col bg-slate-50">
+        {/* Top Navbar */}
+        <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <span className="hover:text-gray-800 cursor-pointer" onClick={() => setSelectedTicket(null)}>Service Desk</span>
+            <span>/</span>
+            <span className="hover:text-gray-800 cursor-pointer" onClick={() => setSelectedTicket(null)}>My Work</span>
+            <span>/</span>
+            <span className="text-gray-900">{selectedTicket.id}</span>
+          </div>
+          <GlobalNavbarActions
+            onOpenTicket={(id) => {
+              const match = allTickets.find((t) => t.id === id);
+              if (match) setSelectedTicket(match);
+            }}
+          />
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="mx-auto max-w-6xl">
             <button
               type="button"
               onClick={() => setSelectedTicket(null)}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
               ← Back to My Work
             </button>
-            <GlobalNavbarActions
-              onOpenTicket={(id) => {
-                const match = allTickets.find((t) => t.id === id);
-                if (match) setSelectedTicket(match);
-              }}
-            />
-          </div>
 
           <div className="mb-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -484,102 +494,112 @@ export default function MyWork() {
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
-    <div className="min-h-full bg-slate-50 flex">
-      {/* Left Sidebar Panel */}
-      <aside
-        className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border-r border-[#d4887b] ${
-          isSidebarCollapsed ? "w-16 px-2" : "w-64 px-4"
-        }`}
-      >
-        {/* Sidebar Header with Collapse Toggle */}
-        <div
-          className={
-            "flex items-center mb-4 pb-3 border-b border-[#d4887b] " +
-            (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
-          }
-        >
-          {!isSidebarCollapsed && (
-            <span className="text-xs font-bold uppercase tracking-wider text-[#542d25]">
-              Views
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-            className="inline-flex items-center justify-center rounded-md p-1.5 text-[#3a201a] hover:bg-black/5 transition-colors text-xs font-bold cursor-pointer"
-            title={isSidebarCollapsed ? "Expand sidebar (>>)" : "Collapse sidebar (<<)"}
-            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isSidebarCollapsed ? ">>" : "<<"}
-          </button>
+    <div className="flex-1 w-full min-h-full flex flex-col bg-slate-50">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">{activeView === "My List" ? "My Work" : activeView}</span>
         </div>
+        <GlobalNavbarActions
+          onOpenTicket={(id) => {
+            const match = allTickets.find((t) => t.id === id);
+            if (match) setSelectedTicket(match);
+          }}
+        />
+      </header>
 
-        {/* View Options List */}
-        <nav className="flex flex-col gap-1.5" aria-label="Views">
-          {VIEW_OPTIONS.map((item) => {
-            const isActive = activeView === item.label;
+      {/* ── Two-Column Layout (Sidebar + Main Content) ── */}
+      <div className="flex flex-1 min-h-0 w-full">
+        {/* Left Sidebar Panel */}
+        <aside
+          className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border-r border-[#d4887b] h-auto min-h-full ${
+            isSidebarCollapsed ? "w-16 px-2" : "w-64 px-4"
+          }`}
+        >
+          {/* Sidebar Header with Collapse Toggle */}
+          <div
+            className={
+              "flex items-center mb-4 pb-3 border-b border-[#d4887b] " +
+              (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
+            }
+          >
+            {!isSidebarCollapsed && (
+              <span className="text-xs font-bold uppercase tracking-wider text-[#542d25]">
+                Views
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              className="inline-flex items-center justify-center rounded-md p-1.5 text-[#3a201a] hover:bg-black/5 transition-colors text-xs font-bold cursor-pointer"
+              title={isSidebarCollapsed ? "Expand sidebar (>>)" : "Collapse sidebar (<<)"}
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarCollapsed ? ">>" : "<<"}
+            </button>
+          </div>
 
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveView(item.label)}
-                title={isSidebarCollapsed ? item.label : undefined}
-                className={
-                  "flex items-center rounded-lg text-sm transition-all cursor-pointer " +
-                  (isSidebarCollapsed
-                    ? "justify-center w-10 h-10 mx-auto p-0 "
-                    : "w-full gap-3 px-3 py-2.5 ") +
-                  (isActive
-                    ? "bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs"
-                    : "text-[#3a201a] hover:bg-black/5 font-medium")
-                }
-              >
-                <div className={`shrink-0 ${isActive ? "text-[#1c0f0c]" : "text-[#3a201a]"}`}>
-                  {item.icon(isActive)}
-                </div>
-                {!isSidebarCollapsed && (
-                  <span className="truncate">{item.label}</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
+          {/* View Options List */}
+          <nav className="flex flex-col gap-1.5" aria-label="Views">
+            {VIEW_OPTIONS.map((item) => {
+              const isActive = activeView === item.label;
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0 px-6 py-6 overflow-y-auto">
-        <div className="mx-auto max-w-6xl">
-          <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">
-                {activeView === "My List" ? "My Work" : activeView}
-              </h1>
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveView(item.label)}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                  className={
+                    "flex items-center rounded-lg text-sm transition-all cursor-pointer " +
+                    (isSidebarCollapsed
+                      ? "justify-center w-10 h-10 mx-auto p-0 "
+                      : "w-full gap-3 px-3 py-2.5 ") +
+                    (isActive
+                      ? "bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs"
+                      : "text-[#3a201a] hover:bg-black/5 font-medium")
+                  }
+                >
+                  <div className={`shrink-0 ${isActive ? "text-[#1c0f0c]" : "text-[#3a201a]"}`}>
+                    {item.icon(isActive)}
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <span className="truncate">{item.label}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Demo User'}</span>, sorted by priority.
-              </p>
-            </div>
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 px-6 py-6 overflow-y-auto">
+          <div className="mx-auto max-w-6xl">
+            <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                  {activeView === "My List" ? "My Work" : activeView}
+                </h1>
 
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-slate-500 hidden sm:block">
+                <p className="mt-1 text-sm text-slate-500">
+                  Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Demo User'}</span>, sorted by priority.
+                </p>
+              </div>
+
+              <div className="text-xs font-semibold px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 shadow-2xs self-start sm:self-auto">
                 {filteredTickets.length} tickets
               </div>
-              <GlobalNavbarActions
-                onOpenTicket={(id) => {
-                  const match = allTickets.find((t) => t.id === id);
-                  if (match) setSelectedTicket(match);
-                }}
-              />
-            </div>
-          </header>
+            </header>
 
-          <div className="mb-4 border-b border-slate-200">
-            <div className="flex gap-6">
+            <div className="mb-4 border-b border-slate-200">
+              <div className="flex gap-6">
               {STATUS_TABS.map((status) => {
                 const count = allTickets.filter(
                   (ticket) => ticket.status === status
@@ -702,8 +722,9 @@ export default function MyWork() {
             </table>
           </div>
         </div>
-      </div>
+      </main>
     </div>
-  );
+  </div>
+);
 }
 
