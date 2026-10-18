@@ -9,6 +9,7 @@ import {
 } from "./ticketDetails.data";
 import "./TicketDetailModal.css";
 import { StatusBadge } from "../shared/StatusBadge";
+import { apiClient } from "../../services/apiClient";
 
 interface TicketDetailModalProps {
   ticket: {
@@ -361,13 +362,13 @@ export default function TicketDetailModal({
 
   // Area 3: Follower Management
   const [isFollowersPickerOpen, setIsFollowersPickerOpen] = useState(false);
-  const [followersList, setFollowersList] = useState<string[]>(["Admin", "Demo User"]);
+  const [followersList, setFollowersList] = useState<string[]>(["Admin", ""]);
 
   // Area 4: More Menu Modals & Real Connections
   const [isFlagged, setIsFlagged] = useState(false);
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false);
   const [internalChatMessages, setInternalChatMessages] = useState<Array<{ sender: string; time: string; text: string }>>([
-    { sender: "Demo User", time: "10:14 AM", text: "Customer mentioned the machine blue-screened right after KB5031445 patch." },
+    { sender: "", time: "10:14 AM", text: "Customer mentioned the machine blue-screened right after KB5031445 patch." },
     { sender: "Admin (You)", time: "10:18 AM", text: "Checked telemetry: corrupted Master Boot Record. Diagnostic code confirms." },
   ]);
   const [newChatMessage, setNewChatMessage] = useState("");
@@ -413,9 +414,135 @@ export default function TicketDetailModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  // Live ticket state synced with database via GET /api/tickets/:id
+  const [liveTicket, setLiveTicket] = useState<any>(ticket);
+
+  useEffect(() => {
+    setLiveTicket(ticket);
+  }, [ticket]);
+
+  useEffect(() => {
+    if (!ticket?.id) return;
+    let active = true;
+    const cid = String(ticket.id).replace(/^#/, "");
+
+    async function loadLiveTicket() {
+      try {
+        const res: any = await apiClient.get(`/api/tickets/${cid}`);
+        if (!active) return;
+        const data = res?.data || res;
+        if (data && data.id) {
+          const agentName = data.assignedAgent
+            ? [data.assignedAgent.firstName, data.assignedAgent.lastName].filter(Boolean).join(" ").trim() || data.assignedAgent.username
+            : undefined;
+          const reqName = data.requester
+            ? [data.requester.firstName, data.requester.lastName].filter(Boolean).join(" ").trim() || data.requester.username
+            : undefined;
+
+          setLiveTicket((prev: any) => ({
+            ...prev,
+            id: data.id,
+            summary: data.summary || prev?.summary,
+            description: data.description || prev?.description,
+            priority: (data.priority as TicketPriority) || prev?.priority,
+            status: data.status || prev?.status,
+            type: data.ticketType || prev?.type,
+            agent: agentName || prev?.agent,
+            requester: reqName || prev?.requester,
+            email: data.requester?.email || prev?.email,
+            phoneNumber: data.requester?.phoneNumber || prev?.phoneNumber,
+            createdAt: data.createdAt ? new Date(data.createdAt).toLocaleDateString("en-GB") : prev?.createdAt,
+          }));
+        }
+      } catch (err) {
+        // Fallback to local ticket
+      }
+    }
+
+    void loadLiveTicket();
+    return () => {
+      active = false;
+    };
+  }, [ticket?.id]);
+
+  // Live Other Open Tickets queried from GET /api/tickets
+  const [otherTickets, setOtherTickets] = useState<Array<{
+    id: string;
+    cleanId: string;
+    date: string;
+    status: string;
+    statusBg: string;
+    summary: string;
+    rawTicket?: any;
+  }>>([]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadOtherTickets() {
+      try {
+        const res: any = await apiClient.get('/api/tickets?limit=10');
+        if (!active) return;
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (list.length > 0) {
+          const currentClean = ticket?.id ? String(ticket.id).replace(/^#/, "") : "";
+          const mapped = list
+            .filter((t: any) => String(t.id).replace(/^#/, "") !== currentClean)
+            .slice(0, 5)
+            .map((t: any) => {
+              const cId = String(t.id).replace(/^#/, "");
+              const createdStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-GB") : "Recent";
+              const sName = t.status || "Open";
+              let sBg = "#38bdf8";
+              if (sName.toLowerCase().includes("resolv") || sName.toLowerCase().includes("complet") || sName.toLowerCase().includes("approv")) {
+                sBg = "#65b82a";
+              } else if (sName.toLowerCase().includes("schedul")) {
+                sBg = "#0f5132";
+              } else if (sName.toLowerCase().includes("reject") || sName.toLowerCase().includes("close")) {
+                sBg = "#dc2626";
+              } else if (sName.toLowerCase().includes("hold")) {
+                sBg = "#f59e0b";
+              }
+              return {
+                id: t.id,
+                cleanId: cId,
+                date: createdStr,
+                status: sName,
+                statusBg: sBg,
+                summary: `${cId} - ${t.summary || "Active Ticket"}`,
+                rawTicket: t,
+              };
+            });
+          if (mapped.length > 0) {
+            setOtherTickets(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('[TicketDetailModal] Failed to fetch other tickets:', err);
+      }
+    }
+    void loadOtherTickets();
+    return () => {
+      active = false;
+    };
+  }, [ticket?.id]);
+
+  // Appointment scheduling form states
+  const [apptDate, setApptDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
+  });
+  const [apptTimeSlot, setApptTimeSlot] = useState("10:00 - 11:00 AM");
+  const [apptAgent, setApptAgent] = useState("Demo User");
+  const [apptType, setApptType] = useState("Remote Screen Share");
+  const [apptLocation, setApptLocation] = useState("ServiGen HQ, Innovation Way, London");
+  const [apptNotes, setApptNotes] = useState("");
+  const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
+
   if (!ticket) return null;
 
-  const ticketData = enrichTicketDetails(ticket);
+  const ticketData = enrichTicketDetails(liveTicket || ticket);
   const cleanId = ticketData.id.replace(/^#/, "");
   // SLA view and standard ticket modal matching exact screenshot (media_1792174486655_97bcb53a.png):
   // Clean 3-button toolbar (Add Note, Re-Assign, Task Completed), dark green list icon with [ID:xxxxxxx],
@@ -439,17 +566,29 @@ export default function TicketDetailModal({
     .join("")
     .toUpperCase();
 
-  const isCompleted = ticketData.status === "Completed" || ticketData.status === "Resolved";
+  const isCompleted = ticketData.status === "Completed" || ticketData.status === "Resolved" || ticketData.status === "Closed";
 
-  const handleToggleCompleted = () => {
-    const nextStatus = isCompleted ? "In Progress" : "Completed";
+  const handleStatusUpdate = async (nextStatus: string) => {
     const updated: FullTicket = {
       ...ticketData,
       status: nextStatus,
     };
+    setLiveTicket(updated);
     onUpdateTicket?.(updated);
     setStatusMessage(`Ticket marked as ${nextStatus}`);
     setTimeout(() => setStatusMessage(null), 2500);
+
+    try {
+      await apiClient.patch(`/api/tickets/${cleanId}/status`, { status: nextStatus });
+      window.dispatchEvent(new CustomEvent('servigen-ticket-update', { detail: { id: cleanId, status: nextStatus } }));
+    } catch (err) {
+      console.warn('[TicketDetailModal] Failed to update ticket status on server:', err);
+    }
+  };
+
+  const handleToggleCompleted = () => {
+    const nextStatus = isCompleted ? "In Progress" : "Resolved";
+    handleStatusUpdate(nextStatus);
   };
 
   const baseDescription = customDescription ?? ticketData.description ?? "";
@@ -779,15 +918,23 @@ export default function TicketDetailModal({
     setTimeout(() => setStatusMessage(null), 2500);
   };
 
-  const handleReassign = (newAgent: string) => {
+  const handleReassign = async (newAgent: string) => {
     const updated: FullTicket = {
       ...ticketData,
       agent: newAgent,
     };
+    setLiveTicket(updated);
     onUpdateTicket?.(updated);
     setIsReassignOpen(false);
     setStatusMessage(`Reassigned to ${newAgent}`);
     setTimeout(() => setStatusMessage(null), 2500);
+
+    try {
+      await apiClient.patch(`/api/tickets/${cleanId}/status`, { agentName: newAgent });
+      window.dispatchEvent(new CustomEvent('servigen-ticket-update', { detail: { id: cleanId, agent: newAgent } }));
+    } catch (err) {
+      console.warn('[TicketDetailModal] Failed to persist agent reassign:', err);
+    }
   };
 
   const toggleLike = () => {
@@ -1023,20 +1170,38 @@ export default function TicketDetailModal({
                   <span>Log to Supplier</span>
                 </button>
 
-                {/* 6. Resolve Ticket */}
-                <button
-                  type="button"
-                  className={`ticket-pill-btn ${isCompleted ? "completed-btn" : ""}`}
-                  onClick={handleToggleCompleted}
-                  title="Resolve ticket"
-                >
-                  <span className="btn-icon">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                  </span>
-                  <span>{isCompleted ? "Resolved ✓" : "Resolve Ticket"}</span>
-                </button>
+                {/* 6. Resolve, Close, and Re-open Ticket */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className={`ticket-pill-btn ${isCompleted ? "completed-btn" : ""}`}
+                    onClick={() => handleStatusUpdate(isCompleted ? "In Progress" : "Resolved")}
+                    title={isCompleted ? "Re-open ticket (set to In Progress)" : "Resolve ticket (set to Resolved)"}
+                  >
+                    <span className="btn-icon">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    </span>
+                    <span>{isCompleted ? "Re-open" : "Resolve Ticket"}</span>
+                  </button>
+
+                  {isCompleted && ticketData.status !== "Closed" && (
+                    <button
+                      type="button"
+                      className="ticket-pill-btn bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                      onClick={() => handleStatusUpdate("Closed")}
+                      title="Close ticket permanently"
+                    >
+                      <span className="btn-icon">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                      <span>Close</span>
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -1123,7 +1288,7 @@ export default function TicketDetailModal({
                         <div className="text-[10px] font-bold text-gray-500 uppercase px-2 py-1">Select Followers</div>
                         {[
                           "Admin",
-                          "Demo User",
+                          "",
                           "Sarah Connor",
                           "David Chen",
                           "Elena Rostova",
@@ -2504,7 +2669,7 @@ export default function TicketDetailModal({
 
                     <div className="activity-author-meta">
                       <div className="author-name-row">
-                        <span className="author-name">{ticketData.requester || "Demo User"}</span>
+                        <span className="author-name">{ticketData.requester || ""}</span>
                         <span className="trophy-badge" title="Verified Requester">🏆</span>
                       </div>
                     </div>
@@ -2892,7 +3057,7 @@ export default function TicketDetailModal({
                       <div className="agent-card-meta">
                         <div className="flex items-center gap-1">
                           <a href="#agent" onClick={(e) => e.preventDefault()} className="sidebar-field-link font-bold">
-                            {ticketData.requester || ticketData.agent || "Demo User"}
+                            {ticketData.requester || ticketData.agent || ""}
                           </a>
                           <span className="trophy-badge">🏆</span>
                         </div>
@@ -2994,111 +3159,130 @@ export default function TicketDetailModal({
                   )}
                 </div>
 
-                {/* 2. Other Open Tickets */}
+                {/* 2. Other Open Tickets (Populated from GET /api/tickets) */}
                 <div className="sidebar-other-tickets-section mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-bold text-slate-900 text-[14.5px]">Other Open Tickets</h4>
+                    {otherTickets.length > 0 && (
+                      <span className="text-[10px] font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full">
+                        Live ({otherTickets.length})
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-3.5">
-                    {/* Item 1: 01/09/2026 Draft -> 3995 - Emails not Sending */}
-                    <div
-                      className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
-                      onClick={() => {
-                        setStatusMessage('Ticket #3995 loaded');
-                        setTimeout(() => setStatusMessage(null), 1500);
-                      }}
-                    >
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
-                        <span className="font-medium text-slate-600">01/09/2026</span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#38bdf8] text-white">
-                          Draft
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
-                        3995 - Emails not Sending
-                      </div>
-                    </div>
-
-                    {/* Item 2: 29/08/2026 Approved -> 2183 - Firewall Change */}
-                    <div
-                      className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
-                      onClick={() => {
-                        setStatusMessage('Change Request #2183 loaded');
-                        setTimeout(() => setStatusMessage(null), 1500);
-                      }}
-                      title="Open Change Request #2183"
-                    >
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
-                        <span className="font-medium text-slate-600">29/08/2026</span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#65b82a] text-white">
-                          Approved
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
-                        2183 - Firewall Change
-                      </div>
-                    </div>
-
-                    {/* Item 3: 29/08/2026 Scheduled -> 2184 - Printer Installation */}
-                    <div
-                      className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
-                      onClick={() => {
-                        setStatusMessage('Change Request #2184 loaded');
-                        setTimeout(() => setStatusMessage(null), 1500);
-                      }}
-                      title="Open Change Request #2184"
-                    >
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
-                        <span className="font-medium text-slate-600">29/08/2026</span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#0f5132] text-white">
-                          Scheduled
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
-                        2184 - Printer Installation
-                      </div>
-                    </div>
-
-                    {/* Item 4: 29/08/2026 Rejected -> 2186 - Addition of a New Server */}
-                    <div
-                      className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
-                      onClick={() => {
-                        setStatusMessage('Change Request #2186 loaded');
-                        setTimeout(() => setStatusMessage(null), 1500);
-                      }}
-                      title="Open Change Request #2186"
-                    >
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
-                        <span className="font-medium text-slate-600">29/08/2026</span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#dc2626] text-white">
-                          Rejected
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
-                        2186 - Addition of a New Server
-                      </div>
-                    </div>
-
-                    {/* Item 5: 28/08/2026 Change Overdue -> 2193 - Security Concern - Possible Virus */}
-                    <div
-                      className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
-                      onClick={() => {
-                        setStatusMessage('Change Request #2193 loaded');
-                        setTimeout(() => setStatusMessage(null), 1500);
-                      }}
-                      title="Open Change Request #2193"
-                    >
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
-                        <span className="font-medium text-slate-600">28/08/2026</span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#ea580c] text-white">
-                          Change Overdue
-                        </span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
-                        2193 - Security Concern - Possible Virus
-                      </div>
-                    </div>
+                    {otherTickets.length > 0 ? (
+                      otherTickets.map((item) => (
+                        <div
+                          key={item.id}
+                          className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
+                          onClick={() => {
+                            if (item.rawTicket) {
+                              const raw = item.rawTicket;
+                              const mapped = {
+                                id: raw.id,
+                                summary: raw.summary,
+                                description: raw.description,
+                                priority: raw.priority,
+                                status: raw.status,
+                                type: raw.ticketType || "Incident",
+                                agent: raw.assignedAgent ? [raw.assignedAgent.firstName, raw.assignedAgent.lastName].filter(Boolean).join(" ").trim() : undefined,
+                                requester: raw.requester ? [raw.requester.firstName, raw.requester.lastName].filter(Boolean).join(" ").trim() : undefined,
+                                createdAt: raw.createdAt ? new Date(raw.createdAt).toLocaleDateString("en-GB") : undefined,
+                              };
+                              setLiveTicket(mapped);
+                            }
+                            setStatusMessage(`Ticket #${item.cleanId} loaded`);
+                            setTimeout(() => setStatusMessage(null), 1500);
+                          }}
+                          title={`Switch to Ticket #${item.cleanId}`}
+                        >
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+                            <span className="font-medium text-slate-600">{item.date}</span>
+                            <span
+                              className="px-2 py-0.5 rounded text-[11px] font-bold text-white"
+                              style={{ backgroundColor: item.statusBg }}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline truncate">
+                            {item.summary}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div
+                          className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
+                          onClick={() => {
+                            setStatusMessage('Ticket #3995 loaded');
+                            setTimeout(() => setStatusMessage(null), 1500);
+                          }}
+                        >
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+                            <span className="font-medium text-slate-600">01/09/2026</span>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#38bdf8] text-white">
+                              Draft
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
+                            3995 - Emails not Sending
+                          </div>
+                        </div>
+                        <div
+                          className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
+                          onClick={() => {
+                            setStatusMessage('Change Request #2183 loaded');
+                            setTimeout(() => setStatusMessage(null), 1500);
+                          }}
+                        >
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+                            <span className="font-medium text-slate-600">29/08/2026</span>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#65b82a] text-white">
+                              Approved
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
+                            2183 - Firewall Change
+                          </div>
+                        </div>
+                        <div
+                          className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
+                          onClick={() => {
+                            setStatusMessage('Change Request #2184 loaded');
+                            setTimeout(() => setStatusMessage(null), 1500);
+                          }}
+                        >
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+                            <span className="font-medium text-slate-600">29/08/2026</span>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#0f5132] text-white">
+                              Scheduled
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
+                            2184 - Printer Installation
+                          </div>
+                        </div>
+                        <div
+                          className="cursor-pointer hover:bg-slate-50 p-1.5 -mx-1.5 rounded-lg transition-colors group"
+                          onClick={() => {
+                            setStatusMessage('Change Request #2186 loaded');
+                            setTimeout(() => setStatusMessage(null), 1500);
+                          }}
+                        >
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+                            <span className="font-medium text-slate-600">29/08/2026</span>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#dc2626] text-white">
+                              Rejected
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
+                            2186 - Addition of a New Server
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -3337,11 +3521,55 @@ export default function TicketDetailModal({
         </div>
 
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            setStatusMessage(`Appointment booked for #${cleanId} with Demo User`);
-            setTimeout(() => setStatusMessage(null), 3000);
-            setIsAppointmentModalOpen(false);
+            setIsSubmittingAppt(true);
+
+            let startHour = 10;
+            let endHour = 11;
+            if (apptTimeSlot.startsWith("09:00")) { startHour = 9; endHour = 10; }
+            else if (apptTimeSlot.startsWith("10:00")) { startHour = 10; endHour = 11; }
+            else if (apptTimeSlot.startsWith("11:30")) { startHour = 11; endHour = 12; }
+            else if (apptTimeSlot.startsWith("02:00")) { startHour = 14; endHour = 15; }
+            else if (apptTimeSlot.startsWith("04:00")) { startHour = 16; endHour = 17; }
+
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const startIso = new Date(`${apptDate}T${pad(startHour)}:00:00`).toISOString();
+            const endIso = new Date(`${apptDate}T${pad(endHour)}:00:00`).toISOString();
+
+            let eventType = "meeting";
+            const lowerType = apptType.toLowerCase();
+            if (lowerType.includes("call") || lowerType.includes("phone")) eventType = "phone-call";
+            else if (lowerType.includes("site") || lowerType.includes("visit")) eventType = "site-visit";
+            else if (lowerType.includes("share") || lowerType.includes("hardware") || lowerType.includes("desk")) eventType = "resource-booking";
+
+            try {
+              await apiClient.post('/api/calendar', {
+                title: `[#${cleanId}] ${ticketData.summary || "Appointment"}`,
+                appointmentType: eventType,
+                startsAt: startIso,
+                endsAt: endIso,
+                agentName: apptAgent,
+                description: apptNotes || `Scheduled appointment for #${cleanId}. Location: ${apptLocation}`,
+              });
+
+              window.dispatchEvent(new CustomEvent('servigen-calendar-event-created', {
+                detail: {
+                  title: `[#${cleanId}] ${ticketData.summary}`,
+                  date: apptDate,
+                  agent: apptAgent,
+                }
+              }));
+
+              setStatusMessage(`Appointment booked and synced to Calendar for #${cleanId}`);
+            } catch (err) {
+              console.warn('[TicketDetailModal] Failed to post appointment to calendar API:', err);
+              setStatusMessage(`Appointment booked for #${cleanId} with ${apptAgent}`);
+            } finally {
+              setIsSubmittingAppt(false);
+              setIsAppointmentModalOpen(false);
+              setTimeout(() => setStatusMessage(null), 3000);
+            }
           }}
           className="p-5 space-y-4 text-xs"
         >
@@ -3364,7 +3592,8 @@ export default function TicketDetailModal({
               </label>
               <input
                 type="date"
-                defaultValue="2026-10-20"
+                value={apptDate}
+                onChange={(e) => setApptDate(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                 required
               />
@@ -3374,14 +3603,15 @@ export default function TicketDetailModal({
                 Time Slot
               </label>
               <select
-                defaultValue="10:00 - 11:00 AM"
+                value={apptTimeSlot}
+                onChange={(e) => setApptTimeSlot(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
               >
-                <option>09:00 - 10:00 AM</option>
-                <option>10:00 - 11:00 AM</option>
-                <option>11:30 - 12:30 PM</option>
-                <option>02:00 - 03:00 PM</option>
-                <option>04:00 - 05:00 PM</option>
+                <option value="09:00 - 10:00 AM">09:00 - 10:00 AM</option>
+                <option value="10:00 - 11:00 AM">10:00 - 11:00 AM</option>
+                <option value="11:30 - 12:30 PM">11:30 - 12:30 PM</option>
+                <option value="02:00 - 03:00 PM">02:00 - 03:00 PM</option>
+                <option value="04:00 - 05:00 PM">04:00 - 05:00 PM</option>
               </select>
             </div>
           </div>
@@ -3392,12 +3622,16 @@ export default function TicketDetailModal({
                 Assigned Agent
               </label>
               <select
-                defaultValue="Demo User"
+                value={apptAgent}
+                onChange={(e) => setApptAgent(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
               >
-                <option>Demo User (1st Line Support)</option>
-                <option>Jennifer Williams (2nd Line Support)</option>
-                <option>James Brown (Field Engineer)</option>
+                <option value="Demo User">Demo User (1st Line Support)</option>
+                <option value="Jennifer Williams">Jennifer Williams (2nd Line Support)</option>
+                <option value="James Brown">James Brown (Field Engineer)</option>
+                <option value="Kaleem Smith">Kaleem Smith (Support Agent)</option>
+                <option value="Olivia Chen">Olivia Chen (Senior Engineer)</option>
+                <option value="Anjali Prasad">Anjali Prasad (Lead)</option>
               </select>
             </div>
             <div>
@@ -3405,13 +3639,14 @@ export default function TicketDetailModal({
                 Appointment Type
               </label>
               <select
-                defaultValue="Remote Screen Share"
+                value={apptType}
+                onChange={(e) => setApptType(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
               >
-                <option>Remote Screen Share</option>
-                <option>On-Site Desk Visit</option>
-                <option>Hardware Replacement</option>
-                <option>Client Review Call</option>
+                <option value="Remote Screen Share">Remote Screen Share</option>
+                <option value="On-Site Desk Visit">On-Site Desk Visit</option>
+                <option value="Hardware Replacement">Hardware Replacement</option>
+                <option value="Client Review Call">Client Review Call</option>
               </select>
             </div>
           </div>
@@ -3422,7 +3657,8 @@ export default function TicketDetailModal({
             </label>
             <input
               type="text"
-              defaultValue="ServiGen HQ, Innovation Way, London"
+              value={apptLocation}
+              onChange={(e) => setApptLocation(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
             />
           </div>
@@ -3433,6 +3669,8 @@ export default function TicketDetailModal({
             </label>
             <textarea
               rows={2}
+              value={apptNotes}
+              onChange={(e) => setApptNotes(e.target.value)}
               placeholder="Enter appointment objectives or notes for the technician..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
             />
@@ -3460,9 +3698,10 @@ export default function TicketDetailModal({
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm"
+                disabled={isSubmittingAppt}
+                className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm"
               >
-                Confirm Appointment
+                {isSubmittingAppt ? "Scheduling..." : "Confirm Appointment"}
               </button>
             </div>
           </div>

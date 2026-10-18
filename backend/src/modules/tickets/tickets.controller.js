@@ -79,8 +79,17 @@ const listTickets = async (req, res, next) => {
 const getTicketById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const ticket = await prisma.ticket.findUnique({
-      where: { id },
+    const cleanId = id.replace(/^#/, '');
+    const ticket = await prisma.ticket.findFirst({
+      where: {
+        OR: [
+          { id },
+          { id: cleanId },
+          { id: `#${cleanId}` },
+          { id: `INC-${cleanId}` },
+          { id: `REQ-${cleanId}` },
+        ]
+      },
       include: {
         requester: {
           select: { id: true, firstName: true, lastName: true, email: true, username: true, phoneNumber: true, networkLogin: true }
@@ -112,17 +121,35 @@ const getTicketById = async (req, res, next) => {
 const updateTicketStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, holdReason } = req.body;
+    const cleanId = id.replace(/^#/, '');
+    const { status, holdReason, assignedAgentId } = req.body;
+
+    const existing = await prisma.ticket.findFirst({
+      where: {
+        OR: [
+          { id },
+          { id: cleanId },
+          { id: `#${cleanId}` },
+          { id: `INC-${cleanId}` },
+          { id: `REQ-${cleanId}` },
+        ]
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: `Ticket ${id} not found` });
+    }
 
     const data = {};
     if (status) data.status = status;
     if (holdReason !== undefined) data.holdReason = holdReason;
+    if (assignedAgentId) data.assignedAgentId = assignedAgentId;
     if (status === 'On Hold') {
       data.holdStartedAt = new Date();
     }
 
     const updated = await prisma.ticket.update({
-      where: { id },
+      where: { id: existing.id },
       data,
       include: {
         requester: true,
