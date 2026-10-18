@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { api } from '../../services/apiClient';
+import { fetchActiveChangeRequests } from '../../services/changeRequestsService';
 import './RequestsPage.css';
 
 export interface RequestItem {
@@ -25,10 +26,11 @@ export const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const currentUserName = user?.fullName || 'Demo User';
 
   // Navigation & Hierarchy State
   const [selectedTeam, setSelectedTeam] = useState<string>('1st Line Support');
-  const [selectedAgent, setSelectedAgent] = useState<string>('Demo User');
+  const [selectedAgent, setSelectedAgent] = useState<string>(user?.fullName || 'Demo User');
   const [is1stLineExpanded, setIs1stLineExpanded] = useState<boolean>(true);
   const [is2ndLineExpanded, setIs2ndLineExpanded] = useState<boolean>(false);
   const [isInfraExpanded, setIsInfraExpanded] = useState<boolean>(false);
@@ -43,39 +45,56 @@ export const RequestsPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    async function loadLiveRequests() {
+  const [activeCrCount, setActiveCrCount] = useState<number | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      // 1. Fetch live active change requests count
       try {
-        const res: any = await api.get('/api/tickets', { params: { ticketType: 'Service Request' } });
-        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        if (!active) return;
-        if (items.length > 0) {
-          const mapped: RequestItem[] = items.map((t: any) => ({
-            id: String(t.id).padStart(7, '0'),
-            slaTimeLeft: t.slaTimeLeft || '-12:00',
-            summary: t.summary || t.title || 'Service Request',
-            category: t.category || 'General Access',
-            priority: (t.priority || 'Medium') as RequestItem['priority'],
-            status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
-            type: t.ticketType || 'Service Request',
-            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
-            agent: typeof t.assignedAgent === 'string' ? t.assignedAgent : t.assignedAgent?.fullName || 'Support Agent',
-            team: t.assignedTeam || '1st Line Support',
-            requester: t.requester || 'User',
-            description: t.description || t.summary,
-          }));
-          setRequestsList(mapped);
-        }
-      } catch (err) {
-        console.warn('[RequestsPage] Live service requests fetch error, fallback active:', err);
+        const crRes = await fetchActiveChangeRequests();
+        const crList = Array.isArray(crRes?.data) ? crRes.data : [];
+        setActiveCrCount(crList.length);
+      } catch (crErr) {
+        console.warn('[RequestsPage] Active CRs fetch error:', crErr);
+        setActiveCrCount(0);
       }
+
+      // 2. Fetch live requests
+      const res: any = await api.get('/api/tickets', { params: { ticketType: 'Service Request' } });
+      let items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (items.length === 0) {
+        const allRes: any = await api.get('/api/tickets');
+        const allItems = Array.isArray(allRes?.data) ? allRes.data : Array.isArray(allRes) ? allRes : [];
+        if (allItems.length > 0) {
+          items = allItems;
+        }
+      }
+
+      if (items.length > 0) {
+        const mapped: RequestItem[] = items.map((t: any) => ({
+          id: String(t.id).padStart(7, '0'),
+          slaTimeLeft: t.slaTimeLeft || '-12:00',
+          summary: t.summary || t.title || 'Service Request',
+          category: t.category || 'General Access',
+          priority: (t.priority || 'Medium') as RequestItem['priority'],
+          status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
+          type: t.ticketType || 'Service Request',
+          date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
+          agent: typeof t.assignedAgent === 'string' ? t.assignedAgent : t.assignedAgent?.fullName || 'Support Agent',
+          team: t.assignedTeam || '1st Line Support',
+          requester: t.requester || 'User',
+          description: t.description || t.summary,
+        }));
+        setRequestsList(mapped);
+      }
+    } catch (err) {
+      console.warn('[RequestsPage] Live service requests fetch error, fallback active:', err);
     }
-    void loadLiveRequests();
-    return () => {
-      active = false;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   // Auto-open modal if ?id= query param is specified
   useEffect(() => {
@@ -143,7 +162,7 @@ export const RequestsPage: React.FC = () => {
   // Counts for Tree Badges
   const counts = useMemo(() => {
     const unassignedCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Unassigned').length;
-    const demoUserCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Demo User').length;
+    const demoUserCount = requestsList.filter((r) => r.team === '1st Line Support' && (r.agent === currentUserName || r.agent === 'Demo User')).length;
     const jamesBrownCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'James Brown').length;
     const jenniferCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Jennifer Williams').length;
     const firstLineTotal = unassignedCount + demoUserCount + jamesBrownCount + jenniferCount;
@@ -159,7 +178,7 @@ export const RequestsPage: React.FC = () => {
       secondLine: secondLineTotal,
       infra: infraTotal,
     };
-  }, [requestsList]);
+  }, [requestsList, currentUserName]);
 
   // Checkbox handling
   const allSelected = filteredRequests.length > 0 && filteredRequests.every((r) => selectedRequestIds.includes(r.id));
@@ -175,14 +194,13 @@ export const RequestsPage: React.FC = () => {
     setSelectedRequestIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     setStatusMessage('Refreshing requests list with live server telemetry...');
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setStatusMessage('✓ Requests list updated');
-      setTimeout(() => setStatusMessage(null), 2000);
-    }, 800);
+    await loadData();
+    setIsRefreshing(false);
+    setStatusMessage('✓ Requests list updated');
+    setTimeout(() => setStatusMessage(null), 2000);
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
@@ -342,17 +360,17 @@ export const RequestsPage: React.FC = () => {
                     <span className="agent-count-badge">{counts.unassigned}</span>
                   </div>
 
-                  {/* Demo User (You) */}
+                  {/* Current User (You) */}
                   <div
-                    className={`tree-agent-row highlight-demo-user ${selectedAgent === 'Demo User' ? 'active-agent-pill' : ''}`}
+                    className={`tree-agent-row highlight-demo-user ${selectedAgent === currentUserName || selectedAgent === 'Demo User' ? 'active-agent-pill' : ''}`}
                     onClick={() => {
                       setSelectedTeam('1st Line Support');
-                      setSelectedAgent('Demo User');
+                      setSelectedAgent(currentUserName);
                     }}
                   >
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <span className="available-pill-tag">Available</span>
-                      <span className="agent-name font-bold truncate">Demo User (You)</span>
+                      <span className="agent-name font-bold truncate">{currentUserName} (You)</span>
                       <span className="trophy-badge text-xs">🏆</span>
                     </div>
                     <span className="agent-count-badge cyan-count">{counts.demoUser}</span>
@@ -435,7 +453,9 @@ export const RequestsPage: React.FC = () => {
                   <span className="text-sm">📝</span>
                   <span className="group-name font-bold text-[#3a201a]">Change Requests</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#13273e] text-white">5 Active</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#13273e] text-white">
+                  {activeCrCount !== null ? `${activeCrCount} Active` : '0 Active'}
+                </span>
               </div>
             </div>
           </div>
