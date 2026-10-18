@@ -38,7 +38,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const currentUserName = user?.fullName || 'Support Agent';
-  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
 
   React.useEffect(() => {
     let active = true;
@@ -46,7 +46,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
       if (!active) return;
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       if (list.length > 0) {
-        setOrgUsers(list.map((u: any) => ({
+        setUsers(list.map((u: any) => ({
           id: String(u.id),
           fullName: u.fullName || u.username || 'Agent',
           role: u.role || 'Agent',
@@ -211,7 +211,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
                   <option value={incident.assignee}>{incident.assignee} (Current)</option>
                   <option value="Unassigned">Unassigned</option>
                   <optgroup label="Organisation Agents">
-                    {orgUsers.map((u) => (
+                    {users.map((u) => (
                       <option key={u.id} value={u.fullName}>
                         {u.fullName} ({u.role})
                       </option>

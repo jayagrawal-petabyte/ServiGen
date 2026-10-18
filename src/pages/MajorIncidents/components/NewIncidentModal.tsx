@@ -33,7 +33,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
   const [product, setProduct]   = useState('');
   const [assignee, setAssignee] = useState('');
   const [errors, setErrors]     = useState<{ title?: string }>({});
-  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; fullName: string; role: string }>>([]);
+  const [users, setUsers]       = useState<Array<{ id: string; fullName: string; role: string }>>([]);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
       if (!active) return;
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       if (list.length > 0) {
-        setOrgUsers(list.map((u: any) => ({
+        setUsers(list.map((u: any) => ({
           id: String(u.id),
           fullName: u.fullName || u.username || 'Agent',
           role: u.role || 'Agent',
@@ -198,7 +198,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
             />
             <datalist id="org-users-list">
-              {orgUsers.map((u) => (
+              {users.map((u) => (
                 <option key={u.id} value={u.fullName} label={u.role} />
               ))}
               <option value="Unassigned" />
