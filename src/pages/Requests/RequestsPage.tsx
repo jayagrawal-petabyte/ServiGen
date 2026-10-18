@@ -253,29 +253,10 @@ export const RequestsPage: React.FC = () => {
       {/* ── Global Header Bar matching Image 2 ── */}
       <header className="requests-top-header">
         <div className="requests-breadcrumb-group">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider mr-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Service Desk</span>
             <span>/</span>
             <span className="text-gray-900">Requests</span>
-          </div>
-
-          <div className="flex items-center gap-1 bg-slate-200/80 p-0.5 rounded-lg mr-2 text-xs">
-            <button
-              type="button"
-              className="px-2.5 py-1 rounded-md font-bold bg-white text-slate-900 shadow-2xs cursor-default flex items-center gap-1"
-            >
-              <span>📋</span>
-              <span>Requests</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/change-requests')}
-              className="px-2.5 py-1 rounded-md font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1"
-              title="Switch to Change Requests queue"
-            >
-              <span>📝</span>
-              <span>Change Requests</span>
-            </button>
           </div>
         </div>
 
