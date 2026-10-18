@@ -1,6 +1,5 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../pages/Auth/AuthContext';
 import BrandLogo from './BrandLogo';
 import './Sidebar.css';
 
@@ -104,16 +103,6 @@ export interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
-  const { user } = useAuth();
-  const initials = user?.fullName
-    ? user.fullName
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
-    : 'IA';
-
   return (
     <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
@@ -157,19 +146,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           </NavLink>
         ))}
       </nav>
-
-      {/* Logged-in Agent Profile Badge */}
-      <div className="mt-auto py-3 flex flex-col items-center justify-center border-t border-white/10 w-full shrink-0">
-        <div
-          className="relative group flex items-center justify-center cursor-default"
-          title={`${user?.fullName || ''} (${user?.role || 'Administrator'})`}
-        >
-          <div className="w-9 h-9 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center shadow-md border-2 border-[#0b2239]">
-            {initials}
-          </div>
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0b2239]" />
-        </div>
-      </div>
     </aside>
   );
 };

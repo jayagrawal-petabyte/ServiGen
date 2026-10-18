@@ -53,6 +53,16 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const user = authContext?.user;
   const logout = authContext?.logout;
 
+  const userInitials = user?.fullName
+    ? user.fullName
+        .split(' ')
+        .filter(Boolean)
+        .map((p) => p[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'AA';
+
   // Active flyout state (mutually exclusive)
   type FlyoutType = 'search' | 'notifications' | 'todo' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
   const [activeFlyout, setActiveFlyout] = useState<FlyoutType>(null);
@@ -532,9 +542,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
         onClick={() => toggleFlyout('profile')}
         aria-label="User Profile"
       >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
-        </svg>
+        <span className="global-nav-avatar-initials">{userInitials}</span>
         <span className={`global-nav-presence-dot ${presence}`} />
       </button>
       </div>

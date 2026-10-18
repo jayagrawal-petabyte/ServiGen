@@ -138,6 +138,15 @@
   box-shadow: 0 2px 6px rgba(0, 192, 243, 0.45);
 }
 
+.global-nav-avatar-initials {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  user-select: none;
+}
+
 .global-nav-presence-dot {
   position: absolute;
   bottom: 0px;
