@@ -66,10 +66,10 @@ export default function DashboardGreeting() {
     year: "numeric",
   });
 
-  const displayName = user?.fullName?.trim() || "Inesh Agarwal";
+  const displayName = user?.fullName?.trim() || '';
   const firstName =
-    user?.firstName?.trim() || displayName.split(/\s+/)[0] || "Inesh";
-  const email = user?.email || "inesh@servigen.io";
+    user?.firstName?.trim() || displayName.split(/\s+/)[0] || '';
+  const email = user?.email || '';
   const role = user?.role || "Administrator";
 
   const initials =

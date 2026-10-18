@@ -120,6 +120,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live)) {
         setServerIncidents(live);
+        setLocalIncidents([]);
         setIsLiveConnected(true);
       } else {
         setServerIncidents([]);
@@ -196,9 +197,11 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
     serverIncidents.forEach((inc) => map.set(inc.id, inc));
-    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    if (!isFetchingLive) {
+      localIncidents.forEach((inc) => map.set(inc.id, inc));
+    }
     return Array.from(map.values());
-  }, [serverIncidents, localIncidents]);
+  }, [serverIncidents, localIncidents, isFetchingLive]);
 
   useEffect(() => {
     if (allIncidents.length > 0) {

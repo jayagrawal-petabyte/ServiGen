@@ -164,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           to="/auth"
           onClick={onCloseMobile}
           className="relative group flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-          title={`${user?.fullName || 'Inesh Agarwal'} (${user?.role || 'Administrator'}) - Click to switch profile`}
+          title={`${user?.fullName || ''} (${user?.role || 'Administrator'}) - Click to switch profile`}
         >
           <div className="w-9 h-9 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center shadow-md border-2 border-[#0b2239]">
             {initials}

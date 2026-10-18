@@ -23,9 +23,8 @@ export const AppLayout: React.FC = () => {
     );
   }
 
-  // Client Route Guard: If not authenticated and no stored token, redirect to /auth
-  if (!isAuthenticated && !token) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
   }
 
   const initials = user?.fullName

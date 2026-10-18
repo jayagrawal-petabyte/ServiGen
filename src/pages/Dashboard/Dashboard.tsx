@@ -309,7 +309,7 @@ export default function Dashboard() {
   }, [statusCounts]);
 
   // Display user info
-  const fullName = user?.fullName || 'Demo User';
+  const fullName = user?.fullName || '';
   const firstName = user?.firstName || fullName.split(' ')[0] || 'Demo';
   const roleName = user?.role || 'IT Manager';
   const userInitials = fullName
