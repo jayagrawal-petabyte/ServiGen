@@ -163,7 +163,7 @@ export default function ServiceCatalogue() {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fffaf7]">
+    <div className="flex-1 w-full h-full flex flex-col bg-[#fffaf7] overflow-hidden">
       {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -181,7 +181,6 @@ export default function ServiceCatalogue() {
           <header className="services-header">
             <div className="services-heading">
               <h1>Services Catalogue</h1>
-              <p>Browse available services, check SLAs, and submit service requests</p>
             </div>
 
             <div className="header-actions">

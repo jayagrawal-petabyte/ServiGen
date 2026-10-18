@@ -1,6 +1,8 @@
 /* --- Left Panel (Major Incident Sidebar Palette Match) --- */
 .left-panel {
   width: 250px;
+  height: calc(100vh - 90px);
+  min-height: calc(100vh - 90px);
   background: #e49b8e;
   display: flex;
   flex-direction: column;
@@ -11,6 +13,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid #d4887b;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .search-bar-row {

@@ -181,6 +181,8 @@
 /* ── Left Tree Sidebar (Major Incident Palette Match) ── */
 .requests-tree-sidebar {
   width: 250px;
+  height: calc(100vh - 90px);
+  min-height: calc(100vh - 90px);
   background-color: #e49b8e;
   border: 1px solid #d4887b;
   border-radius: 20px;
@@ -191,6 +193,7 @@
   overflow-y: auto;
   user-select: none;
   margin: 12px;
+  box-sizing: border-box;
 }
 
 .requests-tree-search-wrapper {

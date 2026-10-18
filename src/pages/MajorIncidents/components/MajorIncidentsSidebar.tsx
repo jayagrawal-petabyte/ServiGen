@@ -124,7 +124,7 @@ const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectL
   }, [searchQuery]);
 
   return (
-    <aside className="w-[250px] shrink-0 bg-[#e49b8e] border border-[#d4887b] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex flex-col my-3 ml-3 overflow-hidden relative select-none">
+    <aside className="w-[250px] shrink-0 bg-[#e49b8e] border border-[#d4887b] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex flex-col h-[calc(100vh-90px)] min-h-[calc(100vh-90px)] overflow-hidden relative select-none box-border">
       <div className="p-4 shrink-0 pb-2">
         <div className="relative">
           <input

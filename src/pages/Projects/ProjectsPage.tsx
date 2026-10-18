@@ -454,7 +454,7 @@ export default function ProjectsPage() {
   const [title, subtitle] = viewTitles[activeView];
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fff7f3]">
+    <div className="flex-1 w-full h-full flex flex-col bg-[#fff7f3] overflow-hidden">
       {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -465,7 +465,7 @@ export default function ProjectsPage() {
         <GlobalNavbarActions />
       </header>
 
-      <div className="projects-page flex-1">
+      <div className="projects-page flex-1 min-h-0">
         <aside className="pj-side">
         <div className="pj-search">
           <input
