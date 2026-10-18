@@ -65,7 +65,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "El usuario informó que la estación de trabajo ABC00001 no arranca después de la actualización del sistema. El código de diagnóstico indica un Registro de Arranque Principal dañado. Los periféricos fueron probados y funcionan correctamente."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Revisión de implementación y despliegue: tareas de infraestructura de Halo ITSM sincronizadas con el plan maestro de producción."
+        ? "Revisión de implementación y despliegue: tareas de infraestructura de ServiGen sincronizadas con el plan maestro de producción."
         : `[Traducción al español]: ${text}`,
   },
   fr: {
@@ -75,7 +75,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "L'utilisateur a signalé que le poste de travail ABC00001 ne démarre pas après la mise à jour du système. Le code de diagnostic indique un secteur de démarrage principal corrompu. Les périphériques ont été testés opérationnels."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Examen du déploiement et de la mise en œuvre : tâches d'infrastructure Halo ITSM synchronisées avec le plan de production principal."
+        ? "Examen du déploiement et de la mise en œuvre : tâches d'infrastructure ServiGen synchronisées avec le plan de production principal."
         : `[Traduction en français]: ${text}`,
   },
   de: {
@@ -85,7 +85,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "Benutzer meldete, dass Arbeitsstation ABC00001 nach Systemaktualisierung nicht startet. Diagnosecode weist auf beschädigten Master Boot Record hin. Peripheriegeräte wurden erfolgreich getestet."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Bereitstellungs- und Implementierungsprüfung: Halo ITSM-Infrastrukturaufgaben wurden mit dem Master-Produktionsplan synchronisiert."
+        ? "Bereitstellungs- und Implementierungsprüfung: ServiGen-Infrastrukturaufgaben wurden mit dem Master-Produktionsplan synchronisiert."
         : `[Deutsche Übersetzung]: ${text}`,
   },
   it: {
@@ -372,8 +372,8 @@ export default function TicketDetailModal({
   ]);
   const [newChatMessage, setNewChatMessage] = useState("");
   const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
-  const [ccRecipients, setCcRecipients] = useState("service-desk-leads@usehalo.com, supervisor@usehalo.com");
-  const [bccRecipients, setBccRecipients] = useState("it-audit-logs@usehalo.com");
+  const [ccRecipients, setCcRecipients] = useState("service-desk-leads@servigen.io, supervisor@servigen.io");
+  const [bccRecipients, setBccRecipients] = useState("it-audit-logs@servigen.io");
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [urlAttachmentTitle, setUrlAttachmentTitle] = useState("");
   const [urlAttachmentHref, setUrlAttachmentHref] = useState("");
@@ -627,7 +627,7 @@ export default function TicketDetailModal({
               type="button"
               className="activity-menu-item"
               onClick={() => {
-                setEmailDraftTo(ticketData.email || "akhan@usehalo.com");
+                setEmailDraftTo(ticketData.email || "akhan@servigen.io");
                 setEmailDraftSubject(`[Ticket #${cleanId}] Activity Update: ${ticketData.summary || ticketData.actionTitle || "Incident Update"}`);
                 setEmailDraftBody(`--- Forwarded Activity Note from ${ticketData.requester || "Agent"} ---\n\n${getDisplayedDescription()}\n\n---------------------------------`);
                 setIsEmailModalOpen(true);
@@ -704,7 +704,7 @@ export default function TicketDetailModal({
         <div className="mb-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[11.5px] flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span>🌐</span>
-            <span>Translated to <strong>{translatedLanguageLabel}</strong> (Halo AI Translate)</span>
+            <span>Translated to <strong>{translatedLanguageLabel}</strong> (ServiGen AI Translate)</span>
           </div>
           <button
             type="button"
@@ -928,7 +928,7 @@ export default function TicketDetailModal({
                   type="button"
                   className="ticket-pill-btn cursor-pointer"
                   onClick={() => {
-                    setEmailDraftTo(ticketData.email || "akhan@usehalo.com");
+                    setEmailDraftTo(ticketData.email || "akhan@servigen.io");
                     setEmailDraftSubject(`[Ticket #${cleanId}] - ${ticketData.summary || "Follow-up regarding your ticket"}`);
                     setEmailDraftBody(`Hello ${ticketData.requester || "User"},\n\nWe are currently investigating your ticket #${cleanId} (${ticketData.summary || "Service Request"}).\n\nPlease let us know if there is any additional diagnostic information or preferred callback window.\n\nKind regards,\n${currentUser}\nSupport Services`);
                     setIsEmailModalOpen(true);
@@ -2457,7 +2457,7 @@ export default function TicketDetailModal({
                     </div>
                     <div className="details-field-row">
                       <span className="details-label">Project:</span>
-                      <span className="details-value text-gray-700">{ticketData.projectName || "2196 - Halo Implementation - Project"}</span>
+                      <span className="details-value text-gray-700">{ticketData.projectName || "2196 - ServiGen Implementation - Project"}</span>
                     </div>
                   </div>
 
@@ -2589,7 +2589,7 @@ export default function TicketDetailModal({
                       <span className="notif-desc-text">New Ticket Logged To...</span>
                     </div>
                     <div className="notif-row-col col-type text-gray-700">
-                      Show in Halo only
+                      Show in ServiGen only
                     </div>
                     <div className="notif-row-col col-agents">
                       <div className="notif-avatar-stack">
@@ -2765,7 +2765,7 @@ export default function TicketDetailModal({
                   <span className="sidebar-field-label">Contact Address</span>
                   <div className="sidebar-address-box">
                     {(ticketData.contactAddress || [
-                      "Halo House, Gipping Way",
+                      "ServiGen HQ, Tech Park",
                       "Stowmarket",
                       "Suffolk",
                       "United Kingdom",
@@ -2843,7 +2843,7 @@ export default function TicketDetailModal({
                       className="sidebar-field-link text-left bg-transparent border-none cursor-pointer text-cyan-600 hover:underline"
                       title="Open in Projects"
                     >
-                      {ticketData.projectName || "2196 - Halo Implementation - Project"}
+                      {ticketData.projectName || "2196 - ServiGen Implementation - Project"}
                     </button>
                   </div>
 
@@ -2981,8 +2981,8 @@ export default function TicketDetailModal({
 
                       <div className="sidebar-field-group">
                         <span className="sidebar-field-label">Email Address</span>
-                        <a href={`mailto:${ticketData.email || "akhan@usehalo.com"}`} className="sidebar-field-link email-link">
-                          {ticketData.email || "akhan@usehalo.com"}
+                        <a href={`mailto:${ticketData.email || "akhan@servigen.io"}`} className="sidebar-field-link email-link">
+                          {ticketData.email || "akhan@servigen.io"}
                         </a>
                       </div>
 
@@ -3422,7 +3422,7 @@ export default function TicketDetailModal({
             </label>
             <input
               type="text"
-              defaultValue="Halo House, Gipping Way, Stowmarket"
+              defaultValue="ServiGen HQ, Innovation Way, London"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
             />
           </div>
@@ -3550,7 +3550,7 @@ export default function TicketDetailModal({
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <span className="text-[11px] text-gray-400">SMTP Relay: Active (halo-mailer@usehalo.com)</span>
+            <span className="text-[11px] text-gray-400">SMTP Relay: Active (mailer@servigen.io)</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -3886,7 +3886,7 @@ export default function TicketDetailModal({
             </label>
             <input
               type="email"
-              defaultValue={ticketData.email || "akhan@usehalo.com"}
+              defaultValue={ticketData.email || "akhan@servigen.io"}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
             />
           </div>

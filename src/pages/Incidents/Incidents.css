@@ -1540,13 +1540,13 @@
   min-height: 0;
 }
 
-.halo-cat-svg {
+.sg-cat-svg {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.halo-cat-label {
+.sg-cat-label {
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;

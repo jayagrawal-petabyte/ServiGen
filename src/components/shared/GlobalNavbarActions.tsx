@@ -950,7 +950,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             <div className="global-help-modal-header">
               <h3>
                 <span>ℹ️</span>
-                <span>ServiGen Halo AI • System & SLA Guide</span>
+                <span>ServiGen • System & SLA Guide</span>
               </h3>
               <button
                 type="button"

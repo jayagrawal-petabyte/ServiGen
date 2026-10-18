@@ -180,7 +180,7 @@ export function enrichTicketDetails(rawTicket: {
     fromTicketId: catalogEntry.fromTicketId || "#2196",
     actionTitle: catalogEntry.actionTitle || `Create ${rawTicket.type || catalogEntry.type || "Project Task"}`,
     contactAddress: catalogEntry.contactAddress || [
-      "Halo House, Gipping Way",
+      "ServiGen HQ, Tech Park",
       "Stowmarket",
       "Suffolk",
       "United Kingdom",
@@ -193,7 +193,7 @@ export function enrichTicketDetails(rawTicket: {
       { id: "ABC00008", type: "Laptop", icon: "laptop" },
     ],
     projectId: catalogEntry.projectId || "2196",
-    projectName: catalogEntry.projectName || "2196 - Halo Implementation - Project",
+    projectName: catalogEntry.projectName || "2196 - ServiGen Implementation - Project",
     workflowName: catalogEntry.workflowName || "Task Management Workflow",
     createdBy: catalogEntry.createdBy || "Admin",
     executionDate: catalogEntry.executionDate || "06/11/2025 10:56 PM",

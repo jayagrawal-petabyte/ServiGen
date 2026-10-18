@@ -109,7 +109,7 @@ const CustomLists: React.FC = () => {
     <div className="cl-modal-overlay flex flex-col">
       <div className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 shadow-xs">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-          Custom Lists Designer • Halo AI
+          Custom Lists Designer • ServiGen
         </span>
         <GlobalNavbarActions />
       </div>
@@ -226,7 +226,7 @@ const CustomLists: React.FC = () => {
               <div className="cl-checkbox-group">
                 <label className="cl-checkbox-label">
                   <input type="checkbox" checked={formData.haloApi} onChange={(e) => handleModalChange('haloApi', e.target.checked)} />
-                  Halo API
+                  ServiGen API
                 </label>
               </div>
             </>

@@ -11,7 +11,7 @@ function getGreeting(): string {
   return "Good Evening";
 }
 
-function HaloAvatar({ initials }: { initials: string }) {
+function AgentAvatar({ initials }: { initials: string }) {
   return (
     <span
       className="greeting-avatar"
@@ -94,7 +94,7 @@ export default function DashboardGreeting() {
         </h1>
 
         <div className="greeting-profile">
-          <HaloAvatar initials={initials} />
+          <AgentAvatar initials={initials} />
 
           <div className="greeting-profile-text">
             <div className="greeting-profile-line">
