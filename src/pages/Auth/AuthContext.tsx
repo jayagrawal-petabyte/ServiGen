@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials } from './types';
-import { api, setStoredToken, getStoredToken, setStoredUser, getStoredUser } from '../../services/apiClient';
+import { api, setStoredToken, getStoredToken, setStoredUser, getStoredUser, obtainDevAuthToken } from '../../services/apiClient';
 
 interface AuthContextType extends AuthState {
   token: string | null;
@@ -114,11 +114,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setBackendConnected(false);
         });
     } else {
-      setAuthState({
-        isAuthenticated: false,
-        user: null,
-        loading: false,
-        error: null,
+      obtainDevAuthToken().then((tok) => {
+        if (tok) {
+          setToken(tok);
+          const savedUser = getStoredUser();
+          if (savedUser) {
+            setAuthState({
+              isAuthenticated: true,
+              user: normalizeUser(savedUser),
+              loading: false,
+              error: null,
+            });
+            setBackendConnected(true);
+            return;
+          }
+        }
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+          error: null,
+        });
+      }).catch(() => {
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+          error: null,
+        });
       });
     }
   }, []);

@@ -144,7 +144,7 @@ export default function CreateArticleDraftModal({
       >
         <div className="modal-header" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#e07a5f' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#00bcd4' }}>
               Knowledge Base Management
             </span>
             <h2 style={{ marginTop: '2px', fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>
@@ -408,7 +408,7 @@ export default function CreateArticleDraftModal({
                 type="checkbox"
                 checked={submitAsAwaiting}
                 onChange={(e) => setSubmitAsAwaiting(e.target.checked)}
-                style={{ accentColor: '#eb6a47', width: '16px', height: '16px', cursor: 'pointer' }}
+                style={{ accentColor: '#00bcd4', width: '16px', height: '16px', cursor: 'pointer' }}
               />
               <label
                 htmlFor="submit-as-awaiting"
@@ -432,13 +432,13 @@ export default function CreateArticleDraftModal({
               type="submit"
               disabled={isSubmitting}
               style={{
-                backgroundColor: '#eb6a47',
+                backgroundColor: '#00bcd4',
                 color: 'white',
                 padding: '8px 20px',
                 borderRadius: '999px',
                 fontWeight: 600,
                 fontSize: '13px',
-                boxShadow: '0 2px 6px rgba(235, 106, 71, 0.3)',
+                boxShadow: '0 2px 6px rgba(0, 188, 212, 0.3)',
                 opacity: isSubmitting ? 0.7 : 1,
               }}
             >

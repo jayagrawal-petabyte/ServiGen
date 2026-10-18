@@ -40,7 +40,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-logo-circle {
   width: 44px;
   height: 44px;
-  background: #f7a992;
+  background: #00bcd4;
   border-radius: 50%;
   display: block;
 }
@@ -71,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 .oh-nav-active {
   color: #ffffff !important;
-  background: #e8855e !important;
+  background: #00bcd4 !important;
   border-radius: 14px !important;
   margin: 0 6px !important;
 }
@@ -128,7 +128,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-btn-get-started:hover { background: #e2e8f0; }
 
 .oh-btn-new-ticket {
-  background: #e8855e;
+  background: #00bcd4;
   color: white;
   border: none;
   border-radius: 20px;
@@ -142,7 +142,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   white-space: nowrap;
   transition: background 0.15s;
 }
-.oh-btn-new-ticket:hover { background: #d4714c; }
+.oh-btn-new-ticket:hover { background: #00acc1; }
 
 .oh-icon-btn {
   position: relative;
@@ -178,7 +178,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-avatar {
   width: 30px;
   height: 30px;
-  background: #e8855e;
+  background: #00bcd4;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -200,18 +200,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .oh-left-panel {
   width: 236px;
   flex-shrink: 0;
-  background: #f7c3b2;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   margin: 12px 6px 12px 14px;
-  border-radius: 28px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 14px;
-  box-shadow: 0 8px 24px rgba(232, 133, 94, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 .oh-left-panel::-webkit-scrollbar { width: 4px; }
-.oh-left-panel::-webkit-scrollbar-thumb { background: #e8a692; border-radius: 2px; }
+.oh-left-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
 /* Curvy Pill Search */
 .oh-search-row {
@@ -315,18 +316,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #4a342c;
+  color: #334155;
   border-radius: 24px;
   transition: all 0.15s ease;
 }
 .oh-view-item:hover {
-  background: rgba(255, 255, 255, 0.45);
+  background: #f1f5f9;
 }
 .oh-view-item-active {
-  background: #e8855e !important;
+  background: #00bcd4 !important;
   color: #ffffff !important;
   border-radius: 24px !important;
-  box-shadow: 0 4px 14px rgba(232, 133, 94, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 188, 212, 0.35);
 }
 .oh-view-item-label {
   line-height: 1.2;
@@ -545,7 +546,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   color: white;
   white-space: nowrap;
 }
-.oh-status-onhold  { background: #e8855e; }
+.oh-status-onhold  { background: #f59e0b; }
 .oh-status-withsup { background: #1c334f; }
 
 /* Checkboxes */
@@ -553,7 +554,7 @@ input[type="checkbox"] {
   width: 14px;
   height: 14px;
   cursor: pointer;
-  accent-color: #e8855e;
+  accent-color: #00bcd4;
 }
 
 /* ── Footer / Pagination ───────────────────────────────────────────── */
@@ -610,10 +611,10 @@ input[type="checkbox"] {
 }
 .oh-page-btn:hover { background: #f8fafc; }
 .oh-page-btn-active {
-  background: #e8855e;
+  background: #00bcd4;
   color: white;
-  border-color: #e8855e;
+  border-color: #00bcd4;
 }
-.oh-page-btn-active:hover { background: #d4714c; }
+.oh-page-btn-active:hover { background: #00acc1; }
 .oh-page-btn-disabled { color: #94a3b8; cursor: default; }
 .oh-page-btn-disabled:hover { background: white; }

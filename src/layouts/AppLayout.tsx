@@ -7,7 +7,7 @@ export const AppLayout: React.FC = () => {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#faf6f2]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8f9fd]">
       {/* Figma Dark Navy Left Icon Sidebar */}
       <Sidebar />
 

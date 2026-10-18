@@ -487,8 +487,8 @@
 
 /* Action Buttons */
 .agent-kpi-claim-btn {
-  background: #e49b8e;
-  color: #3a201a;
+  background: #00bcd4;
+  color: #ffffff;
   border: none;
   font-size: 11px;
   font-weight: 700;
@@ -501,7 +501,7 @@
 }
 
 .agent-kpi-claim-btn:hover {
-  background: #d68778;
+  background: #00acc1;
 }
 
 .agent-kpi-claim-btn.is-claimed {
@@ -543,7 +543,7 @@
   width: 22px;
   height: 22px;
   border: 2.5px solid #e2e8f0;
-  border-top-color: #e49b8e;
+  border-top-color: #00bcd4;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -688,12 +688,12 @@
 }
 
 .agent-kpi-action-btn.primary {
-  background: #e49b8e;
-  color: #3a201a;
+  background: #00bcd4;
+  color: #ffffff;
 }
 
 .agent-kpi-action-btn.primary:hover {
-  background: #d68778;
+  background: #00acc1;
 }
 
 .agent-kpi-action-btn.secondary {

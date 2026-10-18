@@ -165,8 +165,8 @@ const VIEW_ITEMS = [
 type ViewIcon = typeof VIEW_ITEMS[number]["icon"];
 
 function renderViewIcon(icon: ViewIcon, active: boolean): React.ReactElement {
-  const fill = active ? "white" : "#4a342c";
-  const stroke = active ? "white" : "#4a342c";
+  const fill = active ? "white" : "#64748b";
+  const stroke = active ? "white" : "#64748b";
   const p = { viewBox: "0 0 24 24", width: 16, height: 16, fill, style: { flexShrink: 0 as const } };
   
   switch (icon) {
@@ -216,7 +216,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ search, setSearch, activeView, se
         onChange={e => setSearch(e.target.value)}
       />
       <div className="oh-search-icon-btn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#e8855e" strokeWidth="2.5">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#00bcd4" strokeWidth="2.5">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </div>
@@ -225,7 +225,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ search, setSearch, activeView, se
     {/* My List collapser row */}
     <div className="oh-mylist-row">
       <div className="oh-mylist-left">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="#4a342c">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="#64748b">
           <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
         </svg>
         <span className="oh-mylist-label">My List</span>

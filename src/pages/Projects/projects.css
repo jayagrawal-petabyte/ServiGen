@@ -2,24 +2,24 @@
    so it does not leak into other teams' pages. */
 
 .projects-page {
-  --pj-bg: #fff7f3;
+  --pj-bg: #f8f9fd;
   --pj-surface: #ffffff;
-  --pj-panel: #f8c5b1;
-  --pj-btn: #f4a98d;
-  --pj-btn-hover: #ef9373;
-  --pj-accent: #f0694a;
-  --pj-accent-dark: #c4573f;
-  --pj-accent-soft: #fdeee8;
-  --pj-navy: #1c2541;
+  --pj-panel: #ffffff;
+  --pj-btn: #00bcd4;
+  --pj-btn-hover: #00acc1;
+  --pj-accent: #00bcd4;
+  --pj-accent-dark: #00838f;
+  --pj-accent-soft: #e0f7fa;
+  --pj-navy: #1e293b;
   --pj-ink: #1f2430;
   --pj-muted: #6b6f7b;
-  --pj-line: #eef0f3;
-  --pj-chip: #f3f5f8;
-  --pj-good: #4caf50;
-  --pj-mid: #f0694a;
-  --pj-low: #e8364f;
-  --pj-hold: #ffad0d;
-  --pj-new: #1e6b35;
+  --pj-line: #e2e8f0;
+  --pj-chip: #f1f5f9;
+  --pj-good: #10b981;
+  --pj-mid: #00bcd4;
+  --pj-low: #ef4444;
+  --pj-hold: #f59e0b;
+  --pj-new: #059669;
 
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -59,7 +59,9 @@
 
 .pj-side {
   background: var(--pj-panel);
-  border-radius: 32px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   padding: 24px 10px 32px;
   display: flex;
   flex-direction: column;
@@ -73,7 +75,8 @@
 .pj-search {
   display: flex;
   align-items: center;
-  background: var(--pj-surface);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
   padding: 4px 6px 4px 14px;
   margin-bottom: 16px;
@@ -197,7 +200,7 @@
 }
 
 .pj-create-list:hover {
-  background: #a9472f;
+  background: #006064;
 }
 
 /* ---------- header ---------- */
@@ -471,7 +474,7 @@
 
 .pj-bar > div {
   height: 100%;
-  background: #f58a6c;
+  background: #00bcd4;
   border-radius: 999px;
   transition: width 0.3s;
 }
@@ -534,7 +537,7 @@
 }
 
 .pj-board-col {
-  background: #fbe9e1;
+  background: #f1f5f9;
   border-radius: 12px;
   padding: 10px;
   display: flex;
@@ -813,7 +816,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--pj-muted);
-  background: #fbf3ef;
+  background: #f8fafc;
 }
 
 .pj-table-row.done > span:nth-child(2) {
@@ -931,10 +934,10 @@
   font: inherit;
   font-weight: 400;
   color: var(--pj-ink);
-  border: 1px solid #e6e1de;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 7px 10px;
-  background: #fffdfc;
+  background: #ffffff;
   outline: none;
   width: 100%;
 }
@@ -949,7 +952,8 @@
 }
 
 .pj-detail-hours {
-  background: #fbf3ef;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 16px;
@@ -1152,7 +1156,8 @@
   margin: 14px 0;
   font-size: 12px;
   color: var(--pj-muted);
-  background: #fbf3ef;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 8px 12px;
 }

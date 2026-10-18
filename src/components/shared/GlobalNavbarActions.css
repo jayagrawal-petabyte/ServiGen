@@ -25,22 +25,22 @@
   height: 32px;
   padding: 0 16px;
   border-radius: 9999px;
-  background: #e49b8e;
-  color: #3a201a;
+  background: #00bcd4;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(228, 155, 142, 0.35);
+  box-shadow: 0 1px 2px rgba(0, 188, 212, 0.35);
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .global-nav-pill-btn:hover {
-  background: #d8897c;
-  color: #24110d;
+  background: #00acc1;
+  color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(228, 155, 142, 0.45);
+  box-shadow: 0 2px 6px rgba(0, 188, 212, 0.45);
 }
 
 .global-nav-plus-sign {
@@ -60,9 +60,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #e49b8e;
+  border: 1px solid #e2e8f0;
   background: #ffffff;
-  color: #4a2820;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,15 +73,15 @@
 }
 
 .global-nav-icon-btn:hover {
-  background: #fbf0ee;
-  color: #24110d;
-  border-color: #d8897c;
+  background: #f0fdfa;
+  color: #00bcd4;
+  border-color: #00bcd4;
 }
 
 .global-nav-icon-btn.is-active {
-  background: #fbf0ee;
-  color: #24110d;
-  border-color: #d8897c;
+  background: #f0fdfa;
+  color: #00bcd4;
+  border-color: #00bcd4;
 }
 
 /* Red Notification Badge */

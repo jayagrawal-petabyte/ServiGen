@@ -8,14 +8,14 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  background-color: #faf8f5;
+  background-color: #f8f9fd;
 }
 
 /* --- Top Application Navbar --- */
 .article-drafts-top-navbar {
   height: 64px;
   background-color: #ffffff;
-  border-bottom: 1px solid #f0ede8;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -42,38 +42,38 @@
   margin: 0 auto;
 }
 
-/* --- Peach Sub-Navigation Panel --- */
+/* --- Unified Light Sub-Navigation Panel --- */
 .article-drafts-subnav {
-  width: 295px;
+  width: 260px;
   min-height: calc(100vh - 120px);
-  min-height: 780px;
-  background-color: #f7c9bc;
-  border-radius: 32px;
-  padding: 26px 20px 40px 20px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   flex-shrink: 0;
   box-sizing: border-box;
-  box-shadow: 0 6px 24px rgba(246, 192, 175, 0.35);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .subnav-search-box {
-  background-color: #ffffff;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
-  height: 44px;
-  padding: 0 18px;
+  height: 40px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .subnav-search-box input {
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 13.5px;
   width: 100%;
   color: #334155;
   background: transparent;
@@ -84,7 +84,7 @@
 }
 
 .subnav-search-icon {
-  color: #8c4533;
+  color: #00bcd4;
   flex-shrink: 0;
   margin-left: 6px;
 }
@@ -92,12 +92,12 @@
 .subnav-all-drafts-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 14px;
   border-radius: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #5c2718;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
   transition: all 0.15s;
   background: transparent;
   width: 100%;
@@ -106,35 +106,43 @@
   cursor: pointer;
 }
 
-.subnav-all-drafts-btn:hover,
+.subnav-all-drafts-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
 .subnav-all-drafts-btn.active {
-  background-color: rgba(255, 255, 255, 0.55);
+  background-color: #00bcd4;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
 }
 
 .subnav-section-title {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  color: #3a150c;
-  padding: 4px 14px;
-  letter-spacing: -0.01em;
-  margin-top: 6px;
+  color: #64748b;
+  padding: 4px 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 4px;
 }
 
 .subnav-menu-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .subnav-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
+  gap: 10px;
+  padding: 9px 12px;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #5c2718;
+  color: #334155;
   transition: all 0.15s;
   width: 100%;
   text-align: left;
@@ -144,18 +152,22 @@
 }
 
 .subnav-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.35);
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 .subnav-menu-item.active {
-  background-color: rgba(255, 255, 255, 0.55);
+  background-color: #00bcd4;
+  color: #ffffff;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
 }
 
 .subnav-menu-item svg {
-  color: #783526;
+  color: inherit;
   flex-shrink: 0;
 }
+
 
 /* --- Main Content Area --- */
 .article-drafts-main {
@@ -335,7 +347,7 @@
   border-radius: 4px;
   border: 1px solid #cbd5e1;
   cursor: pointer;
-  accent-color: #e07a5f;
+  accent-color: #00bcd4;
 }
 
 /* ID Cell */

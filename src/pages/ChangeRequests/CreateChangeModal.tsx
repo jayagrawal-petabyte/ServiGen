@@ -125,7 +125,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Upgrade Database Server to v14"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#E87A5D] focus:bg-white transition-all text-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00bcd4] focus:bg-white transition-all text-xs"
             />
           </div>
 
@@ -136,7 +136,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed justification, risk assessment, and planned rollback strategy..."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E87A5D] focus:bg-white transition-all text-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#00bcd4] focus:bg-white transition-all text-xs"
             />
           </div>
 
@@ -146,7 +146,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as ChangeType)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               >
                 <option value="Normal">Normal Change</option>
                 <option value="Standard">Standard Change</option>
@@ -159,7 +159,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               <select
                 value={risk}
                 onChange={(e) => setRisk(e.target.value as RiskLevel)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               >
                 <option value="Low">Low Risk</option>
                 <option value="Medium">Medium Risk</option>
@@ -176,7 +176,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 type="text"
                 value={linkedCiName}
                 onChange={(e) => setLinkedCiName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
             <div>
@@ -185,7 +185,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 type="text"
                 value={linkedCiId}
                 onChange={(e) => setLinkedCiId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
           </div>
@@ -197,7 +197,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 type="text"
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
             <div>
@@ -207,7 +207,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 min={1}
                 value={targetHours}
                 onChange={(e) => setTargetHours(parseInt(e.target.value, 10) || 1)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 type="text"
                 value={scheduledStart}
                 onChange={(e) => setScheduledStart(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
             <div>
@@ -228,7 +228,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 type="text"
                 value={scheduledEnd}
                 onChange={(e) => setScheduledEnd(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#E87A5D] hover:bg-[#d46a4e] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

@@ -116,7 +116,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               {getCiIcon(ci.type)}
             </div>
             <div>
-              <span className="text-[11px] font-extrabold text-[#E87A5D] tracking-wide block">
+              <span className="text-[11px] font-extrabold text-[#00bcd4] tracking-wide block">
                 {ci.tag}
               </span>
               <h3 className="font-bold text-slate-900 text-sm leading-tight mt-0.5">
@@ -187,7 +187,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           <div className="flex items-center bg-slate-200/70 p-1 rounded-2xl gap-1">
             <button
               onClick={() => navigate('/cmdb')}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#E87A5D] text-white shadow-2xs cursor-pointer transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#00bcd4] text-white shadow-2xs cursor-pointer transition-all"
             >
               Configuration Items (CIs)
             </button>
@@ -232,7 +232,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
             title="Refresh from backend API"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#E87A5D]' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#00bcd4]' : ''}`} />
             Refresh
           </button>
 
@@ -263,7 +263,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
           >
             <option value="ALL">All Types</option>
             <option value="Server">Servers</option>
@@ -280,7 +280,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
           >
             <option value="ALL">All Statuses</option>
             <option value="Active">Active</option>
@@ -290,7 +290,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         </div>
 
         <div className="ml-auto text-xs text-slate-500 font-semibold flex items-center gap-2">
-          {isLoading && <span className="text-[#E87A5D] font-bold">Synchronizing...</span>}
+          {isLoading && <span className="text-[#00bcd4] font-bold">Synchronizing...</span>}
           <span>Showing {filteredCis.length} {filteredCis.length === 1 ? 'CI' : 'CIs'}</span>
         </div>
       </div>

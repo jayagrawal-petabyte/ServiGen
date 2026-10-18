@@ -32,7 +32,7 @@
 }
 
 .btn-top-coral {
-  background-color: #e07a5f;
+  background-color: #00bcd4;
   color: #ffffff;
   border: none;
   border-radius: 999px;
@@ -47,7 +47,7 @@
 }
 
 .btn-top-coral:hover {
-  background-color: #d16b50;
+  background-color: #00acc1;
   transform: translateY(-1px);
 }
 
@@ -83,7 +83,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #f4a088;
+  background-color: #00bcd4;
   margin-left: 6px;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -490,7 +490,7 @@
 }
 
 .btn-reset-approvals {
-  background-color: #e07a5f;
+  background-color: #00bcd4;
   color: white;
   padding: 8px 22px;
   border-radius: 999px;
@@ -502,7 +502,7 @@
 }
 
 .btn-reset-approvals:hover {
-  background-color: #d16b50;
+  background-color: #00acc1;
 }
 
 /* Toast Notification */
