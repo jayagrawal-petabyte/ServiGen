@@ -142,7 +142,7 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
 
   const filteredItems = feedItems.filter((item) => {
     if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'major') return item.category === 'major' || item.ticketId.startsWith('MI-') || item.ticketId.startsWith('000267');
+    if (selectedFilter === 'major') return item.category === 'major' || item.ticketId.startsWith('MI-');
     if (selectedFilter === 'stage') return item.category === 'stage';
     if (selectedFilter === 'ticket') return item.category === 'ticket';
     if (selectedFilter === 'update') return item.category === 'update';

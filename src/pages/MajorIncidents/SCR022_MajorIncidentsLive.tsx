@@ -99,10 +99,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(true);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
-  const [localIncidents, setLocalIncidents] = usePersistentState<MajorIncident[]>(
-    'servigen_major_incidents_live_v1',
-    []
-  );
+  const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(false);
@@ -114,16 +111,28 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isTimesheetOpen, setIsTimesheetOpen] = useState<boolean>(false);
   const [isKpiDrawerOpen, setIsKpiDrawerOpen] = useState<boolean>(false);
 
+  // Clear any legacy mock localStorage data on mount
+  useEffect(() => {
+    try {
+      localStorage.removeItem('servigen_major_incidents_live_v1');
+      localStorage.removeItem('servigen_major_incidents_live');
+      localStorage.removeItem('servigen_major_incidents');
+      localStorage.removeItem('servigen_major_incidents_notifs_v2');
+      localStorage.removeItem('servigen_major_incidents_tasks_v2');
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const loadLiveIncidents = useCallback(async () => {
     try {
       setIsFetchingLive(true);
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live)) {
-        setServerIncidents(live);
-        // Only remove local incidents already confirmed on the server
-        setLocalIncidents((prev) => prev.filter(
-          (loc) => !live.some((srv) => srv.id === loc.id)
-        ));
+        // Strip out any legacy mock incidents
+        const cleanLive = live.filter((inc) => !inc.id.startsWith('000267'));
+        setServerIncidents(cleanLive);
+        setLocalIncidents([]);
         setIsLiveConnected(true);
       } else {
         setServerIncidents([]);
@@ -199,55 +208,59 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    serverIncidents.forEach((inc) => map.set(inc.id, inc));
+    serverIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) {
+        map.set(inc.id, inc);
+      }
+    });
     if (!isFetchingLive) {
-      localIncidents.forEach((inc) => map.set(inc.id, inc));
+      localIncidents.forEach((inc) => {
+        if (!inc.id.startsWith('000267')) {
+          map.set(inc.id, inc);
+        }
+      });
     }
     return Array.from(map.values());
   }, [serverIncidents, localIncidents, isFetchingLive]);
 
   useEffect(() => {
     if (allIncidents.length > 0) {
-      setNotifications((prev) => {
-        const hasMock = prev.some((n) => n.title.includes('000267'));
-        if (prev.length === 0 || hasMock) {
-          return allIncidents.slice(0, 4).map((inc) => ({
-            id: `notif-${inc.id}`,
-            title: `Major Incident #${inc.id} (${inc.title}) is under active ITSM management.`,
-            time: 'Live',
-            isRead: false,
-            priority: inc.priority === 'Critical' ? 'high' : 'medium',
-          }));
-        }
-        return prev;
+      setNotifications(() => {
+        return allIncidents.slice(0, 4).map((inc) => ({
+          id: `notif-${inc.id}`,
+          title: `Major Incident #${inc.id} (${inc.title}) is under active ITSM management.`,
+          time: 'Live',
+          isRead: false,
+          priority: inc.priority === 'Critical' ? 'high' : 'medium',
+        }));
       });
 
-      setTasks((prev) => {
-        const hasMock = prev.some((t) => t.label.includes('000267'));
-        if (prev.length === 0 || hasMock) {
-          const freshTasks: TaskItem[] = [];
-          allIncidents.slice(0, 3).forEach((inc) => {
-            freshTasks.push({
-              id: `task-${inc.id}-review`,
-              label: `Verify incident diagnosis and mitigation path for #${inc.id}`,
-              done: false,
-            });
-            freshTasks.push({
-              id: `task-${inc.id}-stakeholder`,
-              label: `Post real-time stakeholder update for #${inc.id}`,
-              done: false,
-            });
+      setTasks(() => {
+        const freshTasks: TaskItem[] = [];
+        allIncidents.slice(0, 3).forEach((inc) => {
+          freshTasks.push({
+            id: `task-${inc.id}-review`,
+            label: `Verify incident diagnosis and mitigation path for #${inc.id}`,
+            done: false,
           });
-          return freshTasks;
-        }
-        return prev;
+          freshTasks.push({
+            id: `task-${inc.id}-stakeholder`,
+            label: `Post real-time stakeholder update for #${inc.id}`,
+            done: false,
+          });
+        });
+        return freshTasks;
       });
+    } else {
+      setNotifications([]);
+      setTasks([]);
     }
   }, [allIncidents, setNotifications, setTasks]);
 
   const liveFeedEntries = useMemo<ActivityFeedEntry[]>(() => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
+      if (inc.id.startsWith('000267')) return;
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,

@@ -75,14 +75,19 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    serverIncidents.forEach((inc) => map.set(inc.id, inc));
-    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    serverIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) map.set(inc.id, inc);
+    });
+    localIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) map.set(inc.id, inc);
+    });
     return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
 
   useEffect(() => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
+      if (inc.id.startsWith('000267')) return;
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
