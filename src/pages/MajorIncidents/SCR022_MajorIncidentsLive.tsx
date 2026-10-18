@@ -13,7 +13,7 @@ import IncidentDetailPanel from './components/IncidentDetailPanel';
 import MajorIncidentConsole from './components/MajorIncidentConsole';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority, ActivityFeedEntry } from './types/majorIncident.types';
 import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
-import { MOCK_MAJOR_INCIDENTS, MOCK_FEED_ENTRIES } from './data/mockData';
+import { cmdbService } from '../../services/cmdbService';
 import { FeedPopover } from '../../components/shared/FeedPopover';
 import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
 import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
@@ -118,13 +118,15 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     try {
       setIsFetchingLive(true);
       const live = await majorIncidentsService.getMajorIncidents();
-      if (Array.isArray(live) && live.length > 0) {
+      if (Array.isArray(live)) {
         setServerIncidents(live);
         setIsLiveConnected(true);
       } else {
+        setServerIncidents([]);
         setIsLiveConnected(false);
       }
     } catch {
+      setServerIncidents([]);
       setIsLiveConnected(false);
     } finally {
       setIsFetchingLive(false);
@@ -145,6 +147,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   }, [user]);
 
   const [openPanel, setOpenPanel]           = useState<PanelType>(null);
+  const [cmdbServices, setCmdbServices]     = useState<string[]>([]);
   const [notifications, setNotifications]   = usePersistentState<NotificationItem[]>(
     'servigen_major_incidents_notifs_v2',
     INITIAL_NOTIFICATIONS
@@ -156,11 +159,25 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [feedUnreadCount, setFeedUnreadCount] = useState<number>(0);
   const PAGE_SIZE = 4;
 
-  const activeUserName = user?.fullName || 'Inesh Agarwal';
-  const activeUserEmail = user?.email || 'inesh@servigen.io';
-  const activeUserRole = user?.role || 'Administrator';
+  const activeUserName = user?.fullName || 'Unknown User';
+  const activeUserEmail = user?.email || '';
+  const activeUserRole = user?.role || 'Support Agent';
 
   const unreadNotifCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
+
+  useEffect(() => {
+    let mounted = true;
+    cmdbService.fetchConfigurationItems()
+      .then((res) => {
+        if (mounted && Array.isArray(res?.data) && res.data.length > 0) {
+          setCmdbServices(res.data.map((ci) => ci.name));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleMarkAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -178,9 +195,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    if (serverIncidents.length === 0) {
-      MOCK_MAJOR_INCIDENTS.forEach((inc) => map.set(inc.id, inc));
-    }
     serverIncidents.forEach((inc) => map.set(inc.id, inc));
     localIncidents.forEach((inc) => map.set(inc.id, inc));
     return Array.from(map.values());
@@ -935,13 +949,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
                         <div className="text-[10px] text-emerald-600 uppercase font-bold">Response SLA</div>
-                        <div className="text-lg font-bold text-emerald-700">96.4%</div>
-                        <div className="text-[10px] text-emerald-500">On-time (target: 95%)</div>
+                        <div className="text-lg font-bold text-emerald-700">—</div>
+                        <div className="text-[10px] text-emerald-500">Live SLA monitoring</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-cyan-50 border border-cyan-100">
                         <div className="text-[10px] text-cyan-600 uppercase font-bold">Resolution SLA</div>
-                        <div className="text-lg font-bold text-cyan-700">88.2%</div>
-                        <div className="text-[10px] text-cyan-500">On-time (target: 85%)</div>
+                        <div className="text-lg font-bold text-cyan-700">—</div>
+                        <div className="text-[10px] text-cyan-500">Live SLA monitoring</div>
                       </div>
                     </div>
                     <div className="p-3 rounded-lg bg-white border border-gray-200 space-y-2">
@@ -967,25 +981,29 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   <div className="space-y-3 text-xs text-gray-700">
                     <p className="font-semibold text-gray-900 border-b border-gray-100 pb-2">System & Service Health</p>
                     <div className="space-y-2">
-                      {['API Gateway', 'Auth Service', 'Payment Processing', 'Database Cluster', 'CDN Edge', 'Email Relay'].map((svc) => {
-                        const isAffected = allIncidents.some(
-                          (inc) =>
-                            !inc.lifecycleStages[5]?.isCompleted &&
-                            ((inc.product || '').toLowerCase().includes(svc.toLowerCase()) ||
-                             (inc.title || '').toLowerCase().includes(svc.toLowerCase()))
-                        );
-                        return (
-                          <div key={svc} className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-200">
-                            <span className="font-medium text-gray-800">{svc}</span>
-                            <span className={`inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full ${
-                              isAffected ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${isAffected ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-                              {isAffected ? 'Degraded ⚠' : 'Operational'}
-                            </span>
-                          </div>
-                        );
-                      })}
+                      {cmdbServices.length === 0 ? (
+                        <div className="text-gray-400 text-xs py-4 text-center">No configuration items registered in CMDB</div>
+                      ) : (
+                        cmdbServices.map((svc) => {
+                          const isAffected = allIncidents.some(
+                            (inc) =>
+                              !inc.lifecycleStages[5]?.isCompleted &&
+                              ((inc.product || '').toLowerCase().includes(svc.toLowerCase()) ||
+                               (inc.title || '').toLowerCase().includes(svc.toLowerCase()))
+                          );
+                          return (
+                            <div key={svc} className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-200">
+                              <span className="font-medium text-gray-800">{svc}</span>
+                              <span className={`inline-flex items-center gap-1 font-semibold text-[11px] px-2 py-0.5 rounded-full ${
+                                isAffected ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isAffected ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                {isAffected ? 'Degraded ⚠' : 'Operational'}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 ) : (

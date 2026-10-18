@@ -173,3 +173,12 @@ export const fetchServiceCis = async (): Promise<CmdbApiResponse<ServiceCI[]>> =
     message: res?.message || 'Loaded from live backend service-cis endpoint',
   };
 };
+
+export const cmdbService = {
+  fetchConfigurationItems,
+  fetchConfigurationItemsGroupedByType,
+  fetchConfigurationItemById,
+  fetchServiceCis,
+  normalizeConfigurationItem,
+  groupCisByType,
+};

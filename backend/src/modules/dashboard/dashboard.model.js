@@ -11,6 +11,10 @@
 
 const kpiData = {
   openIncidents: 42,
+  resolvedIncidents: 128,
+  majorIncidents: 4,
+  unassignedIncidents: 16,
+  avgResponseTimeMinutes: 144,
   slaBreaches: 7,
   avgResolutionTimeMinutes: 185,
   lastUpdatedAt: '2026-10-03T02:00:00.000Z',

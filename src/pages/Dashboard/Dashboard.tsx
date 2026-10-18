@@ -66,15 +66,12 @@ export default function Dashboard({
       try {
         const live = await majorIncidentsService.getMajorIncidents();
         if (mounted) {
-          const map = new Map<string, unknown>();
-          map.set("0002673", true);
-          map.set("0002672", true);
-          map.set("0002671", true);
-          (live || []).forEach((inc) => map.set(inc.id, true));
-          setMajorIncidentsCount(map.size);
+          setMajorIncidentsCount(Array.isArray(live) ? live.length : 0);
         }
       } catch {
-        // Fallback to 4
+        if (mounted) {
+          setMajorIncidentsCount(0);
+        }
       }
     }
     void loadMajorIncidents();
@@ -170,22 +167,37 @@ export default function Dashboard({
     },
     {
       label: "Resolved Incidents",
-      value: String(summary?.tickets?.actioned ?? 0),
+      value:
+        kpis?.resolvedIncidents != null
+          ? String(kpis.resolvedIncidents)
+          : summary?.tickets?.actioned != null
+          ? String(summary.tickets.actioned)
+          : "—",
       type: "resolved",
     },
     {
       label: "Major Incidents",
-      value: String(majorIncidentsCount),
+      value:
+        kpis?.majorIncidents != null
+          ? String(kpis.majorIncidents)
+          : String(majorIncidentsCount),
       type: "major",
     },
     {
       label: "Unassigned Incidents",
-      value: String(summary?.assignments?.total ?? summary?.tickets?.pending ?? 16),
+      value:
+        kpis?.unassignedIncidents != null
+          ? String(kpis.unassignedIncidents)
+          : summary?.assignments?.total != null
+          ? String(summary.assignments.total)
+          : summary?.tickets?.pending != null
+          ? String(summary.tickets.pending)
+          : "—",
       type: "unassigned",
     },
     {
       label: "Average Response Time",
-      value: "2.4",
+      value: kpis?.avgResponseTimeHours || "2.4",
       suffix: "Hrs",
       type: "response",
     },

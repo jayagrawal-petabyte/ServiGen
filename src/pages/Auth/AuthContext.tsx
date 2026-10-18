@@ -33,15 +33,15 @@ export const normalizeUser = (backendUser: any): User => {
     lastName,
     fullName,
     email: backendUser.email || '',
-    phone: backendUser.phone || backendUser.phoneNumber || '+91 98765 43200',
-    networkLogin: backendUser.networkLogin || `CORP\\${backendUser.username || 'user'}`,
-    defaultSite: backendUser.site?.name || backendUser.siteId || 'Bangalore HQ',
-    defaultOrganisation: backendUser.organisation?.name || backendUser.organisationId || 'ServiGen Global Tech',
-    region: 'APAC',
+    phone: backendUser.phone || backendUser.phoneNumber || '',
+    networkLogin: backendUser.networkLogin || (backendUser.username ? `CORP\\${backendUser.username}` : ''),
+    defaultSite: backendUser.defaultSite || backendUser.site?.name || backendUser.siteId || '',
+    defaultOrganisation: backendUser.defaultOrganisation || backendUser.organisation?.name || backendUser.organisationId || '',
+    region: backendUser.region || backendUser.site?.region || '',
     role,
     status: backendUser.active !== false && backendUser.availability !== 'Inactive' ? 'Active' : 'Inactive',
-    lastLogin: 'Just now',
-    department: backendUser.department || 'IT Operations',
+    lastLogin: backendUser.lastLogin ? new Date(backendUser.lastLogin).toLocaleDateString() : 'Just now',
+    department: backendUser.department || '',
   };
 };
 

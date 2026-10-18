@@ -5,9 +5,9 @@ import {
   APPOINTMENT_TYPES,
   type CalendarEvent,
   type EventType,
-  mockCalendarEvents,
   toDateKey,
 } from "./mockCalendar";
+import { api } from "../../services/apiClient";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -111,14 +111,14 @@ function layoutDay(events: CalendarEvent[]) {
 
 type Draft = Omit<CalendarEvent, "id">;
 
-function emptyDraft(date: Date, hour = 9): Draft {
+function emptyDraft(date: Date, hour = 9, defaultAgent = 'Support Agent'): Draft {
   return {
     title: "",
     date: toDateKey(date),
     start: `${String(hour).padStart(2, "0")}:00`,
     end: `${String(Math.min(hour + 1, 23)).padStart(2, "0")}:00`,
     type: "meeting",
-    agent: AGENTS[0],
+    agent: defaultAgent,
     description: "",
   };
 }
@@ -128,7 +128,9 @@ export default function CalendarPage() {
   const [anchor, setAnchor] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
-  const [events, setEvents] = useState<CalendarEvent[]>(mockCalendarEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [agentsList, setAgentsList] = useState<string[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
   const [search, setSearch] = useState("");
   const [hiddenTypes, setHiddenTypes] = useState<EventType[]>([]);
   const [hiddenAgents, setHiddenAgents] = useState<string[]>([]);
@@ -142,10 +144,66 @@ export default function CalendarPage() {
   const [draftError, setDraftError] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
+  const availableAgents = useMemo(() => {
+    return agentsList.length > 0 ? agentsList : AGENTS;
+  }, [agentsList]);
+
   // Keep the red "now" line moving.
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(id);
+  }, []);
+
+  // Fetch live calendar events and users
+  useEffect(() => {
+    let mounted = true;
+    async function loadCalendarData() {
+      setIsLoadingEvents(true);
+      try {
+        const [calRes, usersRes]: [any, any] = await Promise.allSettled([
+          api.get('/api/calendar'),
+          api.get('/api/users'),
+        ]).then(([c, u]) => [
+          c.status === 'fulfilled' ? c.value : null,
+          u.status === 'fulfilled' ? u.value : null,
+        ]);
+
+        if (!mounted) return;
+
+        if (usersRes) {
+          const uList = Array.isArray(usersRes?.data) ? usersRes.data : Array.isArray(usersRes) ? usersRes : [];
+          if (uList.length > 0) {
+            const names = uList.map((u: any) => u.fullName || u.username || 'Agent');
+            setAgentsList(Array.from(new Set(names)));
+          }
+        }
+
+        const cList = Array.isArray(calRes?.data) ? calRes.data : Array.isArray(calRes) ? calRes : [];
+        const mapped: CalendarEvent[] = cList.map((item: any) => {
+          const startDate = item.startsAt ? new Date(item.startsAt) : new Date();
+          const endDate = item.endsAt ? new Date(item.endsAt) : new Date();
+          return {
+            id: String(item.id || Date.now()),
+            title: item.title || 'Untitled Event',
+            date: toDateKey(startDate),
+            start: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`,
+            end: `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`,
+            type: (item.appointmentType?.toLowerCase() || 'meeting') as EventType,
+            agent: item.agentName || item.agentId || 'Support Agent',
+            description: item.description || '',
+          };
+        });
+        setEvents(mapped);
+      } catch (err) {
+        console.warn('Failed to load live calendar events:', err);
+      } finally {
+        if (mounted) setIsLoadingEvents(false);
+      }
+    }
+    void loadCalendarData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const dayStart = workingHoursOnly ? 8 : 0;
@@ -212,15 +270,40 @@ export default function CalendarPage() {
 
   function openDraft(date: Date, hour?: number) {
     setDraftError("");
-    setDraft(emptyDraft(date, hour));
+    setDraft(emptyDraft(date, hour, availableAgents[0]));
   }
 
-  function saveDraft() {
+  async function saveDraft() {
     if (!draft) return;
     if (!draft.title.trim()) return setDraftError("Please enter a title.");
     if (toMinutes(draft.end) <= toMinutes(draft.start)) return setDraftError("End time must be after start time.");
-    setEvents((prev) => [...prev, { ...draft, title: draft.title.trim(), id: String(Date.now()) }]);
+
+    const tempId = String(Date.now());
+    const optimisticEvent: CalendarEvent = {
+      ...draft,
+      title: draft.title.trim(),
+      id: tempId,
+    };
+    setEvents((prev) => [...prev, optimisticEvent]);
     setDraft(null);
+
+    try {
+      const startsAt = new Date(`${draft.date}T${draft.start}:00`).toISOString();
+      const endsAt = new Date(`${draft.date}T${draft.end}:00`).toISOString();
+      const res: any = await api.post('/api/calendar', {
+        title: draft.title.trim(),
+        appointmentType: draft.type,
+        startsAt,
+        endsAt,
+      });
+      if (res?.data?.id) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === tempId ? { ...e, id: String(res.data.id) } : e))
+        );
+      }
+    } catch (err) {
+      console.warn('Saved locally; server sync error:', err);
+    }
   }
 
   function deleteEvent(id: string) {
@@ -432,7 +515,7 @@ export default function CalendarPage() {
   }
 
   function renderTimeline() {
-    const agents = AGENTS.filter((a) => !hiddenAgents.includes(a));
+    const agents = availableAgents.filter((a) => !hiddenAgents.includes(a));
     return (
       <div className="cal-timeline" style={{ "--cols": weekDays.length } as CSSProperties}>
         <div className="cal-timeline-row cal-timeline-head">
@@ -577,7 +660,7 @@ export default function CalendarPage() {
             </button>
           </div>
           {agentsOpen &&
-            AGENTS.map((a) => (
+            availableAgents.map((a) => (
               <button
                 key={a}
                 className={`cal-side-item ${hiddenAgents.includes(a) ? "is-off" : ""}`}
@@ -745,7 +828,7 @@ export default function CalendarPage() {
                 <label>
                   Agent
                   <select value={draft.agent} onChange={(e) => setDraft({ ...draft, agent: e.target.value })}>
-                    {AGENTS.map((a) => (
+                    {availableAgents.map((a) => (
                       <option key={a}>{a}</option>
                     ))}
                   </select>

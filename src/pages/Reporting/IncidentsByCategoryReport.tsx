@@ -30,105 +30,6 @@ interface ReportTicketRow {
   slaResolutionMet: number;
 }
 
-const DEFAULT_VPN_TICKETS: ReportTicketRow[] = [
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3840',
-    summary: 'Getting an unacceptable credentials error whenever I try to connect over VPN',
-    createdAt: '12/05/2026 7:50 PM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'Low',
-    agent: 'Demo User',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3841',
-    summary: 'VPN connects for a few seconds then drops back to disconnected on its own',
-    createdAt: '28/08/2026 10:29 PM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'Medium',
-    agent: 'Demo User',
-    status: 'With User',
-    slaResolutionMet: 1,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3842',
-    summary: "Multi factor prompts for VPN aren't arriving on my phone during login",
-    createdAt: '11/05/2026 1:37 PM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'High',
-    agent: 'Jennifer Williams',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3843',
-    summary: "VPN is extremely unstable on this hotel's wireless network this week",
-    createdAt: '10/07/2026 9:33 PM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'Low',
-    agent: 'James Brown',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3844',
-    summary: 'User unable to access internal file shares over Cisco AnyConnect',
-    createdAt: '04/09/2026 3:15 PM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'Medium',
-    agent: 'Demo User',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3845',
-    summary: 'VPN client prompts for re-authentication every 15 minutes',
-    createdAt: '18/09/2026 11:20 AM',
-    site: 'EMEA',
-    team: '1st Line Support',
-    priority: 'Low',
-    agent: 'Demo User',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3846',
-    summary: 'Split tunneling routing table corrupted after Windows update',
-    createdAt: '22/09/2026 8:40 AM',
-    site: 'EMEA',
-    team: '2nd Line Support',
-    priority: 'High',
-    agent: 'Jennifer Williams',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-  {
-    category: 'Network>VPN>Connection Failure',
-    id: '3847',
-    summary: 'Certificate expired on secondary VPN gateway node',
-    createdAt: '29/09/2026 2:10 PM',
-    site: 'EMEA',
-    team: '2nd Line Support',
-    priority: 'Critical',
-    agent: 'James Brown',
-    status: 'Closed',
-    slaResolutionMet: 0,
-  },
-];
-
 export default function IncidentsByCategoryReport() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,7 +60,12 @@ export default function IncidentsByCategoryReport() {
       try {
         const queryParams: Record<string, string | number> = { limit: 100 };
         if (activeCategoryTag) {
-          queryParams.category = activeCategoryTag;
+          const primaryCat = activeCategoryTag.includes('>')
+            ? activeCategoryTag.split('>')[0].trim()
+            : activeCategoryTag.trim();
+          if (primaryCat) {
+            queryParams.category = primaryCat;
+          }
         }
         const res: any = await api.get('/api/incidents', { params: queryParams });
         const list = res?.data?.incidents || (Array.isArray(res?.data) ? res.data : []);
@@ -168,7 +74,7 @@ export default function IncidentsByCategoryReport() {
             id: item.id || '',
             summary: item.summary || 'Incident ticket',
             category: item.incident?.category || item.category || 'General Support',
-            createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '12/05/2026',
+            createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '',
             site: item.siteName || item.organisation || 'EMEA',
             team: item.assignedTeam || '1st Line Support',
             priority: (item.priority || 'Medium') as any,
@@ -180,11 +86,11 @@ export default function IncidentsByCategoryReport() {
           }));
           setTickets(mapped);
         } else if (mounted) {
-          setTickets(DEFAULT_VPN_TICKETS);
+          setTickets([]);
         }
       } catch (err) {
         console.warn('Failed to load live incidents for report:', err);
-        if (mounted) setTickets(DEFAULT_VPN_TICKETS);
+        if (mounted) setTickets([]);
       } finally {
         if (mounted) setIsRefreshing(false);
       }

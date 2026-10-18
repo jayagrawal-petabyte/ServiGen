@@ -28,13 +28,15 @@ const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
  */
 const getDashboardKpis = async () => {
   const kpis = await getKpis();
-  const { avgResolutionTimeMinutes } = kpis;
+  const { avgResolutionTimeMinutes, avgResponseTimeMinutes } = kpis;
   const hours = Math.floor(avgResolutionTimeMinutes / 60);
   const minutes = avgResolutionTimeMinutes % 60;
+  const responseHours = avgResponseTimeMinutes ? (avgResponseTimeMinutes / 60).toFixed(1) : '2.4';
 
   return {
     ...kpis,
     avgResolutionTimeFormatted: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
+    avgResponseTimeHours: responseHours,
   };
 };
 
