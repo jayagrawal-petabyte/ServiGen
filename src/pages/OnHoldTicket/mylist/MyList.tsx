@@ -161,7 +161,7 @@ const MyList: React.FC<MyListProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#00b4d8" strokeWidth="2.5">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#eb6a47" strokeWidth="2.5">
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -170,7 +170,7 @@ const MyList: React.FC<MyListProps> = ({
       {/* Header */}
       <div className="panel-my-lists-row">
         <div className="my-lists-icon-btn">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="#00bcd4">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="#eb6a47">
             <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
           </svg>
         </div>

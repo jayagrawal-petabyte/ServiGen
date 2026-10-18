@@ -141,7 +141,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 placeholder="Search…"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="text-xs border border-gray-200 rounded-full pl-3 pr-6 py-1 w-32 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50"
+                className="text-xs border border-gray-200 rounded-full pl-3 pr-6 py-1 w-32 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50"
               />
               <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -199,7 +199,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {showToast && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(100%+6px)] z-50 pointer-events-none">
           <div className="flex items-center gap-2 bg-gray-800 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-xl">
-            <svg className="w-3.5 h-3.5 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg className="w-3.5 h-3.5 text-[#eb6a47] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
             New Major Incident form opening…

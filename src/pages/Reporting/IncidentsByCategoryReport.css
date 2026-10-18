@@ -115,7 +115,7 @@
 }
 
 .get-started-btn {
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -127,11 +127,11 @@
 }
 
 .get-started-btn:hover {
-  background: #0096c7;
+  background: #db5936;
 }
 
 .new-ticket-btn {
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -139,12 +139,12 @@
   padding: 6px 14px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 180, 216, 0.3);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.3);
   transition: all 0.15s ease;
 }
 
 .new-ticket-btn:hover {
-  background: #0096c7;
+  background: #db5936;
 }
 
 .header-icon-group {
@@ -267,7 +267,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -322,8 +322,8 @@
 }
 
 .report-select-input:focus {
-  border-color: #00b4d8;
-  box-shadow: 0 0 0 2px rgba(0, 180, 216, 0.15);
+  border-color: #eb6a47;
+  box-shadow: 0 0 0 2px rgba(235, 106, 71, 0.15);
 }
 
 /* ── Filter Rows ── */
@@ -371,7 +371,7 @@
 }
 
 .filter-cyan-tag {
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 500;
@@ -427,7 +427,7 @@
 .filter-remove-row-btn {
   border: none;
   background: transparent;
-  color: #00b4d8;
+  color: #eb6a47;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -458,18 +458,18 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #00b4d8;
+  background: #eb6a47;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 180, 216, 0.4);
+  box-shadow: 0 4px 14px rgba(235, 106, 71, 0.4);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .assistant-circle-cyan:hover {
   transform: translateY(-2px);
-  background: #0096c7;
+  background: #db5936;
 }
 
 .assistant-circle-navy {
@@ -511,7 +511,7 @@
 .report-tag-close-btn {
   border: none;
   background: transparent;
-  color: #00b4d8;
+  color: #eb6a47;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -535,7 +535,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   border: none;
   border-radius: 9999px;
@@ -543,12 +543,12 @@
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 180, 216, 0.3);
+  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.3);
   transition: all 0.15s ease;
 }
 
 .report-refresh-btn:hover {
-  background: #0096c7;
+  background: #db5936;
   transform: translateY(-1px);
 }
 
@@ -576,7 +576,7 @@
 }
 
 .report-data-table thead th {
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-weight: 600;
   padding: 10px 14px;
@@ -590,7 +590,7 @@
 }
 
 .report-data-table thead th.sortable-th:hover {
-  background: #0096c7;
+  background: #db5936;
 }
 
 .report-data-table tbody tr {
@@ -676,9 +676,9 @@
 
 .gauge-btn-active {
   background: #ffffff !important;
-  color: #00bcd4 !important;
-  border: 2px solid #00bcd4 !important;
-  box-shadow: 0 1px 4px rgba(0, 188, 212, 0.3);
+  color: #eb6a47 !important;
+  border: 2px solid #eb6a47 !important;
+  box-shadow: 0 1px 4px rgba(235, 106, 71, 0.3);
 }
 
 /* ── Floating To-Do Popover (Exact Match to Image 4) ── */
@@ -749,7 +749,7 @@
 }
 
 .todo-date-input:focus {
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 .todo-content-area {
@@ -781,7 +781,7 @@
 .todo-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #00bcd4;
+  accent-color: #eb6a47;
   cursor: pointer;
 }
 
@@ -792,7 +792,7 @@
 
 .todo-add-pill-btn {
   align-self: flex-start;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border-radius: 9999px;
   padding: 7px 22px;
@@ -803,12 +803,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 2px 6px rgba(0, 188, 212, 0.35);
+  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.35);
   transition: all 0.15s ease;
 }
 
 .todo-add-pill-btn:hover {
-  background: #0096c7;
+  background: #db5936;
 }
 
 .todo-add-pill-btn .plus-icon {
@@ -832,7 +832,7 @@
 }
 
 .todo-input-field:focus {
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 /* ── Split Agent KPI Dashboard View (Exact Match to Image 5) ── */
@@ -951,7 +951,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #00bcd4;
+  background: #eb6a47;
   animation: cyanBounce 1.4s infinite ease-in-out both;
 }
 

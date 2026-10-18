@@ -400,7 +400,7 @@ function TeamIncidentTable({
                 ✕
               </button>
             ) : (
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#00bcd4" strokeWidth="2.5">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#eb6a47" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -411,7 +411,7 @@ function TeamIncidentTable({
           <div className="team-sidebar-header-row">
             <div className="team-sidebar-title-wrap">
               <div
-                className="team-sidebar-title cursor-pointer hover:text-cyan-600 transition-colors"
+                className="team-sidebar-title cursor-pointer hover:text-[#eb6a47] transition-colors"
                 onClick={() => {
                   setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
                   setStatusFilter("Open incidents");
@@ -946,7 +946,7 @@ function TeamIncidentTable({
                   <tr>
                     <td colSpan={10} className="empty-state text-center py-12 text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <span className="inline-block w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="inline-block w-6 h-6 border-2 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
                         <span className="text-sm font-medium text-slate-600">Loading live support incidents from backend...</span>
                       </div>
                     </td>

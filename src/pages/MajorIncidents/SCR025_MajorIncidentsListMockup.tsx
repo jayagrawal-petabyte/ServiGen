@@ -44,9 +44,9 @@ const LifecycleBar: React.FC<{ stages: MajorIncident['lifecycleStages'] }> = ({ 
           title={stage.label}
           className={`h-1.5 w-8 rounded-sm transition-colors ${
             stage.isCompleted
-              ? 'bg-cyan-500'
+              ? 'bg-[#eb6a47]'
               : stage.isActive
-              ? 'bg-cyan-300'
+              ? 'bg-[#f8c5b1]'
               : 'bg-gray-200'
           }`}
         />
@@ -69,15 +69,15 @@ const ListRow: React.FC<{
 }> = ({ incident, index, onSelect, onOpenLive }) => (
   <tr 
     onClick={() => onSelect(incident)}
-    className={`border-b border-gray-100 hover:bg-cyan-50/40 transition-colors group cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+    className={`border-b border-gray-100 hover:bg-[#fdede7]/40 transition-colors group cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
   >
     <td className="px-4 py-3 whitespace-nowrap">
-      <span className="text-[11px] font-mono font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-2 py-0.5 hover:bg-cyan-100 transition-colors">
+      <span className="text-[11px] font-mono font-bold text-[#db5936] bg-[#fdede7] border border-[#f8c5b1] rounded-full px-2 py-0.5 hover:bg-[#fbdcd0] transition-colors">
         #{incident.id}
       </span>
     </td>
     <td className="px-4 py-3">
-      <span className="text-sm font-medium text-gray-800 group-hover:text-cyan-700 transition-colors line-clamp-1">
+      <span className="text-sm font-medium text-gray-800 group-hover:text-[#db5936] transition-colors line-clamp-1">
         {incident.title}
       </span>
     </td>
@@ -103,7 +103,7 @@ const ListRow: React.FC<{
         <span className="text-[11px] text-gray-400 italic">Unassigned</span>
       ) : (
         <div className="flex items-center gap-1.5">
-          <span className="w-5 h-5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+          <span className="w-5 h-5 rounded-full bg-[#eb6a47] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
             {incident.assignee.split(' ').map((n) => n[0]).join('').slice(0, 2)}
           </span>
           <span className="text-[11px] text-gray-700 truncate max-w-[90px]">{incident.assignee}</span>
@@ -115,7 +115,7 @@ const ListRow: React.FC<{
         <button 
           type="button"
           onClick={(e) => { e.stopPropagation(); onSelect(incident); }}
-          className="text-[11px] text-cyan-600 hover:text-cyan-800 font-semibold px-2 py-0.5 rounded hover:bg-cyan-50 transition-colors"
+          className="text-[11px] text-[#eb6a47] hover:text-[#db5936] font-semibold px-2 py-0.5 rounded hover:bg-[#fdede7] transition-colors"
         >
           Details
         </button>
@@ -297,7 +297,7 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-40">‹ Prev</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setPage(p)} className={`px-2 py-1 rounded font-medium ${p === page ? 'bg-cyan-50 text-cyan-600' : 'hover:bg-gray-100'}`}>{p}</button>
+                <button key={p} onClick={() => setPage(p)} className={`px-2 py-1 rounded font-medium ${p === page ? 'bg-[#fdede7] text-[#eb6a47]' : 'hover:bg-gray-100'}`}>{p}</button>
               ))}
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-40">Next ›</button>
             </div>

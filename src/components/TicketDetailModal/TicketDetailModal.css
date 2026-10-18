@@ -305,7 +305,7 @@
 }
 
 .chevron-step.chevron-active {
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
 }
 
@@ -364,9 +364,9 @@
 }
 
 .ticket-nav-tab.tab-active {
-  color: #00b4d8;
+  color: #eb6a47;
   font-weight: 700;
-  border-bottom-color: #00b4d8;
+  border-bottom-color: #eb6a47;
 }
 
 .ticket-subnav-center {
@@ -814,8 +814,8 @@
 }
 
 .notif-refresh-btn:hover {
-  background: #f0fdfa;
-  border-color: #00b4d8;
+  background: #fdede7;
+  border-color: #eb6a47;
 }
 
 .notif-table-header {
@@ -865,7 +865,7 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  border: 9px solid #00b4d8;
+  border: 9px solid #eb6a47;
   border-right-color: transparent;
   animation: cyanSpin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
 }
@@ -993,19 +993,19 @@
   gap: 8px;
   width: 100%;
   padding: 8px 14px;
-  background: #00b4d8;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 600;
   border-radius: 9999px;
   text-decoration: none;
-  box-shadow: 0 1px 3px rgba(0, 180, 216, 0.25);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.25);
   transition: all 0.15s ease;
   box-sizing: border-box;
 }
 
 .teams-action-btn:hover {
-  background: #0096c7;
+  background: #db5936;
   transform: translateY(-1px);
 }
 
@@ -1073,12 +1073,12 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #00b4d8;
+  background: #eb6a47;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 180, 216, 0.3);
+  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.3);
 }
 
 .asset-meta {
@@ -1802,8 +1802,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #f0fdfa;
-  border: 1.5px solid #00bcd4;
+  background: #fdede7;
+  border: 1.5px solid #eb6a47;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2009,7 +2009,7 @@
 }
 
 .supplier-rich-textarea:focus {
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 .supplier-bottom-fields-row {
@@ -2043,7 +2043,7 @@
 }
 
 .supplier-field-select:focus, .supplier-field-textinput:focus {
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 .supplier-composer-footer {

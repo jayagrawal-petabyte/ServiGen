@@ -1925,7 +1925,7 @@ export default function TicketDetailModal({
                 <div className="supplier-composer-header">
                   <div className="supplier-header-left">
                     <div className="supplier-q-badge">
-                      <svg className="w-5 h-5 text-[#00bcd4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8}>
+                      <svg className="w-5 h-5 text-[#eb6a47]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8}>
                         <circle cx="12" cy="12" r="7.5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
                       </svg>
@@ -2557,7 +2557,7 @@ export default function TicketDetailModal({
                       onClick={handleRefreshNotifications}
                       title="Refresh Notification Log"
                     >
-                      <svg className={`w-3.5 h-3.5 ${isRefreshingNotifs ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="#00b4d8" strokeWidth={2.5}>
+                      <svg className={`w-3.5 h-3.5 ${isRefreshingNotifs ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="#eb6a47" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
                     </button>
@@ -2593,7 +2593,7 @@ export default function TicketDetailModal({
                     </div>
                     <div className="notif-row-col col-agents">
                       <div className="notif-avatar-stack">
-                        <span className="stack-avatar bg-[#00bcd4]" title="1st Line Support">1L</span>
+                        <span className="stack-avatar bg-[#eb6a47]" title="1st Line Support">1L</span>
                         <span className="stack-avatar bg-[#303f9f]" title="Chris Robinson">CR</span>
                         <span className="stack-avatar bg-[#e0f2fe] text-[#0284c7]" title="Channel Notifications">
                           <svg className="w-3 h-3 text-cyan-600" viewBox="0 0 24 24" fill="currentColor">
@@ -3015,7 +3015,7 @@ export default function TicketDetailModal({
                           Draft
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         3995 - Emails not Sending
                       </div>
                     </div>
@@ -3035,7 +3035,7 @@ export default function TicketDetailModal({
                           Approved
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2183 - Firewall Change
                       </div>
                     </div>
@@ -3055,7 +3055,7 @@ export default function TicketDetailModal({
                           Scheduled
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2184 - Printer Installation
                       </div>
                     </div>
@@ -3075,7 +3075,7 @@ export default function TicketDetailModal({
                           Rejected
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2186 - Addition of a New Server
                       </div>
                     </div>
@@ -3095,7 +3095,7 @@ export default function TicketDetailModal({
                           Change Overdue
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2193 - Security Concern - Possible Virus
                       </div>
                     </div>

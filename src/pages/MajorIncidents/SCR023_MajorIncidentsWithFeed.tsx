@@ -347,7 +347,7 @@ const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({ entries, isLive, on
                   {entry.actorOrg && (
                     <span className="text-[10px] text-gray-400">{entry.actorOrg}</span>
                   )}
-                  <span className="text-[10px] font-mono text-cyan-600 border border-cyan-300 rounded-full px-1.5 py-0.5 leading-none">
+                  <span className="text-[10px] font-mono text-[#eb6a47] border border-[#f8c5b1] rounded-full px-1.5 py-0.5 leading-none">
                     {entry.ticketRef}
                   </span>
                 </div>

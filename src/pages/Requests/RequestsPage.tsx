@@ -289,7 +289,7 @@ export const RequestsPage: React.FC = () => {
               onChange={(e) => setSearchTree(e.target.value)}
               className="requests-tree-search-input"
             />
-            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" strokeWidth={2.5}>
+            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="#eb6a47" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
@@ -518,7 +518,7 @@ export const RequestsPage: React.FC = () => {
                 onClick={handleRefresh}
               >
                 <svg
-                  className={`w-3.5 h-3.5 text-[#00bcd4] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 text-[#eb6a47] ${isRefreshing ? 'animate-spin' : ''}`}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -743,7 +743,7 @@ export const RequestsPage: React.FC = () => {
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   placeholder="e.g. Request dual monitor setup for trading desk..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   required
                   autoFocus
                 />
@@ -757,7 +757,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   >
                     <option value="Hardware>Laptop">Hardware &gt; Laptop</option>
                     <option value="Hardware>Monitor">Hardware &gt; Monitor</option>
@@ -774,7 +774,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -813,7 +813,7 @@ export const RequestsPage: React.FC = () => {
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Provide technical requirements, business reason, or preferred delivery bay..."
-                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-cyan-500"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                 />
               </div>
 
@@ -827,7 +827,7 @@ export const RequestsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
                 >
                   Create Request
                 </button>

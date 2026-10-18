@@ -730,7 +730,7 @@ input[type="checkbox"] {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -926,7 +926,7 @@ input[type="checkbox"] {
 }
 
 .major-incident-group-row td {
-  background: #00bcd4 !important;
+  background: #eb6a47 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   font-size: 13px !important;
@@ -935,7 +935,7 @@ input[type="checkbox"] {
 }
 
 .major-incident-group-row:hover td {
-  background: #00acc1 !important;
+  background: #db5936 !important;
 }
 
 .major-incident-ticket-row td {

@@ -74,7 +74,7 @@
 }
 
 .requests-get-started-btn {
-  background-color: #00b4d8;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -91,7 +91,7 @@
 }
 
 .requests-new-ticket-btn {
-  background-color: #00b4d8;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -148,7 +148,7 @@
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -207,8 +207,8 @@
 }
 
 .requests-tree-search-input:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 1px #00bcd4;
+  border-color: #eb6a47;
+  box-shadow: 0 0 0 1px #eb6a47;
 }
 
 .tree-search-icon {
@@ -239,7 +239,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: #00bcd4;
+  background-color: #eb6a47;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,8 +328,8 @@
 }
 
 .group-count-badge.cyan-badge {
-  background-color: #e0f7fa;
-  color: #00838f;
+  background-color: #fdede7;
+  color: #eb6a47;
 }
 
 .tree-sub-items {
@@ -365,15 +365,15 @@
 }
 
 .tree-agent-row.highlight-demo-user {
-  background-color: #00b4d8;
+  background-color: #eb6a47;
   color: #ffffff;
   border-radius: 9999px;
   padding: 4px 10px;
-  box-shadow: 0 1px 3px rgba(0, 180, 216, 0.3);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.3);
 }
 
 .tree-agent-row.highlight-demo-user:hover {
-  background-color: #0096c7;
+  background-color: #db5936;
 }
 
 .available-pill-tag {
@@ -587,11 +587,11 @@
 
 .toolbar-refresh-btn:hover {
   background-color: #f1f5f9;
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 .requests-create-btn {
-  background-color: #00bcd4;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -607,7 +607,7 @@
 }
 
 .requests-create-btn:hover {
-  background-color: #00acc1;
+  background-color: #db5936;
 }
 
 .toolbar-more-btn {
@@ -694,7 +694,7 @@
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background-color: #00bcd4;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 8px;
   font-weight: 700;
@@ -731,7 +731,7 @@
 }
 
 .request-summary-link {
-  color: #00bcd4;
+  color: #eb6a47;
   text-decoration: none;
   cursor: pointer;
   display: block;
