@@ -25,12 +25,12 @@
   grid-template-columns: 200px 1fr;
   gap: 40px;
   padding: 24px 32px 24px 24px;
+  min-height: 100vh;
   box-sizing: border-box;
   background: var(--pj-bg);
   color: var(--pj-ink);
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
-  align-items: stretch;
 }
 
 .projects-page *,
@@ -64,8 +64,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  align-self: stretch;
-  min-height: calc(100vh - 120px);
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  min-height: 620px;
 }
 
 .pj-search {

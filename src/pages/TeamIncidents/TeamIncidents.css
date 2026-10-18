@@ -871,10 +871,10 @@
 
 /* Left Sidebar */
 .team-sidebar-panel {
-  width: 240px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  width: 250px;
+  background: #e49b8e;
+  border-radius: 20px;
+  border: 1px solid #d4887b;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -882,14 +882,15 @@
   overflow: hidden;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  user-select: none;
 }
 
 .team-sidebar-search {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 14px;
+  border-bottom: 1px solid #d4887b;
   position: relative;
 }
 
@@ -897,9 +898,12 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: 13px;
-  color: #334155;
-  background: transparent;
+  font-size: 12px;
+  color: #1e293b;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .team-sidebar-search input::placeholder {
@@ -927,19 +931,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #d4887b;
 }
 
 .team-sidebar-title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .team-sidebar-title {
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: #3a201a;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -947,7 +951,7 @@
 }
 
 .team-sidebar-title:hover {
-  color: #0284c7;
+  color: #1c0f0c;
 }
 
 .team-status-menu-container {
@@ -959,12 +963,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: transparent;
-  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 11.5px;
-  color: #475569;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #542d25;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
@@ -972,19 +977,18 @@
 }
 
 .team-sidebar-subtitle-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.6);
+  color: #1c0f0c;
 }
 
 .dropdown-caret {
   font-size: 11px;
-  color: #0284c7;
+  color: #542d25;
   font-weight: 800;
 }
 
 .subtitle-text {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .team-status-dropdown-menu {
@@ -1135,37 +1139,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
   background: transparent;
-  border: 2px solid transparent;
+  border: none;
   cursor: pointer;
   width: 100%;
   text-align: left;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #0f172a;
+  color: #3a201a;
   transition: all 0.15s ease;
 }
 
 .team-sidebar-group-header:hover {
-  background: #f8fafc;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1c0f0c;
 }
 
 .team-sidebar-group-header.active-group {
-  border: 2px solid #000000;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: none;
+  border-radius: 8px;
+  background: #d28072;
+  color: #1c0f0c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   font-weight: 700;
 }
 
 .team-sidebar-badge {
   font-size: 11px;
   font-weight: 700;
-  background: #eb6a47;
-  color: #ffffff;
-  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
+  padding: 2px 7px;
   border-radius: 12px;
   min-width: 22px;
   text-align: center;
@@ -1173,64 +1179,71 @@
 }
 
 .team-sidebar-badge.breaching {
-  background: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+  color: #991b1b;
+}
+
+.team-sidebar-group-header.active-group .team-sidebar-badge,
+.team-subitem-btn.active .team-sidebar-badge,
+.team-sidebar-breaching-sla.active-group .team-sidebar-badge {
+  background: rgba(255, 255, 255, 0.85);
+  color: #1c0f0c;
 }
 
 .team-subitems-tree {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   padding-left: 10px;
-  margin-top: 6px;
+  margin-top: 3px;
+  border-left: 1px dashed #d4887b;
+  margin-left: 12px;
 }
 
 .team-subitem-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 20px;
+  padding: 5px 8px;
+  border-radius: 8px;
   background: transparent;
   border: none;
   cursor: pointer;
   width: 100%;
   text-align: left;
-  font-size: 13px;
-  color: #334155;
+  font-size: 12px;
+  color: #3a201a;
   font-weight: 500;
   transition: all 0.15s ease;
 }
 
 .team-subitem-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1c0f0c;
 }
 
 .team-subitem-btn.active {
-  background: #eb6a47;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(235, 106, 71, 0.25);
-}
-
-.team-subitem-btn.active .team-sidebar-badge {
-  background: #ffffff;
-  color: #eb6a47;
+  background: #d28072;
+  color: #1c0f0c;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .team-section-pill-label {
   display: inline-block;
-  padding: 2px 12px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 1px 10px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: 700;
-  margin: 8px 0 4px 6px;
+  margin: 6px 0 2px 4px;
   width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .team-section-pill-label.available {
-  background: #00b074;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
 }
 
 .team-section-pill-label.offline {
@@ -1242,25 +1255,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
   background: transparent;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   width: 100%;
   text-align: left;
+  color: #3a201a;
+  font-size: 12.5px;
+  font-weight: 600;
   transition: all 0.15s ease;
 }
 
 .team-sidebar-breaching-sla:hover {
-  background: #fef2f2;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1c0f0c;
 }
 
 .team-sidebar-breaching-sla.active-group {
-  border: 2px solid #ef4444;
-  border-radius: 12px;
-  background: #fef2f2;
-  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  background: #d28072;
+  color: #1c0f0c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-weight: 700;
 }
 
 .team-avatar-initials {

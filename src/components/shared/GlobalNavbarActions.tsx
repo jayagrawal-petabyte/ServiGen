@@ -911,8 +911,8 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
                 {presence === 'available' ? 'Available' : presence === 'away' ? 'Away' : 'Busy'}
               </span>
             </div>
-            <div className="global-profile-email">{user?.email || 'user@servigen.io'}</div>
-            <span className="global-profile-role-tag">{user?.role || 'Support Lead'}</span>
+            <div className="global-profile-email">{user?.email || ''}</div>
+            <span className="global-profile-role-tag">{user?.role || ''}</span>
           </div>
 
           <div className="global-presence-section">

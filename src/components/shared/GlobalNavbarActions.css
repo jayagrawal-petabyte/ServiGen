@@ -138,15 +138,6 @@
   box-shadow: 0 2px 6px rgba(0, 192, 243, 0.45);
 }
 
-.global-nav-avatar-initials {
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  user-select: none;
-}
-
 .global-nav-presence-dot {
   position: absolute;
   bottom: 0px;
@@ -503,16 +494,6 @@
   background: #f0fdf4;
   color: #16a34a;
   font-weight: 600;
-}
-
-.global-presence-opt-btn.is-selected.away {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.global-presence-opt-btn.is-selected.busy {
-  background: #fef2f2;
-  color: #b91c1c;
 }
 
 .global-profile-menu-links {

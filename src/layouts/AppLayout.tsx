@@ -144,7 +144,7 @@ export const AppLayout: React.FC = () => {
                       {user?.fullName || ''}
                     </h4>
                     <p className="text-[11px] text-slate-500 truncate">
-                      {user?.email || 'admin@servigen.io'}
+                      {user?.email || ''}
                     </p>
                     <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#fff5f2] text-[#eb6a47] border border-[#f7c9bc]">
                       {user?.role || 'Administrator'}

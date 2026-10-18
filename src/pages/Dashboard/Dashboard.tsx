@@ -324,7 +324,7 @@ export default function Dashboard() {
   const donutGeometry = useMemo(() => {
     const r = 50;
     const circumference = 2 * Math.PI * r;
-    const total = statusCounts.total || 45;
+    const total = statusCounts.total || 1; // avoid divide-by-zero; segments will all be 0 when no data
 
     const openLen = (statusCounts.open / total) * circumference;
     const inProgressLen = (statusCounts.inProgress / total) * circumference;
@@ -548,7 +548,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (pendingApprovalsCount != null ? pendingApprovalsCount : (summary?.approvals?.pending != null ? summary.approvals.pending : (kpisError ? '—' : 5)))}
+                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (pendingApprovalsCount != null ? pendingApprovalsCount : (summary?.approvals?.pending != null ? summary.approvals.pending : (kpisError ? '—' : '—')))}
               </div>
               <div className="text-xs text-gray-500 font-medium mt-1.5">Pending Approvals</div>
             </div>
@@ -569,7 +569,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.myAssignments != null ? kpis.myAssignments : (myAssignmentsCount != null ? myAssignmentsCount : (summary?.assignments?.total != null ? summary.assignments.total : (kpisError ? '—' : 3)))}
+                {kpis?.myAssignments != null ? kpis.myAssignments : (myAssignmentsCount != null ? myAssignmentsCount : (summary?.assignments?.total != null ? summary.assignments.total : (kpisError ? '—' : '—')))}
               </div>
               <div className="text-xs text-gray-500 font-medium mt-1.5">My Assignments</div>
             </div>

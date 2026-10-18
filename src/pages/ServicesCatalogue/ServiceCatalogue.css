@@ -101,7 +101,6 @@
   border-radius: 28px;
   background: #ffc2b0;
   box-sizing: border-box;
-  min-height: calc(100vh - 220px);
 }
 
 .sidebar-search {
@@ -200,27 +199,25 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  align-items: start;
-  align-content: start;
-  grid-auto-rows: max-content;
 }
 
 /* SERVICE CARD */
 .service-card {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  border: 1px solid #edf2f7;
-  border-radius: 18px;
+  min-height: 245px;
+  padding: 17px;
+  border: 1px solid #eee5e1;
+  border-radius: 13px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 3px 12px rgba(70, 45, 35, 0.05);
   box-sizing: border-box;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .service-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(70, 45, 35, 0.1);
 }
 
 .service-card-top {
@@ -232,11 +229,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 12px;
-  border-radius: 14px;
-  font-size: 24px;
+  width: 49px;
+  height: 49px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  font-size: 23px;
 }
 
 .service-icon-end-user-catalogue {
@@ -252,43 +249,44 @@
 }
 
 .service-category {
-  margin-bottom: 4px;
-  color: #888;
-  font-size: 11px;
+  margin-bottom: 6px;
+  color: #999;
+  font-size: 10px;
   line-height: 1.3;
 }
 
 .service-card h3 {
-  margin: 0 0 6px;
-  color: #1e293b;
-  font-size: 16px;
+  margin: 0 0 7px;
+  color: #292929;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.35;
 }
 
 .service-card p {
-  margin: 0 0 18px;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.45;
+  flex: 1;
+  margin: 0;
+  color: #777;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 /* CARD BUTTONS */
 .service-card-actions {
   display: flex;
-  gap: 8px;
-  margin-top: auto;
+  gap: 7px;
+  margin-top: 15px;
 }
 
 .details-button,
 .request-button {
   flex: 1;
-  padding: 9px 12px;
-  border-radius: 9px;
-  font-size: 12px;
+  padding: 8px 7px;
+  border-radius: 7px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .details-button {

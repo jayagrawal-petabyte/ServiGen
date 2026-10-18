@@ -33,18 +33,6 @@ export interface Ticket {
   targetSla?: string;
 }
 
-export const MAJOR_INCIDENT_ROW: Ticket = {
-  id: "0002673-P",
-  priority: "Critical",
-  priorityColor: "red",
-  org: "consultancy/EMEA/General User",
-  summary: "System Login Failure",
-  status: "New",
-  type: "Incident",
-  targetSla: "-179:06",
-  description: "Global authentication provider timeout. Users experiencing SSO login failure on primary portal.",
-};
-
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -141,7 +129,6 @@ const OnHoldTicketScreen: React.FC = () => {
   const [showKpiDrawer, setShowKpiDrawer] = useState<boolean>(false);
   const [showFeedPopover, setShowFeedPopover] = useState<boolean>(false);
   const [showTimesheetPopover, setShowTimesheetPopover] = useState<boolean>(false);
-  const [majorIncidentCollapsed, setMajorIncidentCollapsed] = useState<boolean>(false);
 
   // Authenticated user state
   const { user } = useAuth();
@@ -680,66 +667,7 @@ const OnHoldTicketScreen: React.FC = () => {
                             onSelectTicket={setSelectedTicket}
                           />
                         ))}
-                        {currentPage === 1 && (
-                          <>
-                            <tr
-                              className="major-incident-group-row"
-                              onClick={() => setMajorIncidentCollapsed(!majorIncidentCollapsed)}
-                            >
-                              <td colSpan={9}>
-                                <span className="group-toggle" style={{ marginRight: 6 }}>
-                                  {majorIncidentCollapsed ? "▶" : "▼"}
-                                </span>
-                                Major Incident (1)
-                              </td>
-                            </tr>
-                            {!majorIncidentCollapsed && (
-                              <tr
-                                className="ticket-row major-incident-ticket-row"
-                                onClick={() => navigate('/major-incidents/live?incident=0002673')}
-                                style={{ cursor: "pointer" }}
-                              >
-                                <td className="col-type">
-                                  <span className="mi-arrow-icon">▶</span>
-                                </td>
-                                <td className="col-check" onClick={(e) => e.stopPropagation()}>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedItems.includes(MAJOR_INCIDENT_ROW.id)}
-                                    onChange={() => toggleSelect(MAJOR_INCIDENT_ROW.id)}
-                                  />
-                                </td>
-                                <td className="col-viewing"></td>
-                                <td className="col-id">
-                                  <button
-                                    type="button"
-                                    className="ticket-id-link text-left bg-transparent border-0 cursor-pointer font-bold text-gray-900"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate('/major-incidents/live?incident=0002673');
-                                    }}
-                                  >
-                                    {MAJOR_INCIDENT_ROW.id}
-                                  </button>
-                                </td>
-                                <td className="col-sla">
-                                  <span className="sla-bar-red">{MAJOR_INCIDENT_ROW.targetSla}</span>
-                                </td>
-                                <td className="col-priority">
-                                  <span className="priority-dot" style={{ backgroundColor: "#ef4444" }}></span>
-                                  <span className="priority-label">{MAJOR_INCIDENT_ROW.priority}</span>
-                                </td>
-                                <td className="col-org">
-                                  <span className="org-link">{MAJOR_INCIDENT_ROW.org}</span>
-                                </td>
-                                <td className="col-summary">{MAJOR_INCIDENT_ROW.summary}</td>
-                                <td className="col-status">
-                                  <span className="status-badge status-new">New</span>
-                                </td>
-                              </tr>
-                            )}
-                          </>
-                        )}
+
                       </>
                     ) : (
                       Object.entries(groupedTickets).map(([groupName, tickets]) => {

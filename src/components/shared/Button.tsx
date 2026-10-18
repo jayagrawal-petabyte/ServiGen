@@ -36,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
     <motion.button
       whileHover={!disabled && !isLoading ? { scale: 1.02 } : {}}
       whileTap={!disabled && !isLoading ? { scale: 0.97 } : {}}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl transition-colors cursor-pointer font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >
@@ -46,9 +46,9 @@ export const Button: React.FC<ButtonProps> = ({
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       ) : (
-        icon && <span className="inline-flex shrink-0">{icon}</span>
+        icon && <span>{icon}</span>
       )}
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{children}</span>
+      <span>{children}</span>
     </motion.button>
   );
 };

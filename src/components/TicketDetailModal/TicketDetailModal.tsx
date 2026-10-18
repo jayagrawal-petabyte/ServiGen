@@ -362,40 +362,40 @@ export default function TicketDetailModal({
 
   // Area 3: Follower Management
   const [isFollowersPickerOpen, setIsFollowersPickerOpen] = useState(false);
-  const [followersList, setFollowersList] = useState<string[]>(["Admin", ""]);
+  const [followersList, setFollowersList] = useState<string[]>([]);
+  const [orgUsers, setOrgUsers] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true;
+    apiClient.get('/api/users').then((res: any) => {
+      if (!active) return;
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        setOrgUsers(list.map((u: any) => u.fullName || u.username || 'Agent').filter(Boolean));
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // Area 4: More Menu Modals & Real Connections
   const [isFlagged, setIsFlagged] = useState(false);
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false);
-  const [internalChatMessages, setInternalChatMessages] = useState<Array<{ sender: string; time: string; text: string }>>([
-    { sender: "", time: "10:14 AM", text: "Customer mentioned the machine blue-screened right after KB5031445 patch." },
-    { sender: "Admin (You)", time: "10:18 AM", text: "Checked telemetry: corrupted Master Boot Record. Diagnostic code confirms." },
-  ]);
+  const [internalChatMessages, setInternalChatMessages] = useState<Array<{ sender: string; time: string; text: string }>>([]);
   const [newChatMessage, setNewChatMessage] = useState("");
   const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
-  const [ccRecipients, setCcRecipients] = useState("service-desk-leads@servigen.io, supervisor@servigen.io");
-  const [bccRecipients, setBccRecipients] = useState("it-audit-logs@servigen.io");
+  const [ccRecipients, setCcRecipients] = useState("");
+  const [bccRecipients, setBccRecipients] = useState("");
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [urlAttachmentTitle, setUrlAttachmentTitle] = useState("");
   const [urlAttachmentHref, setUrlAttachmentHref] = useState("");
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false);
-  const [todoItems, setTodoItems] = useState<Array<{ id: string; text: string; done: boolean }>>([
-    { id: "td-1", text: "Verify hardware serial and manufacturer warranty status", done: true },
-    { id: "td-2", text: "Attempt bootrec /fixmbr via recovery console", done: false },
-    { id: "td-3", text: "Validate network share connectivity after OS boots", done: false },
-  ]);
+  const [todoItems, setTodoItems] = useState<Array<{ id: string; text: string; done: boolean }>>([]);
   const [newTodoText, setNewTodoText] = useState("");
   const [isIssueItemModalOpen, setIsIssueItemModalOpen] = useState(false);
   const [isLinkTicketModalOpen, setIsLinkTicketModalOpen] = useState(false);
   const [linkRelationType, setLinkRelationType] = useState("Related To");
-  const [linkedTickets, setLinkedTickets] = useState<Array<{ id: string; relation: string; title: string }>>([
-    { id: "#0003120", relation: "Related To", title: "Domain Controller intermittent DNS resolution" },
-  ]);
+  const [linkedTickets, setLinkedTickets] = useState<Array<{ id: string; relation: string; title: string }>>([]);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<Array<{ name: string; size: string; type: string }>>([
-    { name: "system-diagnostic-report.log", size: "148 KB", type: "log" },
-    { name: "event-viewer-export.evtx", size: "2.4 MB", type: "evtx" },
-  ]);
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ name: string; size: string; type: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const insertSupplierText = (snippet: string) => {
@@ -766,7 +766,7 @@ export default function TicketDetailModal({
               type="button"
               className="activity-menu-item"
               onClick={() => {
-                setEmailDraftTo(ticketData.email || "akhan@servigen.io");
+                setEmailDraftTo(ticketData.email || "");
                 setEmailDraftSubject(`[Ticket #${cleanId}] Activity Update: ${ticketData.summary || ticketData.actionTitle || "Incident Update"}`);
                 setEmailDraftBody(`--- Forwarded Activity Note from ${ticketData.requester || "Agent"} ---\n\n${getDisplayedDescription()}\n\n---------------------------------`);
                 setIsEmailModalOpen(true);
@@ -1075,7 +1075,7 @@ export default function TicketDetailModal({
                   type="button"
                   className="ticket-pill-btn cursor-pointer"
                   onClick={() => {
-                    setEmailDraftTo(ticketData.email || "akhan@servigen.io");
+                    setEmailDraftTo(ticketData.email || "");
                     setEmailDraftSubject(`[Ticket #${cleanId}] - ${ticketData.summary || "Follow-up regarding your ticket"}`);
                     setEmailDraftBody(`Hello ${ticketData.requester || "User"},\n\nWe are currently investigating your ticket #${cleanId} (${ticketData.summary || "Service Request"}).\n\nPlease let us know if there is any additional diagnostic information or preferred callback window.\n\nKind regards,\n${currentUser}\nSupport Services`);
                     setIsEmailModalOpen(true);
@@ -1286,14 +1286,9 @@ export default function TicketDetailModal({
                     {isFollowersPickerOpen && (
                       <div className="followers-selector-menu">
                         <div className="text-[10px] font-bold text-gray-500 uppercase px-2 py-1">Select Followers</div>
-                        {[
-                          "Admin",
-                          "",
-                          "Sarah Connor",
-                          "David Chen",
-                          "Elena Rostova",
-                          "James Wilson",
-                        ].map((agentName) => {
+                        {orgUsers.length === 0 ? (
+                          <div className="px-2 py-1 text-xs text-gray-400">No users found</div>
+                        ) : orgUsers.map((agentName) => {
                           const isChecked = followersList.includes(agentName);
                           return (
                             <label key={agentName} className="follower-checkbox-row">
@@ -2181,7 +2176,7 @@ export default function TicketDetailModal({
                         className="supplier-cc-btn cursor-pointer" 
                         title="Add CC"
                         onClick={() => {
-                          setStatusMessage('CC added: noc-oncall@servigen.io');
+                          setStatusMessage('CC added');
                           setTimeout(() => setStatusMessage(null), 2000);
                         }}
                       >
@@ -2254,7 +2249,7 @@ export default function TicketDetailModal({
                       type="button" 
                       className="rt-tool-btn cursor-pointer" 
                       title="Insert image"
-                      onClick={() => insertSupplierText('![Network Topology Diagram](https://servigen.io/assets/diagram.png)')}
+                      onClick={() => insertSupplierText('![Network Topology Diagram]()')}
                     >
                       🖼
                     </button>
@@ -3139,8 +3134,8 @@ export default function TicketDetailModal({
 
                       <div className="sidebar-field-group">
                         <span className="sidebar-field-label">Email Address</span>
-                        <a href={`mailto:${ticketData.email || "akhan@servigen.io"}`} className="sidebar-field-link email-link">
-                          {ticketData.email || "akhan@servigen.io"}
+                        <a href={`mailto:${ticketData.email || ""}`} className="sidebar-field-link email-link">
+                          {ticketData.email || ""}
                         </a>
                       </div>
 
@@ -3777,7 +3772,7 @@ export default function TicketDetailModal({
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <span className="text-[11px] text-gray-400">SMTP Relay: Active (mailer@servigen.io)</span>
+            <span className="text-[11px] text-gray-400">SMTP Relay: Active</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -4113,7 +4108,7 @@ export default function TicketDetailModal({
             </label>
             <input
               type="email"
-              defaultValue={ticketData.email || "akhan@servigen.io"}
+              defaultValue={ticketData.email || ""}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
             />
           </div>

@@ -13,6 +13,7 @@ import {
 } from "../../services/teamIncidentsService";
 
 import type { TeamIncident } from "./teamIncidents.types";
+import { INITIAL_ALL_TEAM_INCIDENTS } from "./teamIncidents.data";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 
 export type Incident = TeamIncident;
@@ -36,10 +37,10 @@ function TeamIncidentTable({
   const { user } = useAuth();
   const isSecondLine = team.toLowerCase().includes("2nd");
 
-  const [incidents, setIncidents] = useState<TeamIncident[]>([]);
+  const [incidents, setIncidents] = useState<TeamIncident[]>(INITIAL_ALL_TEAM_INCIDENTS);
   const [firstLineAgents, setFirstLineAgents] = useState<SupportAgent[]>([]);
   const [secondLineAgents, setSecondLineAgents] = useState<SupportAgent[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Sync incidents and agents with live backend API
   useEffect(() => {
@@ -52,11 +53,10 @@ function TeamIncidentTable({
     }
 
     let mounted = true;
-    setIsLoading(true);
 
     fetchAllTeamIncidents()
       .then((res) => {
-        if (mounted) {
+        if (mounted && res && res.incidents && res.incidents.length > 0) {
           setIncidents(res.incidents);
           setFirstLineAgents(res.firstLineAgents);
           setSecondLineAgents(res.secondLineAgents);
@@ -398,7 +398,7 @@ function TeamIncidentTable({
                 ✕
               </button>
             ) : (
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#eb6a47" strokeWidth="2.5">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94a3b8" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -409,7 +409,7 @@ function TeamIncidentTable({
           <div className="team-sidebar-header-row">
             <div className="team-sidebar-title-wrap">
               <div
-                className="team-sidebar-title cursor-pointer hover:text-[#eb6a47] transition-colors"
+                className="team-sidebar-title cursor-pointer hover:text-[#1c0f0c] transition-colors"
                 onClick={() => {
                   setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
                   setStatusFilter("Open incidents");
@@ -798,9 +798,11 @@ function TeamIncidentTable({
                   setIsLoading(true);
                   fetchAllTeamIncidents()
                     .then((res) => {
-                      setIncidents(res.incidents);
-                      setFirstLineAgents(res.firstLineAgents);
-                      setSecondLineAgents(res.secondLineAgents);
+                      if (res && res.incidents && res.incidents.length > 0) {
+                        setIncidents(res.incidents);
+                        setFirstLineAgents(res.firstLineAgents);
+                        setSecondLineAgents(res.secondLineAgents);
+                      }
                     })
                     .finally(() => setIsLoading(false));
                 }}
