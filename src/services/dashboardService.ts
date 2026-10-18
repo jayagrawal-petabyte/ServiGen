@@ -73,11 +73,15 @@ export const dashboardService = {
    * Fetch aggregated live KPIs
    */
   async getKpis(): Promise<DashboardKpis> {
-    const res = await api.get('/api/dashboard/kpis');
-    if (res?.success && res.data) {
-      return res.data as DashboardKpis;
+    try {
+      const res = await api.get('/api/dashboard/kpis');
+      if (res?.success && res.data) {
+        return res.data as DashboardKpis;
+      }
+      throw new Error('Failed to retrieve dashboard KPIs');
+    } catch (error) {
+      throw error;
     }
-    throw new Error('Failed to retrieve dashboard KPIs');
   },
 
   /**
