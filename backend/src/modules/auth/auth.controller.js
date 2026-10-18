@@ -1,6 +1,7 @@
 const {
   login,
   getSession,
+  refreshToken,
 } = require('./auth.service');
 
 /**
@@ -90,7 +91,33 @@ const getSessionHandler = async (req, res) => {
   }
 };
 
+/**
+ * POST /auth/refresh
+ *
+ * Refresh a JWT bearer token.
+ */
+const refreshHandler = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const tokenToRefresh = req.body?.token || bearerToken;
+
+    const data = await refreshToken(tokenToRefresh);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data,
+      token: data.token,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Token refresh failed');
+  }
+};
+
 module.exports = {
   loginHandler,
   getSessionHandler,
+  refreshHandler,
 };

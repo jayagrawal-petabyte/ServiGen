@@ -1,10 +1,12 @@
 const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const {
   findUserByEmail,
   findUserById,
 } = require('./auth.model');
 const { generateToken } = require('../../shared');
+const { JWT_SECRET } = require('../../config');
 
 const safePasswordCompare = async (supplied, stored) => {
   if (typeof supplied !== 'string' || typeof stored !== 'string') return false;
@@ -109,7 +111,45 @@ const getSession = async (userId) => {
   return safeUser;
 };
 
+const refreshToken = async (rawToken) => {
+  if (!rawToken) {
+    const error = new Error('Token required for refresh');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(rawToken, JWT_SECRET, { ignoreExpiration: true });
+  } catch {
+    const error = new Error('Invalid token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await findUserById(decoded.id);
+  if (!user || !user.active) {
+    const error = new Error('User not found or inactive');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const newToken = generateToken({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    organisationId: user.organisationId,
+  });
+
+  const { password: _p, passwordHash: _ph, ...safeUser } = user;
+  return {
+    ...safeUser,
+    token: newToken,
+  };
+};
+
 module.exports = {
   login,
   getSession,
+  refreshToken,
 };

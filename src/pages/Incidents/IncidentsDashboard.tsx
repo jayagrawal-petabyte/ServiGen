@@ -14,6 +14,7 @@ import CategoryChart from "./CategoryChart";
 import RecentIncidents from "./RecentIncidents";
 import NewTickets from "./NewTickets";
 import StatisticsCards, { type Statistic } from "./StatisticsCards";
+import AllIncidentsModal from "./AllIncidentsModal";
 
 import type {
   ChartItem,
@@ -353,6 +354,36 @@ export default function IncidentsDashboard() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [isAllIncidentsOpen, setIsAllIncidentsOpen] = useState(false);
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState("");
+  const [newTicketDesc, setNewTicketDesc] = useState("");
+  const [newTicketPriority, setNewTicketPriority] = useState("Medium");
+  const [newTicketCategory, setNewTicketCategory] = useState("Software");
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+
+  const handleCreateTicketSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTicketSubject.trim()) return;
+    setIsSubmittingTicket(true);
+    try {
+      await api.post("/api/incidents", {
+        summary: newTicketSubject.trim(),
+        description: newTicketDesc.trim() || newTicketSubject.trim(),
+        priority: newTicketPriority,
+        category: newTicketCategory,
+      });
+      setIsCreateTicketOpen(false);
+      setNewTicketSubject("");
+      setNewTicketDesc("");
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      console.warn("Failed to create ticket via API:", err);
+    } finally {
+      setIsSubmittingTicket(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -549,11 +580,7 @@ export default function IncidentsDashboard() {
           <button
             type="button"
             className="new-ticket-button"
-            onClick={() => {
-              window.alert(
-                "Ticket creation is not connected yet. Confirm the supported create-ticket API with the backend team."
-              );
-            }}
+            onClick={() => setIsCreateTicketOpen(true)}
           >
             + New Ticket
           </button>
@@ -601,6 +628,7 @@ export default function IncidentsDashboard() {
           <RecentIncidents
             incidents={filteredIncidents}
             onSelectIncident={setSelectedIncident}
+            onViewAll={() => setIsAllIncidentsOpen(true)}
           />
 
           <CategoryChart data={data.category} />
@@ -688,6 +716,122 @@ export default function IncidentsDashboard() {
               <span>Description</span>
               <p>{selectedIncident.description}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      <AllIncidentsModal
+        isOpen={isAllIncidentsOpen}
+        onClose={() => setIsAllIncidentsOpen(false)}
+        incidents={data.recent}
+        onSelectIncident={(incident) => {
+          setIsAllIncidentsOpen(false);
+          setSelectedIncident(incident);
+        }}
+      />
+
+      {isCreateTicketOpen && (
+        <div
+          className="incident-modal-overlay"
+          onClick={() => setIsCreateTicketOpen(false)}
+        >
+          <div
+            className="incident-modal"
+            style={{ maxWidth: '520px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="incident-modal-close"
+              onClick={() => setIsCreateTicketOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className="incident-modal-header">
+              <h2>Create New Incident Ticket</h2>
+            </div>
+            <form onSubmit={handleCreateTicketSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                  Subject *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTicketSubject}
+                  onChange={(e) => setNewTicketSubject(e.target.value)}
+                  placeholder="e.g. VPN gateway unresponsive in Tokyo DC"
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={newTicketDesc}
+                  onChange={(e) => setNewTicketDesc(e.target.value)}
+                  placeholder="Provide incident details, observed symptoms, or user impact..."
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    Priority
+                  </label>
+                  <select
+                    value={newTicketPriority}
+                    onChange={(e) => setNewTicketPriority(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px' }}
+                  >
+                    <option value="Critical">Critical (P1)</option>
+                    <option value="High">High (P2)</option>
+                    <option value="Medium">Medium (P3)</option>
+                    <option value="Low">Low (P4)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                    Category
+                  </label>
+                  <select
+                    value={newTicketCategory}
+                    onChange={(e) => setNewTicketCategory(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px' }}
+                  >
+                    <option value="Software">Software</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Network">Network</option>
+                    <option value="Access">Access</option>
+                    <option value="VPN">VPN</option>
+                    <option value="Email">Email</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateTicketOpen(false)}
+                  style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingTicket}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#0284c7', color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                >
+                  {isSubmittingTicket ? 'Creating...' : 'Create Ticket'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

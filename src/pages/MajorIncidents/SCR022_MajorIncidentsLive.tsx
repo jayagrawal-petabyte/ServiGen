@@ -762,19 +762,25 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-7 flex-1 auto-rows-fr">
                   {Array.from({ length: 35 }).map((_, i) => {
-                    const matchInc = allIncidents[i % (allIncidents.length + 5)];
-                    const hasEvent = i % 7 === 2 && matchInc;
+                    const dayNum = i + 1;
+                    const matchingIncidents = allIncidents.filter((inc) => {
+                      if (!inc.startedAt) return false;
+                      const d = new Date(inc.startedAt);
+                      return !isNaN(d.getTime()) && d.getDate() === dayNum;
+                    });
                     return (
-                      <div key={i} className="border-r border-b border-gray-100 p-2 relative hover:bg-gray-50 transition-colors">
-                        <span className="text-gray-400 text-xs">{i + 1}</span>
-                        {hasEvent && (
+                      <div key={i} className="border-r border-b border-gray-100 p-2 relative hover:bg-gray-50 transition-colors overflow-hidden">
+                        <span className="text-gray-400 text-xs">{dayNum <= 31 ? dayNum : ''}</span>
+                        {dayNum <= 31 && matchingIncidents.map((matchInc) => (
                           <div
+                            key={matchInc.id}
                             onClick={() => setSelectedIncidentId(matchInc.id)}
                             className="mt-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 text-[10px] font-bold p-1 rounded cursor-pointer truncate transition-colors"
+                            title={`#${matchInc.id} ${matchInc.title}`}
                           >
                             #{matchInc.id} {matchInc.title}
                           </div>
-                        )}
+                        ))}
                       </div>
                     );
                   })}

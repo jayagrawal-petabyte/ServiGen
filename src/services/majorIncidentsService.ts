@@ -172,6 +172,7 @@ export function mapBackendToFrontendIncident(backend: BackendMajorIncident): Maj
     assignee: backend.commander || 'Unassigned',
     lifecycleStages: buildLifecycleStages(backend.status, backend.startedAt, backend.resolvedAt),
     updates,
+    startedAt: backend.startedAt,
   };
 }
 

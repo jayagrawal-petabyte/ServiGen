@@ -3,6 +3,7 @@ const express = require('express');
 const {
   loginHandler,
   getSessionHandler,
+  refreshHandler,
 } = require('./auth.controller');
 
 const router = express.Router();
@@ -13,6 +14,13 @@ const router = express.Router();
  * Authenticate a user using username and password.
  */
 router.post('/login', loginHandler);
+
+/**
+ * POST /auth/refresh
+ *
+ * Refresh an active token.
+ */
+router.post('/refresh', refreshHandler);
 
 /**
  * GET /auth/session

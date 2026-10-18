@@ -30,6 +30,7 @@ export interface MajorIncident {
   lifecycleStages: LifecycleStage[];
   assignee: string;
   updates?: IncidentUpdate[];
+  startedAt?: string;
 }
 
 export type FeedEntryType =

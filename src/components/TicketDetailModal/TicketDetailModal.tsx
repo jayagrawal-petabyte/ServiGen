@@ -306,7 +306,7 @@ const AI_ARTICLES_DATA: Record<number, AiArticleItem[]> = {
 
 export default function TicketDetailModal({
   ticket,
-  currentUser = "Inesh Agarwal",
+  currentUser = "Support Agent",
   variant = "incident",
   onClose,
   onUpdateTicket,

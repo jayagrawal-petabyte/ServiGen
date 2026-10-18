@@ -404,7 +404,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
     summary: "System Login Failure - SSO Gateway Timeout",
     priority: "Critical",
     status: "In Progress",
-    agent: "Inesh Agarwal",
+    agent: "Alex Agent",
     requester: "Automated Monitoring (Datadog)",
     department: "Identity & Access Infrastructure",
     category: "Security > Multi-Factor Authentication > SSO",
@@ -421,7 +421,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
       },
       {
         id: "n-2",
-        author: "Inesh Agarwal",
+        author: "Alex Agent",
         time: "12 Oct 2026, 02:18 PM",
         text: "Traffic rerouted to secondary auth cluster in us-west-2. Error rate decreased to 3%.",
       },
@@ -890,7 +890,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
     summary: "Salesforce CRM opportunity pipeline export failing with 413 Payload Too Large",
     priority: "Critical",
     status: "In Progress",
-    agent: "Inesh Agarwal",
+    agent: "Alex Agent",
     requester: "Vikram Malhotra (VP Global Sales)",
     department: "Commercial & Sales Operations",
     category: "Business Applications > Salesforce CRM",
@@ -907,7 +907,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
       },
       {
         id: "n-3025-2",
-        author: "Inesh Agarwal",
+        author: "Alex Agent",
         time: "16 Oct 2026, 12:55 PM",
         text: "Identified batch API serialization issue. Reconfiguring middleware pagination gateway.",
       },
@@ -938,7 +938,7 @@ export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {
 };
 
 export const AVAILABLE_AGENTS = [
-  "Inesh Agarwal",
+  "Alex Agent",
   "Anjali Prasad",
   "Durgesh Kumar",
   "Nainesh Patel",
@@ -1012,15 +1012,21 @@ export function enrichTicketDetails(rawTicket: {
     requester:
       rawTicket.requester ||
       catalogEntry.requester ||
-      "Inesh Agarwal (ServiGen User)",
+      "Support Requester",
     department:
       rawTicket.department || catalogEntry.department || "IT Operations",
     category:
       rawTicket.category || catalogEntry.category || "General Support",
     createdAt:
-      rawTicket.createdAt || catalogEntry.createdAt || "12 Oct 2026, 12:00 PM",
+      rawTicket.createdAt || catalogEntry.createdAt || "Just now",
     targetSla:
-      rawTicket.targetSla || catalogEntry.targetSla || "Target SLA: Within 4 hours",
+      rawTicket.targetSla ||
+      catalogEntry.targetSla ||
+      (rawTicket.priority === 'Critical'
+        ? "Target SLA: Within 1 hour"
+        : rawTicket.priority === 'High'
+        ? "Target SLA: Within 2 hours"
+        : "Target SLA: Within 4 hours"),
     notes:
       rawTicket.notes && rawTicket.notes.length > 0
         ? rawTicket.notes

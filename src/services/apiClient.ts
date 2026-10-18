@@ -179,32 +179,26 @@ export interface RequestOptions extends RequestInit {
 let autoLoginPromise: Promise<string | null> | null = null;
 
 /**
- * Automatically obtains a valid JWT token from the backend for the active session.
+ * Transparently refreshes the active session token using POST /api/auth/refresh.
+ * Eliminates hardcoded development credentials from client communication.
  */
-export async function obtainDevAuthToken(): Promise<string | null> {
+export async function refreshAuthToken(): Promise<string | null> {
+  const currentToken = getAuthToken();
+  if (!currentToken) return null;
+
   if (autoLoginPromise) return autoLoginPromise;
   autoLoginPromise = (async () => {
     try {
       const baseUrl = getApiBaseUrl();
-      const loginUrl = `${baseUrl}/api/auth/login`;
-      let res = await fetch(loginUrl, {
+      const refreshUrl = `${baseUrl}/api/auth/refresh`;
+      const res = await fetch(refreshUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'agent001@servigen.local',
-          password: 'Ag3nt*8mP4!wR9t',
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentToken}`,
+        },
+        body: JSON.stringify({ token: currentToken }),
       });
-      if (!res.ok) {
-        res = await fetch(loginUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: 'admin@servigen.local',
-            password: 'Adm!n#9vK2$7xLq',
-          }),
-        });
-      }
       if (res.ok) {
         const json = await res.json();
         const tok = json?.data?.token || json?.token;
@@ -216,6 +210,8 @@ export async function obtainDevAuthToken(): Promise<string | null> {
           return tok;
         }
       }
+      // If token refresh was rejected by server, clear expired token
+      clearAuthToken();
     } catch {
       // Offline fallback
     } finally {
@@ -225,6 +221,8 @@ export async function obtainDevAuthToken(): Promise<string | null> {
   })();
   return autoLoginPromise;
 }
+
+export const obtainDevAuthToken = refreshAuthToken;
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
  * standard error parsing, and transparent JWT auto-acquisition.
@@ -283,9 +281,8 @@ export async function apiRequest<T = any>(
   }
 
   // If unauthorized and haven't retried yet, transparently refresh token and retry
-  if (response.status === 401 && !_isRetry && !endpoint.includes('/auth/login')) {
-    clearAuthToken();
-    const freshToken = await obtainDevAuthToken();
+  if (response.status === 401 && !_isRetry && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
+    const freshToken = await refreshAuthToken();
     if (freshToken) {
       const retryHeaders = new Headers(customHeaders || {});
       if (fetchOptions.body && !retryHeaders.has('Content-Type')) {

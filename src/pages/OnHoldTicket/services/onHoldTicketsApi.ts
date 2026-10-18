@@ -53,7 +53,7 @@ export function adaptBackendTicket(b: BackendOnHoldTicket): Ticket {
 
   const orgPart = b.organisation || 'consultancy';
   const sitePart = b.site || 'EMEA';
-  const agentPart = b.assignedAgentId || 'Inesh Agarwal';
+  const agentPart = b.assignedAgentId || 'Support Agent';
   const org = `${orgPart}/${sitePart}/${agentPart}`;
 
   const statusLower = b.status?.toLowerCase() || '';

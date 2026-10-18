@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return {
       isAuthenticated: Boolean(savedUser && savedToken),
       user: savedUser || null,
-      loading: false,
+      loading: Boolean(savedToken),
       error: null,
     };
   });
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     checkBackendHealth();
     
-    // Sync active session with backend API if a token exists (GET /api/auth/session)
+    // Sync and validate active session with backend API if a token exists (GET /api/auth/session)
     const activeToken = getStoredToken();
     if (activeToken) {
       api.get('/api/auth/session')
@@ -90,12 +90,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               error: null,
             });
             setBackendConnected(true);
+          } else {
+            setStoredToken(null);
+            setStoredUser(null);
+            setAuthState({
+              isAuthenticated: false,
+              user: null,
+              loading: false,
+              error: null,
+            });
           }
         })
         .catch(() => {
-          // If session is expired or invalid on the backend, clear session
+          // If session is expired or invalid on the backend, clear invalid session
+          setStoredToken(null);
+          setStoredUser(null);
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            loading: false,
+            error: null,
+          });
           setBackendConnected(false);
         });
+    } else {
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+        error: null,
+      });
     }
   }, []);
 

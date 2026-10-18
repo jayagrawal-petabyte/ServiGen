@@ -157,7 +157,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             id: notifId,
             ticketId: String(mi.id),
             title: mi.priority === 'P1' || mi.priority === 'Critical' ? 'Critical SLA Breach Alert' : 'Major Incident Alert',
-            desc: `#${mi.id}: ${mi.title}`,
+            desc: mi.title || 'Major Incident Reported',
             time: 'Live',
             isSla: true,
             slaTime: mi.resolutionTarget || '-179:00',
@@ -173,7 +173,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             id: notifId,
             ticketId: String(t.id),
             title: t.priority === 'Critical' || t.priority === 'High' ? 'SLA Warning Alert' : 'Ticket Status Update',
-            desc: `#${t.id}: ${t.summary || t.title}`,
+            desc: t.summary || t.title || 'Service Ticket Update',
             time: 'Recent',
             isSla: t.priority === 'Critical' || t.priority === 'High',
             slaTime: '-64:00',
@@ -282,10 +282,26 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       )
     : ticketList.slice(0, 8);
 
-  const handleQuickCreateTicket = (e: React.FormEvent) => {
+  const handleQuickCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickSummary.trim()) return;
-    const newId = `INC-${Math.floor(1000 + Math.random() * 9000)}`;
+    let newId = `INC-${Math.floor(1000 + Math.random() * 9000)}`;
+    try {
+      const res: any = await api.post('/api/incidents', {
+        summary: quickSummary.trim(),
+        description: quickDesc.trim() || quickSummary.trim(),
+        category: quickCategory,
+        priority: quickPriority,
+      });
+      if (res?.data?.id) {
+        newId = String(res.data.id);
+      } else if (res?.id) {
+        newId = String(res.id);
+      }
+    } catch (err) {
+      console.warn('[GlobalNavbarActions] Ticket create API sync notice:', err);
+    }
+
     const newTicketItem: QuickSearchItem = {
       id: newId,
       summary: quickSummary.trim(),
@@ -585,39 +601,43 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             )}
           </div>
           <div className="global-notifications-list">
-            {notifications.map((item) => (
-              <div
-                key={item.id}
-                className={`global-notif-item ${item.unread ? 'is-unread' : ''} ${
-                  item.isSla ? 'is-sla' : ''
-                }`}
-                onClick={() => handleNotificationClick(item)}
-              >
+            {notifications.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 text-xs">No notifications at the moment</div>
+            ) : (
+              notifications.map((item) => (
                 <div
-                  className="global-notif-icon"
-                  style={{
-                    background: item.isSla ? '#fee2e2' : '#e0f2fe',
-                    color: item.isSla ? '#ef4444' : '#0284c7',
-                  }}
+                  key={item.id}
+                  className={`global-notif-item ${item.unread ? 'is-unread' : ''} ${
+                    item.isSla ? 'is-sla' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(item)}
                 >
-                  {item.isSla ? '⏰' : '🔔'}
-                </div>
-                <div className="global-notif-content">
-                  <div className="global-notif-header">
-                    <span className="global-notif-title">{item.title}</span>
-                    {item.slaTime && (
-                      <span className="global-notif-badge-pill global-notif-badge-sla">
-                        {item.slaTime}
-                      </span>
-                    )}
+                  <div
+                    className="global-notif-icon"
+                    style={{
+                      background: item.isSla ? '#fee2e2' : '#e0f2fe',
+                      color: item.isSla ? '#ef4444' : '#0284c7',
+                    }}
+                  >
+                    {item.isSla ? '⏰' : '🔔'}
                   </div>
-                  <div className="global-notif-desc" title={item.desc}>
-                    #{item.ticketId}: {item.desc}
+                  <div className="global-notif-content">
+                    <div className="global-notif-header">
+                      <span className="global-notif-title">{item.title}</span>
+                      {item.slaTime && (
+                        <span className="global-notif-badge-pill global-notif-badge-sla">
+                          {item.slaTime}
+                        </span>
+                      )}
+                    </div>
+                    <div className="global-notif-desc" title={item.desc}>
+                      #{item.ticketId}: {item.desc}
+                    </div>
+                    <span className="global-notif-time">{item.time}</span>
                   </div>
-                  <span className="global-notif-time">{item.time}</span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}

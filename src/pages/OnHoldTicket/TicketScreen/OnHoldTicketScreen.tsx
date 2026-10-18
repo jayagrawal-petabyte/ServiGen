@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./OnHoldTicketScreen.css";
 import MyList from "../mylist/MyList";
+import { useAuth } from "../../Auth";
 import { TicketDetailModal, type TicketPriority } from "../../../components/TicketDetailModal";
 import { usePersistentState } from "../../../utils/persistentState";
 import { GlobalNavbarActions } from "../../../components/shared/GlobalNavbarActions";
@@ -175,6 +176,13 @@ const OnHoldTicketScreen: React.FC = () => {
   const [showTimesheetPopover, setShowTimesheetPopover] = useState<boolean>(false);
   const [majorIncidentCollapsed, setMajorIncidentCollapsed] = useState<boolean>(false);
 
+  // Authenticated user state
+  const { user } = useAuth();
+  const currentUserName = user?.fullName || "Support Agent";
+  const defaultOrg = user
+    ? `consultancy/${user.region || 'EMEA'}/${user.fullName || 'Support Agent'}`
+    : 'consultancy/EMEA/Support Agent';
+
   // Flyouts & Modals State
   const [activeFlyout, setActiveFlyout] = useState<
     "search" | "notifications" | "menu" | "history" | "settings" | "profile" | "more" | null
@@ -238,7 +246,7 @@ const OnHoldTicketScreen: React.FC = () => {
   const [newSummary, setNewSummary] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
   const [newPriority, setNewPriority] = useState<"Critical" | "High" | "Medium" | "Low">("Medium");
-  const [newOrg, setNewOrg] = useState<string>("consultancy/EMEA/Inesh Agarwal");
+  const [newOrg, setNewOrg] = useState<string>(defaultOrg);
   const [newStatus, setNewStatus] = useState<"New" | "On H" | "With">("New");
 
   const handleOpenNewModal = () => {
@@ -265,10 +273,17 @@ const OnHoldTicketScreen: React.FC = () => {
       description: newDescription.trim() || newSummary.trim(),
       priority: newPriority,
       priorityColor: priorityColorMap[newPriority] || "yellow",
-      org: newOrg.trim() || "consultancy/EMEA/Inesh Agarwal",
+      org: newOrg.trim() || defaultOrg,
       status: newStatus,
       createdAt: "Just now",
-      targetSla: newStatus === "On H" ? "On Hold" : "Within 4 hours",
+      targetSla:
+        newStatus === "On H"
+          ? "On Hold"
+          : newPriority === "Critical"
+          ? "Within 1 hour"
+          : newPriority === "High"
+          ? "Within 2 hours"
+          : "Within 4 hours",
     };
 
     try {
@@ -363,7 +378,7 @@ const OnHoldTicketScreen: React.FC = () => {
     setTickets((prev) =>
       prev.map((t) =>
         affectedIds.includes(t.id)
-          ? { ...t, org: "consultancy/EMEA/Inesh Agarwal" }
+          ? { ...t, org: defaultOrg }
           : t
       )
     );
@@ -572,7 +587,7 @@ const OnHoldTicketScreen: React.FC = () => {
                     type="button"
                     className="onhold-bulk-btn"
                     onClick={handleBulkAssignToMe}
-                    title="Assign selected tickets to Inesh Agarwal"
+                    title={`Assign selected tickets to ${currentUserName}`}
                   >
                     Assign to Me
                   </button>
@@ -817,14 +832,14 @@ const OnHoldTicketScreen: React.FC = () => {
                 : selectedTicket.status === "With"
                 ? "With User"
                 : "Active",
-            agent: selectedTicket.org.split("/")[2] || "Inesh Agarwal",
+            agent: selectedTicket.org.split("/")[2] || currentUserName,
             description: selectedTicket.description,
             requester: selectedTicket.org,
             department: "Consultancy Support",
             createdAt: selectedTicket.createdAt || "12 Oct 2026",
             targetSla: selectedTicket.targetSla || "Target: 4 hours remaining",
           }}
-          currentUser="Inesh Agarwal"
+          currentUser={currentUserName}
           onClose={() => setSelectedTicket(null)}
           onUpdateTicket={async (updated) => {
             const norm = (updated.status || "").toLowerCase();
@@ -941,7 +956,7 @@ const OnHoldTicketScreen: React.FC = () => {
                   <label>Organisation / User</label>
                   <input
                     type="text"
-                    placeholder="e.g. consultancy/EMEA/Inesh Agarwal"
+                    placeholder={`e.g. ${defaultOrg}`}
                     value={newOrg}
                     onChange={(e) => setNewOrg(e.target.value)}
                   />
