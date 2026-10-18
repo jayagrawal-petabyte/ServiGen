@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useAuth } from "../Auth/AuthContext";
-import {
-  DASHBOARD_TICKETS,
-  type DashboardTicket,
-  type DashboardPriority,
+import type {
+  DashboardTicket,
+  DashboardPriority,
 } from "./dashboard.data";
-import { TicketDetailModal, type FullTicket } from "../../components/TicketDetailModal";
-import { usePersistentState } from "../../utils/persistentState";
+import {
+  TicketDetailModal,
+  type FullTicket,
+} from "../../components/TicketDetailModal";
 import dashboardService from "../../services/dashboardService";
 
 type DashboardTicketsProps = {
@@ -27,8 +29,18 @@ function TicketAvatar() {
   return (
     <div className="table-bubble-avatar">
       <div className="table-bubble-circle">
-        <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
+        <svg
+          className="w-3.5 h-3.5 text-cyan-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z"
+          />
         </svg>
       </div>
       <span className="table-bubble-dot" />
@@ -37,69 +49,127 @@ function TicketAvatar() {
 }
 
 export default function DashboardTickets({
-  isLoading = false,
+  isLoading: parentLoading = false,
   isEmpty = false,
-  isError = false,
+  isError: parentError = false,
 }: DashboardTicketsProps) {
   const { user } = useAuth();
-  const currentAgentName = user?.fullName || "Inesh Agarwal";
+  const currentAgentName = user?.fullName || "Current Agent";
 
-  const [tickets, setTickets] = usePersistentState<DashboardTicket[]>(
-    "servigen_incidents_new_tickets_v2",
-    DASHBOARD_TICKETS
-  );
-  const [selectedTicket, setSelectedTicket] = useState<DashboardTicket | null>(null);
+  const [tickets, setTickets] = useState<DashboardTicket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState(false);
+  const [selectedTicket, setSelectedTicket] =
+    useState<DashboardTicket | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const pageSize = 4;
+  const loading = parentLoading || ticketsLoading;
+  const error = parentError || ticketsError;
 
   useEffect(() => {
     let mounted = true;
-    dashboardService.getNewTickets().then((data) => {
-      if (mounted && data?.length) {
+
+    async function loadTickets() {
+      setTicketsLoading(true);
+      setTicketsError(false);
+
+      try {
+        const data = await dashboardService.getNewTickets();
+
+        if (!mounted) return;
+
+        if (!Array.isArray(data)) {
+          setTickets([]);
+          setTicketsError(true);
+          return;
+        }
+
         setTickets(data);
+        setCurrentPage(1);
+      } catch (error) {
+        console.error("Failed to load dashboard tickets:", error);
+
+        if (mounted) {
+          setTickets([]);
+          setTicketsError(true);
+        }
+      } finally {
+        if (mounted) {
+          setTicketsLoading(false);
+        }
       }
-    });
+    }
+
+    void loadTickets();
+
     return () => {
       mounted = false;
     };
   }, []);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const pageSize = 4;
+  useEffect(() => {
+    const lastPage = Math.max(1, Math.ceil(tickets.length / pageSize));
 
-  const totalPages = Math.ceil(tickets.length / pageSize) || 1;
+    if (currentPage > lastPage) {
+      setCurrentPage(lastPage);
+    }
+  }, [tickets.length, currentPage]);
+
+  useEffect(() => {
+    const existingIds = new Set(tickets.map((ticket) => ticket.id));
+
+    setSelectedIds((previous) =>
+      previous.filter((id) => existingIds.has(id))
+    );
+  }, [tickets]);
+
+  const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const pagedTickets = tickets.slice(startIndex, startIndex + pageSize);
 
   const allVisibleSelected =
-    pagedTickets.length > 0 && pagedTickets.every((t) => selectedIds.includes(t.id));
+    pagedTickets.length > 0 &&
+    pagedTickets.every((ticket) => selectedIds.includes(ticket.id));
 
   const toggleSelectAll = () => {
     if (allVisibleSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !pagedTickets.some((t) => t.id === id)));
-    } else {
-      const visibleIds = pagedTickets.map((t) => t.id);
-      setSelectedIds((prev) => [...new Set([...prev, ...visibleIds])]);
+      setSelectedIds((previous) =>
+        previous.filter(
+          (id) => !pagedTickets.some((ticket) => ticket.id === id)
+        )
+      );
+      return;
     }
+
+    const visibleIds = pagedTickets.map((ticket) => ticket.id);
+
+    setSelectedIds((previous) => [
+      ...new Set([...previous, ...visibleIds]),
+    ]);
   };
 
   const toggleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    setSelectedIds((previous) =>
+      previous.includes(id)
+        ? previous.filter((item) => item !== id)
+        : [...previous, id]
     );
-  };
-
-  const handleTicketClick = (ticket: DashboardTicket) => {
-    setSelectedTicket(ticket);
   };
 
   const handleModalUpdateTicket = (updated: FullTicket) => {
     setSelectedTicket(updated);
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === updated.id
+
+    // This updates local UI state only.
+    // Persist changes through an approved backend API before treating
+    // ticket edits as saved.
+    setTickets((previous) =>
+      previous.map((ticket) =>
+        ticket.id === updated.id
           ? {
-              ...t,
+              ...ticket,
               agent: updated.agent,
               priority: updated.priority as DashboardPriority,
               summary: updated.summary,
@@ -113,61 +183,45 @@ export default function DashboardTickets({
               targetSla: updated.targetSla,
               notes: updated.notes,
             }
-          : t
+          : ticket
       )
     );
   };
 
-  const handleBulkAssignToMe = () => {
-    setTickets((prev) =>
-      prev.map((t) =>
-        selectedIds.includes(t.id) ? { ...t, agent: currentAgentName } : t
-      )
-    );
-    setSelectedIds([]);
-  };
-
-  const handleBulkSetPriority = (priority: DashboardPriority) => {
-    setTickets((prev) =>
-      prev.map((t) =>
-        selectedIds.includes(t.id) ? { ...t, priority } : t
-      )
-    );
-    setSelectedIds([]);
-  };
-
-  const handleBulkDelete = () => {
-    setTickets((prev) => prev.filter((t) => !selectedIds.includes(t.id)));
-    setSelectedIds([]);
-  };
+  const paginationLabel =
+    loading || error || isEmpty || tickets.length === 0
+      ? "0 of 0"
+      : `${startIndex + 1}–${Math.min(
+          startIndex + pageSize,
+          tickets.length
+        )} of ${tickets.length}`;
 
   return (
     <section className="dashboard-card dashboard-tickets-card">
       <div className="dashboard-card-header">
         <div
           className="dashboard-card-heading"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => setIsCollapsed((previous) => !previous)}
           style={{ cursor: "pointer", userSelect: "none" }}
           title={isCollapsed ? "Expand section" : "Collapse section"}
         >
           <h2>My New Tickets</h2>
-          <span className="dashboard-card-chevron">{isCollapsed ? "›" : "⌄"}</span>
+          <span className="dashboard-card-chevron">
+            {isCollapsed ? "›" : "⌄"}
+          </span>
         </div>
 
         {!isCollapsed && (
           <div className="dashboard-table-pagination">
-            <span>
-              {isEmpty
-                ? "0 of 0"
-                : `${startIndex + 1}–${Math.min(startIndex + pageSize, tickets.length)} of ${tickets.length}`}
-            </span>
+            <span>{paginationLabel}</span>
 
             <button
               type="button"
               aria-label="Previous page"
-              disabled={isEmpty || isError || isLoading || currentPage <= 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              style={{ cursor: currentPage > 1 ? "pointer" : "default" }}
+              disabled={loading || error || currentPage <= 1}
+              onClick={() =>
+                setCurrentPage((page) => Math.max(1, page - 1))
+              }
             >
               ‹
             </button>
@@ -175,9 +229,14 @@ export default function DashboardTickets({
             <button
               type="button"
               aria-label="Next page"
-              disabled={isEmpty || isError || isLoading || currentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              style={{ cursor: currentPage < totalPages ? "pointer" : "default" }}
+              disabled={
+                loading || error || currentPage >= totalPages
+              }
+              onClick={() =>
+                setCurrentPage((page) =>
+                  Math.min(totalPages, page + 1)
+                )
+              }
             >
               ›
             </button>
@@ -186,73 +245,48 @@ export default function DashboardTickets({
       </div>
 
       {!isCollapsed && selectedIds.length > 0 && (
-        <div className="tickets-bulk-actions-bar" style={{ margin: "10px 20px" }}>
+        <div
+          className="tickets-bulk-actions-bar"
+          style={{ margin: "10px 20px" }}
+        >
           <div className="bulk-selection-count">
             <span className="bulk-badge">{selectedIds.length}</span>
-            <span>ticket{selectedIds.length > 1 ? "s" : ""} selected</span>
+            <span>
+              ticket{selectedIds.length > 1 ? "s" : ""} selected
+            </span>
           </div>
 
           <div className="bulk-actions-buttons">
             <button
               type="button"
-              className="bulk-btn bulk-btn-assign"
-              onClick={handleBulkAssignToMe}
-              title={`Assign selected tickets to ${currentAgentName}`}
-            >
-              Assign to Me
-            </button>
-
-            <div className="bulk-priority-dropdown-wrap">
-              <select
-                className="bulk-select"
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleBulkSetPriority(e.target.value as DashboardPriority);
-                    e.target.value = "";
-                  }
-                }}
-                aria-label="Set priority for selected tickets"
-              >
-                <option value="" disabled>Set Priority ▾</option>
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              className="bulk-btn bulk-btn-delete"
-              onClick={handleBulkDelete}
-              title="Delete selected tickets"
-            >
-              Delete
-            </button>
-
-            <button
-              type="button"
               className="bulk-btn bulk-btn-clear"
               onClick={() => setSelectedIds([])}
             >
-              Clear
+              Clear selection
             </button>
           </div>
         </div>
       )}
 
-      {!isCollapsed && (
-        isLoading ? (
+      {!isCollapsed &&
+        (loading ? (
           <div className="dashboard-loading">
             Loading new tickets...
           </div>
-        ) : isError ? (
-          <div className="dashboard-empty">
+        ) : error ? (
+          <div className="dashboard-empty" role="alert">
             <strong>Unable to load new tickets</strong>
-            <span>Please try again later.</span>
+            <span>
+              Check your login session and the API response, then try again.
+            </span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
           </div>
-        ) : isEmpty ? (
+        ) : isEmpty || tickets.length === 0 ? (
           <div className="dashboard-empty">
             <strong>No new tickets</strong>
             <span>There are currently no new tickets to display.</span>
@@ -270,7 +304,6 @@ export default function DashboardTickets({
                       onChange={toggleSelectAll}
                     />
                   </th>
-
                   <th>ID</th>
                   <th>Ticket Type</th>
                   <th>Summary</th>
@@ -283,9 +316,14 @@ export default function DashboardTickets({
                 {pagedTickets.map((ticket) => (
                   <tr
                     key={ticket.id}
-                    onClick={(e) => {
-                      if ((e.target as HTMLElement).tagName === "INPUT") return;
-                      handleTicketClick(ticket);
+                    onClick={(event) => {
+                      if (
+                        (event.target as HTMLElement).tagName === "INPUT"
+                      ) {
+                        return;
+                      }
+
+                      setSelectedTicket(ticket);
                     }}
                     style={{ cursor: "pointer" }}
                   >
@@ -298,50 +336,47 @@ export default function DashboardTickets({
                       />
                     </td>
 
-                  <td
-                    className="dashboard-link-cell"
-                    onClick={() => handleTicketClick(ticket)}
-                    title="View complete ticket and request details"
-                    style={{ cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    {ticket.id}
-                  </td>
+                    <td
+                      className="dashboard-link-cell"
+                      title="View ticket details"
+                      style={{ cursor: "pointer", fontWeight: 600 }}
+                    >
+                      {ticket.id}
+                    </td>
 
-                  <td>{ticket.type}</td>
+                    <td>{ticket.type}</td>
 
-                  <td
-                    className="dashboard-link-cell"
-                    onClick={() => handleTicketClick(ticket)}
-                    title="View complete ticket and request details"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {ticket.summary}
-                  </td>
+                    <td
+                      className="dashboard-link-cell"
+                      title="View ticket details"
+                    >
+                      {ticket.summary}
+                    </td>
 
-                  <td>
-                    <span className="dashboard-agent">
-                      <TicketAvatar />
-                      <span>{ticket.agent === 'Inesh Agarwal' || ticket.agent === 'Demo User' ? currentAgentName : ticket.agent}</span>
-                      <span className="trophy-badge text-xs ml-1">🏆</span>
-                    </span>
-                  </td>
+                    <td>
+                      <span className="dashboard-agent">
+                        <TicketAvatar />
+                        <span>{ticket.agent || "Unassigned"}</span>
+                      </span>
+                    </td>
 
-                  <td>
-                    <span className="dashboard-priority">
-                      <span
-                        className={`dashboard-priority-square ${
-                          PRIORITY_CLASS[ticket.priority]
-                        }`}
-                      />
-                      {ticket.priority}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+                    <td>
+                      <span className="dashboard-priority">
+                        <span
+                          className={`dashboard-priority-square ${
+                            PRIORITY_CLASS[ticket.priority] ??
+                            PRIORITY_CLASS.Unassigned
+                          }`}
+                        />
+                        {ticket.priority}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
 
       {selectedTicket && (
         <TicketDetailModal

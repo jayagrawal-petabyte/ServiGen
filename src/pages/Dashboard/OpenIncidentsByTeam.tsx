@@ -1,35 +1,142 @@
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TEAM_INCIDENTS, type TeamIncident } from "./dashboard.data";
-import dashboardService from "../../services/dashboardService";
+import { api } from "../../services/apiClient";
+
+type TeamIncident = {
+  label: string;
+  value: number;
+};
+
+type ApiEnvelope = {
+  success?: boolean;
+  message?: string;
+  data?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function parseTeamData(response: unknown): TeamIncident[] {
+  if (!isRecord(response)) {
+    throw new Error("Invalid response from the dashboard API.");
+  }
+
+  const envelope = response as ApiEnvelope;
+
+  if (envelope.success === false) {
+    throw new Error(
+      envelope.message || "Failed to load incidents by team."
+    );
+  }
+
+  const payload = envelope.data;
+  let rows: unknown;
+
+  if (Array.isArray(payload)) {
+    rows = payload;
+  } else if (isRecord(payload) && Array.isArray(payload.teams)) {
+    rows = payload.teams;
+  } else if (isRecord(payload) && Array.isArray(payload.data)) {
+    rows = payload.data;
+  }
+
+  if (!Array.isArray(rows)) {
+    throw new Error(
+      "The dashboard API response does not contain team data."
+    );
+  }
+
+  const parsed: TeamIncident[] = [];
+
+  for (const item of rows) {
+    if (
+      !isRecord(item) ||
+      typeof item.label !== "string" ||
+      !item.label.trim() ||
+      typeof item.value !== "number" ||
+      !Number.isFinite(item.value) ||
+      item.value < 0
+    ) {
+      throw new Error("The dashboard API returned invalid team data.");
+    }
+
+    parsed.push({
+      label: item.label.trim(),
+      value: item.value,
+    });
+  }
+
+  return parsed;
+}
 
 export default function OpenIncidentsByTeam() {
   const navigate = useNavigate();
-  const [teamData, setTeamData] = useState<TeamIncident[]>(TEAM_INCIDENTS);
-  const maxValue = 90;
+
+  const [teamData, setTeamData] = useState<TeamIncident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
-    dashboardService.getIncidentsByTeam().then((data) => {
-      if (mounted && data?.length) {
-        setTeamData(data);
+
+    async function loadTeamData() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await api.get<unknown>(
+          "/api/dashboard/incidents-by-team"
+        );
+
+        const data = parseTeamData(response);
+
+        if (mounted) {
+          setTeamData(data);
+        }
+      } catch (err: unknown) {
+        console.error("Failed to load incidents by team:", err);
+
+        if (mounted) {
+          setTeamData([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load team incidents."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    });
+    }
+
+    void loadTeamData();
+
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [retryCount]);
 
   const handleTeamClick = (label: string) => {
     const lower = label.toLowerCase();
-    if (lower.includes('2nd')) {
-      navigate('/team/2nd-line-live');
-    } else if (lower.includes('major')) {
-      navigate('/major-incidents/live');
+
+    if (lower.includes("2nd") || lower.includes("second")) {
+      navigate("/team/2nd-line-live");
+    } else if (lower.includes("major")) {
+      navigate("/major-incidents/live");
     } else {
-      navigate('/team/1st-line-live');
+      navigate("/team/1st-line-live");
     }
   };
+
+  const maxValue = Math.max(
+    10,
+    ...teamData.map((team) => team.value)
+  );
 
   return (
     <section className="dashboard-card dashboard-team-card">
@@ -40,71 +147,89 @@ export default function OpenIncidentsByTeam() {
           type="button"
           className="dashboard-round-action"
           aria-label="Open team incidents"
-          onClick={() => navigate('/team/1st-line-live')}
+          onClick={() => navigate("/team/1st-line-live")}
           title="Open Team Incidents"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: "pointer" }}
         >
           →
         </button>
       </div>
 
-      <div className="team-chart">
-        <div className="team-axis">
-          <span>90</span>
-          <span>80</span>
-          <span>70</span>
-          <span>60</span>
-          <span>50</span>
-          <span>40</span>
-          <span>30</span>
-          <span>20</span>
-          <span>10</span>
-          <span>0</span>
+      {isLoading ? (
+        <div className="dashboard-loading" role="status">
+          Loading team incidents...
         </div>
-
-        <div className="team-chart-main">
-          <div className="team-grid-lines">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-
-          <div className="team-bars">
-            {teamData.map((team) => (
-              <div
-                key={team.label}
-                className="team-bar-column"
-                onClick={() => handleTeamClick(team.label)}
-                title={`View ${team.label} Incidents`}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="team-bar-plot">
-                  <div
-                    className="team-bar"
-                    style={{
-                      height: `${(team.value / maxValue) * 100}%`,
-                    }}
-                  >
-                    <span className="team-bar-number">
-                      {team.value}
-                    </span>
-                  </div>
-                </div>
-
-                <span className="team-bar-label">
-                  {team.label}
-                </span>
-              </div>
+      ) : error ? (
+        <div className="dashboard-empty" role="alert">
+          <strong>Unable to load team incidents</strong>
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setRetryCount((count) => count + 1)}
+          >
+            Retry
+          </button>
+        </div>
+      ) : teamData.length === 0 ? (
+        <div className="dashboard-empty">
+          <strong>No open incidents</strong>
+          <span>There are no team incidents to display.</span>
+        </div>
+      ) : (
+        <div className="team-chart">
+          <div className="team-axis" aria-hidden="true">
+            {Array.from({ length: 10 }, (_, index) => (
+              <span key={index}>
+                {Math.round((maxValue * (9 - index)) / 9)}
+              </span>
             ))}
+            <span>0</span>
+          </div>
+
+          <div className="team-chart-main">
+            <div className="team-grid-lines" aria-hidden="true">
+              {Array.from({ length: 9 }, (_, index) => (
+                <span key={index} />
+              ))}
+            </div>
+
+            <div className="team-bars">
+              {teamData.map((team) => (
+                <button
+                  key={team.label}
+                  type="button"
+                  className="team-bar-column"
+                  onClick={() => handleTeamClick(team.label)}
+                  title={`View ${team.label} incidents`}
+                  aria-label={`${team.label}: ${team.value} incidents. View team incidents`}
+                  style={{
+                    cursor: "pointer",
+                    border: 0,
+                    padding: 0,
+                    background: "transparent",
+                    font: "inherit",
+                  }}
+                >
+                  <span className="team-bar-plot">
+                    <span
+                      className="team-bar"
+                      style={{
+                        height: `${(team.value / maxValue) * 100}%`,
+                      }}
+                    >
+                      <span className="team-bar-number">
+                        {team.value}
+                      </span>
+                    </span>
+                  </span>
+
+                  <span className="team-bar-label">{team.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

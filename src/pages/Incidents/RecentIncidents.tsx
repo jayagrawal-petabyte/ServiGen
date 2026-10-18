@@ -1,28 +1,73 @@
+
+import type { KeyboardEvent } from "react";
 import type { RecentIncident } from "./incidents.data";
 import { PriorityPill, StatusPill } from "./Badges";
 
 type RecentIncidentsProps = {
   incidents: RecentIncident[];
-  onSelectIncident: (
-    incident: RecentIncident
-  ) => void;
+  onSelectIncident: (incident: RecentIncident) => void;
   onViewAll?: () => void;
 };
+
+function displayValue(value?: string | null): string {
+  if (!value || !value.trim() || value === "—") {
+    return "—";
+  }
+
+  return value;
+}
+
+function formatDate(dateValue?: string | null): string {
+  if (!dateValue || dateValue === "—") {
+    return "—";
+  }
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function RecentIncidents({
   incidents,
   onSelectIncident,
   onViewAll,
 }: RecentIncidentsProps) {
+  const handleRowKeyDown = (
+    event: KeyboardEvent<HTMLTableRowElement>,
+    incident: RecentIncident
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelectIncident(incident);
+    }
+  };
+
   return (
-    <section className="incident-card recent-card">
+    <section
+      className="incident-card recent-card"
+      aria-labelledby="recent-incidents-heading"
+    >
       <div className="incident-card-title">
-        <h2>Recent Incidents</h2>
+        <h2 id="recent-incidents-heading">Recent Incidents</h2>
 
         <button
           type="button"
           className="view-all-button"
           onClick={onViewAll}
+          disabled={!onViewAll}
+          title={
+            onViewAll
+              ? "View all incidents"
+              : "View all navigation is not connected yet"
+          }
         >
           View All
         </button>
@@ -30,21 +75,21 @@ export default function RecentIncidents({
 
       <div className="incident-table-container">
         {incidents.length === 0 ? (
-          <div className="incident-empty-state">
+          <div className="incident-empty-state" role="status">
             <h3>No incidents found</h3>
             <p>
-              No incidents match the current search.
+              No recent incidents were returned by the API.
             </p>
           </div>
         ) : (
           <table className="incident-table">
             <thead>
               <tr>
-                <th>Incident ID</th>
-                <th>Subject</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th scope="col">Incident ID</th>
+                <th scope="col">Subject</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Status</th>
+                <th scope="col">Date</th>
               </tr>
             </thead>
 
@@ -52,28 +97,30 @@ export default function RecentIncidents({
               {incidents.slice(0, 5).map((incident) => (
                 <tr
                   key={incident.id}
-                  onClick={() =>
-                    onSelectIncident(incident)
+                  onClick={() => onSelectIncident(incident)}
+                  onKeyDown={(event) =>
+                    handleRowKeyDown(event, incident)
                   }
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View incident ${displayValue(
+                    incident.id
+                  )}: ${displayValue(incident.subject)}`}
                   className="incident-row"
                 >
-                  <td>{incident.id}</td>
+                  <td>{displayValue(incident.id)}</td>
 
-                  <td>{incident.subject}</td>
+                  <td>{displayValue(incident.subject)}</td>
 
                   <td>
-                    <PriorityPill
-                      priority={incident.priority}
-                    />
+                    <PriorityPill priority={incident.priority} />
                   </td>
 
                   <td>
-                    <StatusPill
-                      status={incident.status}
-                    />
+                    <StatusPill status={incident.status} />
                   </td>
 
-                  <td>{incident.date}</td>
+                  <td>{formatDate(incident.date)}</td>
                 </tr>
               ))}
             </tbody>

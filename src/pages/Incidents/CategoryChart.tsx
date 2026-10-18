@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useMemo, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CategoryItem } from "./incidents.data";
 
@@ -6,7 +7,14 @@ type CategoryChartProps = {
   data: CategoryItem[];
 };
 
-// Clockwise from 12 o'clock, as in the Halo screenshot
+type HoveredSlice = {
+  label: string;
+  value: number;
+  color: string;
+  x: number;
+  y: number;
+};
+
 const ORDER = [
   "Network>VPN>Connection Failure",
   "Business Applications>CRM",
@@ -24,13 +32,13 @@ const STYLES = [
   { fill: "#003c50", text: "#ffffff" },
   { fill: "#00607c", text: "#ffffff" },
   { fill: "#0096bd", text: "#ffffff" },
-  { fill: "#00c6ff", text: "#ffffff" },
+  { fill: "#00c6ff", text: "#003040" },
   { fill: "#33d4ff", text: "#003040" },
   { fill: "#80e2ff", text: "#003040" },
   { fill: "#aeeeff", text: "#003040" },
-  { fill: "#003c50", text: "#ffffff" },
-  { fill: "#00607c", text: "#ffffff" },
-  { fill: "#0096bd", text: "#ffffff" },
+  { fill: "#00516b", text: "#ffffff" },
+  { fill: "#007d9d", text: "#ffffff" },
+  { fill: "#19afd6", text: "#003040" },
 ];
 
 const W = 900;
@@ -52,42 +60,148 @@ function point(angle: number, radius: number) {
   };
 }
 
-function slicePath(start: number, end: number) {
+function slicePath(start: number, end: number): string {
   const p1 = point(start, R);
   const p2 = point(end, R);
   const large = end - start > 180 ? 1 : 0;
 
-  return `M ${CX} ${CY} L ${p1.x} ${p1.y} A ${R} ${R} 0 ${large} 1 ${p2.x} ${p2.y} Z`;
+  return [
+    `M ${CX} ${CY}`,
+    `L ${p1.x} ${p1.y}`,
+    `A ${R} ${R} 0 ${large} 1 ${p2.x} ${p2.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function formatCount(value: number): string {
+  return new Intl.NumberFormat().format(value);
+}
+
+function formatPercentage(value: number, total: number): string {
+  if (total <= 0) return "0.0";
+
+  return ((value / total) * 100).toFixed(1);
 }
 
 export default function CategoryChart({
   data,
 }: CategoryChartProps) {
   const navigate = useNavigate();
+
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [hoveredSlice, setHoveredSlice] = useState<{
-    label: string;
-    value: number;
-    color: string;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [hoveredSlice, setHoveredSlice] =
+    useState<HoveredSlice | null>(null);
+
+  // Use backend-provided category names and counts.
+  // Do not introduce fixture or hardcoded incident counts.
+  const sorted = useMemo(() => {
+    const sourceItems = Array.isArray(data) ? data : [];
+    const validItems = sourceItems.filter(
+      (item) =>
+        typeof item.label === "string" &&
+        item.label.trim().length > 0 &&
+        typeof item.value === "number" &&
+        Number.isFinite(item.value) &&
+        item.value >= 0
+    );
+
+    return [...validItems].sort((a, b) => {
+      const ai = ORDER.indexOf(a.label);
+      const bi = ORDER.indexOf(b.label);
+
+      // Keep known design categories in their intended order.
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+
+      // Unknown categories from the backend remain visible.
+      return b.value - a.value || a.label.localeCompare(b.label);
+    });
+  }, [data]);
+
+  const total = sorted.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+
+  const slices = useMemo(() => {
+    if (total <= 0) return [];
+
+    const chartItems = sorted.filter((item) => item.value > 0);
+    let accumulated = 0;
+
+    return chartItems.map((item, index) => {
+      const start = (accumulated / total) * 360;
+      accumulated += item.value;
+      const end = (accumulated / total) * 360;
+      const mid = (start + end) / 2;
+
+      const style = STYLES[index % STYLES.length];
+
+      const text =
+        item.showValue === false
+          ? item.label
+          : `${item.label} (${formatCount(item.value)})`;
+
+      const width = Math.min(
+        W - 16,
+        Math.max(100, text.length * CHAR_W + PAD * 2)
+      );
+
+      const edge = point(mid, R);
+      const stub = point(mid, R + STUB);
+
+      let x: number;
+      let y: number;
+
+      if (mid > 165 && mid < 195) {
+        x = stub.x - width / 2;
+        y = stub.y;
+      } else if (mid < 180) {
+        x = stub.x;
+        y = stub.y - LABEL_H / 2;
+      } else {
+        x = stub.x - width;
+        y = stub.y - LABEL_H / 2;
+      }
+
+      x = Math.max(4, Math.min(W - 4 - width, x));
+      y = Math.max(4, Math.min(H - LABEL_H - 4, y));
+
+      return {
+        item,
+        style,
+        text,
+        width,
+        edge,
+        stub,
+        start,
+        end,
+        x,
+        y,
+      };
+    });
+  }, [sorted, total]);
 
   const handleSliceMouseMove = (
-    e: React.MouseEvent<SVGElement>,
+    event: MouseEvent<SVGElement>,
     label: string,
     value: number,
     color: string
   ) => {
-    const svg = e.currentTarget.ownerSVGElement;
+    const svg = event.currentTarget.ownerSVGElement;
     if (!svg) return;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    const cursor = pt.matrixTransform(ctm.inverse());
+
+    const pointInSvg = svg.createSVGPoint();
+    pointInSvg.x = event.clientX;
+    pointInSvg.y = event.clientY;
+
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+
+    const cursor = pointInSvg.matrixTransform(matrix.inverse());
+
     setHoveredSlice({
       label,
       value,
@@ -97,244 +211,276 @@ export default function CategoryChart({
     });
   };
 
-  if (data.length === 0) {
-    return (
-      <section className="incident-card category-card">
-        <div className="incident-card-title">
-          <h2>Incidents by Category</h2>
-        </div>
+  const renderEmptyState = (message: string) => (
+    <section className="incident-card category-card">
+      <div className="incident-card-title">
+        <h2>Incidents by Category</h2>
+      </div>
 
-        <div className="incident-empty-state">
-          <h3>No category data</h3>
-          <p>No incident categories are available.</p>
-        </div>
-      </section>
+      <div className="incident-empty-state" role="status">
+        <h3>No category data</h3>
+        <p>{message}</p>
+      </div>
+    </section>
+  );
+
+  if (sorted.length === 0) {
+    return renderEmptyState(
+      "No incident categories were returned by the backend."
     );
   }
 
-  const sorted = [...data].sort((a, b) => {
-    const ai = ORDER.indexOf(a.label);
-    const bi = ORDER.indexOf(b.label);
-
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
-
-  const total = sorted.reduce((sum, item) => sum + item.value, 0);
-
-  let acc = 0;
-
-  const slices = sorted.map((item, index) => {
-    const start = (acc / total) * 360;
-    acc += item.value;
-    const end = (acc / total) * 360;
-    const mid = (start + end) / 2;
-
-    const style = STYLES[index % STYLES.length];
-
-    const text =
-      item.showValue === false
-        ? item.label
-        : `${item.label} (${item.value})`;
-
-    const width = text.length * CHAR_W + PAD * 2;
-    const edge = point(mid, R);
-    const stub = point(mid, R + STUB);
-
-    let x: number;
-    let y: number;
-
-    if (mid > 165 && mid < 195) {
-      x = stub.x - width / 2;
-      y = stub.y;
-    } else if (mid < 180) {
-      x = stub.x;
-      y = stub.y - LABEL_H / 2;
-    } else {
-      x = stub.x - width;
-      y = stub.y - LABEL_H / 2;
-    }
-
-    x = Math.max(4, Math.min(W - 4 - width, x));
-
-    return { item, style, text, width, edge, stub, start, end, x, y };
-  });
+  if (total <= 0) {
+    return renderEmptyState(
+      "The backend returned no incidents with a positive category count."
+    );
+  }
 
   return (
     <section className="incident-card category-card">
       <div className="incident-card-title">
-        <div
-          style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", userSelect: "none" }}
-          onClick={() => setIsCollapsed(!isCollapsed)}
+        <button
+          type="button"
+          className="category-collapse-button"
+          onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+          aria-expanded={!isCollapsed}
+          aria-controls="category-chart-content"
           title={isCollapsed ? "Expand section" : "Collapse section"}
         >
           <h2>Incidents by Category</h2>
-          <span className="tickets-heading-arrow">{isCollapsed ? "›" : "⌄"}</span>
-        </div>
+          <span className="tickets-heading-arrow" aria-hidden="true">
+            {isCollapsed ? "›" : "⌄"}
+          </span>
+        </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div className="category-chart-actions">
           <button
             type="button"
             className="chart-action-button"
-            aria-label="Open Incidents by Category report"
-            title="Open Incidents by Category report"
-            onClick={() => navigate('/reports/incidents-by-category')}
-            style={{ cursor: "pointer" }}
+            aria-label="View category breakdown"
+            title="View category breakdown"
+            onClick={() => setShowDetailsModal(true)}
           >
-            <span
-              style={{
-                width: "18px",
-                height: "18px",
-                borderRadius: "50%",
-                backgroundColor: "#2c3b4d",
-                color: "#ffffff",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "10px",
-                lineHeight: 1,
-              }}
-            >
-              ➔
-            </span>
+            <span aria-hidden="true">▤</span>
+          </button>
+
+          <button
+            type="button"
+            className="chart-action-button"
+            aria-label="Open category report"
+            title="Open category report"
+            onClick={() =>
+              navigate("/reports/incidents-by-category")
+            }
+          >
+            <span aria-hidden="true">➔</span>
           </button>
         </div>
       </div>
 
       {!isCollapsed && (
-        <svg
-          className="halo-cat-svg"
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="xMidYMid meet"
-          role="img"
-          aria-label="Incidents by category pie chart"
-          onMouseLeave={() => setHoveredSlice(null)}
-          style={{ cursor: "pointer" }}
-        >
-          {slices.map((s) => {
-            const isHovered = hoveredSlice?.label === s.item.label;
-            return (
-              <path
-                key={`slice-${s.item.label}`}
-                d={slicePath(s.start, s.end)}
-                fill={s.style.fill}
-                style={{
-                  cursor: "pointer",
-                  transition: "opacity 0.15s ease",
-                  opacity: hoveredSlice ? (isHovered ? 1 : 0.88) : 1,
-                }}
-                onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-                onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-                onClick={() => navigate('/reports/incidents-by-category')}
-              />
-            );
-          })}
+        <div id="category-chart-content">
+          <svg
+            className="halo-cat-svg"
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label={`Incidents by category pie chart, ${formatCount(total)} total incidents`}
+            onMouseLeave={() => setHoveredSlice(null)}
+          >
+            {slices.map((slice) => {
+              const isHovered =
+                hoveredSlice?.label === slice.item.label;
 
-          {slices.map((s) => (
-            <g
-              key={`label-${s.item.label}`}
-              style={{ cursor: "pointer" }}
-              onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-              onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-              onClick={() => navigate('/reports/incidents-by-category')}
-            >
-              <line
-                x1={s.edge.x}
-                y1={s.edge.y}
-                x2={s.stub.x}
-                y2={s.stub.y}
-                stroke={s.style.fill}
-                strokeWidth="4"
-              />
+              return (
+                <path
+                  key={`slice-${slice.item.label}`}
+                  d={slicePath(slice.start, slice.end)}
+                  fill={slice.style.fill}
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  style={{
+                    cursor: "pointer",
+                    transition: "opacity 0.15s ease",
+                    opacity: hoveredSlice
+                      ? isHovered
+                        ? 1
+                        : 0.88
+                      : 1,
+                  }}
+                  onMouseEnter={(event) =>
+                    handleSliceMouseMove(
+                      event,
+                      slice.item.label,
+                      slice.item.value,
+                      slice.style.fill
+                    )
+                  }
+                  onMouseMove={(event) =>
+                    handleSliceMouseMove(
+                      event,
+                      slice.item.label,
+                      slice.item.value,
+                      slice.style.fill
+                    )
+                  }
+                  onClick={() =>
+                    navigate("/reports/incidents-by-category")
+                  }
+                />
+              );
+            })}
 
-              <rect
-                x={s.x}
-                y={s.y}
-                width={s.width}
-                height={LABEL_H}
-                rx={LABEL_H / 2}
-                fill={s.style.fill}
-              />
-
-              <text
-                className="halo-cat-label"
-                x={s.x + s.width / 2}
-                y={s.y + LABEL_H / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                textLength={s.width - PAD * 2}
-                lengthAdjust="spacingAndGlyphs"
-                fill={s.style.text}
+            {slices.map((slice) => (
+              <g
+                key={`label-${slice.item.label}`}
+                style={{ cursor: "pointer" }}
+                onMouseEnter={(event) =>
+                  handleSliceMouseMove(
+                    event,
+                    slice.item.label,
+                    slice.item.value,
+                    slice.style.fill
+                  )
+                }
+                onMouseMove={(event) =>
+                  handleSliceMouseMove(
+                    event,
+                    slice.item.label,
+                    slice.item.value,
+                    slice.style.fill
+                  )
+                }
+                onClick={() =>
+                  navigate("/reports/incidents-by-category")
+                }
               >
-                {s.text}
-              </text>
-            </g>
-          ))}
-
-          {/* Slice hover tooltip matching Image 1 */}
-          {hoveredSlice && (() => {
-            const textLen = hoveredSlice.label.length;
-            const boxWidth = Math.max(190, textLen * 6.5 + 24);
-            const boxHeight = 44;
-            const placeLeft = hoveredSlice.x > boxWidth + 30;
-            const boxX = placeLeft ? hoveredSlice.x - boxWidth - 14 : hoveredSlice.x + 14;
-            const boxY = Math.max(10, Math.min(H - boxHeight - 10, hoveredSlice.y - boxHeight / 2));
-            const notchY = Math.max(boxY + 10, Math.min(boxY + boxHeight - 10, hoveredSlice.y));
-
-            const notchPath = placeLeft
-              ? `M ${boxX + boxWidth} ${notchY - 6} L ${boxX + boxWidth + 8} ${notchY} L ${boxX + boxWidth} ${notchY + 6} Z`
-              : `M ${boxX} ${notchY - 6} L ${boxX - 8} ${notchY} L ${boxX} ${notchY + 6} Z`;
-
-            return (
-              <g style={{ pointerEvents: "none" }}>
-                <rect
-                  x={boxX}
-                  y={boxY}
-                  width={boxWidth}
-                  height={boxHeight}
-                  rx={4}
-                  ry={4}
-                  fill="#0b1b28"
-                  stroke="#1b3145"
-                  strokeWidth="1"
+                <line
+                  x1={slice.edge.x}
+                  y1={slice.edge.y}
+                  x2={slice.stub.x}
+                  y2={slice.stub.y}
+                  stroke={slice.style.fill}
+                  strokeWidth="3"
                 />
-                <path d={notchPath} fill="#0b1b28" />
 
-                {/* Line 1: Category Name */}
-                <text
-                  x={boxX + 10}
-                  y={boxY + 17}
-                  fill="#ffffff"
-                  fontSize="12.5"
-                  fontWeight="600"
-                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-                >
-                  {hoveredSlice.label}
-                </text>
-
-                {/* Line 2: Color square swatch + count */}
                 <rect
-                  x={boxX + 10}
-                  y={boxY + 25}
-                  width="10"
-                  height="10"
-                  fill={hoveredSlice.color}
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="1"
+                  x={slice.x}
+                  y={slice.y}
+                  width={slice.width}
+                  height={LABEL_H}
+                  rx={LABEL_H / 2}
+                  fill={slice.style.fill}
                 />
+
                 <text
-                  x={boxX + 26}
-                  y={boxY + 34}
-                  fill="#ffffff"
-                  fontSize="12"
-                  fontWeight="500"
-                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+                  className="halo-cat-label"
+                  x={slice.x + slice.width / 2}
+                  y={slice.y + LABEL_H / 2}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  textLength={slice.width - PAD * 2}
+                  lengthAdjust="spacingAndGlyphs"
+                  fill={slice.style.text}
                 >
-                  {hoveredSlice.value}
+                  {slice.text}
                 </text>
               </g>
-            );
-          })()}
-        </svg>
+            ))}
+
+            {hoveredSlice &&
+              (() => {
+                const boxWidth = Math.min(
+                  W - 20,
+                  Math.max(190, hoveredSlice.label.length * 6.5 + 36)
+                );
+                const boxHeight = 44;
+
+                const placeLeft =
+                  hoveredSlice.x > boxWidth + 30;
+
+                const boxX = Math.max(
+                  10,
+                  Math.min(
+                    W - boxWidth - 10,
+                    placeLeft
+                      ? hoveredSlice.x - boxWidth - 14
+                      : hoveredSlice.x + 14
+                  )
+                );
+
+                const boxY = Math.max(
+                  10,
+                  Math.min(
+                    H - boxHeight - 10,
+                    hoveredSlice.y - boxHeight / 2
+                  )
+                );
+
+                const notchY = Math.max(
+                  boxY + 10,
+                  Math.min(
+                    boxY + boxHeight - 10,
+                    hoveredSlice.y
+                  )
+                );
+
+                const notchPath = placeLeft
+                  ? `M ${boxX + boxWidth} ${notchY - 6} L ${Math.min(W - 2, boxX + boxWidth + 8)} ${notchY} L ${boxX + boxWidth} ${notchY + 6} Z`
+                  : `M ${boxX} ${notchY - 6} L ${Math.max(2, boxX - 8)} ${notchY} L ${boxX} ${notchY + 6} Z`;
+
+                return (
+                  <g key="category-chart-tooltip" style={{ pointerEvents: "none" }}>
+                    <rect
+                      x={boxX}
+                      y={boxY}
+                      width={boxWidth}
+                      height={boxHeight}
+                      rx={4}
+                      fill="#0b1b28"
+                      stroke="#1b3145"
+                      strokeWidth="1"
+                    />
+
+                    <path d={notchPath} fill="#0b1b28" />
+
+                    <text
+                      x={boxX + 10}
+                      y={boxY + 17}
+                      fill="#ffffff"
+                      fontSize="12"
+                      fontWeight="600"
+                      fontFamily="system-ui, sans-serif"
+                    >
+                      {hoveredSlice.label.length > 32
+                        ? `${hoveredSlice.label.slice(0, 29)}...`
+                        : hoveredSlice.label}
+                    </text>
+
+                    <rect
+                      x={boxX + 10}
+                      y={boxY + 25}
+                      width="10"
+                      height="10"
+                      fill={hoveredSlice.color}
+                      stroke="rgba(255,255,255,0.4)"
+                    />
+
+                    <text
+                      x={boxX + 26}
+                      y={boxY + 34}
+                      fill="#ffffff"
+                      fontSize="12"
+                      fontWeight="500"
+                      fontFamily="system-ui, sans-serif"
+                    >
+                      {formatCount(hoveredSlice.value)} incidents
+                    </text>
+                  </g>
+                );
+              })()}
+          </svg>
+        </div>
       )}
 
       {showDetailsModal && (
@@ -344,8 +490,17 @@ export default function CategoryChart({
         >
           <div
             className="incident-modal"
-            style={{ maxWidth: "620px", maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
-            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "720px",
+              maxHeight: "85vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="category-details-heading"
           >
             <button
               type="button"
@@ -356,31 +511,79 @@ export default function CategoryChart({
               ×
             </button>
 
-            <div className="incident-modal-header" style={{ paddingBottom: "12px", borderBottom: "1px solid #f1f5f9" }}>
-              <h2>Incidents by Category Breakdown</h2>
-              <p style={{ color: "#64748b", fontSize: "12px", marginTop: "4px" }}>
-                Full distribution across {data.length} IT infrastructure categories ({total} total incidents)
+            <div
+              className="incident-modal-header"
+              style={{
+                paddingBottom: "12px",
+                borderBottom: "1px solid #f1f5f9",
+              }}
+            >
+              <h2 id="category-details-heading">
+                Incidents by Category Breakdown
+              </h2>
+
+              <p
+                style={{
+                  color: "#64748b",
+                  fontSize: "12px",
+                  marginTop: "4px",
+                }}
+              >
+                {sorted.length} categories · {formatCount(total)} total incidents
               </p>
             </div>
 
-            <div style={{ flex: 1, overflowY: "auto", margin: "16px 0", paddingRight: "4px" }}>
-              <table className="incident-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                margin: "16px 0",
+                paddingRight: "4px",
+              }}
+            >
+              <table
+                className="incident-table"
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                }}
+              >
                 <thead>
                   <tr>
-                    <th>Category</th>
-                    <th style={{ textAlign: "right" }}>Incidents</th>
-                    <th style={{ textAlign: "right" }}>Share</th>
-                    <th style={{ width: "140px" }}>Distribution</th>
+                    <th scope="col">Category</th>
+                    <th scope="col" style={{ textAlign: "right" }}>
+                      Incidents
+                    </th>
+                    <th scope="col" style={{ textAlign: "right" }}>
+                      Share
+                    </th>
+                    <th scope="col" style={{ width: "140px" }}>
+                      Distribution
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {sorted.map((item, idx) => {
-                    const percent = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0";
-                    const style = STYLES[idx % STYLES.length];
+                  {sorted.map((item, index) => {
+                    const percent = formatPercentage(
+                      item.value,
+                      total
+                    );
+                    const style = STYLES[index % STYLES.length];
+
                     return (
-                      <tr key={item.label} className="incident-row">
+                      <tr
+                        key={item.label}
+                        className="incident-row"
+                      >
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
                             <span
                               style={{
                                 width: "10px",
@@ -389,19 +592,54 @@ export default function CategoryChart({
                                 background: style.fill,
                                 flexShrink: 0,
                               }}
+                              aria-hidden="true"
                             />
-                            <span style={{ fontSize: "12px", fontWeight: 600 }}>{item.label}</span>
+
+                            <span
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {item.label}
+                            </span>
                           </div>
                         </td>
-                        <td style={{ textAlign: "right", fontWeight: 700 }}>{item.value}</td>
-                        <td style={{ textAlign: "right", fontSize: "12px", color: "#64748b" }}>
+
+                        <td
+                          style={{
+                            textAlign: "right",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {formatCount(item.value)}
+                        </td>
+
+                        <td
+                          style={{
+                            textAlign: "right",
+                            fontSize: "12px",
+                            color: "#64748b",
+                          }}
+                        >
                           {percent}%
                         </td>
+
                         <td>
-                          <div style={{ width: "100%", height: "8px", background: "#f1f5f9", borderRadius: "4px", overflow: "hidden" }}>
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "8px",
+                              background: "#f1f5f9",
+                              borderRadius: "4px",
+                              overflow: "hidden",
+                            }}
+                            role="img"
+                            aria-label={`${percent}% of incidents`}
+                          >
                             <div
                               style={{
-                                width: `${percent}%`,
+                                width: `${Math.min(100, Number(percent))}%`,
                                 height: "100%",
                                 background: style.fill,
                                 borderRadius: "4px",
@@ -417,7 +655,14 @@ export default function CategoryChart({
               </table>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                paddingTop: "12px",
+                borderTop: "1px solid #f1f5f9",
+              }}
+            >
               <button
                 type="button"
                 className="new-ticket-button"

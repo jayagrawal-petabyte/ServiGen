@@ -1,6 +1,10 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import type { NewTicket, Priority } from "./incidents.data";
-import { TicketDetailModal, type FullTicket } from "../../components/TicketDetailModal";
+import {
+  TicketDetailModal,
+  type FullTicket,
+} from "../../components/TicketDetailModal";
 
 type NewTicketsProps = {
   tickets: NewTicket[];
@@ -15,12 +19,39 @@ const PRIORITY_MARKERS: Record<Priority, string> = {
   Unassigned: "#94a3b8",
 };
 
+function displayValue(value?: string | null): string {
+  if (typeof value !== "string" || !value.trim()) {
+    return "—";
+  }
+
+  return value;
+}
+
+function formatDate(value?: string): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function TicketPriority({ priority }: { priority: Priority }) {
+  const color = PRIORITY_MARKERS[priority] ?? "#94a3b8";
+
   return (
     <span className="ticket-priority">
       <span
         className="ticket-priority-dot"
-        style={{ background: PRIORITY_MARKERS[priority] }}
+        style={{ background: color }}
+        aria-hidden="true"
       />
       {priority}
     </span>
@@ -28,52 +59,112 @@ function TicketPriority({ priority }: { priority: Priority }) {
 }
 
 function TicketAvatar({ agent }: { agent: string }) {
-  const isDemo = !agent || agent === "Unassigned" || agent.includes("Demo") || agent.includes("Admin");
-  const displayAgent = isDemo ? "Demo User" : agent;
+  const displayAgent =
+    !agent || !agent.trim() ? "Unassigned" : agent;
+
   return (
     <span className="ticket-agent-cell">
-      <div className="table-bubble-avatar">
-        <div className="table-bubble-circle">
-          <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
+      <span className="table-bubble-avatar" aria-hidden="true">
+        <span className="table-bubble-circle">
+          <svg
+            className="w-3.5 h-3.5 text-cyan-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z"
+            />
           </svg>
-        </div>
+        </span>
         <span className="table-bubble-dot" />
-      </div>
-      <span className="ticket-agent-name font-medium">{displayAgent}</span>
-      <span className="trophy-badge text-xs">🏆</span>
+      </span>
+
+      <span className="ticket-agent-name font-medium">
+        {displayAgent}
+      </span>
     </span>
   );
 }
 
-export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps) {
-  const [selectedTicket, setSelectedTicket] = useState<NewTicket | null>(null);
-  const [hoveredTicketId, setHoveredTicketId] = useState<string | null>(null);
+export default function NewTickets({
+  tickets,
+}: NewTicketsProps) {
+  const [selectedTicket, setSelectedTicket] =
+    useState<NewTicket | null>(null);
+
+  const [hoveredTicketId, setHoveredTicketId] =
+    useState<string | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
   const pageSize = 10;
-  const totalPages = Math.max(1, Math.ceil(tickets.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(tickets.length / pageSize)
+  );
+
   const activePage = Math.min(currentPage, totalPages);
-  const start = tickets.length === 0 ? 0 : (activePage - 1) * pageSize + 1;
+
+  const start =
+    tickets.length === 0
+      ? 0
+      : (activePage - 1) * pageSize + 1;
+
   const end = Math.min(activePage * pageSize, tickets.length);
-  const pagedTickets = tickets.slice((activePage - 1) * pageSize, activePage * pageSize);
+
+  const pagedTickets = tickets.slice(
+    (activePage - 1) * pageSize,
+    activePage * pageSize
+  );
+
+  // Remove selections for tickets no longer present in API data.
+  useEffect(() => {
+    const currentIds = new Set(tickets.map((ticket) => ticket.id));
+
+    setSelectedIds((previous) =>
+      previous.filter((id) => currentIds.has(id))
+    );
+  }, [tickets]);
+
+  // Reset pagination if the API returns fewer tickets.
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const allVisibleSelected =
-    pagedTickets.length > 0 && pagedTickets.every((t) => selectedIds.includes(t.id));
+    pagedTickets.length > 0 &&
+    pagedTickets.every((ticket) =>
+      selectedIds.includes(ticket.id)
+    );
 
   const toggleSelectAll = () => {
     if (allVisibleSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !pagedTickets.some((t) => t.id === id)));
-    } else {
-      const visibleIds = pagedTickets.map((t) => t.id);
-      setSelectedIds((prev) => [...new Set([...prev, ...visibleIds])]);
+      setSelectedIds((previous) =>
+        previous.filter(
+          (id) => !pagedTickets.some((ticket) => ticket.id === id)
+        )
+      );
+      return;
     }
+
+    const visibleIds = pagedTickets.map((ticket) => ticket.id);
+
+    setSelectedIds((previous) =>
+      Array.from(new Set([...previous, ...visibleIds]))
+    );
   };
 
   const toggleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    setSelectedIds((previous) =>
+      previous.includes(id)
+        ? previous.filter((item) => item !== id)
+        : [...previous, id]
     );
   };
 
@@ -81,88 +172,64 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
     setSelectedTicket(ticket);
   };
 
-  const handleModalUpdateTicket = (updated: FullTicket) => {
-    setSelectedTicket(updated);
-    const nextTickets = tickets.map((t) =>
-      t.id === updated.id
-        ? {
-            ...t,
-            agent: updated.agent,
-            priority: updated.priority as Priority,
-            summary: updated.summary,
-            type: updated.type,
-            status: updated.status,
-            description: updated.description,
-            requester: updated.requester,
-            department: updated.department,
-            category: updated.category,
-            createdAt: updated.createdAt,
-            targetSla: updated.targetSla,
-            notes: updated.notes,
-          }
-        : t
+  // The backend update endpoint has not been confirmed.
+  // Do not display local-only edits as successfully saved.
+  const handleModalUpdateTicket = (_updated: FullTicket) => {
+    window.alert(
+      "Ticket updates are not connected to the backend yet. No changes have been saved."
     );
-    onUpdateTickets?.(nextTickets);
-  };
-
-  const handleBulkAssignToMe = () => {
-    const updated = tickets.map((t) =>
-      selectedIds.includes(t.id) ? { ...t, agent: "Inesh Agarwal" } : t
-    );
-    onUpdateTickets?.(updated);
-    setSelectedIds([]);
-  };
-
-  const handleBulkSetPriority = (priority: Priority) => {
-    const updated = tickets.map((t) =>
-      selectedIds.includes(t.id) ? { ...t, priority } : t
-    );
-    onUpdateTickets?.(updated);
-    setSelectedIds([]);
-  };
-
-  const handleBulkDelete = () => {
-    const updated = tickets.filter((t) => !selectedIds.includes(t.id));
-    onUpdateTickets?.(updated);
-    setSelectedIds([]);
   };
 
   return (
     <section className="incident-card tickets-card">
       <div className="incident-card-title tickets-card-title">
-        <div
+        <button
+          type="button"
           className="tickets-heading"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          style={{ cursor: "pointer", userSelect: "none" }}
+          onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+          aria-expanded={!isCollapsed}
+          style={{
+            cursor: "pointer",
+            userSelect: "none",
+            border: 0,
+            background: "transparent",
+            color: "inherit",
+            font: "inherit",
+          }}
           title={isCollapsed ? "Expand section" : "Collapse section"}
         >
           <h2>My New Tickets</h2>
-          <span className="tickets-heading-arrow">▾</span>
-        </div>
+          <span className="tickets-heading-arrow" aria-hidden="true">
+            {isCollapsed ? "›" : "▾"}
+          </span>
+        </button>
 
         {!isCollapsed && (
           <div className="tickets-pagination">
-            <span>{start}–{end} of {tickets.length}</span>
+            <span>
+              {start}–{end} of {tickets.length}
+            </span>
+
             <button
               type="button"
               aria-label="Previous page"
               disabled={activePage <= 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              style={{ opacity: activePage <= 1 ? 0.35 : 1, cursor: activePage <= 1 ? 'default' : 'pointer' }}
+              onClick={() =>
+                setCurrentPage((page) => Math.max(1, page - 1))
+              }
             >
               ‹
             </button>
+
             <button
               type="button"
               aria-label="Next page"
               disabled={activePage >= totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              style={{
-                color: activePage < totalPages ? "#00b4d8" : "#94a3b8",
-                fontWeight: activePage < totalPages ? 700 : 400,
-                opacity: activePage >= totalPages ? 0.35 : 1,
-                cursor: activePage >= totalPages ? 'default' : 'pointer',
-              }}
+              onClick={() =>
+                setCurrentPage((page) =>
+                  Math.min(totalPages, page + 1)
+                )
+              }
             >
               ›
             </button>
@@ -174,44 +241,36 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
         <div className="tickets-bulk-actions-bar">
           <div className="bulk-selection-count">
             <span className="bulk-badge">{selectedIds.length}</span>
-            <span>ticket{selectedIds.length > 1 ? "s" : ""} selected</span>
+            <span>
+              ticket{selectedIds.length === 1 ? "" : "s"} selected
+            </span>
           </div>
 
-          <div className="bulk-actions-buttons">
+          <div
+            className="bulk-actions-buttons"
+            title="Bulk operations are unavailable until backend update endpoints are confirmed."
+          >
             <button
               type="button"
               className="bulk-btn bulk-btn-assign"
-              onClick={handleBulkAssignToMe}
-              title="Assign selected tickets to Inesh Agarwal"
+              disabled
             >
               Assign to Me
             </button>
 
-            <div className="bulk-priority-dropdown-wrap">
-              <select
-                className="bulk-select"
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleBulkSetPriority(e.target.value as Priority);
-                    e.target.value = "";
-                  }
-                }}
-                aria-label="Set priority for selected tickets"
-              >
-                <option value="" disabled>Set Priority ▾</option>
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
+            <select
+              className="bulk-select"
+              aria-label="Set priority for selected tickets"
+              value=""
+              disabled
+            >
+              <option value="">Set Priority</option>
+            </select>
 
             <button
               type="button"
               className="bulk-btn bulk-btn-delete"
-              onClick={handleBulkDelete}
-              title="Delete selected tickets"
+              disabled
             >
               Delete
             </button>
@@ -227,135 +286,135 @@ export default function NewTickets({ tickets, onUpdateTickets }: NewTicketsProps
         </div>
       )}
 
-      {!isCollapsed && (
-        tickets.length === 0 ? (
-          <div className="incident-empty-state">
+      {!isCollapsed &&
+        (tickets.length === 0 ? (
+          <div className="incident-empty-state" role="status">
             <h3>No new tickets found</h3>
-            <p>There are no tickets matching the current search.</p>
+            <p>
+              No tickets were returned by the backend for this view.
+            </p>
           </div>
         ) : (
-        <div className="ticket-table-scroll">
-          <table className="incident-table ticket-table">
-            <thead>
-              <tr>
-                <th className="ticket-check-column">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all tickets"
-                    checked={allVisibleSelected}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th>ID</th>
-                <th>Ticket Type</th>
-                <th>Summary</th>
-                <th>Agent</th>
-                <th>Priority</th>
-              </tr>
-            </thead>
+          <div className="ticket-table-scroll">
+            <table className="incident-table ticket-table">
+              <thead>
+                <tr>
+                  <th className="ticket-check-column" scope="col">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all tickets on this page"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
+                  <th scope="col">ID</th>
+                  <th scope="col">Ticket Type</th>
+                  <th scope="col">Summary</th>
+                  <th scope="col">Agent</th>
+                  <th scope="col">Priority</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {pagedTickets.map((ticket) => {
-                const cleanNum = ticket.id.replace(/\D/g, "") || "3132";
-                const isHovered = hoveredTicketId === ticket.id;
+              <tbody>
+                {pagedTickets.map((ticket) => {
+                  const isHovered =
+                    hoveredTicketId === ticket.id;
 
-                return (
-                  <tr
-                    key={ticket.id}
-                    className={`incident-row ${isHovered ? "row-hovered" : ""}`}
-                    onClick={(e) => {
-                      if ((e.target as HTMLElement).tagName === "INPUT") return;
-                      handleTicketClick(ticket);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td className="ticket-check-column">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${ticket.id}`}
-                        checked={selectedIds.includes(ticket.id)}
-                        onChange={() => toggleSelectOne(ticket.id)}
-                      />
-                    </td>
-                    <td
-                      className="ticket-id-link"
+                  return (
+                    <tr
+                      key={ticket.id}
+                      className={`incident-row ${
+                        isHovered ? "row-hovered" : ""
+                      }`}
                       onClick={() => handleTicketClick(ticket)}
-                      title="View complete ticket and request details"
+                      style={{ cursor: "pointer" }}
                     >
-                      {ticket.id}
-                    </td>
-                    <td>{ticket.type}</td>
-                    <td
-                      className="ticket-summary-cell"
-                      onMouseEnter={() => setHoveredTicketId(ticket.id)}
-                      onMouseLeave={() => setHoveredTicketId(null)}
-                    >
-                      <span
-                        className="ticket-summary-link"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTicketClick(ticket);
-                        }}
-                        title="Click to view full ticket details"
-                      >
-                        {ticket.summary}
-                      </span>
+                      <td className="ticket-check-column">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ticket ${ticket.id}`}
+                          checked={selectedIds.includes(ticket.id)}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={() => toggleSelectOne(ticket.id)}
+                        />
+                      </td>
 
-                      {/* Floating summary preview popover (Image 5) */}
-                      {isHovered && (
-                        <div
-                          className="ticket-hover-popover"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                      <td
+                        className="ticket-id-link"
+                        title="View ticket details"
+                      >
+                        {displayValue(ticket.id)}
+                      </td>
+
+                      <td>{displayValue(ticket.type)}</td>
+
+                      <td
+                        className="ticket-summary-cell"
+                        onMouseEnter={() =>
+                          setHoveredTicketId(ticket.id)
+                        }
+                        onMouseLeave={() =>
+                          setHoveredTicketId(null)
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="ticket-summary-link"
+                          onClick={(event) => {
+                            event.stopPropagation();
                             handleTicketClick(ticket);
                           }}
+                          title="View ticket details"
                         >
-                          <div className="hover-popover-arrow" />
-                          <div className="hover-popover-header">
-                            <div className="flex items-center gap-2">
-                              <span className="hover-badge-new">NEW</span>
-                              <span className="hover-ticket-num">Ticket #{cleanNum}</span>
+                          {displayValue(ticket.summary)}
+                        </button>
+
+                        {isHovered && (
+                          <div className="ticket-hover-popover">
+                            <div className="hover-popover-arrow" />
+
+                            <div className="hover-popover-header">
+                              <span className="hover-ticket-num">
+                                Ticket #{displayValue(ticket.id)}
+                              </span>
+                              <span className="hover-flag-icon">
+                                {displayValue(ticket.status)}
+                              </span>
                             </div>
-                            <span className="hover-flag-icon" title="Flagged">⚑</span>
-                          </div>
 
-                          <div className="hover-popover-title-row">
-                            <h4 className="hover-popover-heading">{ticket.summary}</h4>
-                            <span className="hover-popover-ago">4 months ago</span>
-                          </div>
+                            <div className="hover-popover-title-row">
+                              <h4 className="hover-popover-heading">
+                                {displayValue(ticket.summary)}
+                              </h4>
 
-                          <p className="hover-popover-desc">
-                            {ticket.description || "Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders."}
-                          </p>
-
-                          <div className="hover-popover-footer">
-                            <div className="hover-dots-spinner">
-                              <span className="dot d1" />
-                              <span className="dot d2" />
-                              <span className="dot d3" />
-                              <span className="dot d4" />
-                              <span className="dot d5" />
-                              <span className="dot d6" />
-                              <span className="dot d7" />
-                              <span className="dot d8" />
+                              <span className="hover-popover-ago">
+                                {formatDate(ticket.createdAt)}
+                              </span>
                             </div>
+
+                            <p className="hover-popover-desc">
+                              {displayValue(ticket.description) === "—"
+                                ? "No description was provided by the backend."
+                                : ticket.description}
+                            </p>
                           </div>
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <TicketAvatar agent={ticket.agent} />
-                    </td>
-                    <td>
-                      <TicketPriority priority={ticket.priority} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ))}
+                        )}
+                      </td>
+
+                      <td>
+                        <TicketAvatar agent={ticket.agent} />
+                      </td>
+
+                      <td>
+                        <TicketPriority priority={ticket.priority} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ))}
 
       {selectedTicket && (
         <TicketDetailModal

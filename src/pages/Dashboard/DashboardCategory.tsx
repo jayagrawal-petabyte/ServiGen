@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CategoryItem } from "./dashboard.data";
 
@@ -6,7 +8,14 @@ type DashboardCategoryProps = {
   data: CategoryItem[];
 };
 
-// Clockwise order from 12 o'clock, as in the Halo screenshot
+type HoveredSlice = {
+  label: string;
+  value: number;
+  color: string;
+  x: number;
+  y: number;
+};
+
 const ORDER = [
   "Network>VPN>Connection Failure",
   "Business Applications>CRM",
@@ -60,32 +69,49 @@ function slicePath(start: number, end: number) {
   return `M ${CX} ${CY} L ${p1.x} ${p1.y} A ${R} ${R} 0 ${large} 1 ${p2.x} ${p2.y} Z`;
 }
 
+function EmptyCategoryState() {
+  return (
+    <section className="dashboard-card dashboard-category-card">
+      <div className="dashboard-card-header">
+        <h2>Incidents by Category</h2>
+      </div>
+
+      <div className="dashboard-empty">
+        <strong>No category data</strong>
+        <span>No incident category information is available.</span>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardCategory({
   data,
 }: DashboardCategoryProps) {
   const navigate = useNavigate();
-  const [hoveredSlice, setHoveredSlice] = useState<{
-    label: string;
-    value: number;
-    color: string;
-    x: number;
-    y: number;
-  } | null>(null);
+
+  const [hoveredSlice, setHoveredSlice] =
+    useState<HoveredSlice | null>(null);
 
   const handleSliceMouseMove = (
-    e: React.MouseEvent<SVGElement>,
+    event: MouseEvent<SVGElement>,
     label: string,
     value: number,
     color: string
   ) => {
-    const svg = e.currentTarget.ownerSVGElement;
+    const svg = event.currentTarget.ownerSVGElement;
+
     if (!svg) return;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    const cursor = pt.matrixTransform(ctm.inverse());
+
+    const pointOnScreen = svg.createSVGPoint();
+    pointOnScreen.x = event.clientX;
+    pointOnScreen.y = event.clientY;
+
+    const matrix = svg.getScreenCTM();
+
+    if (!matrix) return;
+
+    const cursor = pointOnScreen.matrixTransform(matrix.inverse());
+
     setHoveredSlice({
       label,
       value,
@@ -95,22 +121,22 @@ export default function DashboardCategory({
     });
   };
 
-  if (data.length === 0) {
-    return (
-      <section className="dashboard-card dashboard-category-card">
-        <div className="dashboard-card-header">
-          <h2>Incidents by Category</h2>
-        </div>
+  const validData = Array.isArray(data)
+    ? data.filter(
+        (item) =>
+          item &&
+          typeof item.label === "string" &&
+          item.label.trim().length > 0 &&
+          Number.isFinite(item.value) &&
+          item.value > 0
+      )
+    : [];
 
-        <div className="dashboard-empty">
-          <strong>No category data</strong>
-          <span>No incident category information is available.</span>
-        </div>
-      </section>
-    );
+  if (validData.length === 0) {
+    return <EmptyCategoryState />;
   }
 
-  const sorted = [...data].sort((a, b) => {
+  const sorted = [...validData].sort((a, b) => {
     const ai = ORDER.indexOf(a.label);
     const bi = ORDER.indexOf(b.label);
 
@@ -119,21 +145,26 @@ export default function DashboardCategory({
 
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
 
-  let acc = 0;
+  if (!Number.isFinite(total) || total <= 0) {
+    return <EmptyCategoryState />;
+  }
+
+  let accumulated = 0;
 
   const slices = sorted.map((item, index) => {
-    const start = (acc / total) * 360;
-    acc += item.value;
-    const end = (acc / total) * 360;
-    const mid = (start + end) / 2;
+    const start = (accumulated / total) * 360;
 
+    accumulated += item.value;
+
+    const end = (accumulated / total) * 360;
+    const mid = (start + end) / 2;
     const style = STYLES[index % STYLES.length];
 
     const text = item.displayValue
       ? `${item.label} (${item.value})`
       : item.label;
 
-    const width = text.length * CHAR_W + PAD * 2;
+    const width = Math.max(70, text.length * CHAR_W + PAD * 2);
     const edge = point(mid, R);
     const stub = point(mid, R + STUB);
 
@@ -141,23 +172,36 @@ export default function DashboardCategory({
     let y: number;
 
     if (mid > 165 && mid < 195) {
-      // bottom: centre the label under the slice
       x = stub.x - width / 2;
       y = stub.y;
     } else if (mid < 180) {
-      // right side
       x = stub.x;
       y = stub.y - LABEL_H / 2;
     } else {
-      // left side
       x = stub.x - width;
       y = stub.y - LABEL_H / 2;
     }
 
     x = Math.max(4, Math.min(W - 4 - width, x));
+    y = Math.max(4, Math.min(H - LABEL_H - 4, y));
 
-    return { item, style, text, width, edge, stub, start, end, x, y };
+    return {
+      item,
+      style,
+      text,
+      width,
+      edge,
+      stub,
+      start,
+      end,
+      x,
+      y,
+    };
   });
+
+  const openCategoryReport = () => {
+    navigate("/reports/incidents-by-category");
+  };
 
   return (
     <section className="dashboard-card dashboard-category-card">
@@ -168,9 +212,9 @@ export default function DashboardCategory({
           type="button"
           className="dashboard-round-action"
           aria-label="Open Incidents by Category report"
-          onClick={() => navigate('/reports/incidents-by-category')}
+          onClick={openCategoryReport}
           title="Open Incidents by Category report"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: "pointer" }}
         >
           <span
             style={{
@@ -201,130 +245,185 @@ export default function DashboardCategory({
           onMouseLeave={() => setHoveredSlice(null)}
           style={{ cursor: "pointer" }}
         >
-          {slices.map((s) => {
-            const isHovered = hoveredSlice?.label === s.item.label;
+          {slices.map((slice) => {
+            const isHovered = hoveredSlice?.label === slice.item.label;
+
             return (
               <path
-                key={`slice-${s.item.label}`}
-                d={slicePath(s.start, s.end)}
-                fill={s.style.fill}
+                key={`slice-${slice.item.label}`}
+                d={slicePath(slice.start, slice.end)}
+                fill={slice.style.fill}
                 style={{
                   cursor: "pointer",
                   transition: "opacity 0.15s ease",
-                  opacity: hoveredSlice ? (isHovered ? 1 : 0.88) : 1,
+                  opacity: hoveredSlice
+                    ? isHovered
+                      ? 1
+                      : 0.88
+                    : 1,
                 }}
-                onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-                onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-                onClick={() => navigate('/reports/incidents-by-category')}
+                onMouseEnter={(event) =>
+                  handleSliceMouseMove(
+                    event,
+                    slice.item.label,
+                    slice.item.value,
+                    slice.style.fill
+                  )
+                }
+                onMouseMove={(event) =>
+                  handleSliceMouseMove(
+                    event,
+                    slice.item.label,
+                    slice.item.value,
+                    slice.style.fill
+                  )
+                }
+                onClick={openCategoryReport}
               />
             );
           })}
 
-          {slices.map((s) => (
+          {slices.map((slice) => (
             <g
-              key={`label-${s.item.label}`}
+              key={`label-${slice.item.label}`}
               style={{ cursor: "pointer" }}
-              onMouseEnter={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-              onMouseMove={(e) => handleSliceMouseMove(e, s.item.label, s.item.value, s.style.fill)}
-              onClick={() => navigate('/reports/incidents-by-category')}
+              onMouseEnter={(event) =>
+                handleSliceMouseMove(
+                  event,
+                  slice.item.label,
+                  slice.item.value,
+                  slice.style.fill
+                )
+              }
+              onMouseMove={(event) =>
+                handleSliceMouseMove(
+                  event,
+                  slice.item.label,
+                  slice.item.value,
+                  slice.style.fill
+                )
+              }
+              onClick={openCategoryReport}
             >
               <line
-                x1={s.edge.x}
-                y1={s.edge.y}
-                x2={s.stub.x}
-                y2={s.stub.y}
-                stroke={s.style.fill}
+                x1={slice.edge.x}
+                y1={slice.edge.y}
+                x2={slice.stub.x}
+                y2={slice.stub.y}
+                stroke={slice.style.fill}
                 strokeWidth="4"
               />
 
               <rect
-                x={s.x}
-                y={s.y}
-                width={s.width}
+                x={slice.x}
+                y={slice.y}
+                width={slice.width}
                 height={LABEL_H}
                 rx={LABEL_H / 2}
-                fill={s.style.fill}
+                fill={slice.style.fill}
               />
 
               <text
                 className="dashboard-category-label"
-                x={s.x + s.width / 2}
-                y={s.y + LABEL_H / 2}
+                x={slice.x + slice.width / 2}
+                y={slice.y + LABEL_H / 2}
                 textAnchor="middle"
                 dominantBaseline="central"
-                textLength={s.width - PAD * 2}
+                textLength={slice.width - PAD * 2}
                 lengthAdjust="spacingAndGlyphs"
-                fill={s.style.text}
+                fill={slice.style.text}
               >
-                {s.text}
+                {slice.text}
               </text>
             </g>
           ))}
 
-          {/* Slice hover tooltip matching Image 1 */}
-          {hoveredSlice && (() => {
-            const textLen = hoveredSlice.label.length;
-            const boxWidth = Math.max(190, textLen * 6.5 + 24);
-            const boxHeight = 44;
-            const placeLeft = hoveredSlice.x > boxWidth + 30;
-            const boxX = placeLeft ? hoveredSlice.x - boxWidth - 14 : hoveredSlice.x + 14;
-            const boxY = Math.max(10, Math.min(H - boxHeight - 10, hoveredSlice.y - boxHeight / 2));
-            const notchY = Math.max(boxY + 10, Math.min(boxY + boxHeight - 10, hoveredSlice.y));
+          {hoveredSlice &&
+            (() => {
+              const textLength = hoveredSlice.label.length;
+              const boxWidth = Math.min(
+                W - 20,
+                Math.max(190, textLength * 6.5 + 24)
+              );
+              const boxHeight = 44;
 
-            const notchPath = placeLeft
-              ? `M ${boxX + boxWidth} ${notchY - 6} L ${boxX + boxWidth + 8} ${notchY} L ${boxX + boxWidth} ${notchY + 6} Z`
-              : `M ${boxX} ${notchY - 6} L ${boxX - 8} ${notchY} L ${boxX} ${notchY + 6} Z`;
+              const placeLeft = hoveredSlice.x > W / 2;
+              const desiredX = placeLeft
+                ? hoveredSlice.x - boxWidth - 14
+                : hoveredSlice.x + 14;
 
-            return (
-              <g style={{ pointerEvents: "none" }}>
-                <rect
-                  x={boxX}
-                  y={boxY}
-                  width={boxWidth}
-                  height={boxHeight}
-                  rx={4}
-                  ry={4}
-                  fill="#0b1b28"
-                  stroke="#1b3145"
-                  strokeWidth="1"
-                />
-                <path d={notchPath} fill="#0b1b28" />
+              const boxX = Math.max(
+                10,
+                Math.min(W - boxWidth - 10, desiredX)
+              );
 
-                {/* Line 1: Category Name */}
-                <text
-                  x={boxX + 10}
-                  y={boxY + 17}
-                  fill="#ffffff"
-                  fontSize="12.5"
-                  fontWeight="600"
-                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-                >
-                  {hoveredSlice.label}
-                </text>
+              const boxY = Math.max(
+                10,
+                Math.min(
+                  H - boxHeight - 10,
+                  hoveredSlice.y - boxHeight / 2
+                )
+              );
 
-                {/* Line 2: Color square swatch + count */}
-                <rect
-                  x={boxX + 10}
-                  y={boxY + 25}
-                  width="10"
-                  height="10"
-                  fill={hoveredSlice.color}
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="1"
-                />
-                <text
-                  x={boxX + 26}
-                  y={boxY + 34}
-                  fill="#ffffff"
-                  fontSize="12"
-                  fontWeight="500"
-                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-                >
-                  {hoveredSlice.value}
-                </text>
-              </g>
-            );
-          })()}
+              const notchY = Math.max(
+                boxY + 10,
+                Math.min(boxY + boxHeight - 10, hoveredSlice.y)
+              );
+
+              const notchPath = placeLeft
+                ? `M ${boxX + boxWidth} ${notchY - 6} L ${boxX + boxWidth + 8} ${notchY} L ${boxX + boxWidth} ${notchY + 6} Z`
+                : `M ${boxX} ${notchY - 6} L ${boxX - 8} ${notchY} L ${boxX} ${notchY + 6} Z`;
+
+              return (
+                <g style={{ pointerEvents: "none" }}>
+                  <rect
+                    x={boxX}
+                    y={boxY}
+                    width={boxWidth}
+                    height={boxHeight}
+                    rx={4}
+                    ry={4}
+                    fill="#0b1b28"
+                    stroke="#1b3145"
+                    strokeWidth="1"
+                  />
+
+                  <path d={notchPath} fill="#0b1b28" />
+
+                  <text
+                    x={boxX + 10}
+                    y={boxY + 17}
+                    fill="#ffffff"
+                    fontSize="12.5"
+                    fontWeight="600"
+                    fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+                  >
+                    {hoveredSlice.label}
+                  </text>
+
+                  <rect
+                    x={boxX + 10}
+                    y={boxY + 25}
+                    width="10"
+                    height="10"
+                    fill={hoveredSlice.color}
+                    stroke="rgba(255,255,255,0.4)"
+                    strokeWidth="1"
+                  />
+
+                  <text
+                    x={boxX + 26}
+                    y={boxY + 34}
+                    fill="#ffffff"
+                    fontSize="12"
+                    fontWeight="500"
+                    fontFamily="system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+                  >
+                    {hoveredSlice.value}
+                  </text>
+                </g>
+              );
+            })()}
         </svg>
       </div>
     </section>
