@@ -4,8 +4,7 @@ import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
 import { FeedPopover } from './FeedPopover';
-import { fetchAllTeamIncidents } from '../../services/teamIncidentsService';
-import { api } from '../../services/apiClient';
+import { api, getAuthToken } from '../../services/apiClient';
 import './GlobalNavbarActions.css';
 
 export interface GlobalNavbarActionsProps {
@@ -142,6 +141,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
+    if (!getAuthToken()) return;
     let active = true;
 
     const formatSlaMinutes = (minutes?: number | null): string | undefined => {
@@ -182,6 +182,19 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       const rawTicketList = tickRes.status === 'fulfilled'
         ? (Array.isArray(tickRes.value?.data) ? tickRes.value.data : Array.isArray(tickRes.value) ? tickRes.value : [])
         : [];
+
+      // Populate quick search index directly from tickets response
+      if (rawTicketList.length > 0) {
+        setTicketList(
+          rawTicketList.map((t: any) => ({
+            id: String(t.id || ''),
+            summary: t.summary || t.title || '',
+            category: t.category || '',
+            priority: t.priority || '',
+            status: t.status || '',
+          }))
+        );
+      }
 
       // 1. Live Major Incidents (active, unresolved incidents only)
       rawMiList
@@ -254,7 +267,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
     return () => {
       active = false;
     };
-  }, [readNotifIds]);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -277,27 +290,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       }, 50);
     }
   }, [activeFlyout]);
-
-  // Load live tickets for quick search index
-  useEffect(() => {
-    fetchAllTeamIncidents()
-      .then((res) => {
-        if (res.incidents && res.incidents.length > 0) {
-          setTicketList(
-            res.incidents.map((inc) => ({
-              id: inc.id,
-              summary: inc.summary,
-              category: inc.category,
-              priority: inc.priority,
-              status: inc.status,
-            }))
-          );
-        }
-      })
-      .catch((err) => {
-        console.warn('[GlobalNavbarActions] Fallback search index:', err);
-      });
-  }, []);
 
   const toggleFlyout = (flyout: FlyoutType) => {
     setActiveFlyout((prev) => (prev === flyout ? null : flyout));
