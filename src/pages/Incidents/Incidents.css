@@ -260,7 +260,7 @@
   border: none;
   border-radius: 20px;
   padding: 0 17px;
-  background: var(--accent-coral);
+  background: #1bc6df;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
@@ -269,7 +269,7 @@
 }
 
 .new-ticket-button:hover {
-  background: var(--accent-coral-hover);
+  background: #12b6ce;
 }
 
 .incident-statistics {
@@ -897,7 +897,7 @@
   height: 30px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--accent-coral);
+  background: #1bc6df;
   overflow: hidden;
 }
 
@@ -1477,7 +1477,7 @@
 .new-ticket-form input:focus,
 .new-ticket-form select:focus,
 .new-ticket-form textarea:focus {
-  border-color: var(--accent-coral);
+  border-color: #1bc6df;
 }
 
 .new-ticket-form-actions {
@@ -1503,12 +1503,12 @@
 }
 
 .new-ticket-submit {
-  background: var(--accent-coral);
+  background: #1bc6df;
   color: #ffffff;
 }
 
 .new-ticket-submit:hover {
-  background: var(--accent-coral-hover);
+  background: #12b6ce;
 }
 .incident-state-card {
   min-height: 260px;

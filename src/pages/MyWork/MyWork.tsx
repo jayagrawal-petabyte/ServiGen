@@ -546,8 +546,9 @@ export default function MyWork() {
                 style={
                   isActive
                     ? {
-                        backgroundColor: "var(--accent-coral, #eb6a47)",
+                        backgroundColor: "#00bcd4",
                         color: "#ffffff",
+                        boxShadow: "0 2px 8px rgba(0, 188, 212, 0.3)",
                       }
                     : undefined
                 }

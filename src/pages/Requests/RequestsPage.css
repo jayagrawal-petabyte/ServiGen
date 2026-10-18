@@ -52,7 +52,7 @@
 }
 
 .breadcrumb-link:hover {
-  color: var(--accent-coral);
+  color: #0284c7;
   text-decoration: underline;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .requests-get-started-btn {
-  background-color: var(--accent-coral);
+  background-color: #00b4d8;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -91,7 +91,7 @@
 }
 
 .requests-new-ticket-btn {
-  background-color: var(--accent-coral);
+  background-color: #00b4d8;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -148,7 +148,7 @@
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: var(--bg-peach);
+  background: #00bcd4;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -207,8 +207,8 @@
 }
 
 .requests-tree-search-input:focus {
-  border-color: var(--bg-peach);
-  box-shadow: 0 0 0 1px var(--bg-peach);
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 1px #00bcd4;
 }
 
 .tree-search-icon {
@@ -239,7 +239,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: var(--bg-peach);
+  background-color: #00bcd4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -365,7 +365,7 @@
 }
 
 .tree-agent-row.highlight-demo-user {
-  background-color: var(--accent-coral);
+  background-color: #00b4d8;
   color: #ffffff;
   border-radius: 9999px;
   padding: 4px 10px;
@@ -533,7 +533,7 @@
 
 .view-dropdown-item.selected {
   font-weight: 700;
-  color: var(--accent-coral);
+  color: #0284c7;
 }
 
 .toolbar-right-actions {
@@ -587,11 +587,11 @@
 
 .toolbar-refresh-btn:hover {
   background-color: #f1f5f9;
-  border-color: var(--bg-peach);
+  border-color: #00bcd4;
 }
 
 .requests-create-btn {
-  background-color: var(--bg-peach);
+  background-color: #00bcd4;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -694,7 +694,7 @@
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background-color: var(--bg-peach);
+  background-color: #00bcd4;
   color: #ffffff;
   font-size: 8px;
   font-weight: 700;
@@ -731,7 +731,7 @@
 }
 
 .request-summary-link {
-  color: var(--bg-peach);
+  color: #00bcd4;
   text-decoration: none;
   cursor: pointer;
   display: block;
@@ -774,7 +774,7 @@
 }
 
 .status-in-progress {
-  background-color: var(--accent-coral);
+  background-color: #0284c7;
   color: #ffffff;
 }
 
