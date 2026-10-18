@@ -57,21 +57,25 @@ const getConfigurationItems = async (options = {}) => {
           },
         },
       });
-      const formatted = records.map((ci) => ({
-        id: ci.id,
-        name: ci.name,
-        type: ci.type,
-        tag: ci.tag,
-        site: ci.siteName || 'Chennai',
-        status: ci.status,
-        businessOwner: ci.businessOwner || 'Technology',
-        organisationId: ci.site?.organisationId || null,
-      }));
+      if (records && records.length > 0) {
+        const formatted = records.map((ci) => ({
+          id: ci.id,
+          name: ci.name,
+          type: ci.type,
+          tag: ci.tag,
+          site: ci.siteName || 'Chennai',
+          status: ci.status,
+          businessOwner: ci.businessOwner || 'Technology',
+          organisationId: ci.site?.organisationId || null,
+        }));
 
-      if (organisationId) {
-        return formatted.filter((item) => !item.organisationId || item.organisationId === organisationId);
+        if (organisationId) {
+          const filtered = formatted.filter((item) => !item.organisationId || item.organisationId === organisationId);
+          if (filtered.length > 0) return filtered;
+        } else {
+          return formatted;
+        }
       }
-      return formatted;
     } catch (_err) {
       // Database connection fallback
     }
