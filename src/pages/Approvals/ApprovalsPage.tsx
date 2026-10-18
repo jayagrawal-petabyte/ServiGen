@@ -153,18 +153,12 @@ export default function ApprovalsPage() {
   };
 
   const handleRefresh = async () => {
-    await loadData();
-    showToast('Approvals list refreshed.', 'info');
-  };
-
-  const handleResetData = async () => {
     setIsLoading(true);
     try {
-      const data = await approvalsApi.resetMockData();
-      setApprovals(data);
-      showToast('Reset sample approvals.', 'info');
+      await loadData();
+      showToast('Approvals list refreshed.', 'info');
     } catch {
-      showToast('Failed to reset sample data.', 'error');
+      showToast('Failed to refresh approvals.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -327,8 +321,8 @@ export default function ApprovalsPage() {
             <h3>You're all caught up!</h3>
             <p>There are no pending requests awaiting your review at the moment.</p>
 
-            <button className="btn-reset-approvals" type="button" onClick={handleResetData}>
-              Load Sample Data
+            <button className="btn-reset-approvals" type="button" onClick={handleRefresh}>
+              Refresh Approvals
             </button>
           </div>
         ) : (

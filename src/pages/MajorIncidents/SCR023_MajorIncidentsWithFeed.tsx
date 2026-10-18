@@ -75,14 +75,19 @@ const SCR023_MajorIncidentsWithFeed: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    serverIncidents.forEach((inc) => map.set(inc.id, inc));
-    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    serverIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) map.set(inc.id, inc);
+    });
+    localIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) map.set(inc.id, inc);
+    });
     return Array.from(map.values());
   }, [serverIncidents, localIncidents]);
 
   useEffect(() => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
+      if (inc.id.startsWith('000267')) return;
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
@@ -347,7 +352,7 @@ const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({ entries, isLive, on
                   {entry.actorOrg && (
                     <span className="text-[10px] text-gray-400">{entry.actorOrg}</span>
                   )}
-                  <span className="text-[10px] font-mono text-cyan-600 border border-cyan-300 rounded-full px-1.5 py-0.5 leading-none">
+                  <span className="text-[10px] font-mono text-[#eb6a47] border border-[#f8c5b1] rounded-full px-1.5 py-0.5 leading-none">
                     {entry.ticketRef}
                   </span>
                 </div>

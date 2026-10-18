@@ -20,6 +20,7 @@ export type RecentIncident = {
   description: string;
   assignedTo: string;
   organisation: string;
+  slaTimeLeft?: number | string | null;
 };
 
 export type TicketNote = {

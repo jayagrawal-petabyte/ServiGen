@@ -1,6 +1,6 @@
 /* ============================================================
    GLOBAL NAVBAR ACTIONS COMPONENT STYLES
-   Adheres to Halo AI / ServiGen Global Utility Bar Design System
+   Adheres to ServiGen Global Utility Bar Design System
    ============================================================ */
 
 .global-nav-actions-wrap {
@@ -680,7 +680,7 @@
 /* ─── TO-DO FLOATING POPOVER (MATCHING FIGMA SCREENSHOT) ─── */
 .global-nav-icon-btn.is-todo-active {
   background: #ffffff !important;
-  color: #00bcd4 !important;
+  color: #eb6a47 !important;
   box-shadow: 0 0 0 2px #0f172a !important;
 }
 
@@ -750,8 +750,8 @@
 }
 
 .global-todo-date-input:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.15);
+  border-color: #eb6a47;
+  box-shadow: 0 0 0 2px rgba(235, 106, 71, 0.15);
 }
 
 .global-todo-content {
@@ -813,7 +813,7 @@
 .global-todo-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #00bcd4;
+  accent-color: #eb6a47;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -848,7 +848,7 @@
 
 .global-todo-add-pill-btn {
   align-self: flex-start;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border-radius: 9999px;
   padding: 7px 22px;
@@ -859,14 +859,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 2px 6px rgba(0, 188, 212, 0.35);
+  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.35);
   transition: all 0.15s ease;
 }
 
 .global-todo-add-pill-btn:hover {
-  background: #0096c7;
+  background: #db5936;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 188, 212, 0.45);
+  box-shadow: 0 4px 10px rgba(235, 106, 71, 0.45);
 }
 
 .global-todo-add-form {
@@ -887,8 +887,8 @@
 }
 
 .global-todo-input-field:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.15);
+  border-color: #eb6a47;
+  box-shadow: 0 0 0 2px rgba(235, 106, 71, 0.15);
 }
 
 .global-todo-form-actions {
@@ -898,7 +898,7 @@
 }
 
 .global-todo-btn-save {
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border: none;
   border-radius: 9999px;
@@ -910,7 +910,7 @@
 }
 
 .global-todo-btn-save:hover {
-  background: #0096c7;
+  background: #db5936;
 }
 
 .global-todo-btn-cancel {

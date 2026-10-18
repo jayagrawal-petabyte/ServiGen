@@ -37,7 +37,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const effectiveUserName = userName || user?.fullName || 'Inesh Agarwal';
+  const effectiveUserName = userName || user?.fullName || '';
   const effectiveDate = userDate || new Date().toLocaleDateString('en-GB');
 
   // Load persistent state or fall back to defaults

@@ -15,6 +15,8 @@ import type {
 export interface DashboardKpis {
   openIncidents: number;
   resolvedIncidents?: number;
+  pendingApprovals?: number;
+  myAssignments?: number;
   majorIncidents?: number;
   unassignedIncidents?: number;
   avgResponseTimeMinutes?: number;
@@ -78,16 +80,41 @@ export const dashboardService = {
       if (res?.success && res.data) {
         return res.data as DashboardKpis;
       }
-    } catch {
-      // Fallback
+      throw new Error('Failed to retrieve dashboard KPIs');
+    } catch (error) {
+      throw error;
     }
+  },
 
-    return {
-      openIncidents: 0,
-      slaBreaches: 0,
-      avgResolutionTimeMinutes: 0,
-      avgResolutionTimeFormatted: '0m',
+  /**
+   * Mood value translation between frontend display labels and backend model enums
+   */
+  moodToBackend(mood: string): string {
+    const map: Record<string, string> = {
+      'Great': 'Great',
+      'Good': 'Good',
+      'Okay': 'Neutral',
+      'Not Good': 'Struggling',
+      'Stressed': 'Overwhelmed',
+      'Neutral': 'Neutral',
+      'Struggling': 'Struggling',
+      'Overwhelmed': 'Overwhelmed',
     };
+    return map[mood] || mood;
+  },
+
+  moodToFrontend(mood: string): string {
+    const map: Record<string, string> = {
+      'Great': 'Great',
+      'Good': 'Good',
+      'Neutral': 'Okay',
+      'Struggling': 'Not Good',
+      'Overwhelmed': 'Stressed',
+      'Okay': 'Okay',
+      'Not Good': 'Not Good',
+      'Stressed': 'Stressed',
+    };
+    return map[mood] || mood;
   },
 
   /**
@@ -97,7 +124,11 @@ export const dashboardService = {
     try {
       const res = await api.get('/api/dashboard/mood');
       if (res?.success && res.data) {
-        return res.data.mood || null;
+        const raw = res.data.mood || res.data;
+        if (typeof raw === 'string') {
+          return dashboardService.moodToFrontend(raw);
+        }
+        return null;
       }
     } catch {
       // Fallback
@@ -110,7 +141,8 @@ export const dashboardService = {
    */
   async submitMood(mood: string): Promise<boolean> {
     try {
-      const res = await api.post('/api/dashboard/mood', { mood });
+      const backendMood = dashboardService.moodToBackend(mood);
+      const res = await api.post('/api/dashboard/mood', { mood: backendMood });
       return res?.success === true;
     } catch {
       return false;

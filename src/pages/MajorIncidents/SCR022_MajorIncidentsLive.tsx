@@ -90,7 +90,7 @@ const PANELS: Record<NonNullable<PanelType>, PanelDef> = {
   },
   profile: {
     title: '👤 Your Profile',
-    body: 'Inesh Agarwal\nEmail: inesh@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online',
+    body: 'Support Agent\nEmail: agent@servigen.io\nOrg:   ServiGen ITSM\nStatus: ● Online',
   },
 };
 
@@ -99,13 +99,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isFeedOpen, setIsFeedOpen]         = useState<boolean>(true);
   const [showNewModal, setShowNewModal]     = useState<boolean>(false);
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
-  const [localIncidents, setLocalIncidents] = usePersistentState<MajorIncident[]>(
-    'servigen_major_incidents_live_v1',
-    []
-  );
+  const [localIncidents, setLocalIncidents] = useState<MajorIncident[]>([]);
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
-  const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(true);
+  const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(false);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
@@ -114,12 +111,28 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isTimesheetOpen, setIsTimesheetOpen] = useState<boolean>(false);
   const [isKpiDrawerOpen, setIsKpiDrawerOpen] = useState<boolean>(false);
 
+  // Clear any legacy mock localStorage data on mount
+  useEffect(() => {
+    try {
+      localStorage.removeItem('servigen_major_incidents_live_v1');
+      localStorage.removeItem('servigen_major_incidents_live');
+      localStorage.removeItem('servigen_major_incidents');
+      localStorage.removeItem('servigen_major_incidents_notifs_v2');
+      localStorage.removeItem('servigen_major_incidents_tasks_v2');
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const loadLiveIncidents = useCallback(async () => {
     try {
       setIsFetchingLive(true);
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live)) {
-        setServerIncidents(live);
+        // Strip out any legacy mock incidents
+        const cleanLive = live.filter((inc) => !inc.id.startsWith('000267'));
+        setServerIncidents(cleanLive);
+        setLocalIncidents([]);
         setIsLiveConnected(true);
       } else {
         setServerIncidents([]);
@@ -195,53 +208,59 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
-    serverIncidents.forEach((inc) => map.set(inc.id, inc));
-    localIncidents.forEach((inc) => map.set(inc.id, inc));
+    serverIncidents.forEach((inc) => {
+      if (!inc.id.startsWith('000267')) {
+        map.set(inc.id, inc);
+      }
+    });
+    if (!isFetchingLive) {
+      localIncidents.forEach((inc) => {
+        if (!inc.id.startsWith('000267')) {
+          map.set(inc.id, inc);
+        }
+      });
+    }
     return Array.from(map.values());
-  }, [serverIncidents, localIncidents]);
+  }, [serverIncidents, localIncidents, isFetchingLive]);
 
   useEffect(() => {
     if (allIncidents.length > 0) {
-      setNotifications((prev) => {
-        const hasMock = prev.some((n) => n.title.includes('000267'));
-        if (prev.length === 0 || hasMock) {
-          return allIncidents.slice(0, 4).map((inc) => ({
-            id: `notif-${inc.id}`,
-            title: `Major Incident #${inc.id} (${inc.title}) is under active ITSM management.`,
-            time: 'Live',
-            isRead: false,
-            priority: inc.priority === 'Critical' ? 'high' : 'medium',
-          }));
-        }
-        return prev;
+      setNotifications(() => {
+        return allIncidents.slice(0, 4).map((inc) => ({
+          id: `notif-${inc.id}`,
+          title: `Major Incident #${inc.id} (${inc.title}) is under active ITSM management.`,
+          time: 'Live',
+          isRead: false,
+          priority: inc.priority === 'Critical' ? 'high' : 'medium',
+        }));
       });
 
-      setTasks((prev) => {
-        const hasMock = prev.some((t) => t.label.includes('000267'));
-        if (prev.length === 0 || hasMock) {
-          const freshTasks: TaskItem[] = [];
-          allIncidents.slice(0, 3).forEach((inc) => {
-            freshTasks.push({
-              id: `task-${inc.id}-review`,
-              label: `Verify incident diagnosis and mitigation path for #${inc.id}`,
-              done: false,
-            });
-            freshTasks.push({
-              id: `task-${inc.id}-stakeholder`,
-              label: `Post real-time stakeholder update for #${inc.id}`,
-              done: false,
-            });
+      setTasks(() => {
+        const freshTasks: TaskItem[] = [];
+        allIncidents.slice(0, 3).forEach((inc) => {
+          freshTasks.push({
+            id: `task-${inc.id}-review`,
+            label: `Verify incident diagnosis and mitigation path for #${inc.id}`,
+            done: false,
           });
-          return freshTasks;
-        }
-        return prev;
+          freshTasks.push({
+            id: `task-${inc.id}-stakeholder`,
+            label: `Post real-time stakeholder update for #${inc.id}`,
+            done: false,
+          });
+        });
+        return freshTasks;
       });
+    } else {
+      setNotifications([]);
+      setTasks([]);
     }
   }, [allIncidents, setNotifications, setTasks]);
 
   const liveFeedEntries = useMemo<ActivityFeedEntry[]>(() => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
+      if (inc.id.startsWith('000267')) return;
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
@@ -437,11 +456,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const handleResetDemoIncidents = async () => {
     localStorage.removeItem('servigen_major_incidents_live_v1');
     setLocalIncidents([]);
-    try {
-      await majorIncidentsService.updateMajorIncident('0002671', { status: 'Investigating', commander: 'Unassigned', priority: 'P1' });
-      await majorIncidentsService.updateMajorIncident('0002672', { status: 'Investigating', commander: 'Jennifer Williams', priority: 'P2' });
-      await majorIncidentsService.updateMajorIncident('0002673', { status: 'Investigating', commander: 'Demo User', priority: 'P1' });
-    } catch {}
     await loadLiveIncidents();
   };
 
@@ -656,7 +670,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             setIsFeedOpen(false);
             loadLiveIncidents();
           }}
-          onResetDemo={handleResetDemoIncidents}
           onToggleFeed={() => {
             setIsFeedOpen((v) => {
               const next = !v;
@@ -725,7 +738,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                               className="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs hover:shadow-xs cursor-pointer transition-all space-y-2"
                             >
                               <div className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] font-mono font-bold text-cyan-600 bg-cyan-50 border border-cyan-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-mono font-bold text-[#eb6a47] bg-[#fdede7] border border-[#f8c5b1] px-1.5 py-0.5 rounded">
                                   #{inc.id}
                                 </span>
                                 <PriorityBadge priority={inc.priority} />
@@ -741,7 +754,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                                       e.stopPropagation();
                                       handleAdvanceStage(inc.id);
                                     }}
-                                    className="text-[10px] font-bold text-cyan-600 hover:text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full"
+                                    className="text-[10px] font-bold text-[#eb6a47] hover:text-[#db5936] bg-[#fdede7] px-2 py-0.5 rounded-full"
                                   >
                                     Advance →
                                   </button>
@@ -833,7 +846,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                       {unreadNotifCount > 0 && (
                         <button
                           onClick={handleMarkAllNotificationsRead}
-                          className="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-full transition-colors"
+                          className="text-[11px] font-bold text-[#eb6a47] hover:text-[#db5936] bg-[#fdede7] hover:bg-[#fbdcd0] px-2.5 py-1 rounded-full transition-colors"
                         >
                           Mark all as read
                         </button>
@@ -848,7 +861,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                           className={`p-3 rounded-xl border transition-all ${
                             notif.isRead
                               ? 'bg-gray-50/60 border-gray-100 text-gray-500 opacity-75'
-                              : 'bg-white border-cyan-200 shadow-xs text-gray-800 ring-1 ring-cyan-100'
+                              : 'bg-white border-[#f8c5b1] shadow-xs text-gray-800 ring-1 ring-[#f8c5b1]'
                           }`}
                         >
                           <div className="flex items-start gap-2">
@@ -858,7 +871,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                                   ? 'bg-gray-300'
                                   : notif.priority === 'high'
                                   ? 'bg-red-500 ring-2 ring-red-200'
-                                  : 'bg-cyan-500 ring-2 ring-cyan-200'
+                                  : 'bg-[#eb6a47] ring-2 ring-[#f8c5b1]'
                               }`}
                             />
                             <div className="flex-1 min-w-0">
@@ -872,7 +885,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                                   className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
                                     notif.isRead
                                       ? 'text-gray-500 hover:bg-gray-200'
-                                      : 'text-cyan-600 bg-cyan-50 hover:bg-cyan-100'
+                                      : 'text-[#eb6a47] bg-[#fdede7] hover:bg-[#fbdcd0]'
                                   }`}
                                 >
                                   {notif.isRead ? 'Mark unread' : 'Mark as read'}
@@ -892,14 +905,14 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                         key={task.id}
                         onClick={() => handleToggleTask(task.id)}
                         className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                          task.done ? 'bg-gray-50 border-gray-100 text-gray-400' : 'bg-white border-gray-200 text-gray-700 hover:border-cyan-300'
+                          task.done ? 'bg-gray-50 border-gray-100 text-gray-400' : 'bg-white border-gray-200 text-gray-700 hover:border-[#eb6a47]'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={task.done}
                           onChange={() => {}}
-                          className="mt-0.5 rounded text-cyan-500 focus:ring-cyan-400 cursor-pointer"
+                          className="mt-0.5 rounded text-[#eb6a47] focus:ring-[#eb6a47] cursor-pointer"
                         />
                         <span className={`text-xs leading-snug ${task.done ? 'line-through' : 'font-medium'}`}>
                           {task.label}
@@ -910,7 +923,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                 ) : openPanel === 'profile' ? (
                   <div className="space-y-3 text-xs text-gray-700">
                     <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                      <div className="w-10 h-10 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                      <div className="w-10 h-10 rounded-full bg-[#eb6a47] text-white font-bold flex items-center justify-center text-sm shadow-xs">
                         {activeUserName.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>
@@ -920,7 +933,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                     </div>
                     <div className="space-y-1.5 text-xs">
                       <div><span className="text-gray-400">Account Role:</span> <span className="font-semibold text-gray-800">{activeUserRole}</span></div>
-                      <div><span className="text-gray-400">Effective Permissions:</span> <span className="font-semibold text-cyan-600">{role}</span></div>
+                      <div><span className="text-gray-400">Effective Permissions:</span> <span className="font-semibold text-[#eb6a47]">{role}</span></div>
                       <div><span className="text-gray-400">Department:</span> <span className="font-medium text-gray-800">{user?.department || 'IT Operations'}</span></div>
                       <div><span className="text-gray-400">Organization:</span> <span className="font-medium text-gray-800">{user?.defaultOrganisation || 'ServiGen Global Tech'}</span></div>
                       <div><span className="text-gray-400">Status:</span> <span className="inline-flex items-center gap-1 font-medium text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online</span></div>
@@ -937,7 +950,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                       liveFeedEntries.slice(0, 10).map((entry) => (
                         <div key={entry.id} className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-2xs text-xs space-y-1">
                           <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-mono font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200">
+                            <span className="font-mono font-bold text-[#db5936] bg-[#fdede7] px-1.5 py-0.5 rounded border border-[#f8c5b1]">
                               {entry.ticketRef}
                             </span>
                             <span className="text-gray-400">{entry.timeAgo}</span>
@@ -958,10 +971,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                         <div className="text-lg font-bold text-emerald-700">—</div>
                         <div className="text-[10px] text-emerald-500">Live SLA monitoring</div>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-cyan-50 border border-cyan-100">
-                        <div className="text-[10px] text-cyan-600 uppercase font-bold">Resolution SLA</div>
-                        <div className="text-lg font-bold text-cyan-700">—</div>
-                        <div className="text-[10px] text-cyan-500">Live SLA monitoring</div>
+                      <div className="p-2.5 rounded-lg bg-[#fdede7] border border-[#f8c5b1]">
+                        <div className="text-[10px] text-[#eb6a47] uppercase font-bold">Resolution SLA</div>
+                        <div className="text-lg font-bold text-[#db5936]">—</div>
+                        <div className="text-[10px] text-[#eb6a47]">Live SLA monitoring</div>
                       </div>
                     </div>
                     <div className="p-3 rounded-lg bg-white border border-gray-200 space-y-2">
@@ -975,7 +988,11 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Total In-Progress:</span>
-                        <span className="font-bold text-cyan-700">{allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length}</span>
+                        <span className="font-bold text-[#db5936]">{allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Resolved Incidents:</span>
+                        <span className="font-bold text-emerald-600">{allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Resolved Incidents:</span>

@@ -54,7 +54,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
     : '99.9';
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F9FD] select-none">
+    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] select-none">
       {/* Header with Navigation Pills */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -77,7 +77,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
             </button>
             <button
               onClick={() => navigate('/cmdb/services')}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#00bcd4] text-white shadow-2xs cursor-pointer transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#eb6a47] text-white shadow-2xs cursor-pointer transition-all"
             >
               Service CIs (Live Health)
             </button>
@@ -88,7 +88,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
             disabled={isLoading}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#00bcd4]' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
             Refresh Live Health
           </button>
 
@@ -220,7 +220,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
               <button
                 type="button"
                 onClick={() => navigate('/services-catalogue')}
-                className="flex items-center gap-1 text-[#00bcd4] font-bold hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-[#eb6a47] font-bold hover:underline cursor-pointer"
               >
                 Catalogue <ExternalLink className="w-3 h-3" />
               </button>

@@ -2,8 +2,18 @@
 const db = require('../../config/db');
 const { addIncidentSlaDetails } = require('./incidents.sla.service');
 
-const CLOSED_STATUSES = ['Resolved', 'Closed'];
-const OPEN_STATUSES = ['Active', 'Pending', 'Actioned', 'On Hold'];
+const CLOSED_STATUSES = ['Resolved', 'Closed', 'resolved', 'closed'];
+const OPEN_STATUSES = [
+  'Active', 'Pending', 'Actioned', 'On Hold', 'Open', 'In Progress', 'New',
+  'active', 'pending', 'actioned', 'on hold', 'open', 'in progress', 'new',
+];
+
+const FIRST_LINE_NAMES = [
+  '1st Line Support', '1st Line', 'First Line Support', 'First Line', '1st-line', 'first-line',
+];
+const SECOND_LINE_NAMES = [
+  '2nd Line Support', '2nd Line', 'Second Line Support', 'Second Line', '2nd-line', 'second-line',
+];
 
 const PRIORITY_ORDER = {
   Critical: 0,
@@ -57,15 +67,24 @@ const isAdmin = (user) =>
   user.role.toLowerCase() === 'admin';
 
 const buildTeamWhere = (teamName, user, query = {}) => {
+  const isFirstLine =
+    teamName.toLowerCase().includes('1st') || teamName.toLowerCase().includes('first');
+  const teamVariants = isFirstLine ? FIRST_LINE_NAMES : SECOND_LINE_NAMES;
+
+  const teamConditions = [
+    { assignedTeam: { in: teamVariants } },
+    { team: { is: { name: { in: teamVariants } } } },
+    { teamId: isFirstLine ? 'team-001' : 'team-002' },
+  ];
+
+  if (isFirstLine) {
+    teamConditions.push({ assignedTeam: null });
+  }
+
   const conditions = [
-    { ticketType: 'Incident' },
+    { ticketType: { in: ['Incident', 'incident', 'INCIDENT'] } },
     { status: { in: OPEN_STATUSES } },
-    {
-      OR: [
-        { assignedTeam: teamName },
-        { team: { is: { name: teamName } } },
-      ],
-    },
+    { OR: teamConditions },
   ];
 
   // Never trust an organisation ID provided by the query string.

@@ -15,6 +15,8 @@ import RecentIncidents from "./RecentIncidents";
 import NewTickets from "./NewTickets";
 import StatisticsCards, { type Statistic } from "./StatisticsCards";
 import AllIncidentsModal from "./AllIncidentsModal";
+import { SlaBadge } from "../../components/shared/SlaBadge";
+import { StatusBadge } from "../../components/shared/StatusBadge";
 
 import type {
   ChartItem,
@@ -258,6 +260,12 @@ function normalizeRecentIncident(item: ApiRecord): RecentIncident {
     ]),
     date: readText(item, ["date", "updatedAt", "createdAt"]),
     description: readText(item, ["description", "details"]),
+    slaTimeLeft:
+      typeof item.slaTimeLeft === "number" || typeof item.slaTimeLeft === "string"
+        ? item.slaTimeLeft
+        : typeof item.sla === "string"
+        ? item.sla
+        : null,
   } as RecentIncident;
 }
 
@@ -680,13 +688,7 @@ export default function IncidentsDashboard() {
                   {selectedIncident.priority}
                 </span>
 
-                <span
-                  className={`incident-pill ${getStatusClass(
-                    selectedIncident.status
-                  )}`}
-                >
-                  {selectedIncident.status}
-                </span>
+                <StatusBadge status={selectedIncident.status} />
               </div>
             </div>
 
@@ -709,6 +711,13 @@ export default function IncidentsDashboard() {
               <div className="incident-detail-item">
                 <span>Status</span>
                 <strong>{selectedIncident.status}</strong>
+              </div>
+
+              <div className="incident-detail-item">
+                <span>SLA Time Left</span>
+                <div>
+                  <SlaBadge slaTimeLeft={selectedIncident.slaTimeLeft} />
+                </div>
               </div>
             </div>
 

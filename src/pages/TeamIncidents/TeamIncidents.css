@@ -766,7 +766,7 @@
 }
 
 .team-btn-get-started {
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border: none;
   padding: 5px 16px;
@@ -774,19 +774,19 @@
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 188, 212, 0.25);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.25);
   transition: all 0.15s;
 }
 
 .team-btn-get-started:hover {
-  background: #00acc1;
+  background: #db5936;
 }
 
 .team-btn-new-ticket {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border: none;
   padding: 5px 14px;
@@ -794,12 +794,12 @@
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 188, 212, 0.25);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.25);
   transition: all 0.15s;
 }
 
 .team-btn-new-ticket:hover {
-  background: #00acc1;
+  background: #db5936;
 }
 
 .team-icon-buttons-group {
@@ -833,7 +833,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #00bcd4;
+  background: #eb6a47;
   border: none;
   display: flex;
   align-items: center;
@@ -1163,7 +1163,7 @@
 .team-sidebar-badge {
   font-size: 11px;
   font-weight: 700;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   padding: 2px 8px;
   border-radius: 12px;
@@ -1207,15 +1207,15 @@
 }
 
 .team-subitem-btn.active {
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.25);
+  box-shadow: 0 2px 8px rgba(235, 106, 71, 0.25);
 }
 
 .team-subitem-btn.active .team-sidebar-badge {
   background: #ffffff;
-  color: #00bcd4;
+  color: #eb6a47;
 }
 
 .team-section-pill-label {
@@ -1331,8 +1331,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #e0f7fa;
-  color: #00bcd4;
+  background: #fdede7;
+  color: #eb6a47;
   border: none;
   display: flex;
   align-items: center;
@@ -1344,7 +1344,7 @@
 }
 
 .team-add-circle-btn:hover {
-  background: #b2ebf2;
+  background: #fad8cc;
 }
 
 .team-toolbar-right-group {
@@ -1363,7 +1363,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   border: none;
   padding: 4px 14px;
@@ -1371,12 +1371,12 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 188, 212, 0.25);
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.25);
   transition: all 0.15s;
 }
 
 .team-btn-new-cyan:hover {
-  background: #00acc1;
+  background: #db5936;
 }
 
 /* Status Pill in Table */

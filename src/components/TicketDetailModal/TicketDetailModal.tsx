@@ -8,6 +8,7 @@ import {
   AVAILABLE_AGENTS,
 } from "./ticketDetails.data";
 import "./TicketDetailModal.css";
+import { StatusBadge } from "../shared/StatusBadge";
 
 interface TicketDetailModalProps {
   ticket: {
@@ -64,7 +65,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "El usuario informó que la estación de trabajo ABC00001 no arranca después de la actualización del sistema. El código de diagnóstico indica un Registro de Arranque Principal dañado. Los periféricos fueron probados y funcionan correctamente."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Revisión de implementación y despliegue: tareas de infraestructura de Halo ITSM sincronizadas con el plan maestro de producción."
+        ? "Revisión de implementación y despliegue: tareas de infraestructura de ServiGen sincronizadas con el plan maestro de producción."
         : `[Traducción al español]: ${text}`,
   },
   fr: {
@@ -74,7 +75,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "L'utilisateur a signalé que le poste de travail ABC00001 ne démarre pas après la mise à jour du système. Le code de diagnostic indique un secteur de démarrage principal corrompu. Les périphériques ont été testés opérationnels."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Examen du déploiement et de la mise en œuvre : tâches d'infrastructure Halo ITSM synchronisées avec le plan de production principal."
+        ? "Examen du déploiement et de la mise en œuvre : tâches d'infrastructure ServiGen synchronisées avec le plan de production principal."
         : `[Traduction en français]: ${text}`,
   },
   de: {
@@ -84,7 +85,7 @@ const TRANSLATION_MAP: Record<string, { name: string; flag: string; translate: (
       text.toLowerCase().includes("workstation") || text.toLowerCase().includes("boot")
         ? "Benutzer meldete, dass Arbeitsstation ABC00001 nach Systemaktualisierung nicht startet. Diagnosecode weist auf beschädigten Master Boot Record hin. Peripheriegeräte wurden erfolgreich getestet."
         : text.toLowerCase().includes("deployment") || text.toLowerCase().includes("implementation")
-        ? "Bereitstellungs- und Implementierungsprüfung: Halo ITSM-Infrastrukturaufgaben wurden mit dem Master-Produktionsplan synchronisiert."
+        ? "Bereitstellungs- und Implementierungsprüfung: ServiGen-Infrastrukturaufgaben wurden mit dem Master-Produktionsplan synchronisiert."
         : `[Deutsche Übersetzung]: ${text}`,
   },
   it: {
@@ -371,8 +372,8 @@ export default function TicketDetailModal({
   ]);
   const [newChatMessage, setNewChatMessage] = useState("");
   const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
-  const [ccRecipients, setCcRecipients] = useState("service-desk-leads@usehalo.com, supervisor@usehalo.com");
-  const [bccRecipients, setBccRecipients] = useState("it-audit-logs@usehalo.com");
+  const [ccRecipients, setCcRecipients] = useState("service-desk-leads@servigen.io, supervisor@servigen.io");
+  const [bccRecipients, setBccRecipients] = useState("it-audit-logs@servigen.io");
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [urlAttachmentTitle, setUrlAttachmentTitle] = useState("");
   const [urlAttachmentHref, setUrlAttachmentHref] = useState("");
@@ -626,7 +627,7 @@ export default function TicketDetailModal({
               type="button"
               className="activity-menu-item"
               onClick={() => {
-                setEmailDraftTo(ticketData.email || "akhan@usehalo.com");
+                setEmailDraftTo(ticketData.email || "akhan@servigen.io");
                 setEmailDraftSubject(`[Ticket #${cleanId}] Activity Update: ${ticketData.summary || ticketData.actionTitle || "Incident Update"}`);
                 setEmailDraftBody(`--- Forwarded Activity Note from ${ticketData.requester || "Agent"} ---\n\n${getDisplayedDescription()}\n\n---------------------------------`);
                 setIsEmailModalOpen(true);
@@ -703,7 +704,7 @@ export default function TicketDetailModal({
         <div className="mb-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[11.5px] flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span>🌐</span>
-            <span>Translated to <strong>{translatedLanguageLabel}</strong> (Halo AI Translate)</span>
+            <span>Translated to <strong>{translatedLanguageLabel}</strong> (ServiGen AI Translate)</span>
           </div>
           <button
             type="button"
@@ -927,7 +928,7 @@ export default function TicketDetailModal({
                   type="button"
                   className="ticket-pill-btn cursor-pointer"
                   onClick={() => {
-                    setEmailDraftTo(ticketData.email || "akhan@usehalo.com");
+                    setEmailDraftTo(ticketData.email || "akhan@servigen.io");
                     setEmailDraftSubject(`[Ticket #${cleanId}] - ${ticketData.summary || "Follow-up regarding your ticket"}`);
                     setEmailDraftBody(`Hello ${ticketData.requester || "User"},\n\nWe are currently investigating your ticket #${cleanId} (${ticketData.summary || "Service Request"}).\n\nPlease let us know if there is any additional diagnostic information or preferred callback window.\n\nKind regards,\n${currentUser}\nSupport Services`);
                     setIsEmailModalOpen(true);
@@ -1924,7 +1925,7 @@ export default function TicketDetailModal({
                 <div className="supplier-composer-header">
                   <div className="supplier-header-left">
                     <div className="supplier-q-badge">
-                      <svg className="w-5 h-5 text-[#00bcd4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8}>
+                      <svg className="w-5 h-5 text-[#eb6a47]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8}>
                         <circle cx="12" cy="12" r="7.5" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
                       </svg>
@@ -2419,7 +2420,7 @@ export default function TicketDetailModal({
                     <div className="details-field-row">
                       <span className="details-label">Status:</span>
                       <span className="details-value">
-                        <span className="status-badge-inline">{ticketData.status || "In Progress"}</span>
+                        <StatusBadge status={ticketData.status || "In Progress"} size="sm" />
                       </span>
                     </div>
                     <div className="details-field-row">
@@ -2456,7 +2457,7 @@ export default function TicketDetailModal({
                     </div>
                     <div className="details-field-row">
                       <span className="details-label">Project:</span>
-                      <span className="details-value text-gray-700">{ticketData.projectName || "2196 - Halo Implementation - Project"}</span>
+                      <span className="details-value text-gray-700">{ticketData.projectName || "2196 - ServiGen Implementation - Project"}</span>
                     </div>
                   </div>
 
@@ -2556,7 +2557,7 @@ export default function TicketDetailModal({
                       onClick={handleRefreshNotifications}
                       title="Refresh Notification Log"
                     >
-                      <svg className={`w-3.5 h-3.5 ${isRefreshingNotifs ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="#00b4d8" strokeWidth={2.5}>
+                      <svg className={`w-3.5 h-3.5 ${isRefreshingNotifs ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="#eb6a47" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
                     </button>
@@ -2588,11 +2589,11 @@ export default function TicketDetailModal({
                       <span className="notif-desc-text">New Ticket Logged To...</span>
                     </div>
                     <div className="notif-row-col col-type text-gray-700">
-                      Show in Halo only
+                      Show in ServiGen only
                     </div>
                     <div className="notif-row-col col-agents">
                       <div className="notif-avatar-stack">
-                        <span className="stack-avatar bg-[#00bcd4]" title="1st Line Support">1L</span>
+                        <span className="stack-avatar bg-[#eb6a47]" title="1st Line Support">1L</span>
                         <span className="stack-avatar bg-[#303f9f]" title="Chris Robinson">CR</span>
                         <span className="stack-avatar bg-[#e0f2fe] text-[#0284c7]" title="Channel Notifications">
                           <svg className="w-3 h-3 text-cyan-600" viewBox="0 0 24 24" fill="currentColor">
@@ -2764,7 +2765,7 @@ export default function TicketDetailModal({
                   <span className="sidebar-field-label">Contact Address</span>
                   <div className="sidebar-address-box">
                     {(ticketData.contactAddress || [
-                      "Halo House, Gipping Way",
+                      "ServiGen HQ, Tech Park",
                       "Stowmarket",
                       "Suffolk",
                       "United Kingdom",
@@ -2842,7 +2843,7 @@ export default function TicketDetailModal({
                       className="sidebar-field-link text-left bg-transparent border-none cursor-pointer text-cyan-600 hover:underline"
                       title="Open in Projects"
                     >
-                      {ticketData.projectName || "2196 - Halo Implementation - Project"}
+                      {ticketData.projectName || "2196 - ServiGen Implementation - Project"}
                     </button>
                   </div>
 
@@ -2873,9 +2874,7 @@ export default function TicketDetailModal({
                   <div className="sidebar-field-group">
                     <span className="sidebar-field-label">Status</span>
                     <div className="pt-1">
-                      <span className="sidebar-status-pill">
-                        {ticketData.status === "Completed" ? "Completed" : "New"}
-                      </span>
+                      <StatusBadge status={ticketData.status === "Completed" ? "Completed" : "New"} size="sm" />
                     </div>
                   </div>
 
@@ -2982,8 +2981,8 @@ export default function TicketDetailModal({
 
                       <div className="sidebar-field-group">
                         <span className="sidebar-field-label">Email Address</span>
-                        <a href={`mailto:${ticketData.email || "akhan@usehalo.com"}`} className="sidebar-field-link email-link">
-                          {ticketData.email || "akhan@usehalo.com"}
+                        <a href={`mailto:${ticketData.email || "akhan@servigen.io"}`} className="sidebar-field-link email-link">
+                          {ticketData.email || "akhan@servigen.io"}
                         </a>
                       </div>
 
@@ -3016,7 +3015,7 @@ export default function TicketDetailModal({
                           Draft
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         3995 - Emails not Sending
                       </div>
                     </div>
@@ -3036,7 +3035,7 @@ export default function TicketDetailModal({
                           Approved
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2183 - Firewall Change
                       </div>
                     </div>
@@ -3056,7 +3055,7 @@ export default function TicketDetailModal({
                           Scheduled
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2184 - Printer Installation
                       </div>
                     </div>
@@ -3076,7 +3075,7 @@ export default function TicketDetailModal({
                           Rejected
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2186 - Addition of a New Server
                       </div>
                     </div>
@@ -3096,7 +3095,7 @@ export default function TicketDetailModal({
                           Change Overdue
                         </span>
                       </div>
-                      <div className="text-xs font-semibold text-[#0097a7] group-hover:underline">
+                      <div className="text-xs font-semibold text-[#eb6a47] group-hover:underline">
                         2193 - Security Concern - Possible Virus
                       </div>
                     </div>
@@ -3127,7 +3126,7 @@ export default function TicketDetailModal({
                   <div className="sidebar-field-group">
                     <span className="sidebar-field-label">Status</span>
                     <div className="pt-1">
-                      <span className="sidebar-status-pill-green">{ticketData.status || "New"}</span>
+                      <StatusBadge status={ticketData.status || "New"} size="sm" />
                     </div>
                   </div>
 
@@ -3169,8 +3168,17 @@ export default function TicketDetailModal({
 
   {/* ── SLA Targets & Metrics Detail Dialog (Triggered by Incident SLA Box) ── */}
   {isSlaDetailsOpen && (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp">
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsSlaDetailsOpen(false);
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
           <div className="flex items-center gap-2">
             <span className="text-base">⏱</span>
@@ -3178,7 +3186,10 @@ export default function TicketDetailModal({
           </div>
           <button
             type="button"
-            onClick={() => setIsSlaDetailsOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSlaDetailsOpen(false);
+            }}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs transition-colors cursor-pointer"
             title="Close SLA breakdown"
           >
@@ -3253,7 +3264,8 @@ export default function TicketDetailModal({
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setIsSlaDetailsOpen(false);
                 setActiveTab("audit-log");
                 setStatusMessage("Switched to Audit Log & SLA Event Trail");
@@ -3266,7 +3278,8 @@ export default function TicketDetailModal({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setStatusMessage("SLA Target recalculated based on schedule");
                   setTimeout(() => setStatusMessage(null), 2500);
                   setIsSlaDetailsOpen(false);
@@ -3277,7 +3290,10 @@ export default function TicketDetailModal({
               </button>
               <button
                 type="button"
-                onClick={() => setIsSlaDetailsOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSlaDetailsOpen(false);
+                }}
                 className="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm"
               >
                 Done
@@ -3291,8 +3307,17 @@ export default function TicketDetailModal({
 
   {/* ── Appointment & Calendar Scheduling Dialog (Triggered by 🗂 button) ── */}
   {isAppointmentModalOpen && (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-scaleUp">
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsAppointmentModalOpen(false);
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-scaleUp"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-cyan-600 to-blue-700 text-white">
           <div className="flex items-center gap-2">
             <span className="text-base">📅</span>
@@ -3300,7 +3325,10 @@ export default function TicketDetailModal({
           </div>
           <button
             type="button"
-            onClick={() => setIsAppointmentModalOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAppointmentModalOpen(false);
+            }}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs transition-colors cursor-pointer"
             title="Close scheduling"
           >
@@ -3394,7 +3422,7 @@ export default function TicketDetailModal({
             </label>
             <input
               type="text"
-              defaultValue="Halo House, Gipping Way, Stowmarket"
+              defaultValue="ServiGen HQ, Innovation Way, London"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
             />
           </div>
@@ -3522,7 +3550,7 @@ export default function TicketDetailModal({
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <span className="text-[11px] text-gray-400">SMTP Relay: Active (halo-mailer@usehalo.com)</span>
+            <span className="text-[11px] text-gray-400">SMTP Relay: Active (mailer@servigen.io)</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -3858,7 +3886,7 @@ export default function TicketDetailModal({
             </label>
             <input
               type="email"
-              defaultValue={ticketData.email || "akhan@usehalo.com"}
+              defaultValue={ticketData.email || "akhan@servigen.io"}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
             />
           </div>

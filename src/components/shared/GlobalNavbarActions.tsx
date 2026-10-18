@@ -4,8 +4,7 @@ import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
 import { FeedPopover } from './FeedPopover';
-import { fetchAllTeamIncidents } from '../../services/teamIncidentsService';
-import { api } from '../../services/apiClient';
+import { api, getAuthToken } from '../../services/apiClient';
 import './GlobalNavbarActions.css';
 
 export interface GlobalNavbarActionsProps {
@@ -142,7 +141,34 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
+    if (!getAuthToken()) return;
     let active = true;
+
+    const formatSlaMinutes = (minutes?: number | null): string | undefined => {
+      if (typeof minutes !== 'number' || isNaN(minutes)) return undefined;
+      const isNeg = minutes < 0;
+      const abs = Math.abs(minutes);
+      const h = Math.floor(abs / 60);
+      const m = abs % 60;
+      const str = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      return isNeg ? `-${str}` : `+${str}`;
+    };
+
+    const formatTimeAgo = (dateStr?: string | null): string => {
+      if (!dateStr) return 'Recently';
+      try {
+        const date = new Date(dateStr);
+        const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (isNaN(diffSec) || diffSec < 0) return 'Recently';
+        if (diffSec < 60) return 'Just now';
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+        return `${Math.floor(diffSec / 86400)}d ago`;
+      } catch {
+        return 'Recently';
+      }
+    };
+
     Promise.allSettled([
       api.get('/api/major-incidents'),
       api.get('/api/tickets'),
@@ -150,37 +176,90 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       if (!active) return;
       const liveNotifs: NotificationItem[] = [];
 
-      if (miRes.status === 'fulfilled' && Array.isArray(miRes.value?.data)) {
-        miRes.value.data.slice(0, 3).forEach((mi: any) => {
+      const rawMiList = miRes.status === 'fulfilled'
+        ? (Array.isArray(miRes.value?.data) ? miRes.value.data : Array.isArray(miRes.value) ? miRes.value : [])
+        : [];
+      const rawTicketList = tickRes.status === 'fulfilled'
+        ? (Array.isArray(tickRes.value?.data) ? tickRes.value.data : Array.isArray(tickRes.value) ? tickRes.value : [])
+        : [];
+
+      // Populate quick search index directly from tickets response
+      if (rawTicketList.length > 0) {
+        setTicketList(
+          rawTicketList.map((t: any) => ({
+            id: String(t.id || ''),
+            summary: t.summary || t.title || '',
+            category: t.category || '',
+            priority: t.priority || '',
+            status: t.status || '',
+          }))
+        );
+      }
+
+      // 1. Live Major Incidents (active, unresolved incidents only)
+      rawMiList
+        .filter((mi: any) => !['resolved', 'closed'].includes(String(mi.status || '').toLowerCase()))
+        .slice(0, 3)
+        .forEach((mi: any) => {
           const notifId = `notif-mi-${mi.id}`;
+          const isCritical = mi.priority === 'P1' || mi.priority === 'Critical';
           liveNotifs.push({
             id: notifId,
             ticketId: String(mi.id),
-            title: mi.priority === 'P1' || mi.priority === 'Critical' ? 'Critical SLA Breach Alert' : 'Major Incident Alert',
-            desc: mi.title || 'Major Incident Reported',
-            time: 'Live',
-            isSla: true,
-            slaTime: mi.resolutionTarget || '-179:00',
+            title: isCritical ? 'Critical Major Incident Alert' : 'Major Incident Alert',
+            desc: mi.title || mi.description || 'Major Incident In Progress',
+            time: formatTimeAgo(mi.startedAt || mi.createdAt),
+            isSla: Boolean(mi.resolutionTarget),
+            slaTime: mi.resolutionTarget ? String(mi.resolutionTarget) : undefined,
             unread: !readNotifIds[notifId],
           });
         });
-      }
 
-      if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
-        tickRes.value.data.slice(0, 4).forEach((t: any) => {
+      // 2. Tickets with actual SLA Breaches, SLA Warnings, or Critical Priority
+      rawTicketList
+        .filter((t: any) => !['resolved', 'closed'].includes(String(t.status || '').toLowerCase()))
+        .forEach((t: any) => {
           const notifId = `notif-t-${t.id}`;
-          liveNotifs.push({
-            id: notifId,
-            ticketId: String(t.id),
-            title: t.priority === 'Critical' || t.priority === 'High' ? 'SLA Warning Alert' : 'Ticket Status Update',
-            desc: t.summary || t.title || 'Service Ticket Update',
-            time: 'Recent',
-            isSla: t.priority === 'Critical' || t.priority === 'High',
-            slaTime: '-64:00',
-            unread: !readNotifIds[notifId],
-          });
+          const hasSlaNum = typeof t.slaTimeLeft === 'number';
+          const isBreached = hasSlaNum && t.slaTimeLeft < 0;
+          const isWarning = hasSlaNum && t.slaTimeLeft >= 0 && t.slaTimeLeft <= 60;
+          const isCritical = t.priority === 'Critical' || t.priority === 'High';
+
+          if (isBreached) {
+            liveNotifs.push({
+              id: notifId,
+              ticketId: String(t.id),
+              title: 'Critical SLA Breach Alert',
+              desc: t.summary || t.title || 'SLA breached on active ticket',
+              time: formatTimeAgo(t.updatedAt || t.createdAt),
+              isSla: true,
+              slaTime: formatSlaMinutes(t.slaTimeLeft),
+              unread: !readNotifIds[notifId],
+            });
+          } else if (isWarning) {
+            liveNotifs.push({
+              id: notifId,
+              ticketId: String(t.id),
+              title: 'SLA Warning Alert',
+              desc: t.summary || t.title || 'SLA approaching breach limit',
+              time: formatTimeAgo(t.updatedAt || t.createdAt),
+              isSla: true,
+              slaTime: formatSlaMinutes(t.slaTimeLeft),
+              unread: !readNotifIds[notifId],
+            });
+          } else if (isCritical && liveNotifs.length < 5) {
+            liveNotifs.push({
+              id: notifId,
+              ticketId: String(t.id),
+              title: `${t.priority} Priority Ticket`,
+              desc: t.summary || t.title || 'Priority ticket requires attention',
+              time: formatTimeAgo(t.updatedAt || t.createdAt),
+              isSla: hasSlaNum,
+              slaTime: hasSlaNum ? formatSlaMinutes(t.slaTimeLeft) : undefined,
+              unread: !readNotifIds[notifId],
+            });
+          }
         });
-      }
 
       setNotifications(liveNotifs);
     });
@@ -188,7 +267,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
     return () => {
       active = false;
     };
-  }, [readNotifIds]);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -211,27 +290,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       }, 50);
     }
   }, [activeFlyout]);
-
-  // Load live tickets for quick search index
-  useEffect(() => {
-    fetchAllTeamIncidents()
-      .then((res) => {
-        if (res.incidents && res.incidents.length > 0) {
-          setTicketList(
-            res.incidents.map((inc) => ({
-              id: inc.id,
-              summary: inc.summary,
-              category: inc.category,
-              priority: inc.priority,
-              status: inc.status,
-            }))
-          );
-        }
-      })
-      .catch((err) => {
-        console.warn('[GlobalNavbarActions] Fallback search index:', err);
-      });
-  }, []);
 
   const toggleFlyout = (flyout: FlyoutType) => {
     setActiveFlyout((prev) => (prev === flyout ? null : flyout));
@@ -803,8 +861,8 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       {activeFlyout === 'profile' && (
         <div className="global-flyout-dropdown global-profile-flyout">
           <div className="global-profile-header-card">
-            <div className="global-profile-name">{user?.fullName || 'Inesh Agarwal'}</div>
-            <div className="global-profile-email">{user?.email || 'inesh@servigen.io'}</div>
+            <div className="global-profile-name">{user?.fullName || ''}</div>
+            <div className="global-profile-email">{user?.email || 'user@servigen.io'}</div>
             <span className="global-profile-role-tag">{user?.role || 'Support Lead'}</span>
           </div>
 
@@ -867,7 +925,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
               onClick={() => {
                 setActiveFlyout(null);
                 if (logout) logout();
-                navigate('/login');
+                navigate('/auth');
               }}
             >
               <span>🚪</span>
@@ -884,7 +942,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             <div className="global-help-modal-header">
               <h3>
                 <span>ℹ️</span>
-                <span>ServiGen Halo AI • System & SLA Guide</span>
+                <span>ServiGen • System & SLA Guide</span>
               </h3>
               <button
                 type="button"

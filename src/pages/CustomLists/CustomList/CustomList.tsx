@@ -16,7 +16,7 @@ const CustomList: React.FC = () => {
     displayType: 'Default',
     showChangeFreeze: false,
     showByTeam: false,
-    haloApi: false,
+    servigenApi: false,
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -75,7 +75,7 @@ const CustomList: React.FC = () => {
       displayType: 'Default',
       showChangeFreeze: false,
       showByTeam: false,
-      haloApi: false,
+      servigenApi: false,
     });
     setErrors({});
     setSubmitStatus('idle');

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { api } from '../../services/apiClient';
 import './RequestsPage.css';
 
 export interface RequestItem {
@@ -20,335 +21,6 @@ export interface RequestItem {
   description?: string;
 }
 
-const INITIAL_REQUESTS: RequestItem[] = [
-  {
-    id: '0003583',
-    slaTimeLeft: '-88:01',
-    summary: 'Requesting a temporary staff account for Q4 tax audit',
-    category: 'Email>Distribution List>External Access',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '20/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Marcus Brody',
-    description: 'Contract auditor requires temporary AD credentials with read-only access to Finance share during FY26 Q4 reconciliation.',
-  },
-  {
-    id: '0003581',
-    slaTimeLeft: '-40:01',
-    summary: 'Requesting a recently promoted senior analyst access to PowerBI executive dashboard',
-    category: 'Email>Distribution List>Internal Reports',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Rachel Green',
-    description: 'Promoted analyst requires PowerBI Pro license and workspace contributor permissions for Corporate KPI reports.',
-  },
-  {
-    id: '0003502',
-    slaTimeLeft: '-64:00',
-    summary: 'Requesting a specific linting extension in VS Code for backend node repo',
-    category: 'Development Tools>Visual Studio Code',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '24/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Devon Vance',
-    description: 'Developer requesting ESLint v9 workspace extension whitelisting on managed engineering laptops.',
-  },
-  {
-    id: '0003467',
-    slaTimeLeft: '-88:01',
-    summary: 'Requesting a new application package for Docker Desktop developer license',
-    category: 'Endpoint Management>Software Distribution',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '20/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Alex Morgan',
-    description: 'Docker Desktop business subscription license assigned to user; needs client push from Intune company portal.',
-  },
-  {
-    id: '0003409',
-    slaTimeLeft: '-40:01',
-    summary: 'Reimage requested for a desktop workstation following storage drive replacement',
-    category: 'Software>Operating System>Windows 11 Enterprise',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Jennifer Cole',
-    description: 'Workstation ABC00001 had SSD upgraded; technician requests standard SOE Windows 11 Enterprise re-imaging.',
-  },
-  {
-    id: '0003232',
-    slaTimeLeft: '-40:01',
-    summary: 'Onboarding five new starters needing standard laptop and monitor bundles',
-    category: 'Hardware>Mobile Devices & Bundles',
-    priority: 'Medium',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'HR Onboarding Hub',
-    description: 'Batch equipment request for September consultancy intake: 5x ThinkPad X1 Carbon Gen 11, dual 27-inch monitors, and USB-C docks.',
-  },
-  {
-    id: '0003209',
-    slaTimeLeft: '-40:01',
-    summary: 'Docking station makes a clicking sound and disconnects external displays',
-    category: 'Hardware>Docking Station',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Brian Hayes',
-    description: 'CalDigit TS4 dock intermittently drops secondary DisplayPort monitor connection after 30 minutes of continuous use.',
-  },
-  {
-    id: '0003013',
-    slaTimeLeft: '-40:01',
-    summary: 'Update email display name across Google Workspace & Directory',
-    category: 'Identity & Access>Google Workspace',
-    priority: 'Medium',
-    status: 'New',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Kavita Rao',
-    description: 'User legally updated surname; please synchronize primary display name across Google Workspace, Slack, and Zoom.',
-  },
-  {
-    id: '0003012',
-    slaTimeLeft: '-40:01',
-    summary: 'Request external monitor for workstation B-42',
-    category: 'Hardware>Monitor',
-    priority: 'High',
-    status: 'New',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Rahul Verma',
-    description: 'UX designer requesting Dell UltraSharp 27-inch 4K color-accurate monitor for high-fidelity prototyping desk.',
-  },
-  {
-    id: '0003011',
-    slaTimeLeft: '-88:01',
-    summary: 'Install Adobe Acrobat Pro and license activation',
-    category: 'Standard Applications>Adobe Acrobat Pro',
-    priority: 'Low',
-    status: 'New',
-    type: 'Service Request',
-    date: '20/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Sarah Jenkins',
-    description: 'Legal counsel requires Adobe Acrobat Pro DC enterprise license for PDF redaction and certified digital signatures.',
-  },
-  {
-    id: '0003010',
-    slaTimeLeft: '-64:00',
-    summary: 'Access request for Finance FY27-Audit shared folder',
-    category: 'Account Administration>Shared Drives',
-    priority: 'Medium',
-    status: 'New',
-    type: 'Service Request',
-    date: '24/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'David Wallace',
-    description: 'Finance supervisor approved NTFS security group membership for FY27 external audit working documents repository.',
-  },
-  {
-    id: '0003009',
-    slaTimeLeft: '-40:01',
-    summary: 'Request new laptop for new staff onboarding',
-    category: 'Hardware>Laptop',
-    priority: 'High',
-    status: 'New',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Lisa Ray',
-    description: 'Standard MacBook Pro 14-inch M3 Pro requested for incoming senior frontend engineer starting next Monday.',
-  },
-  {
-    id: '0003008',
-    slaTimeLeft: '-40:01',
-    summary: 'Additional 32GB RAM upgrade for CAD engineering workstation',
-    category: 'Hardware>Memory & Components',
-    priority: 'Low',
-    status: 'New',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Martin Lee',
-    description: 'Civil engineering user running complex SolidWorks simulations experiencing out-of-memory crash dumps.',
-  },
-  {
-    id: '0003007',
-    slaTimeLeft: '-88:01',
-    summary: 'Configure SSO integration for newly provisioned Figma organization',
-    category: 'Identity & Access>SAML SSO',
-    priority: 'Medium',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '20/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Aisha Khan',
-    description: 'Configure Okta SAML 2.0 app integration with SCIM user provisioning for company design organization.',
-  },
-  {
-    id: '0003006',
-    slaTimeLeft: '-64:00',
-    summary: 'Provision dev sandbox PostgreSQL database with seed datasets',
-    category: 'Database Services>PostgreSQL',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '24/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Elena Rostova',
-    description: 'Isolated test environment AWS RDS PostgreSQL 16 instance required for billing engine upgrade dry run.',
-  },
-  {
-    id: '0003005',
-    slaTimeLeft: '-40:01',
-    summary: 'Replacement USB-C charging cable for Dell Latitude 7440',
-    category: 'Hardware>Peripherals & Cables',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Carlos Ruiz',
-    description: 'Existing OEM 65W braided USB-C power delivery cable damaged at connector end; requires storeroom replacement.',
-  },
-  {
-    id: '0003004',
-    slaTimeLeft: '-88:01',
-    summary: 'Extend guest Wi-Fi voucher for visiting ISO 27001 audit team',
-    category: 'Network>Wireless Guest Access',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '20/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Security Operations',
-    description: 'Audit team on-site for additional 3 business days; extend WPA2 guest portal voucher expiration to Friday 18:00.',
-  },
-  {
-    id: '0003003',
-    slaTimeLeft: '-40:01',
-    summary: 'Mobile device management profile enrollment for employee iPhone 15',
-    category: 'Endpoint Management>MDM Profile',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '28/09/2026',
-    agent: 'Demo User',
-    team: '1st Line Support',
-    requester: 'Claire Dunphy',
-    description: 'Employee BYOD registration for secure corporate email, Microsoft Authenticator, and Slack MDM containment.',
-  },
-
-  // Additional Team Requests (for James Brown, Jennifer Williams, Unassigned, etc.)
-  {
-    id: '0003601',
-    slaTimeLeft: '-12:30',
-    summary: 'Request local administrator override for legacy compiler runtime',
-    category: 'Endpoint Management>Privilege Access',
-    priority: 'Medium',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '29/09/2026',
-    agent: 'James Brown',
-    team: '1st Line Support',
-  },
-  {
-    id: '0003602',
-    slaTimeLeft: '-24:00',
-    summary: 'Replace damaged headset ear cushions for customer service agent',
-    category: 'Hardware>Peripherals & Cables',
-    priority: 'Low',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '27/09/2026',
-    agent: 'James Brown',
-    team: '1st Line Support',
-  },
-  {
-    id: '0003610',
-    slaTimeLeft: '-08:15',
-    summary: 'Configure secondary email forwarder to regional shared mailbox',
-    category: 'Email>Distribution List>Mailbox Rules',
-    priority: 'Low',
-    status: 'New',
-    type: 'Service Request',
-    date: '30/09/2026',
-    agent: 'Jennifer Williams',
-    team: '1st Line Support',
-  },
-  {
-    id: '0003620',
-    slaTimeLeft: '-04:00',
-    summary: 'Urgent replacement laptop for traveling sales director',
-    category: 'Hardware>Laptop',
-    priority: 'High',
-    status: 'New',
-    type: 'Service Request',
-    date: '30/09/2026',
-    agent: 'Unassigned',
-    team: '1st Line Support',
-  },
-  {
-    id: '0003630',
-    slaTimeLeft: '-16:45',
-    summary: 'VPN split-tunneling exception for developer container cluster',
-    category: 'Network>VPN Configuration',
-    priority: 'Medium',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '25/09/2026',
-    agent: 'David Chen',
-    team: '2nd Line Support',
-  },
-  {
-    id: '0003640',
-    slaTimeLeft: '-32:10',
-    summary: 'Firewall port opening for third-party payroll API endpoint',
-    category: 'Network>Firewall Rules',
-    priority: 'High',
-    status: 'In Progress',
-    type: 'Service Request',
-    date: '26/09/2026',
-    agent: 'Elena Rostova',
-    team: 'Infrastructure',
-  },
-];
-
 export const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -363,13 +35,47 @@ export const RequestsPage: React.FC = () => {
   const [searchTree, setSearchTree] = useState<string>('');
 
   // Table Data State
-  const [requestsList, setRequestsList] = useState<RequestItem[]>(INITIAL_REQUESTS);
+  const [requestsList, setRequestsList] = useState<RequestItem[]>([]);
   const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<RequestItem | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'Open Requests' | 'In Progress' | 'New'>('Open Requests');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadLiveRequests() {
+      try {
+        const res: any = await api.get('/api/tickets', { params: { ticketType: 'Service Request' } });
+        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (!active) return;
+        if (items.length > 0) {
+          const mapped: RequestItem[] = items.map((t: any) => ({
+            id: String(t.id).padStart(7, '0'),
+            slaTimeLeft: t.slaTimeLeft || '-12:00',
+            summary: t.summary || t.title || 'Service Request',
+            category: t.category || 'General Access',
+            priority: (t.priority || 'Medium') as RequestItem['priority'],
+            status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
+            type: t.ticketType || 'Service Request',
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
+            agent: typeof t.assignedAgent === 'string' ? t.assignedAgent : t.assignedAgent?.fullName || 'Support Agent',
+            team: t.assignedTeam || '1st Line Support',
+            requester: t.requester || 'User',
+            description: t.description || t.summary,
+          }));
+          setRequestsList(mapped);
+        }
+      } catch (err) {
+        console.warn('[RequestsPage] Live service requests fetch error, fallback active:', err);
+      }
+    }
+    void loadLiveRequests();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Auto-open modal if ?id= query param is specified
   useEffect(() => {
@@ -445,13 +151,13 @@ export const RequestsPage: React.FC = () => {
     const infraTotal = requestsList.filter((r) => r.team === 'Infrastructure').length;
 
     return {
-      unassigned: unassignedCount || 12,
-      demoUser: demoUserCount || 18,
-      jamesBrown: jamesBrownCount || 20,
-      jennifer: jenniferCount || 7,
-      firstLine: firstLineTotal || 57,
-      secondLine: secondLineTotal || 16,
-      infra: infraTotal || 11,
+      unassigned: unassignedCount,
+      demoUser: demoUserCount,
+      jamesBrown: jamesBrownCount,
+      jennifer: jenniferCount,
+      firstLine: firstLineTotal,
+      secondLine: secondLineTotal,
+      infra: infraTotal,
     };
   }, [requestsList]);
 
@@ -583,7 +289,7 @@ export const RequestsPage: React.FC = () => {
               onChange={(e) => setSearchTree(e.target.value)}
               className="requests-tree-search-input"
             />
-            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" strokeWidth={2.5}>
+            <svg className="tree-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </div>
@@ -729,17 +435,17 @@ export const RequestsPage: React.FC = () => {
             </div>
 
             {/* Group 4: Change Requests & Active Changes */}
-            <div className="tree-node-group mt-3 pt-2.5 border-t border-slate-200">
+            <div className="tree-node-group mt-3 pt-2.5 border-t border-[#d4887b]">
               <div
-                className="tree-group-title-row cursor-pointer hover:bg-orange-50 transition-colors rounded-lg py-1 px-2 flex items-center justify-between"
+                className="tree-group-title-row cursor-pointer hover:bg-black/5 transition-colors rounded-lg py-1 px-2 flex items-center justify-between"
                 onClick={() => navigate('/change-requests')}
                 title="Go to Change Requests & Active Changes"
               >
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm">📝</span>
-                  <span className="group-name font-bold text-slate-800">Change Requests</span>
+                  <span className="group-name font-bold text-[#3a201a]">Change Requests</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-orange-100 text-orange-700">5 Active</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#13273e] text-white">5 Active</span>
               </div>
             </div>
           </div>
@@ -812,7 +518,7 @@ export const RequestsPage: React.FC = () => {
                 onClick={handleRefresh}
               >
                 <svg
-                  className={`w-3.5 h-3.5 text-[#00bcd4] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 text-[#eb6a47] ${isRefreshing ? 'animate-spin' : ''}`}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1037,7 +743,7 @@ export const RequestsPage: React.FC = () => {
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   placeholder="e.g. Request dual monitor setup for trading desk..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   required
                   autoFocus
                 />
@@ -1051,7 +757,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   >
                     <option value="Hardware>Laptop">Hardware &gt; Laptop</option>
                     <option value="Hardware>Monitor">Hardware &gt; Monitor</option>
@@ -1068,7 +774,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -1107,7 +813,7 @@ export const RequestsPage: React.FC = () => {
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Provide technical requirements, business reason, or preferred delivery bay..."
-                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-cyan-500"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
                 />
               </div>
 
@@ -1121,7 +827,7 @@ export const RequestsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
                 >
                   Create Request
                 </button>

@@ -391,9 +391,9 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                     <label>Default Organisation</label>
                     <select value={newOrg} onChange={(e) => setNewOrg(e.target.value)}>
                       <option value="ServiGen Global Tech">ServiGen Global Tech</option>
-                      <option value="Halo AI Enterprise">Halo AI Enterprise</option>
-                      <option value="Halo AI Europe">Halo AI Europe</option>
-                      <option value="Halo Americas Inc.">Halo Americas Inc.</option>
+                      <option value="ServiGen Enterprise">ServiGen Enterprise</option>
+                      <option value="ServiGen Europe">ServiGen Europe</option>
+                      <option value="ServiGen Americas Inc.">ServiGen Americas Inc.</option>
                     </select>
                   </div>
                   <div className="org-modal-field">

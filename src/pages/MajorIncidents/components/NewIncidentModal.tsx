@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { MajorIncident, Priority } from '../types/majorIncident.types';
-import { MOCK_ORGANISATION_USERS } from '../../Auth/mockAuthData';
-import { mockConfigurationItems } from '../../../data/mockCmdbData';
+import { api } from '../../../services/apiClient';
 
 interface NewIncidentModalProps {
   onClose: () => void;
@@ -33,10 +32,26 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
   const [product, setProduct]   = useState('');
   const [assignee, setAssignee] = useState('');
   const [errors, setErrors]     = useState<{ title?: string }>({});
+  const [users, setUsers]       = useState<Array<{ id: string; fullName: string; role: string }>>([]);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     titleRef.current?.focus();
+    let active = true;
+    api.get('/api/users').then((res: any) => {
+      if (!active) return;
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        setUsers(list.map((u: any) => ({
+          id: String(u.id),
+          fullName: u.fullName || u.username || 'Agent',
+          role: u.role || 'Agent',
+        })));
+      }
+    }).catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   // close on Escape
@@ -121,7 +136,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
               className={`w-full text-sm border rounded-lg px-3 py-2 outline-none transition-colors placeholder-gray-300
                 ${errors.title
                   ? 'border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-100'
-                  : 'border-gray-200 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100'
+                  : 'border-gray-200 focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1]'
                 } bg-gray-50`}
             />
             {errors.title && (
@@ -161,12 +176,9 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
               value={product}
               onChange={(e) => setProduct(e.target.value)}
               placeholder="Select or enter CI Service (e.g. Database, API Gateway)…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400"
             />
             <datalist id="cmdb-products-list">
-              {mockConfigurationItems.map((ci) => (
-                <option key={ci.id} value={ci.name} />
-              ))}
             </datalist>
           </div>
 
@@ -179,10 +191,10 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
               placeholder="Select or type team member…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 bg-gray-50 placeholder-gray-400"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400"
             />
             <datalist id="org-users-list">
-              {MOCK_ORGANISATION_USERS.map((u) => (
+              {users.map((u) => (
                 <option key={u.id} value={u.fullName} label={u.role} />
               ))}
               <option value="Unassigned" />
@@ -200,7 +212,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             </button>
             <button
               type="submit"
-              className="bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-5 py-2 rounded-full transition-colors shadow-sm"
+              className="bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-semibold px-5 py-2 rounded-full transition-colors shadow-sm"
             >
               Create Incident
             </button>

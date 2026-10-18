@@ -71,7 +71,7 @@ export default function ArticleDraftsPage() {
         (draft) =>
           draft.author.toLowerCase().includes('demo') ||
           draft.author.toLowerCase().includes('user') ||
-          draft.author.toLowerCase().includes('inesh')
+          draft.author.toLowerCase().includes('admin')
       );
     } else if (activeSubnavView === 'by-agent') {
       result = result.filter((draft) => draft.agent.trim().length > 0);
@@ -221,6 +221,11 @@ export default function ArticleDraftsPage() {
     <div className="article-drafts-page-wrapper">
       {/* Top Application Navbar with Unified Global Actions */}
       <header className="article-drafts-top-navbar">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            Knowledge Base • Article Drafts
+          </span>
+        </div>
         <GlobalNavbarActions onNewTicket={() => setIsCreateModalOpen(true)} />
       </header>
 

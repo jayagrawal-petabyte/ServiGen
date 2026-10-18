@@ -11,7 +11,7 @@ function getGreeting(): string {
   return "Good Evening";
 }
 
-function HaloAvatar({ initials }: { initials: string }) {
+function AgentAvatar({ initials }: { initials: string }) {
   return (
     <span
       className="greeting-avatar"
@@ -66,10 +66,10 @@ export default function DashboardGreeting() {
     year: "numeric",
   });
 
-  const displayName = user?.fullName?.trim() || "Inesh Agarwal";
+  const displayName = user?.fullName?.trim() || '';
   const firstName =
-    user?.firstName?.trim() || displayName.split(/\s+/)[0] || "Inesh";
-  const email = user?.email || "inesh@servigen.io";
+    user?.firstName?.trim() || displayName.split(/\s+/)[0] || '';
+  const email = user?.email || '';
   const role = user?.role || "Administrator";
 
   const initials =
@@ -94,7 +94,7 @@ export default function DashboardGreeting() {
         </h1>
 
         <div className="greeting-profile">
-          <HaloAvatar initials={initials} />
+          <AgentAvatar initials={initials} />
 
           <div className="greeting-profile-text">
             <div className="greeting-profile-line">

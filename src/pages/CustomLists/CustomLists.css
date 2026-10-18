@@ -6,7 +6,7 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -30,7 +30,7 @@
 .cl-btn-get-started { background: #00b0f0; color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; margin-right: 6px; }
 .cl-topnav-icons { display: flex; align-items: center; gap: 2px; margin-right: 12px; }
 .cl-tnav-icon-btn { background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; }
-.cl-tnav-icon-btn:hover { background: #f1f5f9; color: #0f172a; }
+.cl-tnav-icon-btn:hover { background: var(--bg-canvas); color: #0f172a; }
 .cl-user-avatar { width: 28px; height: 28px; background: #00b0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
 /* --- Content Row (Sidebar + Main Area) --- */
@@ -57,12 +57,12 @@
 .cl-search-input:focus { border-color: #0ea5e9; }
 .cl-sidebar-content { flex: 1; overflow-y: auto; padding: 12px 0; }
 .cl-btn-new-list { width: calc(100% - 24px); margin: 0 12px 16px; background: white; border: 1px solid #cbd5e1; color: #334155; border-radius: 4px; padding: 6px 10px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
-.cl-btn-new-list:hover { background: #f8fafc; border-color: #94a3b8; }
+.cl-btn-new-list:hover { background: var(--bg-canvas); border-color: #94a3b8; }
 
 .cl-group { margin-bottom: 16px; }
 .cl-group-title { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; padding: 0 16px 6px; }
 .cl-list-item { display: flex; align-items: center; padding: 8px 16px; cursor: pointer; color: #334155; gap: 8px; }
-.cl-list-item:hover { background: #f8fafc; }
+.cl-list-item:hover { background: var(--bg-canvas); }
 .cl-list-item.active { background: #e0f2fe; color: #0284c7; border-right: 3px solid #0ea5e9; }
 .cl-list-icon { color: #94a3b8; display: flex; }
 .cl-list-item.active .cl-list-icon { color: #0284c7; }
@@ -88,12 +88,12 @@
 .cl-empty-state h3 { color: #0f172a; margin: 12px 0 4px; }
 .cl-empty-state p { font-size: 13px; }
 
-.cl-table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.cl-table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; background: var(--bg-canvas); }
 .cl-toolbar-left, .cl-toolbar-right { display: flex; align-items: center; gap: 12px; }
 .cl-bulk-actions { display: flex; align-items: center; gap: 8px; padding-left: 12px; border-left: 1px solid #cbd5e1; }
 .cl-selected-count { font-size: 12px; color: #64748b; font-weight: 500; }
 .cl-btn-secondary { background: white; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
-.cl-btn-secondary:hover { background: #f1f5f9; }
+.cl-btn-secondary:hover { background: var(--bg-canvas); }
 .cl-count-text { font-size: 12px; color: #64748b; }
 .cl-tb-nav-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; }
 .cl-tb-nav-btn:hover { background: #e2e8f0; }
@@ -102,9 +102,9 @@
 
 .cl-table-wrap { flex: 1; overflow: auto; }
 .cl-main-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.cl-main-table th { padding: 10px 12px; text-align: left; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; background: #f8fafc; white-space: nowrap; }
+.cl-main-table th { padding: 10px 12px; text-align: left; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; background: var(--bg-canvas); white-space: nowrap; }
 .cl-main-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-.cl-main-table tr:hover td { background: #f8fafc; }
+.cl-main-table tr:hover td { background: var(--bg-canvas); }
 .cl-main-table tr.selected td { background: #f0f9ff; }
 .cl-ticket-link { color: #0ea5e9; text-decoration: none; font-weight: 500; }
 .cl-ticket-link:hover { text-decoration: underline; }
@@ -112,37 +112,29 @@
 .cl-status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
 .cl-skeleton-loader { padding: 30px; text-align: center; color: #94a3b8; font-size: 13px; }
 
-/* --- Modal Styles (Preserved) --- */
+/* --- Modal / Page Styles --- */
 .cl-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 72px; /* Offset for the 72px left sidebar so modal is not hidden underneath */
-  right: 0;
-  bottom: 0;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px; /* Creates space around the form so it doesn't fully fit the screen */
+  flex-direction: column;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.1); /* Transparent background */
-  backdrop-filter: blur(12px); /* Blurry effect */
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 40;
+  background: var(--bg-canvas, #faf6f2);
 }
 
 .cl-modal {
-  width: 100%;
-  max-width: 1200px; 
-  height: calc(100vh - 48px);
-  max-height: calc(100vh - 48px);
+  width: calc(100% - 48px);
+  margin: 20px 24px 40px;
   background: white;
-  border-radius: 12px; /* Curvy edges */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Very light shadow */
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 0;
+  border: 1px solid #e2e8f0;
 }
 
 /* Header Bar */
@@ -151,7 +143,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  background: #f8fafc;
+  background: var(--bg-canvas);
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -177,7 +169,7 @@
 }
 
 .cl-btn-save:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   border-color: #94a3b8;
 }
 .cl-btn-save:disabled {
@@ -217,7 +209,7 @@
   transition: background 0.2s;
 }
 .cl-icon-btn:hover {
-  background: #f1f5f9;
+  background: var(--bg-canvas);
 }
 
 /* Title Area */
@@ -434,13 +426,9 @@
 }
 
 @media (max-width: 768px) {
-  .cl-modal-overlay {
-    left: 0;
-    padding: 12px;
-  }
   .cl-modal {
-    height: calc(100vh - 24px);
-    max-height: calc(100vh - 24px);
+    width: calc(100% - 24px);
+    margin: 12px;
   }
   .cl-form-body {
     padding: 16px;

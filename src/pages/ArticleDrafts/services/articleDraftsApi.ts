@@ -20,7 +20,6 @@ import {
   type UpdateArticleDraftDto,
   type BackendKnowledgeArticle,
 } from '../articleDrafts.types';
-import { INITIAL_ARTICLE_DRAFTS } from '../mockArticleDraftsData';
 import { apiClient, ApiError } from '../../../services/apiClient';
 
 export type { CreateArticleDraftDto, UpdateArticleDraftDto, BackendKnowledgeArticle };
@@ -101,7 +100,7 @@ function getStoredDrafts(): ArticleDraft[] {
   } catch (err) {
     console.warn('Failed to read article drafts from storage:', err);
   }
-  return [...INITIAL_ARTICLE_DRAFTS];
+  return [];
 }
 
 /**
@@ -357,7 +356,7 @@ export const articleDraftsApi = {
    */
   async resetData(): Promise<ArticleDraft[]> {
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-    setStoredDrafts([...INITIAL_ARTICLE_DRAFTS]);
-    return [...INITIAL_ARTICLE_DRAFTS];
+    setStoredDrafts([]);
+    return [];
   },
 };

@@ -5,9 +5,9 @@ import {
   APPOINTMENT_TYPES,
   type CalendarEvent,
   type EventType,
-  mockCalendarEvents,
   toDateKey,
-} from "./mockCalendar";
+} from "./calendar.types";
+import { apiClient, api } from "../../services/apiClient";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -123,12 +123,23 @@ function emptyDraft(date: Date, hour = 9): Draft {
   };
 }
 
+function normalizeEventType(type?: string): EventType {
+  if (!type) return "meeting";
+  const lower = type.toLowerCase().trim().replace(/[\s_]+/g, "-");
+  if (lower.includes("phone") || lower.includes("call")) return "phone-call";
+  if (lower.includes("site") || lower.includes("visit")) return "site-visit";
+  if (lower.includes("resource") || lower.includes("booking")) return "resource-booking";
+  return "meeting";
+}
+
 export default function CalendarPage() {
   const [now, setNow] = useState(new Date());
   const [anchor, setAnchor] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
-  const [events, setEvents] = useState<CalendarEvent[]>(mockCalendarEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [hiddenTypes, setHiddenTypes] = useState<EventType[]>([]);
   const [hiddenAgents, setHiddenAgents] = useState<string[]>([]);
@@ -141,6 +152,64 @@ export default function CalendarPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [draftError, setDraftError] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Fetch calendar events on mount
+  useEffect(() => {
+    let active = true;
+    async function fetchCalendarEvents() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res: any = await apiClient.get('/api/calendar');
+        if (!active) return;
+        const rawEvents = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const mapped: CalendarEvent[] = rawEvents.map((item: any) => {
+          if (item.date && item.start && item.end) {
+            return {
+              id: String(item.id),
+              title: item.title || "Untitled Event",
+              date: item.date,
+              start: item.start,
+              end: item.end,
+              type: normalizeEventType(item.type || item.appointmentType),
+              agent: item.agent || item.agentName || "Demo User",
+              allDay: Boolean(item.allDay),
+              description: item.description || "",
+            };
+          }
+          const startDt = item.startsAt ? new Date(item.startsAt) : new Date();
+          const endDt = item.endsAt
+            ? new Date(item.endsAt)
+            : new Date(startDt.getTime() + 60 * 60 * 1000);
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return {
+            id: String(item.id),
+            title: item.title || "Untitled Event",
+            date: toDateKey(startDt),
+            start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
+            end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
+            type: normalizeEventType(item.appointmentType || item.type),
+            agent: item.agent || (item.agentId ? "Demo User" : "Demo User"),
+            description: item.description || "",
+          };
+        });
+        setEvents(mapped);
+      } catch (err: any) {
+        if (!active) return;
+        setEvents([]);
+        setError(err?.message || "Failed to load calendar events");
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void fetchCalendarEvents();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Keep the red "now" line moving.
   useEffect(() => {
@@ -219,8 +288,25 @@ export default function CalendarPage() {
     if (!draft) return;
     if (!draft.title.trim()) return setDraftError("Please enter a title.");
     if (toMinutes(draft.end) <= toMinutes(draft.start)) return setDraftError("End time must be after start time.");
-    setEvents((prev) => [...prev, { ...draft, title: draft.title.trim(), id: String(Date.now()) }]);
+    const newEvent: CalendarEvent = { ...draft, title: draft.title.trim(), id: String(Date.now()) };
+    setEvents((prev) => [...prev, newEvent]);
     setDraft(null);
+
+    const startsAt = new Date(`${draft.date}T${draft.start}:00`).toISOString();
+    const endsAt = new Date(`${draft.date}T${draft.end}:00`).toISOString();
+    apiClient.post('/api/calendar', {
+      title: draft.title.trim(),
+      appointmentType: draft.type,
+      startsAt,
+      endsAt,
+    }).then((res: any) => {
+      const createdId = res?.data?.id || res?.id;
+      if (createdId) {
+        setEvents((prev) => prev.map((ev) => ev.id === newEvent.id ? { ...ev, id: String(createdId) } : ev));
+      }
+    }).catch((err) => {
+      console.warn('[CalendarPage] Failed to persist event:', err);
+    });
   }
 
   function deleteEvent(id: string) {
@@ -598,7 +684,10 @@ export default function CalendarPage() {
             <button onClick={() => step(1)}>Next ›</button>
           </div>
 
-          <h2 className="cal-title">{title}</h2>
+          <h2 className="cal-title">
+            {title}
+            {loading && <span style={{ fontSize: "12px", marginLeft: "10px", opacity: 0.6, fontWeight: "normal" }}>Loading...</span>}
+          </h2>
 
           <div className="cal-toolbar-right">
             <div className="cal-views">
@@ -644,6 +733,7 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+        {error && <div className="cal-error" style={{ margin: "8px 16px" }}>{error}</div>}
 
         {view === "week" && renderTimeGrid(weekDays)}
         {view === "day" && renderTimeGrid([anchor])}

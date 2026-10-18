@@ -261,6 +261,20 @@ export async function obtainDevAuthToken(): Promise<string | null> {
   return autoLoginPromise;
 }
 
+/**
+ * Checks if an endpoint is public (accessible without Bearer token)
+ */
+export function isPublicEndpoint(endpoint: string): boolean {
+  const clean = endpoint.toLowerCase();
+  return (
+    clean.includes('/auth/login') ||
+    clean.includes('/auth/register') ||
+    clean.includes('/auth/forgot-password') ||
+    clean.includes('/auth/reset-password') ||
+    clean.includes('/health')
+  );
+}
+
 export const refreshAuthToken = obtainDevAuthToken;
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
@@ -298,9 +312,17 @@ export async function apiRequest<T = any>(
 
   // Attach JWT Bearer token for protected endpoints; auto-acquire if missing
   let token = getAuthToken();
-  if (!token && !endpoint.includes('/auth/login') && !endpoint.includes('/health')) {
+  if (!token && !isPublicEndpoint(normalizedEndpoint)) {
     token = await obtainDevAuthToken();
   }
+
+  // Early guard: If endpoint requires authentication and no token is present,
+  // do not dispatch the HTTP request. This prevents 401 storms and protects against
+  // tripping the backend rate limiter (429 Too Many Requests).
+  if (!token && !isPublicEndpoint(normalizedEndpoint)) {
+    throw new ApiError('Authentication required. Missing Bearer token.', 401);
+  }
+
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -319,8 +341,16 @@ export async function apiRequest<T = any>(
     throw new ApiError(errorMsg, 0);
   }
 
+  // If rate limited by backend, immediately throw rate limit error without retrying
+  if (response.status === 429) {
+    throw new ApiError(
+      'Rate Limit Exceeded (429): Maximum 100 requests per 15 minutes reached. Please wait.',
+      429
+    );
+  }
+
   // If unauthorized and haven't retried yet, transparently refresh token and retry
-  if (response.status === 401 && !_isRetry && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
+  if (response.status === 401 && !_isRetry && !isPublicEndpoint(normalizedEndpoint) && !endpoint.includes('/auth/refresh')) {
     clearAuthToken();
     const freshToken = await obtainDevAuthToken();
     if (freshToken) {
@@ -335,6 +365,7 @@ export async function apiRequest<T = any>(
         headers: retryHeaders,
       });
     }
+    clearAuthToken();
   }
 
   let responseData: any = null;

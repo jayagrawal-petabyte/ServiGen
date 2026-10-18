@@ -7,11 +7,15 @@
  * to Supabase/Prisma without changing the service layer.
  */
 
+const db = require('../../config/db');
+
 // ─── KPI Seed Data ────────────────────────────────────────────────────────────
 
 const kpiData = {
   openIncidents: 42,
   resolvedIncidents: 128,
+  pendingApprovals: 5,
+  myAssignments: 3,
   majorIncidents: 4,
   unassignedIncidents: 16,
   avgResponseTimeMinutes: 144,
@@ -104,10 +108,119 @@ const newTickets = [
 
 // ─── Accessor Functions ───────────────────────────────────────────────────────
 
-/**
- * Return the current KPI snapshot (SCR-014)
- */
-const getKpis = async () => ({ ...kpiData });
+const getOpenIncidents = async () => {
+  return await db.ticket.count({
+    where: {
+      status: {
+        notIn: ['Resolved', 'Closed', 'resolved', 'closed'],
+      },
+    },
+  });
+};
+
+const getResolvedIncidents = async () => {
+  return await db.ticket.count({
+    where: {
+      status: {
+        in: ['Resolved', 'Closed', 'resolved', 'closed'],
+      },
+    },
+  });
+};
+
+const getPendingApprovals = async () => {
+  return await db.approval.count({
+    where: {
+      status: {
+        in: ['Pending', 'pending'],
+      },
+    },
+  });
+};
+
+const getMyAssignments = async (userId) => {
+  if (userId) {
+    return await db.ticket.count({
+      where: {
+        assignedAgentId: userId,
+      },
+    });
+  }
+  return await db.ticket.count({
+    where: {
+      assignedAgentId: { not: null },
+    },
+  });
+};
+
+const getKpis = async (userId = null) => {
+  try {
+    const [
+      openCount,
+      resolvedCount,
+      pendingApprovalsCount,
+      myAssignmentsCount,
+      majorCount,
+      unassignedCount,
+      ticketsForResponseTime,
+    ] = await Promise.all([
+      getOpenIncidents(),
+      getResolvedIncidents(),
+      getPendingApprovals(),
+      getMyAssignments(userId),
+      db.ticket.count({
+        where: {
+          OR: [
+            { ticketType: { in: ['Major Incident', 'MajorIncident'] } },
+            { priority: { in: ['Critical', 'P1', 'critical', 'p1'] } },
+          ],
+        },
+      }),
+      db.ticket.count({
+        where: {
+          assignedAgentId: null,
+        },
+      }),
+      db.ticket.findMany({
+        select: { createdAt: true, updatedAt: true },
+        take: 100,
+      }),
+    ]);
+
+    let avgResponseTime = kpiData.avgResponseTimeMinutes;
+    if (Array.isArray(ticketsForResponseTime) && ticketsForResponseTime.length > 0) {
+      const durations = ticketsForResponseTime
+        .map((t) => {
+          const created = new Date(t.createdAt).getTime();
+          const updated = new Date(t.updatedAt).getTime();
+          return Math.round((updated - created) / 60000);
+        })
+        .filter((d) => d > 0);
+
+      if (durations.length > 0) {
+        avgResponseTime = Math.round(
+          durations.reduce((sum, d) => sum + d, 0) / durations.length
+        );
+      }
+    }
+
+    return {
+      ...kpiData,
+      openIncidents: openCount,
+      resolvedIncidents: resolvedCount,
+      pendingApprovals: pendingApprovalsCount,
+      myAssignments: myAssignmentsCount,
+      majorIncidents: majorCount,
+      unassignedIncidents: unassignedCount,
+      avgResponseTimeMinutes: avgResponseTime,
+      lastUpdatedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    // Database connection fallback — log so it is visible in dev
+    if (process.env.NODE_ENV !== "test") console.error("[dashboard] getKpis DB error:", err.message);
+    return { ...kpiData };
+  }
+};
 
 /**
  * Return all mood entries, optionally scoped to a single agent (SCR-014)
@@ -118,8 +231,6 @@ const getMoodEntries = async (agentId = null) => {
   }
   return [...moodEntries];
 };
-
-const db = require('../../config/db');
 
 /**
  * Save a new mood check-in for an agent. Replaces any existing entry for today (SCR-014)
@@ -208,6 +319,10 @@ const getAgentSummaryData = async (agentId) => {
 
 module.exports = {
   getKpis,
+  getOpenIncidents,
+  getResolvedIncidents,
+  getPendingApprovals,
+  getMyAssignments,
   getMoodEntries,
   saveMoodEntry,
   getTeamBreakdown,

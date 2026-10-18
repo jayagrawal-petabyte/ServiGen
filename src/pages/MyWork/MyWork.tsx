@@ -10,6 +10,8 @@ import {
   type MyWorkTicket,
 } from "../../services/myWorkService";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
+import { SlaBadge } from "../../components/shared/SlaBadge";
+import { StatusPill } from "../../components/shared/StatusBadge";
 
 export type Ticket = MyWorkTicket;
 
@@ -20,61 +22,12 @@ export type TimeLog = {
   note: string;
 };
 
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: "TCK-30291",
-    priority: "P1 - Critical",
-    organisation: "Meridian Foods Ltd",
-    summary: "Order sync failing between POS and ERP",
-    timeRecord: "2h 15m",
-    status: "Active",
-  },
-  {
-    id: "TCK-30288",
-    priority: "P2 - High",
-    organisation: "Northbridge Logistics",
-    summary: "Warehouse scanner firmware update request",
-    timeRecord: "45m",
-    status: "Pending",
-  },
-  {
-    id: "TCK-30271",
-    priority: "P3 - Medium",
-    organisation: "Aurelia Health",
-    summary: "New starter access to imaging system",
-    timeRecord: "1h 05m",
-    status: "Active",
-  },
-  {
-    id: "TCK-30260",
-    priority: "P2 - High",
-    organisation: "Solace Retail Group",
-    summary: "Checkout page throwing 500 on discount codes",
-    timeRecord: "3h 40m",
-    status: "Pending",
-  },
-  {
-    id: "TCK-30254",
-    priority: "P4 - Low",
-    organisation: "Meridian Foods Ltd",
-    summary: "Update signage on internal knowledge base article",
-    timeRecord: "12m",
-    status: "Actioned",
-  },
-];
 
 const PRIORITY_STYLES: Record<string, string> = {
   "P1 - Critical": "bg-rose-50 text-rose-700 border-rose-200",
   "P2 - High": "bg-amber-50 text-amber-800 border-amber-200",
   "P3 - Medium": "bg-sky-50 text-sky-700 border-sky-200",
   "P4 - Low": "bg-slate-100 text-slate-600 border-slate-300",
-};
-
-const STATUS_STYLES: Record<TicketStatus, string> = {
-  Active: "bg-green-50 text-green-700 border-green-200",
-  Pending: "bg-amber-50 text-amber-700 border-amber-200",
-  Actioned: "bg-slate-100 text-slate-600 border-slate-300",
-  "On Hold": "bg-purple-50 text-purple-700 border-purple-200",
 };
 
 const PRIORITY_ORDER = [
@@ -90,55 +43,6 @@ const STATUS_TABS: TicketStatus[] = [
   "Actioned",
   "On Hold",
 ];
-
-const MOCK_TIME_LOGS: Record<string, TimeLog[]> = {
-  "TCK-30291": [
-    {
-      id: 1,
-      date: "2026-10-05",
-      duration: "1h 15m",
-      note: "Investigated POS to ERP sync failure",
-    },
-    {
-      id: 2,
-      date: "2026-10-06",
-      duration: "1h",
-      note: "Checked integration logs and retry process",
-    },
-  ],
-  "TCK-30288": [
-    {
-      id: 3,
-      date: "2026-10-05",
-      duration: "45m",
-      note: "Reviewed scanner firmware request",
-    },
-  ],
-  "TCK-30271": [
-    {
-      id: 4,
-      date: "2026-10-04",
-      duration: "1h 05m",
-      note: "Created access request for imaging system",
-    },
-  ],
-  "TCK-30260": [
-    {
-      id: 5,
-      date: "2026-10-03",
-      duration: "3h 40m",
-      note: "Investigated checkout discount-code error",
-    },
-  ],
-  "TCK-30254": [
-    {
-      id: 6,
-      date: "2026-10-02",
-      duration: "12m",
-      note: "Updated internal knowledge base signage",
-    },
-  ],
-};
 
 type PriorityPillProps = {
   priority: string;
@@ -161,38 +65,93 @@ function PriorityPill({ priority }: PriorityPillProps) {
   );
 }
 
-type StatusPillProps = {
-  status: TicketStatus;
-};
 
-function StatusPill({ status }: StatusPillProps) {
-  return (
-    <span
-      className={
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium " +
-        STATUS_STYLES[status]
-      }
-    >
-      {status}
-    </span>
-  );
+interface ViewOption {
+  id: string;
+  label: string;
+  icon: (active: boolean) => React.ReactNode;
 }
+
+const VIEW_OPTIONS: ViewOption[] = [
+  {
+    id: "my-list",
+    label: "My List",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
+      </svg>
+    ),
+  },
+  {
+    id: "tickets-agents",
+    label: "Tickets by Agents",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+      </svg>
+    ),
+  },
+  {
+    id: "tickets-team",
+    label: "Tickets by Team",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
+        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+      </svg>
+    ),
+  },
+  {
+    id: "tickets-type",
+    label: "Tickets by Type",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+        <line x1="8" y1="8" x2="16" y2="8" />
+        <line x1="8" y1="16" x2="12" y2="16" />
+      </svg>
+    ),
+  },
+  {
+    id: "tickets-status",
+    label: "Tickets by Status",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+    ),
+  },
+  {
+    id: "all-tickets",
+    label: "All Tickets",
+    icon: () => (
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    ),
+  },
+];
 
 export default function MyWork() {
   const { user } = useAuth();
+  const [activeView, setActiveView] = useState<string>("My List");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [query, setQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [activeTab, setActiveTab] = useState<TicketStatus>("Active");
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [tickets, setTickets] = usePersistentState<Ticket[]>(
     "servigen_my_work_tickets_v1",
-    MOCK_TICKETS
+    []
   );
   const [serverTickets, setServerTickets] = useState<Ticket[]>([]);
   const [isFetchingTickets, setIsFetchingTickets] = useState(false);
   const [timeLogs, setTimeLogs] = usePersistentState<Record<string, TimeLog[]>>(
     "servigen_my_work_time_logs_v1",
-    MOCK_TIME_LOGS
+    {}
   );
   const [showAddTimeLog, setShowAddTimeLog] = useState(false);
   const [newDuration, setNewDuration] = useState("");
@@ -216,11 +175,9 @@ export default function MyWork() {
 
   const allTickets = useMemo(() => {
     const map = new Map<string, Ticket>();
-    MOCK_TICKETS.forEach((t) => map.set(t.id, t));
     serverTickets.forEach((t) => map.set(t.id, t));
-    tickets.forEach((t) => map.set(t.id, t));
     return Array.from(map.values());
-  }, [serverTickets, tickets]);
+  }, [serverTickets]);
 
   const filteredTickets = useMemo(() => {
     const searchText = query.trim().toLowerCase();
@@ -263,6 +220,7 @@ export default function MyWork() {
     const updated = { ...selectedTicket, status: newStatus };
     setSelectedTicket(updated);
     setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setServerTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
 
     await myWorkService.updateTicketStatus(selectedTicket.id, newStatus);
   };
@@ -303,6 +261,7 @@ export default function MyWork() {
     if (updatedTicket) {
       setSelectedTicket((curr) => curr ? { ...curr, timeRecord: updatedTicket.timeRecord } : null);
       setTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? { ...t, timeRecord: updatedTicket.timeRecord } : t)));
+      setServerTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? { ...t, timeRecord: updatedTicket.timeRecord } : t)));
     }
   };
 
@@ -322,7 +281,7 @@ export default function MyWork() {
             </button>
             <GlobalNavbarActions
               onOpenTicket={(id) => {
-                const match = tickets.find((t) => t.id === id);
+                const match = allTickets.find((t) => t.id === id);
                 if (match) setSelectedTicket(match);
               }}
             />
@@ -417,6 +376,15 @@ export default function MyWork() {
                 <p className="mt-1 text-sm text-slate-700">
                   {selectedTicket.timeRecord}
                 </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  SLA Time Left
+                </p>
+                <div className="mt-1">
+                  <SlaBadge slaTimeLeft={selectedTicket.slaTimeLeft} slaFormatted={selectedTicket.slaFormatted} />
+                </div>
               </div>
             </div>
           </div>
@@ -520,149 +488,219 @@ export default function MyWork() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50 px-6 py-6">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">
-              My Work
-            </h1>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Inesh Agarwal'}</span>, sorted by priority.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-slate-500 hidden sm:block">
-              {filteredTickets.length} tickets
-            </div>
-            <GlobalNavbarActions
-              onOpenTicket={(id) => {
-                const match = tickets.find((t) => t.id === id);
-                if (match) setSelectedTicket(match);
-              }}
-            />
-          </div>
-        </header>
-
-        <div className="mb-4 border-b border-slate-200">
-          <div className="flex gap-6">
-            {STATUS_TABS.map((status) => {
-              const count = tickets.filter(
-                (ticket) => ticket.status === status
-              ).length;
-
-              const isActive = activeTab === status;
-
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setActiveTab(status)}
-                  className={
-                    "border-b-2 px-1 pb-3 text-sm font-medium transition " +
-                    (isActive
-                      ? "border-slate-900 text-slate-900"
-                      : "border-transparent text-slate-500 hover:text-slate-800")
-                  }
-                >
-                  {status}
-
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={query}
-              onChange={handleSearchChange}
-              placeholder="Search by ticket ID, organisation, or summary"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
-          <select
-            value={priorityFilter}
-            onChange={handlePriorityChange}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+    <div className="min-h-full bg-slate-50 flex">
+      {/* Left Sidebar Panel */}
+      <aside
+        className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border-r border-[#d4887b] ${
+          isSidebarCollapsed ? "w-16 px-2" : "w-64 px-4"
+        }`}
+      >
+        {/* Sidebar Header with Collapse Toggle */}
+        <div
+          className={
+            "flex items-center mb-4 pb-3 border-b border-[#d4887b] " +
+            (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
+          }
+        >
+          {!isSidebarCollapsed && (
+            <span className="text-xs font-bold uppercase tracking-wider text-[#542d25]">
+              Views
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-md p-1.5 text-[#3a201a] hover:bg-black/5 transition-colors text-xs font-bold cursor-pointer"
+            title={isSidebarCollapsed ? "Expand sidebar (>>)" : "Collapse sidebar (<<)"}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <option value="All">All priorities</option>
-
-            {PRIORITY_ORDER.map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
-              </option>
-            ))}
-          </select>
+            {isSidebarCollapsed ? ">>" : "<<"}
+          </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
-              <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Priority</th>
-                <th className="px-4 py-3">Organisation</th>
-                <th className="px-4 py-3">Summary</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Time Record</th>
-              </tr>
-            </thead>
+        {/* View Options List */}
+        <nav className="flex flex-col gap-1.5" aria-label="Views">
+          {VIEW_OPTIONS.map((item) => {
+            const isActive = activeView === item.label;
 
-            <tbody className="divide-y divide-slate-100">
-              {filteredTickets.map((ticket) => (
-                <tr
-                  key={ticket.id}
-                  className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => setSelectedTicket(ticket)}
-                >
-                  <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
-                    {ticket.id}
-                  </td>
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActiveView(item.label)}
+                title={isSidebarCollapsed ? item.label : undefined}
+                className={
+                  "flex items-center rounded-lg text-sm transition-all cursor-pointer " +
+                  (isSidebarCollapsed
+                    ? "justify-center w-10 h-10 mx-auto p-0 "
+                    : "w-full gap-3 px-3 py-2.5 ") +
+                  (isActive
+                    ? "bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs"
+                    : "text-[#3a201a] hover:bg-black/5 font-medium")
+                }
+              >
+                <div className={`shrink-0 ${isActive ? "text-[#1c0f0c]" : "text-[#3a201a]"}`}>
+                  {item.icon(isActive)}
+                </div>
+                {!isSidebarCollapsed && (
+                  <span className="truncate">{item.label}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
 
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <PriorityPill priority={ticket.priority} />
-                  </td>
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 px-6 py-6 overflow-y-auto">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">
+                {activeView === "My List" ? "My Work" : activeView}
+              </h1>
 
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                    {ticket.organisation}
-                  </td>
+              <p className="mt-1 text-sm text-slate-500">
+                Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Demo User'}</span>, sorted by priority.
+              </p>
+            </div>
 
-                  <td className="px-4 py-3 text-slate-700">
-                    {ticket.summary}
-                  </td>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-slate-500 hidden sm:block">
+                {filteredTickets.length} tickets
+              </div>
+              <GlobalNavbarActions
+                onOpenTicket={(id) => {
+                  const match = allTickets.find((t) => t.id === id);
+                  if (match) setSelectedTicket(match);
+                }}
+              />
+            </div>
+          </header>
 
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <StatusPill status={ticket.status} />
-                  </td>
+          <div className="mb-4 border-b border-slate-200">
+            <div className="flex gap-6">
+              {STATUS_TABS.map((status) => {
+                const count = allTickets.filter(
+                  (ticket) => ticket.status === status
+                ).length;
 
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                    {ticket.timeRecord}
-                  </td>
-                </tr>
-              ))}
+                const isActive = activeTab === status;
 
-              {filteredTickets.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-10 text-center text-sm text-slate-400"
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setActiveTab(status)}
+                    className={
+                      "border-b-2 px-1 pb-3 text-sm font-medium transition " +
+                      (isActive
+                        ? "border-slate-900 text-slate-900"
+                        : "border-transparent text-slate-500 hover:text-slate-800")
+                    }
                   >
-                    No {activeTab.toLowerCase()} tickets match your
-                    filters.
-                  </td>
+                    {status}
+
+                    <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={query}
+                onChange={handleSearchChange}
+                placeholder="Search by ticket ID, organisation, or summary"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              />
+            </div>
+
+            <select
+              value={priorityFilter}
+              onChange={handlePriorityChange}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="All">All priorities</option>
+
+              {PRIORITY_ORDER.map((priority) => (
+                <option key={priority} value={priority}>
+                  {priority}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50">
+                <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">Priority</th>
+                  <th className="px-4 py-3">Organisation</th>
+                  <th className="px-4 py-3">Summary</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">SLA Time Left</th>
+                  <th className="px-4 py-3">Time Record</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody className="divide-y divide-slate-100">
+                {filteredTickets.map((ticket) => (
+                  <tr
+                    key={ticket.id}
+                    className="cursor-pointer hover:bg-slate-50"
+                    onClick={() => setSelectedTicket(ticket)}
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
+                      {ticket.id}
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <PriorityPill priority={ticket.priority} />
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {ticket.organisation}
+                    </td>
+
+                    <td className="px-4 py-3 text-slate-700">
+                      {ticket.summary}
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <StatusPill status={ticket.status} />
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <SlaBadge slaTimeLeft={ticket.slaTimeLeft} slaFormatted={ticket.slaFormatted} />
+                    </td>
+
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {ticket.timeRecord}
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredTickets.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-10 text-center text-sm text-slate-400"
+                    >
+                      No {activeTab.toLowerCase()} tickets match your
+                      filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

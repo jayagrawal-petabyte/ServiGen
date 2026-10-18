@@ -5,7 +5,7 @@
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  background-color: #fafbfc;
+  background-color: var(--bg-canvas);
   overflow: hidden;
   font-family: inherit;
 }
@@ -74,7 +74,7 @@
 }
 
 .requests-get-started-btn {
-  background-color: #00b4d8;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -91,7 +91,7 @@
 }
 
 .requests-new-ticket-btn {
-  background-color: #00b4d8;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -148,7 +148,7 @@
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: #00bcd4;
+  background: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -178,11 +178,11 @@
   overflow: hidden;
 }
 
-/* ── Left Tree Sidebar ── */
+/* ── Left Tree Sidebar (Major Incident Palette Match) ── */
 .requests-tree-sidebar {
   width: 240px;
-  background-color: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background-color: #e49b8e;
+  border-right: 1px solid #d4887b;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -197,18 +197,19 @@
 
 .requests-tree-search-input {
   width: 100%;
-  padding: 6px 28px 6px 10px;
+  padding: 6px 28px 6px 12px;
   font-size: 11px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border: 0;
+  border-radius: 9999px;
+  background: #ffffff;
   outline: none;
   color: #1e293b;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
 }
 
 .requests-tree-search-input:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 0 1px #00bcd4;
+  box-shadow: 0 0 0 2px rgba(19, 39, 62, 0.2);
 }
 
 .tree-search-icon {
@@ -218,6 +219,7 @@
   transform: translateY(-50%);
   width: 14px;
   height: 14px;
+  color: #94a3b8;
   pointer-events: none;
 }
 
@@ -226,7 +228,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #d4887b;
 }
 
 .tree-header-left {
@@ -236,10 +238,10 @@
 }
 
 .tree-group-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #00bcd4;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background-color: #13273e;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,30 +255,31 @@
 .tree-title {
   font-size: 12px;
   font-weight: 700;
-  color: #1e293b;
+  color: #3a201a;
   line-height: 1.1;
 }
 
 .tree-subtitle {
   font-size: 10px;
-  color: #64748b;
+  color: #542d25;
   cursor: pointer;
 }
 
 .tree-collapse-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #3a201a;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 4px;
+  transition: background-color 0.15s ease;
 }
 
 .tree-collapse-btn:hover {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1c0f0c;
 }
 
 .requests-tree-nodes {
@@ -292,25 +295,26 @@
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 12px;
-  color: #334155;
+  color: #3a201a;
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
 
 .tree-group-title-row:hover {
-  background-color: #f8fafc;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .tree-group-title-row.active-group {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: #d28072;
+  color: #1c0f0c;
   font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tree-caret {
   margin-right: 6px;
   font-size: 10px;
-  color: #64748b;
+  color: #542d25;
   width: 10px;
 }
 
@@ -323,19 +327,24 @@
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 9999px;
-  background-color: #e2e8f0;
-  color: #475569;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
 }
 
 .group-count-badge.cyan-badge {
-  background-color: #e0f7fa;
-  color: #00838f;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
+}
+
+.tree-group-title-row.active-group .group-count-badge {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #1c0f0c;
 }
 
 .tree-sub-items {
   margin-left: 14px;
   padding-left: 8px;
-  border-left: 1px dashed #cbd5e1;
+  border-left: 1px dashed #d4887b;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -349,31 +358,33 @@
   padding: 5px 8px;
   border-radius: 6px;
   font-size: 11px;
-  color: #475569;
+  color: #3a201a;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .tree-agent-row:hover {
-  background-color: #f1f5f9;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .tree-agent-row.active-agent {
-  background-color: #f1f5f9;
+  background-color: #d28072;
   font-weight: 700;
-  color: #0f172a;
+  color: #1c0f0c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tree-agent-row.highlight-demo-user {
-  background-color: #00b4d8;
-  color: #ffffff;
+  background-color: #d28072;
+  color: #1c0f0c;
+  font-weight: 700;
   border-radius: 9999px;
   padding: 4px 10px;
-  box-shadow: 0 1px 3px rgba(0, 180, 216, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .tree-agent-row.highlight-demo-user:hover {
-  background-color: #0096c7;
+  background-color: #cb7365;
 }
 
 .available-pill-tag {
@@ -421,12 +432,14 @@
   font-weight: 700;
   padding: 0 6px;
   border-radius: 9999px;
-  color: #64748b;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #3a201a;
 }
 
-.agent-count-badge.cyan-count {
-  background-color: rgba(255, 255, 255, 0.3);
-  color: #ffffff;
+.tree-agent-row.active-agent .agent-count-badge,
+.tree-agent-row.highlight-demo-user .agent-count-badge.cyan-count {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #1c0f0c;
 }
 
 /* ── Main Viewport ── */
@@ -436,7 +449,7 @@
   flex-direction: column;
   padding: 12px;
   overflow: hidden;
-  background-color: #fafbfc;
+  background-color: var(--bg-canvas);
 }
 
 /* ── Table Toolbar ── */
@@ -587,11 +600,11 @@
 
 .toolbar-refresh-btn:hover {
   background-color: #f1f5f9;
-  border-color: #00bcd4;
+  border-color: #eb6a47;
 }
 
 .requests-create-btn {
-  background-color: #00bcd4;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -607,7 +620,7 @@
 }
 
 .requests-create-btn:hover {
-  background-color: #00acc1;
+  background-color: #db5936;
 }
 
 .toolbar-more-btn {
@@ -694,7 +707,7 @@
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background-color: #00bcd4;
+  background-color: #eb6a47;
   color: #ffffff;
   font-size: 8px;
   font-weight: 700;
@@ -731,7 +744,7 @@
 }
 
 .request-summary-link {
-  color: #00bcd4;
+  color: #eb6a47;
   text-decoration: none;
   cursor: pointer;
   display: block;

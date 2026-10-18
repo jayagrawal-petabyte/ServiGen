@@ -2,13 +2,16 @@ import type {
   IncidentStatus,
   Priority,
 } from "./incidents.data";
+import { StatusBadge, StatusPill as SharedStatusPill } from "../../components/shared/StatusBadge";
+
+export { StatusBadge };
 
 type PriorityPillProps = {
   priority: Priority;
 };
 
 type StatusPillProps = {
-  status: IncidentStatus;
+  status: IncidentStatus | string;
 };
 
 const PRIORITY_STYLES: Record<Priority, string> = {
@@ -17,13 +20,6 @@ const PRIORITY_STYLES: Record<Priority, string> = {
   Medium: "priority-medium",
   Low: "priority-low",
   Unassigned: "priority-unassigned",
-};
-
-const STATUS_STYLES: Record<IncidentStatus, string> = {
-  "In Progress": "status-progress",
-  Open: "status-open",
-  Resolved: "status-resolved",
-  "On Hold": "status-hold",
 };
 
 export function PriorityPill({
@@ -45,15 +41,5 @@ export function PriorityPill({
 export function StatusPill({
   status,
 }: StatusPillProps) {
-  const label = STATUS_STYLES[status]
-    ? status
-    : "Open";
-
-  return (
-    <span
-      className={`incident-pill ${STATUS_STYLES[label]}`}
-    >
-      {label}
-    </span>
-  );
+  return <SharedStatusPill status={status} size="sm" />;
 }

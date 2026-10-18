@@ -281,7 +281,7 @@ export default function CategoryChart({
       {!isCollapsed && (
         <div id="category-chart-content">
           <svg
-            className="halo-cat-svg"
+            className="sg-cat-svg"
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="xMidYMid meet"
             role="img"
@@ -374,7 +374,7 @@ export default function CategoryChart({
                 />
 
                 <text
-                  className="halo-cat-label"
+                  className="sg-cat-label"
                   x={slice.x + slice.width / 2}
                   y={slice.y + LABEL_H / 2}
                   textAnchor="middle"

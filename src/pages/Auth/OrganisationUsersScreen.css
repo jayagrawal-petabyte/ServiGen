@@ -5,7 +5,7 @@
 .org-users-page {
   min-height: 100vh;
   width: 100%;
-  background: #f8fafc;
+  background: var(--bg-canvas);
   color: #0f172a;
   padding: 1.75rem 2.25rem 3rem 2.25rem;
   box-sizing: border-box;
@@ -48,7 +48,7 @@
 .org-users-nav-pills {
   display: flex;
   align-items: center;
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   padding: 3px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -114,13 +114,13 @@
 }
 
 .org-btn-refresh:hover {
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   border-color: #94a3b8;
   color: #0f172a;
 }
 
 .org-btn-add-user {
-  background: #2563eb;
+  background: var(--accent-coral);
   border: 1px solid #1d4ed8;
   color: #ffffff;
   padding: 6px 15px;
@@ -136,7 +136,7 @@
 }
 
 .org-btn-add-user:hover {
-  background: #1d4ed8;
+  background: var(--accent-coral-hover);
 }
 
 /* Region Filter Tabs */
@@ -162,12 +162,12 @@
 
 .org-region-tab-btn:hover {
   color: #0f172a;
-  background: #f8fafc;
+  background: var(--bg-canvas);
   border-color: #cbd5e1;
 }
 
 .org-region-tab-btn.active {
-  background: #2563eb;
+  background: var(--accent-coral);
   color: #ffffff;
   border-color: #2563eb;
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
@@ -195,7 +195,7 @@
 
 .org-search-input {
   width: 100%;
-  background: #f8fafc;
+  background: var(--bg-canvas);
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   padding: 8px 12px;
@@ -217,7 +217,7 @@
 }
 
 .org-filter-select {
-  background: #f8fafc;
+  background: var(--bg-canvas);
   border: 1px solid #cbd5e1;
   color: #1e293b;
   padding: 8px 12px;
@@ -251,7 +251,7 @@
 }
 
 .org-users-table thead th {
-  background: #f8fafc;
+  background: var(--bg-canvas);
   padding: 11px 14px;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -271,7 +271,7 @@
 }
 
 .org-users-table tbody tr:hover td {
-  background: #f8fafc;
+  background: var(--bg-canvas);
 }
 
 /* User cell (Avatar + Name + Handle) */
@@ -285,7 +285,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--accent-coral);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.75rem;
@@ -315,7 +315,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
   color: #475569;
-  background: #f1f5f9;
+  background: var(--bg-canvas);
   padding: 2px 7px;
   border-radius: 4px;
   border: 1px solid #e2e8f0;
@@ -379,7 +379,7 @@
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: var(--bg-canvas);
 }
 
 .org-modal-header h2 {
@@ -428,7 +428,7 @@
 
 .org-modal-field input,
 .org-modal-field select {
-  background: #f8fafc;
+  background: var(--bg-canvas);
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   padding: 8px 12px;
@@ -452,5 +452,5 @@
   gap: 10px;
   padding: 14px 20px;
   border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: var(--bg-canvas);
 }

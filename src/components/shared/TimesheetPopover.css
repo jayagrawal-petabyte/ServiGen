@@ -189,8 +189,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 1.5px solid #00bcd4;
-  color: #00bcd4;
+  border: 1.5px solid #eb6a47;
+  color: #eb6a47;
   background: transparent;
   display: flex;
   align-items: center;
@@ -201,7 +201,7 @@
 }
 
 .timesheet-plus-circle:hover {
-  background: #e0f7fa;
+  background: #fdede7;
 }
 
 /* Action Links */

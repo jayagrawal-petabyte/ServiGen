@@ -32,7 +32,8 @@ const getAgentIdFromReq = (req) =>
  */
 const getKpisHandler = async (req, res) => {
   try {
-    const data = await getDashboardKpis();
+    const userId = req.user?.id || req.headers['x-user-id'] || req.query.agentId || null;
+    const data = await getDashboardKpis(userId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard KPIs');

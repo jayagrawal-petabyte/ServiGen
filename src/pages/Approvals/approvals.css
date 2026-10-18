@@ -8,7 +8,7 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  background-color: #faf8f5;
+  background-color: var(--bg-canvas);
 }
 
 /* --- Top Application Navbar --- */
@@ -32,7 +32,7 @@
 }
 
 .btn-top-coral {
-  background-color: #00bcd4;
+  background-color: var(--accent-coral);
   color: #ffffff;
   border: none;
   border-radius: 999px;
@@ -47,7 +47,7 @@
 }
 
 .btn-top-coral:hover {
-  background-color: #00acc1;
+  background-color: var(--accent-coral-hover);
   transform: translateY(-1px);
 }
 
@@ -83,7 +83,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #00bcd4;
+  background-color: var(--accent-coral-light);
   margin-left: 6px;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -490,7 +490,7 @@
 }
 
 .btn-reset-approvals {
-  background-color: #00bcd4;
+  background-color: var(--accent-coral);
   color: white;
   padding: 8px 22px;
   border-radius: 999px;
@@ -502,7 +502,7 @@
 }
 
 .btn-reset-approvals:hover {
-  background-color: #00acc1;
+  background-color: var(--accent-coral-hover);
 }
 
 /* Toast Notification */
@@ -633,7 +633,7 @@
 }
 
 .btn-close-modal:hover {
-  background-color: #f1f5f9;
+  background-color: var(--bg-canvas);
   color: #0f172a;
 }
 

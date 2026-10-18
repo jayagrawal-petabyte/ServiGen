@@ -101,7 +101,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span
               onClick={() => navigate('/major-incidents/live')}
-              className="cursor-pointer hover:text-cyan-600 transition-colors"
+              className="cursor-pointer hover:text-[#eb6a47] transition-colors"
             >
               Major Incidents
             </span>
@@ -124,7 +124,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                     setPage(1);
                   }}
                   placeholder="Search incidents, ID, service..."
-                  className="w-56 text-xs pl-7 pr-7 py-1.5 border border-cyan-400 rounded-full outline-none focus:ring-1 focus:ring-cyan-300 bg-white"
+                  className="w-56 text-xs pl-7 pr-7 py-1.5 border border-[#f8c5b1] rounded-full outline-none focus:ring-1 focus:ring-[#eb6a47] bg-white"
                   autoFocus
                 />
                 <span className="absolute left-2.5 text-gray-400 text-xs">🔍</span>
@@ -152,7 +152,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowNewModal(true)}
-                className="w-8 h-8 rounded-full border border-cyan-400 text-cyan-400 flex items-center justify-center bg-white hover:bg-cyan-50 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full border border-[#eb6a47] text-[#eb6a47] flex items-center justify-center bg-white hover:bg-[#fdede7] transition-colors cursor-pointer"
                 title="Create New Major Incident"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,7 +190,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                 <button
                   type="button"
                   onClick={loadIncidents}
-                  className="p-1 text-cyan-500 hover:bg-cyan-50 flex items-center justify-center rounded cursor-pointer transition-colors"
+                  className="p-1 text-[#eb6a47] hover:bg-[#fdede7] flex items-center justify-center rounded cursor-pointer transition-colors"
                   title="Refresh incident list"
                 >
                   <svg
@@ -211,7 +211,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewModal(true)}
-                  className="bg-cyan-400 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-full font-medium flex items-center gap-1 cursor-pointer transition-colors active:scale-95 text-xs"
+                  className="bg-[#eb6a47] hover:bg-[#db5936] text-white px-3 py-1.5 rounded-full font-medium flex items-center gap-1 cursor-pointer transition-colors active:scale-95 text-xs"
                 >
                   <span>+</span> New
                 </button>
@@ -237,7 +237,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/reports/incidents-by-category');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>📊</span> Incidents by Category Report
                     </button>
@@ -247,7 +247,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/change-requests');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>🔧</span> Change Requests &amp; RCA
                     </button>
@@ -257,7 +257,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/cmdb/services');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>⚙️</span> CMDB Topology &amp; Services
                     </button>
@@ -267,7 +267,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/calendar');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>📅</span> Major Incident Calendar
                     </button>
@@ -277,7 +277,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/major-incidents/list');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>📋</span> Major Incident Register (List View)
                     </button>
@@ -287,7 +287,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                         setShowOptionsMenu(false);
                         navigate('/major-incidents/feed');
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-cyan-50 text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 hover:bg-[#fdede7] text-gray-700 font-medium flex items-center gap-2 cursor-pointer"
                     >
                       <span>📡</span> Major Incident Feed View
                     </button>
@@ -308,7 +308,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
                       setSearchQuery('');
                       setSelectedListId('all');
                     }}
-                    className="mt-3 text-xs text-cyan-600 hover:underline font-semibold cursor-pointer"
+                    className="mt-3 text-xs text-[#eb6a47] hover:underline font-semibold cursor-pointer"
                   >
                     Clear filters &amp; view all
                   </button>
