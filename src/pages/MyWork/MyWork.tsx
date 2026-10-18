@@ -20,48 +20,6 @@ export type TimeLog = {
   note: string;
 };
 
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: "TCK-30291",
-    priority: "P1 - Critical",
-    organisation: "Meridian Foods Ltd",
-    summary: "Order sync failing between POS and ERP",
-    timeRecord: "2h 15m",
-    status: "Active",
-  },
-  {
-    id: "TCK-30288",
-    priority: "P2 - High",
-    organisation: "Northbridge Logistics",
-    summary: "Warehouse scanner firmware update request",
-    timeRecord: "45m",
-    status: "Pending",
-  },
-  {
-    id: "TCK-30271",
-    priority: "P3 - Medium",
-    organisation: "Aurelia Health",
-    summary: "New starter access to imaging system",
-    timeRecord: "1h 05m",
-    status: "Active",
-  },
-  {
-    id: "TCK-30260",
-    priority: "P2 - High",
-    organisation: "Solace Retail Group",
-    summary: "Checkout page throwing 500 on discount codes",
-    timeRecord: "3h 40m",
-    status: "Pending",
-  },
-  {
-    id: "TCK-30254",
-    priority: "P4 - Low",
-    organisation: "Meridian Foods Ltd",
-    summary: "Update signage on internal knowledge base article",
-    timeRecord: "12m",
-    status: "Actioned",
-  },
-];
 
 const PRIORITY_STYLES: Record<string, string> = {
   "P1 - Critical": "bg-rose-50 text-rose-700 border-rose-200",
@@ -186,7 +144,7 @@ export default function MyWork() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [tickets, setTickets] = usePersistentState<Ticket[]>(
     "servigen_my_work_tickets_v1",
-    MOCK_TICKETS
+    []
   );
   const [serverTickets, setServerTickets] = useState<Ticket[]>([]);
   const [isFetchingTickets, setIsFetchingTickets] = useState(false);
@@ -217,14 +175,8 @@ export default function MyWork() {
   const allTickets = useMemo(() => {
     const map = new Map<string, Ticket>();
     serverTickets.forEach((t) => map.set(t.id, t));
-    tickets.forEach((t) => {
-      // Don't let legacy mock tickets leak in if server tickets exist
-      if (!t.id.startsWith('mock-')) {
-        map.set(t.id, t);
-      }
-    });
     return Array.from(map.values());
-  }, [serverTickets, tickets]);
+  }, [serverTickets]);
 
   const filteredTickets = useMemo(() => {
     const searchText = query.trim().toLowerCase();
@@ -267,6 +219,7 @@ export default function MyWork() {
     const updated = { ...selectedTicket, status: newStatus };
     setSelectedTicket(updated);
     setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setServerTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
 
     await myWorkService.updateTicketStatus(selectedTicket.id, newStatus);
   };
@@ -307,6 +260,7 @@ export default function MyWork() {
     if (updatedTicket) {
       setSelectedTicket((curr) => curr ? { ...curr, timeRecord: updatedTicket.timeRecord } : null);
       setTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? { ...t, timeRecord: updatedTicket.timeRecord } : t)));
+      setServerTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? { ...t, timeRecord: updatedTicket.timeRecord } : t)));
     }
   };
 
@@ -326,7 +280,7 @@ export default function MyWork() {
             </button>
             <GlobalNavbarActions
               onOpenTicket={(id) => {
-                const match = tickets.find((t) => t.id === id);
+                const match = allTickets.find((t) => t.id === id);
                 if (match) setSelectedTicket(match);
               }}
             />
@@ -533,7 +487,7 @@ export default function MyWork() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Inesh Agarwal'}</span>, sorted by priority.
+              Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Demo User'}</span>, sorted by priority.
             </p>
           </div>
 
@@ -543,7 +497,7 @@ export default function MyWork() {
             </div>
             <GlobalNavbarActions
               onOpenTicket={(id) => {
-                const match = tickets.find((t) => t.id === id);
+                const match = allTickets.find((t) => t.id === id);
                 if (match) setSelectedTicket(match);
               }}
             />
@@ -553,7 +507,7 @@ export default function MyWork() {
         <div className="mb-4 border-b border-slate-200">
           <div className="flex gap-6">
             {STATUS_TABS.map((status) => {
-              const count = tickets.filter(
+              const count = allTickets.filter(
                 (ticket) => ticket.status === status
               ).length;
 
