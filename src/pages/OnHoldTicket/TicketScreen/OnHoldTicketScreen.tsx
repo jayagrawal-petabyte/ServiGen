@@ -481,6 +481,7 @@ const OnHoldTicketScreen: React.FC = () => {
             setSearchQuery={setSearchQuery} 
             activeView={activeView}
             setActiveView={setActiveView}
+            ticketsCount={tickets.length}
           />
 
           <div className="right-panel">

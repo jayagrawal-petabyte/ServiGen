@@ -132,14 +132,25 @@ export function setCachedOnHoldTickets(tickets: Ticket[]): void {
 /**
  * Fetch all On-Hold tickets from backend GET /api/my-work/on-hold
  */
+function extractCount(res: any): number {
+  if (!res) return 0;
+  if (typeof res.pagination?.total === 'number') return res.pagination.total;
+  if (typeof res.data?.pagination?.total === 'number') return res.data.pagination.total;
+  if (Array.isArray(res.data?.tickets)) return res.data.tickets.length;
+  if (Array.isArray(res.tickets)) return res.tickets.length;
+  if (Array.isArray(res.data)) return res.data.length;
+  if (Array.isArray(res)) return res.length;
+  return 0;
+}
+
+/**
+ * Fetch all On-Hold tickets from backend GET /api/my-work/on-hold
+ */
 export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/on-hold');
-    const ticketList: BackendOnHoldTicket[] = Array.isArray(response?.data)
-      ? response.data
-      : Array.isArray(response)
-      ? response
-      : [];
+    const raw = response?.data?.tickets || response?.tickets || response?.data || response;
+    const ticketList: BackendOnHoldTicket[] = Array.isArray(raw) ? raw : [];
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
@@ -162,11 +173,8 @@ export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Tic
 export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/active');
-    const ticketList: BackendOnHoldTicket[] = Array.isArray(response?.data)
-      ? response.data
-      : Array.isArray(response)
-      ? response
-      : [];
+    const raw = response?.data?.tickets || response?.tickets || response?.data || response;
+    const ticketList: BackendOnHoldTicket[] = Array.isArray(raw) ? raw : [];
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
@@ -189,11 +197,8 @@ export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promis
 export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/actioned');
-    const ticketList: BackendOnHoldTicket[] = Array.isArray(response?.data)
-      ? response.data
-      : Array.isArray(response)
-      ? response
-      : [];
+    const raw = response?.data?.tickets || response?.tickets || response?.data || response;
+    const ticketList: BackendOnHoldTicket[] = Array.isArray(raw) ? raw : [];
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
@@ -211,38 +216,37 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promis
 }
 
 /**
- * Fetch queue counts from backend GET /api/dashboard/summary
+ * Fetch queue counts from backend GET /api/dashboard/summary and /api/my-work queues
  */
 export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
   try {
-    const response = await apiClient.get<any>('/api/dashboard/summary');
-    const counts = response?.data?.tickets;
-    if (counts && typeof counts.active === 'number') {
-      return {
-        active: counts.active,
-        onHold: counts.onHold ?? 0,
-        actioned: counts.actioned ?? 0,
-        pending: counts.pending ?? 0,
-        total: counts.total ?? 0,
-      };
-    }
-    // Fallback: fetch ticket counts directly from /api/my-work endpoints
-    const [activeRes, onHoldRes, actionedRes] = await Promise.all([
+    const [summaryRes, activeRes, onHoldRes, actionedRes] = await Promise.all([
+      apiClient.get<any>('/api/dashboard/summary').catch(() => null),
       apiClient.get<any>('/api/my-work/active').catch(() => null),
       apiClient.get<any>('/api/my-work/on-hold').catch(() => null),
       apiClient.get<any>('/api/my-work/actioned').catch(() => null),
     ]);
 
-    const activeCount = Array.isArray(activeRes?.data) ? activeRes.data.length : Array.isArray(activeRes) ? activeRes.length : 0;
-    const onHoldCount = Array.isArray(onHoldRes?.data) ? onHoldRes.data.length : Array.isArray(onHoldRes) ? onHoldRes.length : 0;
-    const actionedCount = Array.isArray(actionedRes?.data) ? actionedRes.data.length : Array.isArray(actionedRes) ? actionedRes.length : 0;
+    const activeCount = extractCount(activeRes);
+    const onHoldCount = extractCount(onHoldRes);
+    const actionedCount = extractCount(actionedRes);
+
+    const summaryCounts = summaryRes?.data?.tickets || summaryRes?.tickets;
+    const summaryActive = typeof summaryCounts?.active === 'number' ? summaryCounts.active : 0;
+    const summaryOnHold = typeof summaryCounts?.onHold === 'number' ? summaryCounts.onHold : (summaryCounts?.pending ?? 0);
+    const summaryActioned = typeof summaryCounts?.actioned === 'number' ? summaryCounts.actioned : 0;
+
+    // Use the max of dashboard summary and direct endpoint count to prevent 0 counts when tickets exist
+    const finalActive = Math.max(activeCount, summaryActive);
+    const finalOnHold = Math.max(onHoldCount, summaryOnHold);
+    const finalActioned = Math.max(actionedCount, summaryActioned);
 
     return {
-      active: activeCount,
-      onHold: onHoldCount,
-      actioned: actionedCount,
-      pending: onHoldCount,
-      total: activeCount + onHoldCount + actionedCount,
+      active: finalActive,
+      onHold: finalOnHold,
+      actioned: finalActioned,
+      pending: finalOnHold,
+      total: finalActive + finalOnHold + finalActioned,
     };
   } catch (error) {
     console.warn('[OnHoldApi] Live queue counts unavailable, defaulting to 0:', error);

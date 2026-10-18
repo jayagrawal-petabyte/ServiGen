@@ -201,6 +201,7 @@ export default function App() {
         <Routes>
           {/* Auth (Standalone screen - No sidebar) */}
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/login" element={<AuthPage />} />
 
           {/* All App Screens (Inside Figma Left Sidebar Shell) */}
           <Route element={<AppLayout />}>
@@ -230,6 +231,7 @@ export default function App() {
             <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
             <Route path="/reports/incidents-by-category" element={<IncidentsByCategoryReport />} />
             <Route path="/reporting" element={<IncidentsByCategoryReport />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

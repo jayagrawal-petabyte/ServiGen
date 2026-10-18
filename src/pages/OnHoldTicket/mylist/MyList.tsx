@@ -51,6 +51,7 @@ interface MyListProps {
   setSearchQuery: (query: string) => void;
   activeView: string;
   setActiveView: (view: string) => void;
+  ticketsCount?: number;
   onCreateNewList?: () => void;
 }
 
@@ -59,11 +60,16 @@ const MyList: React.FC<MyListProps> = ({
   setSearchQuery,
   activeView,
   setActiveView,
+  ticketsCount,
   onCreateNewList,
 }) => {
   const navigate = useNavigate();
   const [counts, setCounts] = useState<QueueCounts | null>(null);
   const [customLists, setCustomLists] = useState<CustomListSummary[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string>(() => {
+    const match = DEFAULT_LIST_ITEMS.find((i) => i.label === activeView);
+    return match ? match.id : 'my-new-tickets';
+  });
 
   // Fetch live backend counts & custom lists on mount
   useEffect(() => {
@@ -97,20 +103,23 @@ const MyList: React.FC<MyListProps> = ({
     'Views',
   ];
 
-  // Merge static list items with live counts
+  // Merge static list items with live counts & synchronize active badge with table length
   const items: MyListItem[] = DEFAULT_LIST_ITEMS.map((item) => {
+    let badge = 0;
     if (counts) {
       if (item.id === 'my-new-tickets') {
-        return { ...item, badge: counts.active ?? 0 };
-      }
-      if (item.id === 'my-on-hold-tickets') {
-        return { ...item, badge: counts.onHold ?? counts.pending ?? 0 };
-      }
-      if (item.id === 'my-closed-tickets') {
-        return { ...item, badge: counts.actioned ?? 0 };
+        badge = counts.active ?? 0;
+      } else if (item.id === 'my-on-hold-tickets') {
+        badge = counts.onHold ?? counts.pending ?? 0;
+      } else if (item.id === 'my-closed-tickets') {
+        badge = counts.actioned ?? 0;
       }
     }
-    return { ...item, badge: item.badge !== undefined ? 0 : undefined };
+    // Synchronize active view badge with real ticket list count (e.g. 12)
+    if (activeView === item.label && typeof ticketsCount === 'number' && ticketsCount > 0) {
+      badge = ticketsCount;
+    }
+    return { ...item, badge };
   });
 
   // Append any user-created lists from backend list-builder under "Views"
@@ -122,6 +131,15 @@ const MyList: React.FC<MyListProps> = ({
   }));
 
   const allItems = [...items, ...userCustomItems];
+
+  useEffect(() => {
+    // If activeView changes externally, sync selectedItemId
+    const currentItem = allItems.find((i) => i.id === selectedItemId);
+    if (!currentItem || currentItem.label !== activeView) {
+      const match = allItems.find((i) => i.label === activeView);
+      if (match) setSelectedItemId(match.id);
+    }
+  }, [activeView, allItems.length]);
 
   const handleCreateListClick = () => {
     if (onCreateNewList) {
@@ -170,14 +188,18 @@ const MyList: React.FC<MyListProps> = ({
               <h4 className="my-lists-category-title">{cat}</h4>
               <div className="my-lists-items-wrap">
                 {groupItems.map((item) => {
-                  const isActive = activeView === item.label;
+                  // Scope selection strictly by item.id so duplicate labels (e.g. 3 Agent Lists) select individually
+                  const isActive = selectedItemId === item.id;
 
                   return (
                     <button
                       key={item.id}
                       type="button"
                       className={`my-list-nav-item ${isActive ? 'active' : ''}`}
-                      onClick={() => setActiveView(item.label)}
+                      onClick={() => {
+                        setSelectedItemId(item.id);
+                        setActiveView(item.label);
+                      }}
                     >
                       <div className="my-list-nav-left">
                         <span className="my-list-item-icon">{item.icon}</span>

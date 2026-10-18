@@ -98,7 +98,12 @@ const NAV_ITEMS: NavItemConfig[] = [
   },
 ];
 
-export const Sidebar: React.FC = () => {
+export interface SidebarProps {
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
   const { user } = useAuth();
   const initials = user?.fullName
     ? user.fullName
@@ -110,22 +115,34 @@ export const Sidebar: React.FC = () => {
     : 'IA';
 
   return (
-    <aside className="figma-left-sidebar select-none">
+    <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
         <NavLink
           to="/dashboard"
+          onClick={onCloseMobile}
           className="flex items-center justify-center transition-transform hover:scale-105"
           style={{ textDecoration: 'none' }}
           title="ServiGen Dashboard"
         >
           <BrandLogo size={32} />
         </NavLink>
+        {mobileOpen && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="md:hidden absolute right-2 text-white/70 hover:text-white p-1 rounded-md"
+            aria-label="Close sidebar"
+          >
+            ✕
+          </button>
+        )}
       </div>
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onCloseMobile}
             className={({ isActive }) =>
               `sidebar-nav-link ${isActive ? 'active' : ''}`
             }
@@ -145,6 +162,7 @@ export const Sidebar: React.FC = () => {
       <div className="mt-auto py-3 flex flex-col items-center justify-center border-t border-white/10 w-full shrink-0">
         <NavLink
           to="/auth"
+          onClick={onCloseMobile}
           className="relative group flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
           title={`${user?.fullName || 'Inesh Agarwal'} (${user?.role || 'Administrator'}) - Click to switch profile`}
         >

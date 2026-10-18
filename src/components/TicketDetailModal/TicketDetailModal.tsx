@@ -3168,8 +3168,17 @@ export default function TicketDetailModal({
 
   {/* ── SLA Targets & Metrics Detail Dialog (Triggered by Incident SLA Box) ── */}
   {isSlaDetailsOpen && (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp">
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsSlaDetailsOpen(false);
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
           <div className="flex items-center gap-2">
             <span className="text-base">⏱</span>
@@ -3177,7 +3186,10 @@ export default function TicketDetailModal({
           </div>
           <button
             type="button"
-            onClick={() => setIsSlaDetailsOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSlaDetailsOpen(false);
+            }}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs transition-colors cursor-pointer"
             title="Close SLA breakdown"
           >
@@ -3252,7 +3264,8 @@ export default function TicketDetailModal({
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setIsSlaDetailsOpen(false);
                 setActiveTab("audit-log");
                 setStatusMessage("Switched to Audit Log & SLA Event Trail");
@@ -3265,7 +3278,8 @@ export default function TicketDetailModal({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setStatusMessage("SLA Target recalculated based on schedule");
                   setTimeout(() => setStatusMessage(null), 2500);
                   setIsSlaDetailsOpen(false);
@@ -3276,7 +3290,10 @@ export default function TicketDetailModal({
               </button>
               <button
                 type="button"
-                onClick={() => setIsSlaDetailsOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSlaDetailsOpen(false);
+                }}
                 className="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm"
               >
                 Done
@@ -3290,8 +3307,17 @@ export default function TicketDetailModal({
 
   {/* ── Appointment & Calendar Scheduling Dialog (Triggered by 🗂 button) ── */}
   {isAppointmentModalOpen && (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-scaleUp">
+    <div
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsAppointmentModalOpen(false);
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-scaleUp"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-cyan-600 to-blue-700 text-white">
           <div className="flex items-center gap-2">
             <span className="text-base">📅</span>
@@ -3299,7 +3325,10 @@ export default function TicketDetailModal({
           </div>
           <button
             type="button"
-            onClick={() => setIsAppointmentModalOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAppointmentModalOpen(false);
+            }}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs transition-colors cursor-pointer"
             title="Close scheduling"
           >
