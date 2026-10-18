@@ -128,7 +128,7 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
   return {
     id: `draft-${draft.id}`,
     ticketNumber,
-    authorName: draft.author || 'Demo User',
+    authorName: draft.author || '',
     authorInitials: initials,
     authorType: 'user',
     onBehalfOf: draft.team || 'General User',

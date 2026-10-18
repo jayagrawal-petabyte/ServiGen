@@ -67,14 +67,6 @@ export type FullTicket = {
 export const MOCK_TICKET_CATALOG: Record<string, Partial<FullTicket>> = {};
 
 export const AVAILABLE_AGENTS = [
-  "Alex Agent",
-  "Anjali Prasad",
-  "Durgesh Kumar",
-  "Nainesh Patel",
-  "Monalisa Panda",
-  "Mohammad Taha Ali",
-  "Aditya Kumar Singh",
-  "Voona Sarayu",
   "Unassigned",
 ];
 
@@ -137,11 +129,11 @@ export function enrichTicketDetails(rawTicket: {
     description:
       rawTicket.description ||
       catalogEntry.description ||
-      `Detailed request specifications and log records for ticket ${rawTicket.id}. Please review assigned parameters and take necessary resolution action.`,
+      "",
     requester:
       rawTicket.requester ||
       catalogEntry.requester ||
-      "Support Requester",
+      "",
     department:
       rawTicket.department || catalogEntry.department || "IT Operations",
     category:
@@ -159,56 +151,35 @@ export function enrichTicketDetails(rawTicket: {
     notes:
       rawTicket.notes && rawTicket.notes.length > 0
         ? rawTicket.notes
-        : catalogEntry.notes || [
-            {
-              id: "n-init",
-              author: "Admin (You)",
-              time: catalogEntry.createdAt || "17/05/2026 4:06 AM",
-              text:
-                catalogEntry.description ||
-                rawTicket.description ||
-                `Launch the ITSM system across all departments. Monitor system performance, user adoption, and ticket flow during the initial rollout. Document lessons learned, collect feedback for ongoing improvements, and present a post-implementation review report to stakeholders.`,
-            },
-          ],
+        : catalogEntry.notes || [],
     site: catalogEntry.site || "EMEA",
-    organisationName: catalogEntry.organisationName || catalogEntry.department || "consultancy",
-    email: catalogEntry.email || "jagath.varshan@softrateglobal.com",
-    phoneNumber: catalogEntry.phoneNumber || "4644354",
-    preferredNumber: catalogEntry.preferredNumber || "01449 833111",
+    organisationName: catalogEntry.organisationName || catalogEntry.department || "",
+    email: catalogEntry.email || "",
+    phoneNumber: catalogEntry.phoneNumber || "",
+    preferredNumber: catalogEntry.preferredNumber || "",
     isAgent: catalogEntry.isAgent !== undefined ? catalogEntry.isAgent : true,
-    timeTaken: catalogEntry.timeTaken || "70:15",
-    fromTicketId: catalogEntry.fromTicketId || "#2196",
+    timeTaken: catalogEntry.timeTaken || "",
+    fromTicketId: catalogEntry.fromTicketId || "",
     actionTitle: catalogEntry.actionTitle || `Create ${rawTicket.type || catalogEntry.type || "Project Task"}`,
-    contactAddress: catalogEntry.contactAddress || [
-      "ServiGen HQ, Tech Park",
-      "Stowmarket",
-      "Suffolk",
-      "United Kingdom",
-      "Ip14 1GJ",
-    ],
-    assets: catalogEntry.assets || [
-      { id: "ABC00001", type: "Workstation", icon: "workstation" },
-      { id: "ABC00002", type: "Mobile Phone", icon: "phone" },
-      { id: "ABC00007", type: "Monitor", icon: "monitor" },
-      { id: "ABC00008", type: "Laptop", icon: "laptop" },
-    ],
-    projectId: catalogEntry.projectId || "2196",
-    projectName: catalogEntry.projectName || "2196 - ServiGen Implementation - Project",
-    workflowName: catalogEntry.workflowName || "Task Management Workflow",
-    createdBy: catalogEntry.createdBy || "Admin",
-    executionDate: catalogEntry.executionDate || "06/11/2025 10:56 PM",
+    contactAddress: catalogEntry.contactAddress || [],
+    assets: catalogEntry.assets || [],
+    projectId: catalogEntry.projectId || "",
+    projectName: catalogEntry.projectName || "",
+    workflowName: catalogEntry.workflowName || "",
+    createdBy: catalogEntry.createdBy || "",
+    executionDate: catalogEntry.executionDate || "",
     assignedTeam: catalogEntry.assignedTeam || "1st Line Support",
     additionalAgents: catalogEntry.additionalAgents || "Not set",
-    timeRecorded: catalogEntry.timeRecorded || catalogEntry.timeTaken || "70:15",
+    timeRecorded: catalogEntry.timeRecorded || catalogEntry.timeTaken || "",
     budgetType: catalogEntry.budgetType || "Project Management",
-    timeBudget: catalogEntry.timeBudget || "05:00",
+    timeBudget: catalogEntry.timeBudget || "",
     startDate: catalogEntry.startDate || "Not set",
     targetDate: catalogEntry.targetDate || "Not set",
-    responseTarget: catalogEntry.responseTarget || "01/09/2026 10:29 PM",
+    responseTarget: catalogEntry.responseTarget || "",
     responseTargetMet: catalogEntry.responseTargetMet !== undefined ? catalogEntry.responseTargetMet : true,
-    resolutionTarget: catalogEntry.resolutionTarget || "10/09/2026 10:29 PM",
+    resolutionTarget: catalogEntry.resolutionTarget || "",
     resolutionTargetMet: catalogEntry.resolutionTargetMet !== undefined ? catalogEntry.resolutionTargetMet : false,
-    slaTime: catalogEntry.slaTime || (rawTicket as any).slaTime || "-32:01",
+    slaTime: catalogEntry.slaTime || (rawTicket as any).slaTime || "",
     pipelineStage: catalogEntry.pipelineStage || "Request Fulfillment",
     pipelineDate: catalogEntry.pipelineDate || catalogEntry.executionDate || "29/07/2026 6:22 PM",
   };

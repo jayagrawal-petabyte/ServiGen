@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
-  AGENTS,
   APPOINTMENT_TYPES,
   type CalendarEvent,
   type EventType,
   toDateKey,
-  getDefaultCalendarEvents,
 } from "./calendar.types";
 import { apiClient, api } from "../../services/apiClient";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
@@ -120,7 +118,7 @@ function emptyDraft(date: Date, hour = 9): Draft {
     start: `${String(hour).padStart(2, "0")}:00`,
     end: `${String(Math.min(hour + 1, 23)).padStart(2, "0")}:00`,
     type: "meeting",
-    agent: AGENTS[0],
+    agent: "",
     description: "",
   };
 }
@@ -139,12 +137,13 @@ export default function CalendarPage() {
   const [anchor, setAnchor] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
-  const [events, setEvents] = useState<CalendarEvent[]>(() => getDefaultCalendarEvents());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [hiddenTypes, setHiddenTypes] = useState<EventType[]>([]);
   const [hiddenAgents, setHiddenAgents] = useState<string[]>([]);
+  const [agentList, setAgentList] = useState<string[]>([]);
   const [typesOpen, setTypesOpen] = useState(true);
   const [agentsOpen, setAgentsOpen] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -175,7 +174,7 @@ export default function CalendarPage() {
                 start: item.start,
                 end: item.end,
                 type: normalizeEventType(item.type || item.appointmentType),
-                agent: item.agent || item.agentName || "Demo User",
+                agent: item.agent || item.agentName || "",
                 allDay: Boolean(item.allDay),
                 description: item.description || "",
               };
@@ -192,18 +191,18 @@ export default function CalendarPage() {
               start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
               end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
               type: normalizeEventType(item.appointmentType || item.type),
-              agent: item.agent || (item.agentId ? "Demo User" : "Demo User"),
+              agent: item.agent || "",
               description: item.description || "",
             };
           });
           setEvents(mapped);
         } else {
           // If database is unseeded, use default mock calendar events so page is not empty
-          setEvents(getDefaultCalendarEvents());
+          setEvents([]);
         }
       } catch (err: any) {
         if (!active) return;
-        setEvents(getDefaultCalendarEvents());
+        setEvents([]);
         console.warn("[CalendarPage] Backend fetch error, using fallback events:", err);
       } finally {
         if (active) {
@@ -217,6 +216,38 @@ export default function CalendarPage() {
       active = false;
     };
   }, []);
+
+  // Load agent list from API
+  useEffect(() => {
+    async function loadAgents() {
+      try {
+        const { api: apiAgent } = await import("../../services/apiClient");
+        const [r1, r2]: any[] = await Promise.all([
+          apiAgent.get('/api/incidents/support/first-line/agents'),
+          apiAgent.get('/api/incidents/support/second-line/agents'),
+        ]);
+        const extract = (res: any): string[] => {
+          const arr = Array.isArray(res?.data?.agents) ? res.data.agents
+            : Array.isArray(res?.data) ? res.data
+            : Array.isArray(res?.agents) ? res.agents : [];
+          return arr.map((a: any) => {
+            const u = a.user ?? a;
+            return [u.firstName, u.lastName].filter(Boolean).join(' ') || u.fullName || u.username || '';
+          }).filter(Boolean);
+        };
+        const combined = [...new Set([...extract(r1), ...extract(r2)])];
+        if (combined.length > 0) setAgentList(combined);
+      } catch { }
+    }
+    void loadAgents();
+  }, []);
+
+  // Fallback: derive from loaded events
+  useEffect(() => {
+    if (agentList.length === 0 && events.length > 0) {
+      setAgentList([...new Set(events.map((e) => e.agent).filter(Boolean))]);
+    }
+  }, [events, agentList.length]);
 
   // Keep the red "now" line moving.
   useEffect(() => {
@@ -527,7 +558,7 @@ export default function CalendarPage() {
   }
 
   function renderTimeline() {
-    const agents = AGENTS.filter((a) => !hiddenAgents.includes(a));
+    const agents = agentList.filter((a) => !hiddenAgents.includes(a));
     return (
       <div className="cal-timeline" style={{ "--cols": weekDays.length } as CSSProperties}>
         <div className="cal-timeline-row cal-timeline-head">
@@ -709,7 +740,7 @@ export default function CalendarPage() {
                 if (hiddenAgents.length > 0) {
                   setHiddenAgents([]);
                 } else {
-                  setHiddenAgents([...AGENTS]);
+                  setHiddenAgents([...agentList]);
                 }
               }}
             >
@@ -717,7 +748,7 @@ export default function CalendarPage() {
             </button>
           </div>
           {agentsOpen &&
-            AGENTS.map((a) => {
+            agentList.map((a) => {
               const off = hiddenAgents.includes(a);
               return (
                 <button
@@ -906,7 +937,7 @@ export default function CalendarPage() {
                 <label>
                   Agent
                   <select value={draft.agent} onChange={(e) => setDraft({ ...draft, agent: e.target.value })}>
-                    {AGENTS.map((a) => (
+                    {agentList.map((a) => (
                       <option key={a}>{a}</option>
                     ))}
                   </select>

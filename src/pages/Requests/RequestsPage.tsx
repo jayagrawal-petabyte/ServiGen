@@ -26,11 +26,11 @@ export const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const currentUserName = user?.fullName || 'Demo User';
+  const currentUserName = user?.fullName || '';
 
   // Navigation & Hierarchy State
   const [selectedTeam, setSelectedTeam] = useState<string>('1st Line Support');
-  const [selectedAgent, setSelectedAgent] = useState<string>(user?.fullName || 'Demo User');
+  const [selectedAgent, setSelectedAgent] = useState<string>(user?.fullName || '');
   const [is1stLineExpanded, setIs1stLineExpanded] = useState<boolean>(true);
   const [is2ndLineExpanded, setIs2ndLineExpanded] = useState<boolean>(false);
   const [isInfraExpanded, setIsInfraExpanded] = useState<boolean>(false);
@@ -160,25 +160,35 @@ export const RequestsPage: React.FC = () => {
   }, [requestsList, selectedAgent, selectedTeam, statusFilter, searchTree]);
 
   // Counts for Tree Badges
+  const otherFirstLineAgents = useMemo(() => {
+    const names = [...new Set(
+      requestsList
+        .filter((r) => r.team === '1st Line Support' && r.agent !== 'Unassigned' && r.agent !== currentUserName && r.agent)
+        .map((r) => r.agent)
+    )];
+    return names;
+  }, [requestsList, currentUserName]);
+
   const counts = useMemo(() => {
     const unassignedCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Unassigned').length;
-    const demoUserCount = requestsList.filter((r) => r.team === '1st Line Support' && (r.agent === currentUserName || r.agent === 'Demo User')).length;
-    const jamesBrownCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'James Brown').length;
-    const jenniferCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Jennifer Williams').length;
-    const firstLineTotal = unassignedCount + demoUserCount + jamesBrownCount + jenniferCount;
+    const demoUserCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === currentUserName).length;
+    const otherCounts: Record<string, number> = {};
+    otherFirstLineAgents.forEach((name) => {
+      otherCounts[name] = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === name).length;
+    });
+    const firstLineTotal = requestsList.filter((r) => r.team === '1st Line Support').length;
     const secondLineTotal = requestsList.filter((r) => r.team === '2nd Line Support').length;
     const infraTotal = requestsList.filter((r) => r.team === 'Infrastructure').length;
 
     return {
       unassigned: unassignedCount,
       demoUser: demoUserCount,
-      jamesBrown: jamesBrownCount,
-      jennifer: jenniferCount,
+      otherAgents: otherCounts,
       firstLine: firstLineTotal,
       secondLine: secondLineTotal,
       infra: infraTotal,
     };
-  }, [requestsList, currentUserName]);
+  }, [requestsList, currentUserName, otherFirstLineAgents]);
 
   // Checkbox handling
   const allSelected = filteredRequests.length > 0 && filteredRequests.every((r) => selectedRequestIds.includes(r.id));
@@ -217,7 +227,7 @@ export const RequestsPage: React.FC = () => {
       status: 'New',
       type: 'Service Request',
       date: new Date().toLocaleDateString('en-GB'),
-      agent: selectedAgent || 'Demo User',
+      agent: selectedAgent || '',
       team: selectedTeam || '1st Line Support',
       requester: user?.fullName || '',
       description: newDescription.trim() || 'Service request submitted via Requests workspace.',
@@ -362,7 +372,7 @@ export const RequestsPage: React.FC = () => {
 
                   {/* Current User (You) */}
                   <div
-                    className={`tree-agent-row highlight-demo-user ${selectedAgent === currentUserName || selectedAgent === 'Demo User' ? 'active-agent-pill' : ''}`}
+                    className={`tree-agent-row highlight-demo-user ${selectedAgent === currentUserName ? 'active-agent-pill' : ''}`}
                     onClick={() => {
                       setSelectedTeam('1st Line Support');
                       setSelectedAgent(currentUserName);
@@ -376,36 +386,26 @@ export const RequestsPage: React.FC = () => {
                     <span className="agent-count-badge cyan-count">{counts.demoUser}</span>
                   </div>
 
-                  {/* James Brown */}
-                  <div
-                    className={`tree-agent-row ${selectedAgent === 'James Brown' ? 'active-agent' : ''}`}
-                    onClick={() => {
-                      setSelectedTeam('1st Line Support');
-                      setSelectedAgent('James Brown');
-                    }}
-                  >
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="offline-pill-tag">Offline</span>
-                      <span className="agent-circle-tag bg-amber-500">JB</span>
-                      <span className="agent-name truncate">James Brown</span>
-                    </div>
-                    <span className="agent-count-badge">{counts.jamesBrown}</span>
-                  </div>
-
-                  {/* Jennifer Williams */}
-                  <div
-                    className={`tree-agent-row ${selectedAgent === 'Jennifer Williams' ? 'active-agent' : ''}`}
-                    onClick={() => {
-                      setSelectedTeam('1st Line Support');
-                      setSelectedAgent('Jennifer Williams');
-                    }}
-                  >
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="agent-circle-tag bg-purple-600">JW</span>
-                      <span className="agent-name truncate">Jennifer Williams</span>
-                    </div>
-                    <span className="agent-count-badge">{counts.jennifer}</span>
-                  </div>
+                  {/* Dynamic other 1st Line agents from live data */}
+                  {otherFirstLineAgents.map((agentName) => {
+                    const initials = agentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+                    return (
+                      <div
+                        key={agentName}
+                        className={`tree-agent-row ${selectedAgent === agentName ? 'active-agent' : ''}`}
+                        onClick={() => {
+                          setSelectedTeam('1st Line Support');
+                          setSelectedAgent(agentName);
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <span className="agent-circle-tag bg-slate-500">{initials}</span>
+                          <span className="agent-name truncate">{agentName}</span>
+                        </div>
+                        <span className="agent-count-badge">{counts.otherAgents[agentName] ?? 0}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -622,11 +622,7 @@ export const RequestsPage: React.FC = () => {
                       </td>
 
                       <td className="col-viewing">
-                        {req.agent === 'Demo User' && (
-                          <div className="viewing-avatar-dot" title="Viewing by Demo User">
-                            <span>DU</span>
-                          </div>
-                        )}
+
                       </td>
 
                       <td className="col-id font-medium text-gray-700">

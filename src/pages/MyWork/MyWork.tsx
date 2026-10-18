@@ -589,7 +589,7 @@ export default function MyWork() {
                 </h1>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || 'Demo User'}</span>, sorted by priority.
+                  Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || ''}</span>, sorted by priority.
                 </p>
               </div>
 

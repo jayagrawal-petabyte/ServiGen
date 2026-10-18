@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ServiceCI } from '../../types/cmdb';
-import { fetchServiceCis, DEFAULT_SERVICE_CIS } from '../../services/cmdbService';
+import { fetchServiceCis } from '../../services/cmdbService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getServiceHealthVariant } from '../../utils/statusUtils';
 import {
@@ -21,7 +21,7 @@ interface ServiceCisPageProps {
 export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: initialServices }) => {
   const navigate = useNavigate();
   const [items, setItems] = useState<ServiceCI[]>(
-    initialServices && initialServices.length > 0 ? initialServices : DEFAULT_SERVICE_CIS
+    initialServices && initialServices.length > 0 ? initialServices : []
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,6 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
       }
     } catch (err: any) {
       console.error('[ServiceCisPage] Error fetching service CIs:', err);
-      // Keep existing items (DEFAULT_SERVICE_CIS) so it never drops to 0/0
     } finally {
       setIsLoading(false);
     }

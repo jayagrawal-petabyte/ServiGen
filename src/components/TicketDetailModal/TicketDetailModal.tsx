@@ -534,9 +534,9 @@ export default function TicketDetailModal({
     return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
   });
   const [apptTimeSlot, setApptTimeSlot] = useState("10:00 - 11:00 AM");
-  const [apptAgent, setApptAgent] = useState("Demo User");
+  const [apptAgent, setApptAgent] = useState("");
   const [apptType, setApptType] = useState("Remote Screen Share");
-  const [apptLocation, setApptLocation] = useState("ServiGen HQ, Innovation Way, London");
+  const [apptLocation, setApptLocation] = useState("");
   const [apptNotes, setApptNotes] = useState("");
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
 
@@ -2097,7 +2097,7 @@ export default function TicketDetailModal({
                     </div>
                     <div className="supplier-user-title-col">
                       <div className="supplier-user-name">
-                        <span>Demo User</span>
+                        <span></span>
                         <span className="trophy-gold">🏆</span>
                       </div>
                       <div className="supplier-log-action-label">
@@ -2523,7 +2523,7 @@ export default function TicketDetailModal({
 
                         <div className="activity-author-meta">
                           <div className="author-name-row">
-                            <span className="author-name">{ticketData.requester || ticketData.agent || "Aisha Khan"}</span>
+                            <span className="author-name">{ticketData.requester || ticketData.agent || ""}</span>
                           </div>
                           <div className="activity-action-label">
                             {ticketData.actionTitle || "Opened"}
@@ -2618,11 +2618,11 @@ export default function TicketDetailModal({
                     </div>
                     <div className="details-field-row">
                       <span className="details-label">Workflow:</span>
-                      <span className="details-value">{ticketData.workflowName || "Task Management Workflow"}</span>
+                      <span className="details-value">{ticketData.workflowName || ""}</span>
                     </div>
                     <div className="details-field-row">
                       <span className="details-label">Project:</span>
-                      <span className="details-value text-gray-700">{ticketData.projectName || "2196 - ServiGen Implementation - Project"}</span>
+                      <span className="details-value text-gray-700">{ticketData.projectName || ""}</span>
                     </div>
                   </div>
 
@@ -2765,8 +2765,7 @@ export default function TicketDetailModal({
                             <path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.378 1.157.062 1.638A8.04 8.04 0 0112 20.25z" />
                           </svg>
                         </span>
-                        <span className="stack-avatar bg-[#fb8c00]" title="James Brown">JB</span>
-                        <span className="stack-avatar bg-[#512da8]" title="Jennifer Williams">JW</span>
+
                       </div>
                     </div>
                     <div className="notif-row-col col-to text-gray-400">
@@ -2879,7 +2878,7 @@ export default function TicketDetailModal({
                       <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                       <div className="flex-1">
                         <div className="font-semibold text-gray-800">Ticket Created via Portal</div>
-                        <div className="text-gray-500 text-[11px]">{ticketData.createdAt || "27/07/2026 4:44 PM"} by {ticketData.requester || "Aisha Khan"}</div>
+                        <div className="text-gray-500 text-[11px]">{ticketData.createdAt || "27/07/2026 4:44 PM"} by {ticketData.requester || ""}</div>
                       </div>
                     </div>
                     <div className="flex items-start gap-2.5 pb-2 border-b border-gray-100">
@@ -2929,13 +2928,7 @@ export default function TicketDetailModal({
                 <div className="sidebar-field-group">
                   <span className="sidebar-field-label">Contact Address</span>
                   <div className="sidebar-address-box">
-                    {(ticketData.contactAddress || [
-                      "ServiGen HQ, Tech Park",
-                      "Stowmarket",
-                      "Suffolk",
-                      "United Kingdom",
-                      "Ip14 1GJ",
-                    ]).map((line, idx) => (
+                    {(ticketData.contactAddress || []).map((line, idx) => (
                       <div key={idx}>{line}</div>
                     ))}
                   </div>
@@ -3008,7 +3001,7 @@ export default function TicketDetailModal({
                       className="sidebar-field-link text-left bg-transparent border-none cursor-pointer text-cyan-600 hover:underline"
                       title="Open in Projects"
                     >
-                      {ticketData.projectName || "2196 - ServiGen Implementation - Project"}
+                      {ticketData.projectName || ""}
                     </button>
                   </div>
 
@@ -3032,7 +3025,7 @@ export default function TicketDetailModal({
                   <div className="sidebar-field-group">
                     <span className="sidebar-field-label">Workflow</span>
                     <a href="#workflow" onClick={(e) => e.preventDefault()} className="sidebar-field-link">
-                      {ticketData.workflowName || "Task Management Workflow"}
+                      {ticketData.workflowName || ""}
                     </a>
                   </div>
 
@@ -3130,7 +3123,7 @@ export default function TicketDetailModal({
                           onClick={(e) => e.preventDefault()}
                           className="sidebar-user-link font-bold text-slate-900"
                         >
-                          {ticketData.requester || "Aisha Khan"}
+                          {ticketData.requester || ""}
                         </a>
                       </div>
 
@@ -3408,7 +3401,7 @@ export default function TicketDetailModal({
               Target: <strong className="text-gray-800">{ticketData.responseTarget || "01/09/2026 10:29 PM"}</strong>
             </div>
             <div className="text-gray-500 text-[11px]">
-              First contact logged in 14 minutes by <strong>Jennifer Williams</strong>.
+              First contact logged in 14 minutes.
             </div>
           </div>
 
@@ -3626,12 +3619,7 @@ export default function TicketDetailModal({
                 onChange={(e) => setApptAgent(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
               >
-                <option value="Demo User">Demo User (1st Line Support)</option>
-                <option value="Jennifer Williams">Jennifer Williams (2nd Line Support)</option>
-                <option value="James Brown">James Brown (Field Engineer)</option>
-                <option value="Kaleem Smith">Kaleem Smith (Support Agent)</option>
-                <option value="Olivia Chen">Olivia Chen (Senior Engineer)</option>
-                <option value="Anjali Prasad">Anjali Prasad (Lead)</option>
+                <option value="">Select Agent</option>
               </select>
             </div>
             <div>

@@ -38,156 +38,12 @@ export interface KnowledgeArticle {
   fullContent?: string;
 }
 
-const DEFAULT_TECHNICAL_TASKS: WorkTask[] = [
-  {
-    id: '0002697-C',
-    team: 'Infrastructure',
-    summary: 'Engage Identity Provider',
-    status: 'New',
-    activity: 'Diagnosis',
-    type: 'technical',
-  },
-  {
-    id: '0002696-C',
-    team: '1st Line Support',
-    summary: 'Test Login on Different Environments',
-    status: 'New',
-    activity: 'Diagnosis',
-    type: 'technical',
-  },
-  {
-    id: '0002695-C',
-    team: '2nd Line Support',
-    summary: 'Analyze Authentication Logs',
-    status: 'New',
-    activity: 'Diagnosis',
-    type: 'technical',
-  },
-  {
-    id: '0002694-C',
-    team: 'Infrastructure',
-    summary: 'Rollback Recent SSO Changes',
-    status: 'New',
-    activity: 'Recovery',
-    type: 'technical',
-  },
-];
+const DEFAULT_TECHNICAL_TASKS: WorkTask[] = [];
 
-const DEFAULT_BUSINESS_TASKS: WorkTask[] = [
-  {
-    id: '0002693-B',
-    team: 'Finance Operations',
-    summary: 'Notify Payroll & Accounting Leads of Outage',
-    status: 'In Progress',
-    activity: 'Communication',
-    type: 'business',
-  },
-  {
-    id: '0002692-B',
-    team: 'Customer Success',
-    summary: 'Prepare External Customer Advisory Notice',
-    status: 'Completed',
-    activity: 'Communication',
-    type: 'business',
-  },
-  {
-    id: '0002691-B',
-    team: 'Legal & Compliance',
-    summary: 'Review Regulatory Impact & SLA Penalties',
-    status: 'New',
-    activity: 'Assessment',
-    type: 'business',
-  },
-  {
-    id: '0002690-B',
-    team: 'Executive Leadership',
-    summary: 'Send Hourly War-Room Summary to C-Suite',
-    status: 'New',
-    activity: 'Briefing',
-    type: 'business',
-  },
-];
+const DEFAULT_BUSINESS_TASKS: WorkTask[] = [];
 
-const ALL_KB_ARTICLES: KnowledgeArticle[] = [
-  {
-    id: 'kb-1',
-    title: 'Emails not Sending',
-    category: 'kb',
-    tags: ['email', 'Standard Applications>Email', 'Office365', 'Microsoft365'],
-    views: 1,
-    helpful: 1,
-    score: '+1-0',
-    snippet:
-      "If you see messages piling up in your Outlook outbox or people you're sending messages to aren't receiving them, try the following methods",
-    fullContent:
-      "1. Check network connectivity and proxy settings.\n2. In Outlook, verify Work Offline is disabled.\n3. Clear the Outbox folder and send a test message.\n4. Check Exchange Online service status in M365 admin center.",
-  },
-  {
-    id: 'kb-2',
-    title: 'Resetting Corporate Password for User',
-    category: 'kb',
-    tags: ['password', 'auth', 'ActiveDirectory', 'SSO'],
-    views: 0,
-    helpful: 0,
-    score: '+0-0',
-    snippet:
-      "If you're unable to log in to your corporate account and need to reset your password, follow these steps:",
-    fullContent:
-      "1. Direct user to https://passwordreset.microsoftonline.com/\n2. Verify identity via MFA SMS or Authenticator prompt.\n3. If account is locked in AD, unlock via Active Directory Users & Computers.",
-  },
-  {
-    id: 'kb-3',
-    title: 'Providing Temporary Password for New User',
-    category: 'approved',
-    tags: ['onboarding', 'credentials', 'security', 'identity'],
-    views: 3,
-    helpful: 1,
-    score: '+2-0',
-    snippet:
-      'When onboarding a new user or when their primary credentials are unverified, follow this procedure to issue temporary credentials.',
-    fullContent:
-      "1. Request manager verification ticket.\n2. Issue a Temporary Access Pass (TAP) via Entra ID with 8-hour expiry.\n3. Communicate credentials securely via encrypted SMS.",
-  },
-  {
-    id: 'kb-4',
-    title: 'Resolving Leave Request Issues',
-    category: 'urgent',
-    tags: ['portal', 'hr', 'leave', 'finance'],
-    views: 5,
-    helpful: 2,
-    score: '+4-1',
-    snippet:
-      'Guidance on resolving pending or stuck leave requests within the HR and payroll portal.',
-    fullContent:
-      "1. Check if the approver hierarchy has changed.\n2. In SAP SuccessFactors, re-trigger the workflow.\n3. Contact HR Ops if balance calculation mismatch occurs.",
-  },
-  {
-    id: 'kb-5',
-    title: 'Identity Provider SSO Token Cache Corruption',
-    category: 'urgent',
-    tags: ['auth', 'sso', 'identity', 'tokens', 'p1'],
-    views: 12,
-    helpful: 7,
-    score: '+7-0',
-    snippet:
-      'Instructions to invalidate session tokens on redis gateway cluster and issue force re-authentication for locked client pools.',
-    fullContent:
-      "1. Execute `redis-cli -h auth-cluster FLUSHDB` for session cache keys.\n2. Restart the auth-gateway pod replicas gracefully.\n3. Instruct users to clear browser cookies or open Incognito session.",
-  },
-  {
-    id: 'kb-6',
-    title: 'Prohibited Actions during High Severity Outage',
-    category: 'restricted',
-    tags: ['compliance', 'p1', 'rollback', 'lockdown'],
-    views: 8,
-    helpful: 4,
-    score: '+4-0',
-    snippet:
-      'Do not apply direct production database schema migrations or unapproved config changes while active war-room is open.',
-    fullContent:
-      "All production changes during P1/Major incidents must have verbal approval from the Incident Commander and be logged in the live war-room feed.",
-  },
-];
+// KB articles loaded from /api/kb/articles at runtime
+const ALL_KB_ARTICLES: KnowledgeArticle[] = [];
 
 export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
   incident: initialIncident,
@@ -1348,9 +1204,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                         onBlur={() => setIsEditingAssignee(false)}
                         className="bg-white border border-cyan-400 rounded text-xs font-bold text-gray-900 outline-none p-0.5 cursor-pointer max-w-[120px]"
                       >
-                        <option value="Demo User">Demo User</option>
-                        <option value="Inesh Agarwal">Inesh Agarwal</option>
-                        <option value="Jennifer Williams">Jennifer Williams</option>
+                        <option value="">Select Agent</option>
                         <option value="Admin">Admin</option>
                         <option value="Unassigned">Unassigned</option>
                       </select>
@@ -2842,9 +2696,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                     onChange={(e) => setCurrentAssignee(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 outline-none focus:border-cyan-400 cursor-pointer"
                   >
-                    <option value="Demo User">Demo User</option>
-                    <option value="Inesh Agarwal">Inesh Agarwal</option>
-                    <option value="Jennifer Williams">Jennifer Williams</option>
+                    <option value="">Select Agent</option>
                     <option value="Admin">Admin</option>
                     <option value="Unassigned">Unassigned</option>
                   </select>
@@ -3256,7 +3108,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 Q
               </div>
               <div>
-                <span className="font-bold text-gray-900 block text-sm">Inesh Agarwal</span>
+                <span className="font-bold text-gray-900 block text-sm"></span>
                 <span className="text-gray-500 text-xs">inesh@servigen.io</span>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
                   ITSM Administrator ● Online

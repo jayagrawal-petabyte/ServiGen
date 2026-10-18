@@ -13,26 +13,9 @@ interface Ticket {
   status: "On Hold" | "With Sup";
 }
 
-const INCIDENT_TICKETS: Ticket[] = [
-  { id: "0003951", priority: "High",     org: "consultancy/EMEA/Liam O'Connor",          summary: "Got an email pretending to be f...",           status: "On Hold"  },
-  { id: "0003926", priority: "Medium",   org: "consultancy/EMEA/James Brown",             summary: "Getting a file size error trying to ...",       status: "With Sup" },
-  { id: "0003841", priority: "Medium",   org: "consultancy/EMEA/Kaleem Smith",            summary: "VPN connects for a few second...",              status: "With Sup" },
-  { id: "0003816", priority: "Critical", org: "consultancy/Americas/Fatima Al-Mans...",   summary: "Trading desk computer won't b...",              status: "With Sup" },
-  { id: "0003801", priority: "High",     org: "consultancy/EMEA/Aisha Khan",              summary: "Teams meeting invites to exter...",             status: "With Sup" },
-  { id: "0003701", priority: "Low",      org: "consultancy/Americas/Kwame Mensah",        summary: "Other people on Zoom calls say...",             status: "On Hold"  },
-  { id: "0003693", priority: "Low",      org: "consultancy/EMEA/Liam O'Connor",           summary: "Computer has gotten noticeabl...",              status: "With Sup" },
-  { id: "0003885", priority: "High",     org: "consultancy/APAC/Mateo Fernandez",         summary: "Nobody in customer support ca...",              status: "With Sup" },
-  { id: "0003868", priority: "High",     org: "consultancy/Americas/Lucas Oliveira",      summary: "VPN disconnects constantly wh...",              status: "On Hold"  },
-  { id: "0003637", priority: "Medium",   org: "consultancy/EMEA/Jennifer Williams",       summary: "Goals I set for this quarter neve...",          status: "With Sup" },
-  { id: "0003549", priority: "Low",      org: "consultancy/EMEA/Kaleem Smith",            summary: "Getting a warning banner abou...",              status: "On Hold"  },
-  { id: "0003450", priority: "High",     org: "consultancy/EMEA/James Brown",             summary: "Can't connect to a virtual mach...",            status: "With Sup" },
-  { id: "0003373", priority: "Medium",   org: "consultancy/EMEA/Jennifer Williams",       summary: "Broke my phone screen, authen...",              status: "With Sup" },
-  { id: "0003157", priority: "High",     org: "consultancy/APAC/John Smith",              summary: "Laptop battery percentage jum...",              status: "On Hold"  },
-];
+const INCIDENT_TICKETS: Ticket[] = [];
 
-const SERVICE_TICKETS: Ticket[] = [
-  { id: "0003947", priority: "Low", org: "consultancy/APAC/Diego Morales", summary: "Requesting approval to install p...", status: "With Sup" },
-];
+const SERVICE_TICKETS: Ticket[] = [];
 
 const PRIORITY_COLOR: Record<Ticket["priority"], string> = {
   Critical: "#ef4444",

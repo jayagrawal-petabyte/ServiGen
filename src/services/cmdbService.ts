@@ -40,7 +40,7 @@ export function normalizeConfigurationItem(item: any): ConfigurationItem {
     name: item.name || item.tag || 'Configuration Item',
     type: validCategory,
     tag: item.tag || item.id || '',
-    site: item.site || item.siteName || 'Chennai',
+    site: item.site || item.siteName || '',
     status: (item.status === 'Active' || item.status === 'Maintenance' || item.status === 'Deprecated')
       ? item.status
       : 'Active',
@@ -147,58 +147,8 @@ export const fetchConfigurationItemById = async (
 };
 
 /**
- * Default fallback Service CIs representing core infrastructure services
- */
-export const DEFAULT_SERVICE_CIS: ServiceCI[] = [
-  {
-    id: 'SVC-001',
-    name: 'Payment & Billing Gateway',
-    category: 'Application',
-    healthStatus: 'Operational',
-    uptimeSlaPercent: 99.98,
-    businessOwner: 'Finance',
-    supportingCisCount: 3,
-    description: 'High-availability payment transaction gateway and invoice dispatch system.',
-    lastIncidentDate: 'None reported',
-  },
-  {
-    id: 'SVC-002',
-    name: 'Customer Identity & Directory Service',
-    category: 'Database',
-    healthStatus: 'Operational',
-    uptimeSlaPercent: 99.95,
-    businessOwner: 'Technology',
-    supportingCisCount: 2,
-    description: 'Core customer records, authentication directories, and SSO profile data.',
-    lastIncidentDate: 'None reported',
-  },
-  {
-    id: 'SVC-003',
-    name: 'Enterprise HR & Workspace Portal',
-    category: 'Cloud Service',
-    healthStatus: 'Operational',
-    uptimeSlaPercent: 99.90,
-    businessOwner: 'Human Resources',
-    supportingCisCount: 2,
-    description: 'Staff directory, benefits self-service portal, and employee ticketing workflows.',
-    lastIncidentDate: 'None reported',
-  },
-  {
-    id: 'SVC-004',
-    name: 'Production Edge Network & Web Cluster',
-    category: 'Network',
-    healthStatus: 'Operational',
-    uptimeSlaPercent: 99.99,
-    businessOwner: 'Platform Operations',
-    supportingCisCount: 4,
-    description: 'Load balancing, SSL edge termination, and perimeter ingress routing.',
-    lastIncidentDate: 'None reported',
-  },
-];
-
-/**
  * Fetch all live Service CIs from live backend
- * Endpoint: GET /api/cmdb/service-cis with fallback to live configuration items
+ * Endpoint: GET /api/cmdb/service-cis
  */
 export const fetchServiceCis = async (): Promise<CmdbApiResponse<ServiceCI[]>> => {
   try {
@@ -225,39 +175,13 @@ export const fetchServiceCis = async (): Promise<CmdbApiResponse<ServiceCI[]>> =
       };
     }
   } catch (_err) {
-    // Fall back to live configuration items query
-  }
-
-  // If service-cis is empty or unreachable, query live configuration items
-  try {
-    const ciRes = await fetchConfigurationItems();
-    if (ciRes.data && ciRes.data.length > 0) {
-      const mapped: ServiceCI[] = ciRes.data.map((ci, idx) => ({
-        id: `SVC-${ci.id.replace(/^CI-/, '') || idx + 1}`,
-        name: ci.name.endsWith('Service') ? ci.name : `${ci.name} Service`,
-        category: ci.type,
-        healthStatus: ci.status === 'Active' ? 'Operational' : ci.status === 'Maintenance' ? 'Maintenance' : 'Degraded',
-        uptimeSlaPercent: ci.status === 'Active' ? 99.95 : ci.status === 'Maintenance' ? 98.5 : 94.0,
-        businessOwner: ci.businessOwner || 'Technology Operations',
-        supportingCisCount: Math.max(1, (idx % 3) + 1),
-        description: `${ci.name} (${ci.tag || ci.id}) - live ${ci.type} supporting ${ci.site} environment.`,
-        lastIncidentDate: ci.activeIncidentsCount > 0 ? `${ci.activeIncidentsCount} active incident(s)` : 'None reported',
-      }));
-
-      return {
-        success: true,
-        data: mapped,
-        message: 'Synthesized from live CMDB configuration items',
-      };
-    }
-  } catch (_ciErr) {
-    // Secondary fallback
+    // Endpoint unavailable
   }
 
   return {
     success: true,
-    data: DEFAULT_SERVICE_CIS,
-    message: 'Loaded default live service CIs',
+    data: [],
+    message: 'No service CIs available',
   };
 };
 

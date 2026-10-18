@@ -307,8 +307,7 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
 
                 <div className="agent-kpi-dots-indicator">
                   <span className={`agent-kpi-dot ${selectedAgent === 'All Agents' ? 'is-active' : ''}`} />
-                  <span className={`agent-kpi-dot ${selectedAgent === 'Demo User' ? 'is-active' : ''}`} />
-                  <span className={`agent-kpi-dot ${selectedAgent !== 'All Agents' && selectedAgent !== 'Demo User' ? 'is-active' : ''}`} />
+                  <span className={`agent-kpi-dot ${selectedAgent !== 'All Agents' ? 'is-active' : ''}`} />
                 </div>
 
                 <button

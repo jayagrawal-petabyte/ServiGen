@@ -81,9 +81,9 @@ function adaptBackendArticle(item: BackendKnowledgeArticle): ArticleDraft {
     status: item.status || 'Draft',
     type: 'Article Draft',
     date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : '17-07-2026',
-    author: item.author || 'Demo User',
+    author: item.author || '',
     team: 'Tier 2 Messaging Ops',
-    agent: item.author || 'Demo User',
+    agent: item.author || '',
     body: item.content || '',
   };
 }
