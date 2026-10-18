@@ -112,37 +112,29 @@
 .cl-status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
 .cl-skeleton-loader { padding: 30px; text-align: center; color: #94a3b8; font-size: 13px; }
 
-/* --- Modal Styles (Preserved) --- */
+/* --- Modal / Page Styles --- */
 .cl-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 72px; /* Offset for the 72px left sidebar so modal is not hidden underneath */
-  right: 0;
-  bottom: 0;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px; /* Creates space around the form so it doesn't fully fit the screen */
+  flex-direction: column;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.1); /* Transparent background */
-  backdrop-filter: blur(12px); /* Blurry effect */
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 40;
+  background: var(--bg-canvas, #faf6f2);
 }
 
 .cl-modal {
-  width: 100%;
-  max-width: 1200px; 
-  height: calc(100vh - 48px);
-  max-height: calc(100vh - 48px);
+  width: calc(100% - 48px);
+  margin: 20px 24px 40px;
   background: white;
-  border-radius: 12px; /* Curvy edges */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Very light shadow */
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 0;
+  border: 1px solid #e2e8f0;
 }
 
 /* Header Bar */
@@ -434,13 +426,9 @@
 }
 
 @media (max-width: 768px) {
-  .cl-modal-overlay {
-    left: 0;
-    padding: 12px;
-  }
   .cl-modal {
-    height: calc(100vh - 24px);
-    max-height: calc(100vh - 24px);
+    width: calc(100% - 24px);
+    margin: 12px;
   }
   .cl-form-body {
     padding: 16px;
