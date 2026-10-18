@@ -40,10 +40,9 @@ function formatSla(slaTimeLeft: any, slaFormatted?: string): string {
     return isNeg ? `-${formatted}` : formatted;
   }
   if (slaFormatted) {
-    if (slaFormatted === 'SLA Breached') return '-64:00';
     return slaFormatted;
   }
-  return '-64:00';
+  return '--:--';
 }
 
 /**
@@ -68,14 +67,18 @@ export function normalizeSupportIncident(
   }
 
   // Format date logged
-  let dateFormatted = '24/07/2026';
+  let dateFormatted = '';
   if (raw.createdAt) {
     try {
       const d = new Date(raw.createdAt);
       dateFormatted = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     } catch {
-      dateFormatted = '24/07/2026';
+      dateFormatted = '';
     }
+  }
+  if (!dateFormatted) {
+    const d = new Date();
+    dateFormatted = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }
 
   const slaStr = formatSla(raw.slaTimeLeft, raw.slaFormatted);

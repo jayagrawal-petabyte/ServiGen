@@ -158,19 +158,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         ))}
       </nav>
 
-      {/* Logged-in Agent Profile Badge linking to /auth */}
+      {/* Logged-in Agent Profile Badge */}
       <div className="mt-auto py-3 flex flex-col items-center justify-center border-t border-white/10 w-full shrink-0">
-        <NavLink
-          to="/auth"
-          onClick={onCloseMobile}
-          className="relative group flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-          title={`${user?.fullName || ''} (${user?.role || 'Administrator'}) - Click to switch profile`}
+        <div
+          className="relative group flex items-center justify-center cursor-default"
+          title={`${user?.fullName || ''} (${user?.role || 'Administrator'})`}
         >
           <div className="w-9 h-9 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center shadow-md border-2 border-[#0b2239]">
             {initials}
           </div>
           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0b2239]" />
-        </NavLink>
+        </div>
       </div>
     </aside>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation, Navigate, NavLink } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '../components/shared/Sidebar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../pages/Auth/AuthContext';
@@ -59,15 +59,14 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
 
-        <NavLink
-          to="/auth"
-          className="flex items-center gap-2 text-white/80 hover:text-white"
+        <div
+          className="flex items-center gap-2 text-white/80"
           title={`${user?.fullName || 'User'} (${user?.role || 'Administrator'})`}
         >
           <div className="w-7 h-7 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center border border-white/20">
             {initials}
           </div>
-        </NavLink>
+        </div>
       </header>
 
       {/* Mobile Backdrop Overlay (< 768px) */}
