@@ -38,7 +38,7 @@ export default function CreateArticleDraftModal({
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [priority, setPriority] = useState('High');
   const [body, setBody] = useState('');
-  const [author, setAuthor] = useState(user?.fullName || '');
+  const [author, setAuthor] = useState(user?.fullName || 'Inesh Agarwal');
   const [team, setTeam] = useState(user?.department || 'IT Operations');
   const [slaDays, setSlaDays] = useState('3');
   const [submitAsAwaiting, setSubmitAsAwaiting] = useState(false);
@@ -109,8 +109,8 @@ export default function CreateArticleDraftModal({
           month: 'short',
           year: 'numeric',
         }).replace(/ /g, '-'),
-        author: author.trim() || user?.fullName || '',
-        agent: author.trim() || user?.fullName || '',
+        author: author.trim() || user?.fullName || 'Inesh Agarwal',
+        agent: author.trim() || user?.fullName || 'Inesh Agarwal',
         team: team.trim() || 'General Operations',
         body: body.trim(),
       });
@@ -144,7 +144,7 @@ export default function CreateArticleDraftModal({
       >
         <div className="modal-header" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#00bcd4' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#e07a5f' }}>
               Knowledge Base Management
             </span>
             <h2 style={{ marginTop: '2px', fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>
@@ -408,7 +408,7 @@ export default function CreateArticleDraftModal({
                 type="checkbox"
                 checked={submitAsAwaiting}
                 onChange={(e) => setSubmitAsAwaiting(e.target.checked)}
-                style={{ accentColor: '#00bcd4', width: '16px', height: '16px', cursor: 'pointer' }}
+                style={{ accentColor: '#eb6a47', width: '16px', height: '16px', cursor: 'pointer' }}
               />
               <label
                 htmlFor="submit-as-awaiting"
@@ -432,13 +432,13 @@ export default function CreateArticleDraftModal({
               type="submit"
               disabled={isSubmitting}
               style={{
-                backgroundColor: '#00bcd4',
+                backgroundColor: '#eb6a47',
                 color: 'white',
                 padding: '8px 20px',
                 borderRadius: '999px',
                 fontWeight: 600,
                 fontSize: '13px',
-                boxShadow: '0 2px 6px rgba(0, 188, 212, 0.3)',
+                boxShadow: '0 2px 6px rgba(235, 106, 71, 0.3)',
                 opacity: isSubmitting ? 0.7 : 1,
               }}
             >

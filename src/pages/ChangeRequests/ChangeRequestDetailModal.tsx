@@ -39,7 +39,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50 rounded-t-3xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm font-extrabold text-[#00bcd4]">{changeRequest.id}</span>
+              <span className="text-sm font-extrabold text-[#E87A5D]">{changeRequest.id}</span>
               <span className="px-2.5 py-0.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-full">
                 {changeRequest.type} Change
               </span>
@@ -57,14 +57,14 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
         </div>
 
         <div className="p-6 space-y-6 text-xs text-slate-700">
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-[#FCE6DC]/50 rounded-2xl border border-[#FCE6DC]">
             <div>
               <span className="text-slate-500 font-bold block mb-1 uppercase">Status</span>
               {onChangeStatus ? (
                 <select
                   value={changeRequest.status}
                   onChange={(e) => onChangeStatus(e.target.value as ChangeStatus)}
-                  className="px-2.5 py-1 bg-white border border-slate-300 text-slate-800 text-xs font-bold rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00bcd4]"
+                  className="px-2.5 py-1 bg-white border border-slate-300 text-slate-800 text-xs font-bold rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E87A5D]"
                 >
                   <option value="In Progress">In Progress</option>
                   <option value="On Hold">On Hold</option>
@@ -82,7 +82,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             </div>
             <div>
               <span className="text-slate-500 font-bold block mb-1 uppercase">Completion</span>
-              <span className="text-base font-extrabold text-[#00bcd4]">{changeRequest.completionPercent}%</span>
+              <span className="text-base font-extrabold text-[#E87A5D]">{changeRequest.completionPercent}%</span>
             </div>
             <div>
               <span className="text-slate-500 font-bold block mb-1 uppercase">Time Spent</span>
@@ -151,7 +151,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
           <div>
             <h3 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
-              <CheckSquare className="w-4 h-4 text-[#00bcd4]" /> Implementation Checklist & Subtasks
+              <CheckSquare className="w-4 h-4 text-[#E87A5D]" /> Implementation Checklist & Subtasks
             </h3>
             <div className="space-y-2">
               {changeRequest.subtasks.map((task: SubTask) => (
@@ -159,7 +159,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   key={task.id}
                   onClick={() => onToggleSubtask && onToggleSubtask(task.id)}
                   className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                    onToggleSubtask ? 'cursor-pointer hover:border-[#00bcd4]' : ''
+                    onToggleSubtask ? 'cursor-pointer hover:border-[#E87A5D]' : ''
                   } ${
                     task.completed
                       ? 'bg-slate-50/60 border-slate-200 text-slate-400'
@@ -170,7 +170,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                     type="checkbox"
                     checked={task.completed}
                     onChange={() => onToggleSubtask && onToggleSubtask(task.id)}
-                    className="w-4 h-4 text-[#00bcd4] rounded focus:ring-[#00bcd4] cursor-pointer"
+                    className="w-4 h-4 text-[#E87A5D] rounded focus:ring-[#E87A5D] cursor-pointer"
                   />
                   <span className={`font-medium flex-1 ${task.completed ? 'line-through text-slate-400' : ''}`}>
                     {task.title}
