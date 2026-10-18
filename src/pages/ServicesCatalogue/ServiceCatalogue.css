@@ -292,25 +292,20 @@
 }
 
 .details-button {
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #ded8d5;
   background: #fff;
-  color: #475569;
+  color: #555;
 }
 
 .request-button {
-  border: 1.5px solid #00bcd4;
-  background: #00bcd4;
+  border: 1px solid #ff977b;
+  background: #ff977b;
   color: #fff;
 }
 
-.details-button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
+.details-button:hover,
 .request-button:hover {
-  background: #00acc1;
-  border-color: #00acc1;
+  opacity: 0.82;
 }
 
 /* EMPTY STATE */

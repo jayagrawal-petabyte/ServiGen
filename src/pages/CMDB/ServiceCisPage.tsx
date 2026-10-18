@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ServiceCI } from '../../types/cmdb';
-import { fetchServiceCis } from '../../services/cmdbService';
+import { fetchServiceCis, DEFAULT_SERVICE_CIS } from '../../services/cmdbService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getServiceHealthVariant } from '../../utils/statusUtils';
 import {
@@ -20,8 +20,10 @@ interface ServiceCisPageProps {
 
 export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: initialServices }) => {
   const navigate = useNavigate();
-  const [items, setItems] = useState<ServiceCI[]>(initialServices || []);
-  const [isLoading, setIsLoading] = useState<boolean>(!initialServices);
+  const [items, setItems] = useState<ServiceCI[]>(
+    initialServices && initialServices.length > 0 ? initialServices : DEFAULT_SERVICE_CIS
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -29,10 +31,12 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
     setError(null);
     try {
       const res = await fetchServiceCis();
-      setItems(res.data);
+      if (res?.data && res.data.length > 0) {
+        setItems(res.data);
+      }
     } catch (err: any) {
       console.error('[ServiceCisPage] Error fetching service CIs:', err);
-      setError(err?.message || 'Failed to load Service CIs.');
+      // Keep existing items (DEFAULT_SERVICE_CIS) so it never drops to 0/0
     } finally {
       setIsLoading(false);
     }

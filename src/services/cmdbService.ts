@@ -149,7 +149,7 @@ export const fetchConfigurationItemById = async (
 /**
  * Default fallback Service CIs representing core infrastructure services
  */
-const DEFAULT_SERVICE_CIS: ServiceCI[] = [
+export const DEFAULT_SERVICE_CIS: ServiceCI[] = [
   {
     id: 'SVC-001',
     name: 'Payment & Billing Gateway',
