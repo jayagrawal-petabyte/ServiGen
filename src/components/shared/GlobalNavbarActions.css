@@ -25,21 +25,22 @@
   height: 32px;
   padding: 0 16px;
   border-radius: 9999px;
-  background: #00c0f3;
-  color: #ffffff;
+  background: #e49b8e;
+  color: #3a201a;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 192, 243, 0.35);
+  box-shadow: 0 1px 2px rgba(228, 155, 142, 0.35);
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .global-nav-pill-btn:hover {
-  background: #0096c7;
+  background: #d8897c;
+  color: #24110d;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 192, 243, 0.45);
+  box-shadow: 0 2px 6px rgba(228, 155, 142, 0.45);
 }
 
 .global-nav-plus-sign {
@@ -59,9 +60,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e49b8e;
   background: #ffffff;
-  color: #334155;
+  color: #4a2820;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -72,15 +73,15 @@
 }
 
 .global-nav-icon-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: #fbf0ee;
+  color: #24110d;
+  border-color: #d8897c;
 }
 
 .global-nav-icon-btn.is-active {
-  background: #e0f2fe;
-  color: #0284c7;
-  border-color: #7dd3fc;
+  background: #fbf0ee;
+  color: #24110d;
+  border-color: #d8897c;
 }
 
 /* Red Notification Badge */
@@ -334,12 +335,24 @@
   background: #f8fafc;
 }
 
-.global-notif-item.is-unread {
-  background: #f0fdf4;
+.global-notif-item.is-unread.is-sla {
+  background: #fff5f5;
+  border-left: 3px solid #ef4444;
 }
 
-.global-notif-item.is-sla {
-  background: #fef2f2;
+.global-notif-item.is-unread:not(.is-sla) {
+  background: #f0fdf4;
+  border-left: 3px solid #10b981;
+}
+
+.global-notif-item:not(.is-unread) {
+  background: #ffffff;
+  opacity: 0.72;
+}
+
+.global-notif-item:not(.is-unread):hover {
+  background: #f8fafc;
+  opacity: 1;
 }
 
 .global-notif-icon {

@@ -20,10 +20,12 @@ const clipPath = (isFirst: boolean, isLast: boolean): string => {
   return `polygon(0 0, calc(100% - ${ARROW_W}px) 0, 100% 50%, calc(100% - ${ARROW_W}px) 100%, 0 100%, ${ARROW_W}px 50%)`;
 };
 
-const getStageBg = (_isFirst: boolean, isActive: boolean, _isCompleted: boolean) =>
+const getStageBg = (_isFirst: boolean, isActive: boolean, isCompleted: boolean) =>
   isActive
-    ? { bg: '#06b6d4', text: 'text-white',   labelText: 'text-cyan-100' }
-    : { bg: '#e2e8f0', text: 'text-gray-700', labelText: 'text-gray-500' };
+    ? { bg: '#13273e', text: 'text-white', labelText: 'text-gray-300' }
+    : isCompleted
+    ? { bg: '#e6f4ea', text: 'text-[#137333]', labelText: 'text-[#1e8e3e]' }
+    : { bg: '#eef2f6', text: 'text-gray-600', labelText: 'text-gray-400' };
 
 const LifecyclePipeline: React.FC<LifecyclePipelineProps> = ({ stages, topBadges = [] }) => (
   <div className="flex items-end mt-1 overflow-x-auto pb-1">

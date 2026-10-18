@@ -602,7 +602,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>🌐</span> Major Incident Dashboard
           </button>
           <span className="text-gray-300">›</span>
-          <span className="font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-[11px]">
+          <span className="font-bold text-white bg-[#13273e] px-2.5 py-0.5 rounded-full text-[11px] shadow-2xs">
             {shortId}
           </span>
         </div>
@@ -611,7 +611,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveActionModal('get_started')}
-            className="bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-xs cursor-pointer active:scale-95"
+            className="bg-[#e49b8e] hover:bg-[#d8897c] text-[#3a201a] text-xs font-bold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-2xs cursor-pointer active:scale-95"
           >
             Get started
           </button>
@@ -620,18 +620,18 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
               if (onOpenNewTicket) onOpenNewTicket();
               else showToast('Opening new incident ticket wizard...');
             }}
-            className="flex items-center gap-1 bg-cyan-400 hover:bg-cyan-500 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-xs ring-2 ring-offset-1 ring-cyan-200 cursor-pointer active:scale-95"
+            className="flex items-center gap-1 bg-[#e49b8e] hover:bg-[#d8897c] text-[#3a201a] text-xs font-bold px-4 py-1.5 rounded-full transition-colors whitespace-nowrap shadow-2xs cursor-pointer active:scale-95"
           >
-            <span className="text-base leading-none font-light">+</span>
+            <span className="text-base leading-none font-medium">+</span>
             <span>New Ticket</span>
           </button>
 
           {/* Icon buttons with interactive modals */}
-          <div className="flex items-center gap-1 ml-1 text-gray-500">
+          <div className="flex items-center gap-1.5 ml-1 text-[#4a2820]">
             <button
               onClick={() => setIsKbModalOpen(true)}
               title="Search Knowledge Base"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <circle cx="11" cy="11" r="8" strokeWidth="2" />
@@ -641,7 +641,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('notifications')}
               title="Notifications"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer relative active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer relative active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -656,7 +656,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('tasks')}
               title="My Assigned Action Tasks"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -669,7 +669,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('performance')}
               title="SLA Performance"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M12 2a10 10 0 1 0 10 10" strokeWidth="2" />
@@ -679,7 +679,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('health')}
               title="System & Service Health"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M5 12.55a11 11 0 0 1 14.08 0" strokeWidth="2" />
@@ -689,7 +689,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('timesheet')}
               title="Timesheet & Time Tracker"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <circle cx="12" cy="12" r="10" strokeWidth="2" />
@@ -699,7 +699,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <button
               onClick={() => setActiveActionModal('help')}
               title="Major Incident SOP Process"
-              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full border border-[#e49b8e] bg-white text-[#4a2820] hover:bg-[#fbf0ee] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <circle cx="12" cy="12" r="10" strokeWidth="2" />
@@ -2776,7 +2776,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   setEditingTask(null);
                   showToast('Task updated successfully');
                 }}
-                className="px-5 py-2 rounded-full bg-cyan-400 hover:bg-cyan-500 text-white font-semibold cursor-pointer active:scale-95"
+                className="px-5 py-2 rounded-full bg-[#13273e] hover:bg-[#0c1a2b] text-white font-semibold cursor-pointer active:scale-95"
               >
                 Save Task
               </button>
@@ -2887,7 +2887,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   setActiveActionModal(null);
                   showToast('Incident details updated');
                 }}
-                className="px-5 py-2 rounded-full bg-cyan-400 hover:bg-cyan-500 text-white font-semibold cursor-pointer active:scale-95"
+                className="px-5 py-2 rounded-full bg-[#13273e] hover:bg-[#0c1a2b] text-white font-semibold cursor-pointer active:scale-95"
               >
                 Save Changes
               </button>
@@ -2934,7 +2934,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   setActiveActionModal(null);
                   showToast('You are ready to manage Major Incidents!');
                 }}
-                className="px-6 py-2 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-xs cursor-pointer active:scale-95"
+                className="px-6 py-2 rounded-full bg-[#13273e] hover:bg-[#0c1a2b] text-white font-semibold text-xs cursor-pointer active:scale-95"
               >
                 Got It, Let's Go!
               </button>

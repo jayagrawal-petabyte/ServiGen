@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../pages/Auth/AuthContext';
 import './TimesheetPopover.css';
 
 interface TimesheetPopoverProps {
@@ -8,20 +9,113 @@ interface TimesheetPopoverProps {
   userDate?: string;
 }
 
+function parseTimeToMinutes(timeStr: string): number | null {
+  if (!timeStr || timeStr === '--:--') return null;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return null;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3]?.toUpperCase();
+
+  if (period === 'PM' && hours < 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
+function formatMinutesToHours(minutes: number): string {
+  const safeMin = Math.max(0, minutes);
+  const h = Math.floor(safeMin / 60);
+  const m = safeMin % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
 export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
   onClose,
-  userName = 'Demo User',
-  userDate = '17/09/2026',
+  userName,
+  userDate,
 }) => {
   const navigate = useNavigate();
-  const [startTime, setStartTime] = useState('--:--');
-  const [finishTime, setFinishTime] = useState('--:--');
-  const [loggedHours, setLoggedHours] = useState<number>(0);
-  const [breakMinutes, setBreakMinutes] = useState<number>(0);
+  const { user } = useAuth();
+  const effectiveUserName = userName || user?.fullName || 'Inesh Agarwal';
+  const effectiveDate = userDate || new Date().toLocaleDateString('en-GB');
+
+  // Load persistent state or fall back to defaults
+  const [startTime, setStartTime] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_timesheet_data');
+      return saved ? JSON.parse(saved).startTime || '09:00 AM' : '09:00 AM';
+    } catch {
+      return '09:00 AM';
+    }
+  });
+
+  const [finishTime, setFinishTime] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_timesheet_data');
+      return saved ? JSON.parse(saved).finishTime || '05:00 PM' : '05:00 PM';
+    } catch {
+      return '05:00 PM';
+    }
+  });
+
+  const [loggedMinutes, setLoggedMinutes] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_timesheet_data');
+      return saved ? JSON.parse(saved).loggedMinutes ?? 60 : 60;
+    } catch {
+      return 60;
+    }
+  });
+
+  const [breakMinutes, setBreakMinutes] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_timesheet_data');
+      return saved ? JSON.parse(saved).breakMinutes ?? 15 : 15;
+    } catch {
+      return 15;
+    }
+  });
+
   const [timerActive, setTimerActive] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
+  const [isFinishMenuOpen, setIsFinishMenuOpen] = useState(false);
 
+  const startMenuRef = useRef<HTMLDivElement>(null);
+  const finishMenuRef = useRef<HTMLDivElement>(null);
+
+  // Persist state to localStorage on changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'servigen_timesheet_data',
+        JSON.stringify({
+          startTime,
+          finishTime,
+          loggedMinutes,
+          breakMinutes,
+        })
+      );
+    } catch {}
+  }, [startTime, finishTime, loggedMinutes, breakMinutes]);
+
+  // Handle outside click for menus
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (startMenuRef.current && !startMenuRef.current.contains(e.target as Node)) {
+        setIsStartMenuOpen(false);
+      }
+      if (finishMenuRef.current && !finishMenuRef.current.contains(e.target as Node)) {
+        setIsFinishMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  // Timer loop
   useEffect(() => {
     let interval: any = null;
     if (timerActive) {
@@ -34,7 +128,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
 
   const showNotice = (msg: string) => {
     setStatusNotice(msg);
-    setTimeout(() => setStatusNotice(null), 2500);
+    setTimeout(() => setStatusNotice(null), 3000);
   };
 
   const formatTimer = (sec: number) => {
@@ -43,44 +137,36 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
     return `${String(mins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
   };
 
-  // Time grid slots from 12:00 AM to 11:50 PM
+  // Target hours: 8 hours = 480 minutes
+  const TARGET_MINUTES = 480;
+
+  // Calculate Hours Worked = (Finish Time - Start Time) - Break Time
+  const hoursWorkedStr = useMemo(() => {
+    const startMins = parseTimeToMinutes(startTime);
+    const finishMins = parseTimeToMinutes(finishTime);
+
+    if (startMins === null || finishMins === null) return '-';
+
+    let diff = finishMins - startMins;
+    if (diff < 0) diff += 24 * 60; // Crosses midnight
+
+    const workedMins = Math.max(0, diff - breakMinutes);
+    return formatMinutesToHours(workedMins);
+  }, [startTime, finishTime, breakMinutes]);
+
+  // Calculate Unlogged Time = Target Hours - Logged Hours
+  const unloggedMinutes = Math.max(0, TARGET_MINUTES - loggedMinutes);
+  const unloggedStr = formatMinutesToHours(unloggedMinutes);
+  const loggedStr = formatMinutesToHours(loggedMinutes);
+
+  const START_SUGGESTIONS = ['08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM'];
+  const FINISH_SUGGESTIONS = ['04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM'];
+
+  // Time grid slots
   const timeSlots = [
-    '12:00 AM',
-    '12:10 AM',
-    '12:20 AM',
-    '12:30 AM',
-    '12:40 AM',
-    '12:50 AM',
-    '01:00 AM',
-    '01:10 AM',
-    '01:20 AM',
-    '01:30 AM',
-    '01:40 AM',
-    '01:50 AM',
-    '02:00 AM',
-    '02:10 AM',
-    '02:20 AM',
-    '02:30 AM',
-    '02:40 AM',
-    '02:50 AM',
-    '03:00 AM',
-    '03:10 AM',
-    '03:20 AM',
-    '03:30 AM',
-    '03:40 AM',
-    '03:50 AM',
-    '04:00 AM',
-    '04:10 AM',
-    '04:20 AM',
-    '04:30 AM',
-    '04:40 AM',
-    '04:50 AM',
-    '05:00 AM',
-    '05:10 AM',
-    '05:20 AM',
-    '05:30 AM',
-    '05:40 AM',
-    '05:50 AM',
+    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
+    '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM'
   ];
 
   return (
@@ -117,7 +203,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </svg>
           </div>
           <span className="timesheet-user-name">
-            {userName} - {userDate}
+            {effectiveUserName} - {effectiveDate}
           </span>
         </div>
 
@@ -126,7 +212,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           {/* Start Time */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Start Time:</span>
-            <div className="timesheet-input-box">
+            <div className="timesheet-input-box" ref={startMenuRef}>
               <input
                 type="text"
                 className="timesheet-time-input"
@@ -137,21 +223,39 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
               <button
                 type="button"
                 className="timesheet-clock-btn"
-                onClick={() => setStartTime('09:00 AM')}
-                title="Pick start time"
+                onClick={() => setIsStartMenuOpen((o) => !o)}
+                title="Select start time"
               >
                 <svg className="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
               </button>
+
+              {isStartMenuOpen && (
+                <div className="timesheet-dropdown-menu">
+                  {START_SUGGESTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className="timesheet-dropdown-item"
+                      onClick={() => {
+                        setStartTime(t);
+                        setIsStartMenuOpen(false);
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Finish Time */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Finish Time:</span>
-            <div className="timesheet-input-box">
+            <div className="timesheet-input-box" ref={finishMenuRef}>
               <input
                 type="text"
                 className="timesheet-time-input"
@@ -162,14 +266,32 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
               <button
                 type="button"
                 className="timesheet-clock-btn"
-                onClick={() => setFinishTime('05:00 PM')}
-                title="Pick finish time"
+                onClick={() => setIsFinishMenuOpen((o) => !o)}
+                title="Select finish time"
               >
                 <svg className="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
               </button>
+
+              {isFinishMenuOpen && (
+                <div className="timesheet-dropdown-menu">
+                  {FINISH_SUGGESTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className="timesheet-dropdown-item"
+                      onClick={() => {
+                        setFinishTime(t);
+                        setIsFinishMenuOpen(false);
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -179,25 +301,27 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             <span className="timesheet-metric-val font-semibold">08:00</span>
           </div>
 
-          {/* Hours Worked */}
+          {/* Hours Worked (Dynamically Computed) */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Hours Worked:</span>
-            <span className="timesheet-metric-val text-gray-400">-</span>
+            <span className="timesheet-metric-val font-semibold text-gray-800">
+              {hoursWorkedStr}
+            </span>
           </div>
 
           {/* Hours Logged */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Hours Logged:</span>
             <div className="flex items-center gap-2">
-              <span className={`timesheet-metric-val ${loggedHours > 0 ? 'font-semibold text-cyan-600' : 'text-gray-400'}`}>
-                {loggedHours > 0 ? `${String(loggedHours).padStart(2, '0')}:00` : '-'}
+              <span className={`timesheet-metric-val font-bold text-cyan-600`}>
+                {loggedStr}
               </span>
               <button
                 type="button"
                 className="timesheet-plus-circle cursor-pointer hover:bg-cyan-500 hover:text-white transition-colors"
-                title="Add logged hours (+1 hr)"
+                title="Add 1 hour to logged time"
                 onClick={() => {
-                  setLoggedHours((h) => Math.min(12, h + 1));
+                  setLoggedMinutes((m) => Math.min(TARGET_MINUTES + 120, m + 60));
                   showNotice('Logged +1 hr');
                 }}
               >
@@ -213,13 +337,13 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Break Time:</span>
             <div className="flex items-center gap-2">
-              <span className={`timesheet-metric-val ${breakMinutes > 0 ? 'font-semibold text-amber-600' : 'text-gray-400'}`}>
-                {breakMinutes > 0 ? `${breakMinutes} min` : '-'}
+              <span className="timesheet-metric-val font-semibold text-amber-600">
+                {breakMinutes} min
               </span>
               <button
                 type="button"
                 className="timesheet-plus-circle cursor-pointer hover:bg-amber-500 hover:text-white transition-colors"
-                title="Add break time (+15 min)"
+                title="Add 15 min break"
                 onClick={() => {
                   setBreakMinutes((m) => m + 15);
                   showNotice('Added +15 min break');
@@ -233,59 +357,66 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </div>
           </div>
 
-          {/* Unlogged Time */}
+          {/* Unlogged Time (Dynamically Computed) */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Unlogged Time:</span>
             <div className="flex items-center gap-2">
-              <span className="timesheet-metric-val font-semibold">08:00</span>
-              <button
-                type="button"
-                className="timesheet-plus-circle cursor-pointer hover:bg-cyan-500 hover:text-white transition-colors"
-                title="Log remaining unlogged time"
-                onClick={() => {
-                  setLoggedHours(8);
-                  showNotice('All 8 target hours logged');
-                }}
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
+              <span className={`timesheet-metric-val font-bold ${unloggedMinutes > 0 ? 'text-gray-900' : 'text-emerald-600'}`}>
+                {unloggedStr}
+              </span>
+              {unloggedMinutes > 0 && (
+                <button
+                  type="button"
+                  className="timesheet-plus-circle cursor-pointer hover:bg-cyan-500 hover:text-white transition-colors"
+                  title="Log remaining unlogged time"
+                  onClick={() => {
+                    setLoggedMinutes(TARGET_MINUTES);
+                    showNotice('Logged all 8 target hours');
+                  }}
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Action Links */}
-        {/* Timer notification / Active Timer badge */}
+        {/* Live Ticking Timer Card */}
         {timerActive && (
-          <div className="flex items-center justify-between mx-4 mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-800">
+          <div className="mt-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-900">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-semibold">Active Timer:</span>
-              <span className="font-mono text-emerald-900 font-bold">{formatTimer(timerSeconds)}</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold">Timer Running:</span>
+              <span className="font-mono font-bold text-sm text-emerald-800">{formatTimer(timerSeconds)}</span>
             </div>
             <button
               type="button"
               onClick={() => {
+                const addedMinutes = Math.max(1, Math.round(timerSeconds / 60));
+                setLoggedMinutes((m) => m + addedMinutes);
                 setTimerActive(false);
-                showNotice(`Timer recorded: ${formatTimer(timerSeconds)}`);
+                setTimerSeconds(0);
+                showNotice(`Timer logged: +${addedMinutes} min`);
               }}
-              className="text-[11px] text-emerald-700 hover:text-emerald-900 font-medium underline cursor-pointer"
+              className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-white border border-emerald-300 rounded px-2 py-0.5"
             >
               Stop &amp; Log
             </button>
           </div>
         )}
 
+        {/* Status Toast Banner */}
         {statusNotice && (
-          <div className="mx-4 mb-2 p-1.5 bg-cyan-50 border border-cyan-200 rounded text-[11px] text-cyan-800 text-center font-medium">
+          <div className="mt-3 p-2 bg-cyan-50 border border-cyan-200 rounded-lg text-xs text-cyan-800 text-center font-semibold">
             {statusNotice}
           </div>
         )}
 
         {/* Action Links */}
-        <div className="timesheet-links-row">
+        <div className="timesheet-links-row mt-3">
           <button
             type="button"
             className="timesheet-action-link cursor-pointer bg-transparent border-none text-left"
@@ -298,13 +429,15 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           </button>
           <button
             type="button"
-            className="timesheet-action-link cursor-pointer bg-transparent border-none text-left font-semibold text-cyan-600"
+            className={`timesheet-action-link cursor-pointer bg-transparent border-none text-left font-semibold ${
+              timerActive ? 'text-amber-600' : 'text-cyan-600'
+            }`}
             onClick={() => {
               setTimerActive((prev) => !prev);
-              showNotice(!timerActive ? 'Active timer started' : 'Timer stopped');
+              showNotice(!timerActive ? 'Active timer started ▶' : 'Timer paused');
             }}
           >
-            {timerActive ? 'Pause current timer' : 'Start a new timer ▶'}
+            {timerActive ? 'Pause current timer ⏸' : 'Start a new timer ▶'}
           </button>
         </div>
       </div>

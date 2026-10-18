@@ -21,6 +21,23 @@ export const PRIMARY_USER: User = {
 export const MOCK_ORGANISATION_USERS: User[] = [
   PRIMARY_USER,
   {
+    id: 'admin-001',
+    username: 'admin001',
+    firstName: 'Adam',
+    lastName: 'Admin',
+    fullName: 'Adam Admin',
+    email: 'admin@servigen.local',
+    phone: '+44 20 7946 0950',
+    networkLogin: 'CORP\\admin001',
+    defaultSite: 'London UK Branch',
+    defaultOrganisation: 'Acme Corp',
+    region: 'EMEA',
+    role: 'Administrator',
+    status: 'Active',
+    lastLogin: 'Just now',
+    department: 'IT Operations',
+  },
+  {
     id: 'USR-001',
     username: 'anjali.prasad',
     firstName: 'Anjali',

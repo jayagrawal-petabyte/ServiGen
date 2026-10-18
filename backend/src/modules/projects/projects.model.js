@@ -68,6 +68,15 @@ const mockProjects = [
   },
 ];
 
+const toIsoDateString = (val) => {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return !isNaN(val.getTime()) ? val.toISOString().split('T')[0] : null;
+  }
+  const d = new Date(val);
+  return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : String(val).split('T')[0];
+};
+
 const getProjects = async (options = {}) => {
   const { organisationId } = options;
 
@@ -82,8 +91,8 @@ const getProjects = async (options = {}) => {
         id: p.id,
         name: p.name,
         status: p.status,
-        startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
-        endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
+        startDate: toIsoDateString(p.startDate),
+        endDate: toIsoDateString(p.endDate),
         timeSpent: p.timeSpent,
         organisationId: 'org-001',
         subtasks: (p.subtasks || []).map((st) => ({
@@ -122,8 +131,8 @@ const getActiveProjects = async (options = {}) => {
         id: p.id,
         name: p.name,
         status: p.status,
-        startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
-        endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
+        startDate: toIsoDateString(p.startDate),
+        endDate: toIsoDateString(p.endDate),
         timeSpent: p.timeSpent,
         organisationId: 'org-001',
         subtasks: (p.subtasks || []).map((st) => ({
@@ -157,8 +166,8 @@ const getProjectById = async (projectId, organisationId = null) => {
           id: p.id,
           name: p.name,
           status: p.status,
-          startDate: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
-          endDate: p.endDate ? p.endDate.toISOString().split('T')[0] : null,
+          startDate: toIsoDateString(p.startDate),
+          endDate: toIsoDateString(p.endDate),
           timeSpent: p.timeSpent,
           organisationId: 'org-001',
           subtasks: (p.subtasks || []).map((st) => ({

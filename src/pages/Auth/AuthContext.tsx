@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials } from './types';
-import { MOCK_ORGANISATION_USERS, PRIMARY_USER } from './mockAuthData';
 import { api, setStoredToken, getStoredToken, setStoredUser, getStoredUser } from '../../services/apiClient';
 
 interface AuthContextType extends AuthState {
@@ -8,14 +7,14 @@ interface AuthContextType extends AuthState {
   backendConnected: boolean;
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => void;
-  switchUser: (userOrId: string | User) => void;
+  switchUser: (user: User) => void;
   updateUserRole: (userId: string, newRole: User['role']) => void;
   checkBackendHealth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const normalizeUser = (backendUser: any): User => {
+export const normalizeUser = (backendUser: any): User => {
   const firstName = backendUser.firstName || '';
   const lastName = backendUser.lastName || '';
   const fullName = `${firstName} ${lastName}`.trim() || backendUser.username || 'User';
@@ -34,13 +33,13 @@ const normalizeUser = (backendUser: any): User => {
     lastName,
     fullName,
     email: backendUser.email || '',
-    phone: backendUser.phone || '+91 98765 43200',
-    networkLogin: `CORP\\${backendUser.username || 'user'}`,
-    defaultSite: backendUser.siteId || 'Bangalore HQ',
-    defaultOrganisation: backendUser.organisationId || 'ServiGen Global Tech',
+    phone: backendUser.phone || backendUser.phoneNumber || '+91 98765 43200',
+    networkLogin: backendUser.networkLogin || `CORP\\${backendUser.username || 'user'}`,
+    defaultSite: backendUser.site?.name || backendUser.siteId || 'Bangalore HQ',
+    defaultOrganisation: backendUser.organisation?.name || backendUser.organisationId || 'ServiGen Global Tech',
     region: 'APAC',
     role,
-    status: backendUser.active !== false ? 'Active' : 'Inactive',
+    status: backendUser.active !== false && backendUser.availability !== 'Inactive' ? 'Active' : 'Inactive',
     lastLogin: 'Just now',
     department: backendUser.department || 'IT Operations',
   };
@@ -51,9 +50,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [authState, setAuthState] = useState<AuthState>(() => {
     const savedUser = getStoredUser();
+    const savedToken = getStoredToken();
     return {
-      isAuthenticated: true,
-      user: savedUser || PRIMARY_USER,
+      isAuthenticated: Boolean(savedUser && savedToken),
+      user: savedUser || null,
       loading: false,
       error: null,
     };
@@ -73,13 +73,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     checkBackendHealth();
+    
+    // Sync active session with backend API if a token exists (GET /api/auth/session)
+    const activeToken = getStoredToken();
+    if (activeToken) {
+      api.get('/api/auth/session')
+        .then((res) => {
+          const sessionUser = res?.data || res;
+          if (sessionUser && (sessionUser.id || sessionUser.username)) {
+            const normalized = normalizeUser(sessionUser);
+            setStoredUser(normalized);
+            setAuthState({
+              isAuthenticated: true,
+              user: normalized,
+              loading: false,
+              error: null,
+            });
+            setBackendConnected(true);
+          }
+        })
+        .catch(() => {
+          // If session is expired or invalid on the backend, clear session
+          setBackendConnected(false);
+        });
+    }
   }, []);
 
+  /**
+   * Authenticate strictly against live backend endpoint (POST /api/auth/login)
+   */
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      // 1. Attempt live backend login via /api/auth/login
       const res = await api.post('/api/auth/login', {
         username: credentials.username.trim(),
         password: credentials.password,
@@ -87,7 +113,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const authToken = res.token || res.data?.token;
       if (res.success && authToken) {
-        const normalized = normalizeUser(res.data || res);
+        const backendUserData = res.data?.user || res.data || res;
+        const normalized = normalizeUser(backendUserData);
         setStoredToken(authToken);
         setStoredUser(normalized);
         setToken(authToken);
@@ -100,35 +127,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         return true;
       }
-    } catch (err) {
-      console.warn('Backend login attempt encountered an issue, testing mock fallback:', err);
-    }
 
-    // 2. Fallback to mock organization users for offline/local resilience
-    const foundUser = MOCK_ORGANISATION_USERS.find(
-      (u) =>
-        u.username.toLowerCase() === credentials.username.trim().toLowerCase() ||
-        u.email.toLowerCase() === credentials.username.trim().toLowerCase()
-    );
-
-    if (foundUser) {
-      setStoredUser(foundUser);
       setAuthState({
-        isAuthenticated: true,
-        user: foundUser,
+        isAuthenticated: false,
+        user: null,
         loading: false,
-        error: null,
+        error: res.message || 'Invalid username or password.',
       });
-      return true;
+      return false;
+    } catch (err: any) {
+      const msg = err.message || 'Invalid username or password.';
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+        error: msg,
+      });
+      return false;
     }
-
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-      loading: false,
-      error: 'Invalid username or password.',
-    });
-    return false;
   };
 
   const logout = () => {
@@ -143,28 +159,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const switchUser = (userOrId: string | User) => {
-    if (typeof userOrId === 'object' && userOrId !== null) {
-      setStoredUser(userOrId);
+  const switchUser = (user: User) => {
+    if (user && typeof user === 'object') {
+      setStoredUser(user);
       setAuthState({
         isAuthenticated: true,
-        user: userOrId,
-        loading: false,
-        error: null,
-      });
-      return;
-    }
-    const found = MOCK_ORGANISATION_USERS.find(
-      (u) =>
-        u.id === userOrId ||
-        u.fullName.toLowerCase() === userOrId.toLowerCase() ||
-        u.username.toLowerCase() === userOrId.toLowerCase()
-    );
-    if (found) {
-      setStoredUser(found);
-      setAuthState({
-        isAuthenticated: true,
-        user: found,
+        user,
         loading: false,
         error: null,
       });

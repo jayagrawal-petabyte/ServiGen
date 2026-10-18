@@ -7,6 +7,9 @@ const {
   getTicket,
   changeTicketStatus,
   logTicketTime,
+  createAgentTicket,
+  updateAgentTicketFields,
+  deleteAgentTicket,
 } = require('./my-work.service');
 
 /**
@@ -163,6 +166,54 @@ const logTimeHandler = async (req, res) => {
   }
 };
 
+/**
+ * POST /my-work - Create and assign a new ticket
+ */
+const createTicketHandler = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const created = await createAgentTicket(req.body, agentId);
+    return res.status(201).json({
+      success: true,
+      data: created,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to create ticket');
+  }
+};
+
+/**
+ * PATCH /my-work/:ticketId - Update arbitrary ticket fields (priority, agent, summary)
+ */
+const updateTicketFieldsHandler = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const updated = await updateAgentTicketFields(req.params.ticketId, req.body, agentId);
+    return res.status(200).json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to update ticket fields');
+  }
+};
+
+/**
+ * DELETE /my-work/:ticketId - Delete a ticket
+ */
+const deleteTicketHandler = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const result = await deleteAgentTicket(req.params.ticketId, agentId);
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to delete ticket');
+  }
+};
+
 module.exports = {
   listMyWorkTickets,
   listActiveTickets,
@@ -172,4 +223,7 @@ module.exports = {
   getTicketDetails,
   updateTicketStatusHandler,
   logTimeHandler,
+  createTicketHandler,
+  updateTicketFieldsHandler,
+  deleteTicketHandler,
 };

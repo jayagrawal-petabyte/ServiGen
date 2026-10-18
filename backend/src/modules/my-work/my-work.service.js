@@ -3,6 +3,7 @@ const {
   getTicketById,
   saveTicket,
   updateTicket,
+  deleteTicket,
 } = require('./my-work.model');
 
 const VALID_STATUSES = ['Active', 'Pending', 'Actioned', 'On Hold'];
@@ -345,6 +346,100 @@ const logTicketTime = async (ticketId, minutesSpent, agentId) => {
   return formatTicket(updatedTicket);
 };
 
+/**
+ * Create a new ticket assigned to the agent
+ */
+const createAgentTicket = async (ticketData = {}, agentId = 'agent-001') => {
+  if (!ticketData.summary || typeof ticketData.summary !== 'string') {
+    const error = new Error('summary is required and must be a string');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const id = ticketData.id || `TICK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const ticketType = ticketData.ticketType || (ticketData.type === 'Service Request' ? 'Service Request' : 'Incident');
+  const priority = VALID_PRIORITIES.find(
+    (p) => p.toLowerCase() === (ticketData.priority || 'Medium').toLowerCase()
+  ) || 'Medium';
+
+  const status = VALID_STATUSES.find(
+    (s) => s.toLowerCase() === (ticketData.status || 'Active').toLowerCase()
+  ) || (ticketData.status === 'On H' ? 'On Hold' : 'Active');
+
+  const newTicket = {
+    id,
+    summary: ticketData.summary.trim(),
+    priority,
+    status,
+    ticketType,
+    organisation: ticketData.organisation || ticketData.org || 'consultancy',
+    site: ticketData.site || 'EMEA',
+    assignedAgentId: agentId,
+    slaTimeLeft: typeof ticketData.slaTimeLeft === 'number' ? ticketData.slaTimeLeft : 240,
+    timeRecord: 0,
+    holdReason: status === 'On Hold' ? ticketData.holdReason || 'Customer investigation in progress' : null,
+    holdStartedAt: status === 'On Hold' ? new Date().toISOString() : null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    description: ticketData.description || ticketData.summary.trim(),
+  };
+
+  const saved = await saveTicket(newTicket);
+  return formatTicket(saved);
+};
+
+/**
+ * Update arbitrary fields on a ticket (priority, assignedAgentId, summary, holdReason, status)
+ */
+const updateAgentTicketFields = async (ticketId, changes = {}, agentId) => {
+  const existingTicket = await getTicketById(ticketId);
+  if (!existingTicket) {
+    const error = new Error(`Ticket with ID '${ticketId}' not found`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const allowedChanges = {};
+  if (changes.priority) {
+    const matchedPriority = VALID_PRIORITIES.find(
+      (p) => p.toLowerCase() === changes.priority.trim().toLowerCase()
+    );
+    if (matchedPriority) allowedChanges.priority = matchedPriority;
+  }
+  if (changes.assignedAgentId && typeof changes.assignedAgentId === 'string') {
+    allowedChanges.assignedAgentId = changes.assignedAgentId.trim();
+  }
+  if (changes.summary && typeof changes.summary === 'string') {
+    allowedChanges.summary = changes.summary.trim();
+  }
+  if (changes.status) {
+    const matchedStatus = VALID_STATUSES.find(
+      (s) => s.toLowerCase() === changes.status.trim().toLowerCase()
+    );
+    if (matchedStatus) allowedChanges.status = matchedStatus;
+  }
+  if (changes.holdReason !== undefined) {
+    allowedChanges.holdReason = changes.holdReason;
+  }
+
+  const updated = await updateTicket(ticketId, allowedChanges);
+  return formatTicket(updated);
+};
+
+/**
+ * Delete a ticket
+ */
+const deleteAgentTicket = async (ticketId, agentId) => {
+  const existingTicket = await getTicketById(ticketId);
+  if (!existingTicket) {
+    const error = new Error(`Ticket with ID '${ticketId}' not found`);
+    error.statusCode = 404;
+    throw error;
+  }
+  await deleteTicket(ticketId);
+  return { id: ticketId, deleted: true };
+};
+
 module.exports = {
   VALID_STATUSES,
   VALID_PRIORITIES,
@@ -363,4 +458,7 @@ module.exports = {
   getTicket,
   changeTicketStatus,
   logTicketTime,
+  createAgentTicket,
+  updateAgentTicketFields,
+  deleteAgentTicket,
 };

@@ -152,10 +152,17 @@ export default function ArticleDraftDetailModal({
     >
       <div
         className="modal-content"
-        style={{ maxWidth: '720px' }}
+        style={{
+          maxWidth: '720px',
+          backgroundColor: '#ffffff',
+          borderRadius: '18px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid #f0ede8',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
+        <div className="modal-header" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }}>
           <div
             style={{
               display: 'flex',

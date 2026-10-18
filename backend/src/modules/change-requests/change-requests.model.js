@@ -238,21 +238,25 @@ const createChangeRequest = async (payload) => {
   } = payload;
 
   if (process.env.NODE_ENV !== 'test') {
-    const cr = await db.changeRequest.create({
-      data: {
-        summary,
-        changeType,
-        status: 'Draft',
-        ciId: ciId || undefined,
-        ciTag: ciTag || undefined,
-        assignedAgentId: assignedAgentId || undefined,
-        relatedService: relatedService || undefined,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
-      },
-      include: crInclude,
-    });
-    return formatRecord(cr);
+    try {
+      const cr = await db.changeRequest.create({
+        data: {
+          summary,
+          changeType,
+          status: 'Draft',
+          ciId: ciId || undefined,
+          ciTag: ciTag || undefined,
+          assignedAgentId: assignedAgentId || undefined,
+          relatedService: relatedService || undefined,
+          startDate: startDate ? new Date(startDate) : undefined,
+          endDate: endDate ? new Date(endDate) : undefined,
+        },
+        include: crInclude,
+      });
+      return formatRecord(cr);
+    } catch (_err) {
+      // Database unreachable — fall through to in-memory mock.
+    }
   }
 
   // Mock fallback for test env — generate a sequential-looking ID
