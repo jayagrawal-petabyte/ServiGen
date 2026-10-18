@@ -491,31 +491,26 @@ export default function MyWork() {
     <div className="min-h-full bg-slate-50 flex">
       {/* Left Sidebar Panel */}
       <aside
-        className={`transition-all duration-200 shrink-0 flex flex-col py-5 ${
+        className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border-r border-[#d4887b] ${
           isSidebarCollapsed ? "w-16 px-2" : "w-64 px-4"
         }`}
-        style={{
-          borderRight: "1px solid var(--border-subtle, #e2e8f0)",
-          backgroundColor: "var(--bg-card, #ffffff)",
-        }}
       >
         {/* Sidebar Header with Collapse Toggle */}
         <div
           className={
-            "flex items-center mb-4 pb-3 border-b " +
+            "flex items-center mb-4 pb-3 border-b border-[#d4887b] " +
             (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
           }
-          style={{ borderColor: "var(--border-subtle, #e2e8f0)" }}
         >
           {!isSidebarCollapsed && (
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#542d25]">
               Views
             </span>
           )}
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-            className="inline-flex items-center justify-center rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-bold"
+            className="inline-flex items-center justify-center rounded-md p-1.5 text-[#3a201a] hover:bg-black/5 transition-colors text-xs font-bold cursor-pointer"
             title={isSidebarCollapsed ? "Expand sidebar (>>)" : "Collapse sidebar (<<)"}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -535,25 +530,18 @@ export default function MyWork() {
                 onClick={() => setActiveView(item.label)}
                 title={isSidebarCollapsed ? item.label : undefined}
                 className={
-                  "flex items-center rounded-lg text-sm transition-all " +
+                  "flex items-center rounded-lg text-sm transition-all cursor-pointer " +
                   (isSidebarCollapsed
                     ? "justify-center w-10 h-10 mx-auto p-0 "
                     : "w-full gap-3 px-3 py-2.5 ") +
                   (isActive
-                    ? "shadow-sm font-semibold text-white"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium")
-                }
-                style={
-                  isActive
-                    ? {
-                        backgroundColor: "#eb6a47",
-                        color: "#ffffff",
-                        boxShadow: "0 2px 8px rgba(235, 106, 71, 0.3)",
-                      }
-                    : undefined
+                    ? "bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs"
+                    : "text-[#3a201a] hover:bg-black/5 font-medium")
                 }
               >
-                {item.icon(isActive)}
+                <div className={`shrink-0 ${isActive ? "text-[#1c0f0c]" : "text-[#3a201a]"}`}>
+                  {item.icon(isActive)}
+                </div>
                 {!isSidebarCollapsed && (
                   <span className="truncate">{item.label}</span>
                 )}
