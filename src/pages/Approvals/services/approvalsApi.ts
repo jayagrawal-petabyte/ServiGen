@@ -1,4 +1,4 @@
-import { apiClient, ApiError } from '../../../services/apiClient';
+import { apiClient } from '../../../services/apiClient';
 import type { Approval, TicketDetails } from '../ApprovalCard';
 import { articleDraftsApi } from '../../ArticleDrafts/services/articleDraftsApi';
 import type { ArticleDraft } from '../../ArticleDrafts/articleDrafts.types';
@@ -15,7 +15,6 @@ export interface BackendApproval {
 }
 
 const STORAGE_KEY = 'servigen_approvals_cache_v3';
-const MOCK_STORAGE_KEY = 'servigen_approvals_mock_v3';
 
 /**
  * Helper to compute friendly relative time string from ISO date string
@@ -155,29 +154,6 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
 }
 
 /**
- * Isolated development/mock storage helper
- */
-function getMockApprovals(): Approval[] {
-  try {
-    const raw = localStorage.getItem(MOCK_STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch {
-    // fallback
-  }
-  return [];
-}
-
-function setMockApprovals(list: Approval[]): void {
-  try {
-    localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(list));
-  } catch {
-    // fallback
-  }
-}
-
-/**
  * Cache helper for live API state (to keep approved/rejected status across tab switching)
  */
 function getCachedApprovals(): Record<string, Approval> {
@@ -221,29 +197,24 @@ export const approvalsApi = {
   /**
    * Fetch pending approvals from GET /api/approvals/pending merged with awaiting article drafts.
    */
-  async getPendingApprovals(useMockFallback = false): Promise<Approval[]> {
+  async getPendingApprovals(): Promise<Approval[]> {
     let baseApprovals: Approval[] = [];
 
-    if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 100));
-      baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
-    } else {
-      try {
-        const response: any = await apiClient.get<BackendApproval[]>('/api/approvals');
-        const backendItems = Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response)
-          ? response
-          : [];
-        if (backendItems.length > 0) {
-          baseApprovals = backendItems.map((item: any) => adaptBackendApproval(item));
-        } else {
-          baseApprovals = [];
-        }
-      } catch (err) {
-        console.warn('Backend /api/approvals offline or unreachable:', err);
+    try {
+      const response: any = await apiClient.get<BackendApproval[]>('/api/approvals');
+      const backendItems = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+      if (backendItems.length > 0) {
+        baseApprovals = backendItems.map((item: any) => adaptBackendApproval(item));
+      } else {
         baseApprovals = [];
       }
+    } catch (err) {
+      console.warn('Backend /api/approvals offline or unreachable:', err);
+      baseApprovals = [];
     }
 
     // Always fetch pending article drafts currently awaiting approval
@@ -275,7 +246,7 @@ export const approvalsApi = {
   /**
    * Fetch approval details by ID from GET /api/approvals/:approvalId
    */
-  async getApprovalById(approvalId: string, useMockFallback = false): Promise<Approval> {
+  async getApprovalById(approvalId: string): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
     }
@@ -293,39 +264,20 @@ export const approvalsApi = {
       return adapted;
     }
 
-    if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 100));
-      const found = getMockApprovals().find((a) => a.id === approvalId);
-      if (!found) {
-        throw new ApiError(`Approval #${approvalId} not found`, 404);
-      }
-      return found;
-    }
-
-    try {
-      const response = await apiClient.get<BackendApproval>(
-        `/api/approvals/${encodeURIComponent(approvalId)}`
-      );
-      const raw = (response as any)?.data || response;
-      const adapted = adaptBackendApproval(raw);
-      cacheApproval(adapted);
-      return adapted;
-    } catch (err) {
-      console.warn(`Backend GET /api/approvals/${approvalId} offline, checking local storage:`, err);
-      const found = getMockApprovals().find((a) => a.id === approvalId);
-      if (found) {
-        cacheApproval(found);
-        return found;
-      }
-      throw err;
-    }
+    const response = await apiClient.get<BackendApproval>(
+      `/api/approvals/${encodeURIComponent(approvalId)}`
+    );
+    const raw = (response as any)?.data || response;
+    const adapted = adaptBackendApproval(raw);
+    cacheApproval(adapted);
+    return adapted;
   },
 
   /**
    * Approve a pending request via PATCH /api/approvals/:approvalId/approve
    * If approving an article draft, updates the draft status to 'Published'.
    */
-  async approveRequest(approvalId: string, useMockFallback = false): Promise<Approval> {
+  async approveRequest(approvalId: string): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
     }
@@ -340,37 +292,13 @@ export const approvalsApi = {
       return approved;
     }
 
-    if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 150));
-      const list = getMockApprovals();
-      const item = list.find((a) => a.id === approvalId);
-      if (!item) throw new ApiError(`Approval #${approvalId} not found`, 404);
-      const updated: Approval = { ...item, status: 'approved' };
-      setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
-      cacheApproval(updated);
-      return updated;
-    }
-
-    try {
-      const response = await apiClient.patch<BackendApproval>(
-        `/api/approvals/${encodeURIComponent(approvalId)}/approve`
-      );
-      const adapted = adaptBackendApproval(response);
-      adapted.status = 'approved';
-      cacheApproval(adapted);
-      return adapted;
-    } catch (err) {
-      console.warn(`Backend PATCH /api/approvals/${approvalId}/approve offline/failed, updating local state:`, err);
-      const list = getMockApprovals();
-      const item = list.find((a) => a.id === approvalId);
-      if (item) {
-        const updated: Approval = { ...item, status: 'approved' };
-        setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
-        cacheApproval(updated);
-        return updated;
-      }
-      throw err;
-    }
+    const response = await apiClient.patch<BackendApproval>(
+      `/api/approvals/${encodeURIComponent(approvalId)}/approve`
+    );
+    const adapted = adaptBackendApproval(response);
+    adapted.status = 'approved';
+    cacheApproval(adapted);
+    return adapted;
   },
 
   /**
@@ -379,8 +307,7 @@ export const approvalsApi = {
    */
   async rejectRequest(
     approvalId: string,
-    reason: string,
-    useMockFallback = false
+    reason: string
   ): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
@@ -402,59 +329,27 @@ export const approvalsApi = {
       return rejected;
     }
 
-    if (useMockFallback) {
-      await new Promise((r) => setTimeout(r, 150));
-      const list = getMockApprovals();
-      const item = list.find((a) => a.id === approvalId);
-      if (!item) throw new ApiError(`Approval #${approvalId} not found`, 404);
-      const updated: Approval = {
-        ...item,
-        status: 'rejected',
-        rejectReason: trimmedReason,
-      };
-      setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
-      cacheApproval(updated);
-      return updated;
-    }
-
-    try {
-      const response = await apiClient.patch<BackendApproval>(
-        `/api/approvals/${encodeURIComponent(approvalId)}/reject`,
-        { reason: trimmedReason }
-      );
-      const adapted = adaptBackendApproval(response, trimmedReason);
-      adapted.status = 'rejected';
-      adapted.rejectReason = trimmedReason;
-      cacheApproval(adapted);
-      return adapted;
-    } catch (err) {
-      console.warn(`Backend PATCH /api/approvals/${approvalId}/reject offline/failed, updating local state:`, err);
-      const list = getMockApprovals();
-      const item = list.find((a) => a.id === approvalId);
-      if (item) {
-        const updated: Approval = {
-          ...item,
-          status: 'rejected',
-          rejectReason: trimmedReason,
-        };
-        setMockApprovals(list.map((a) => (a.id === approvalId ? updated : a)));
-        cacheApproval(updated);
-        return updated;
-      }
-      throw err;
-    }
+    const response = await apiClient.patch<BackendApproval>(
+      `/api/approvals/${encodeURIComponent(approvalId)}/reject`,
+      { reason: trimmedReason }
+    );
+    const adapted = adaptBackendApproval(response, trimmedReason);
+    adapted.status = 'rejected';
+    adapted.rejectReason = trimmedReason;
+    cacheApproval(adapted);
+    return adapted;
   },
 
   /**
    * Batch approve pending requests
    */
-  async batchApprove(approvalIds: string[], useMockFallback = false): Promise<string[]> {
+  async batchApprove(approvalIds: string[]): Promise<string[]> {
     if (!Array.isArray(approvalIds) || approvalIds.length === 0) {
       throw new Error('Validation Error: At least one approval ID must be provided.');
     }
 
     const results = await Promise.allSettled(
-      approvalIds.map((id) => this.approveRequest(id, useMockFallback))
+      approvalIds.map((id) => this.approveRequest(id))
     );
 
     const succeeded: string[] = [];
@@ -481,15 +376,14 @@ export const approvalsApi = {
    */
   async batchReject(
     approvalIds: string[],
-    reason = 'Bulk rejection by user',
-    useMockFallback = false
+    reason = 'Bulk rejection by user'
   ): Promise<string[]> {
     if (!Array.isArray(approvalIds) || approvalIds.length === 0) {
       throw new Error('Validation Error: At least one approval ID must be provided.');
     }
 
     const results = await Promise.allSettled(
-      approvalIds.map((id) => this.rejectRequest(id, reason, useMockFallback))
+      approvalIds.map((id) => this.rejectRequest(id, reason))
     );
 
     const succeeded: string[] = [];
@@ -512,11 +406,9 @@ export const approvalsApi = {
   },
 
   /**
-   * Reset mock data to default seed for demo mode
+   * Reset session cache
    */
   async resetMockData(): Promise<Approval[]> {
-    await new Promise((r) => setTimeout(r, 150));
-    setMockApprovals([]);
     localStorage.removeItem(STORAGE_KEY);
     return [];
   },
