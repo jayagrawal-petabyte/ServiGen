@@ -4,8 +4,8 @@
 .calendar-page {
   --cal-bg: #fff7f3;
   --cal-surface: #ffffff;
-  --cal-panel: #f8c5b1;
-  --cal-panel-strong: #f2a487;
+  --cal-panel: #e49b8e;
+  --cal-panel-strong: #d4887b;
   --cal-btn: #f4a98d;
   --cal-btn-hover: #ef9373;
   --cal-accent: #d9694f;
@@ -43,7 +43,9 @@
 
 .cal-side {
   background: var(--cal-panel);
-  border-radius: 28px;
+  border: 1px solid #d4887b;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   padding: 18px 12px 24px;
   display: flex;
   flex-direction: column;

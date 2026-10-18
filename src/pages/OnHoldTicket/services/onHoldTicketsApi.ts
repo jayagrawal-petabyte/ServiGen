@@ -21,9 +21,9 @@ export interface BackendOnHoldTicket {
   description?: string;
 }
 
-const STORAGE_KEY_ONHOLD = 'servigen_onhold_tickets_cache_v2';
-const STORAGE_KEY_ACTIVE = 'servigen_active_tickets_cache_v2';
-const STORAGE_KEY_ACTIONED = 'servigen_actioned_tickets_cache_v2';
+const STORAGE_KEY_ONHOLD = 'servigen_onhold_tickets_cache_v3';
+const STORAGE_KEY_ACTIVE = 'servigen_active_tickets_cache_v3';
+const STORAGE_KEY_ACTIONED = 'servigen_actioned_tickets_cache_v3';
 
 export interface QueueCounts {
   active: number;

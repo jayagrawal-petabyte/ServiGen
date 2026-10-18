@@ -1,13 +1,13 @@
 /* --- Left Panel (Major Incident Sidebar Palette Match) --- */
 .left-panel {
-  width: 220px;
+  width: 250px;
   background: #e49b8e;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
   margin: 12px;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid #d4887b;
   user-select: none;

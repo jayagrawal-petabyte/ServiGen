@@ -44,18 +44,19 @@
 
 /* --- Peach Sub-Navigation Panel --- */
 .article-drafts-subnav {
-  width: 280px;
+  width: 250px;
   min-height: calc(100vh - 120px);
   min-height: 720px;
-  background-color: #f7c9bc;
-  border-radius: 28px;
+  background-color: #e49b8e;
+  border: 1px solid #d4887b;
+  border-radius: 20px;
   padding: 24px 18px 36px 18px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   flex-shrink: 0;
   box-sizing: border-box;
-  box-shadow: 0 6px 24px rgba(246, 192, 175, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .subnav-search-box {

@@ -33,6 +33,16 @@ export interface Ticket {
   targetSla?: string;
 }
 
+export const NEW_TICKETS_DATA: Ticket[] = [
+];
+// Mock data removed — data comes from backend API
+
+
+export const ALL_TICKETS: Ticket[] = [
+];
+// Mock data removed — data comes from backend API
+
+
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -182,9 +192,14 @@ const OnHoldTicketScreen: React.FC = () => {
       } else {
         liveTickets = await fetchOnHoldTickets([]);
       }
-      setTickets(liveTickets);
+      if (liveTickets && liveTickets.length > 0) {
+        setTickets(liveTickets);
+      } else {
+        setTickets([]);
+      }
     } catch (err) {
       console.warn("Failed to fetch tickets from backend:", err);
+      setTickets([]);
     } finally {
       setIsLoading(false);
     }
@@ -426,14 +441,11 @@ const OnHoldTicketScreen: React.FC = () => {
       <div className="main-area">
 
         {/* Top Nav */}
-        <div className="top-navbar">
+        <header className="top-navbar">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Service Desk</span>
             <span>/</span>
             <span className="text-gray-900">On-Hold Tickets</span>
-          </div>
-          <div className="topnav-tab-bar">
-            <span className="tab-plus" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>+</span>
           </div>
           <div className="topnav-right">
             <GlobalNavbarActions
@@ -444,7 +456,7 @@ const OnHoldTicketScreen: React.FC = () => {
               }}
             />
           </div>
-        </div>
+        </header>
 
 
         {/* Content */}

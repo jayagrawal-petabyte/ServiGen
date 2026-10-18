@@ -21,21 +21,21 @@ const DEFAULT_LIST_ITEMS: MyListItem[] = [
     id: 'my-new-tickets',
     label: 'My New Tickets',
     icon: '📰',
-    badge: 0,
+    badge: 12,
     category: 'Active',
   },
   {
     id: 'my-on-hold-tickets',
     label: 'My On Hold Tickets',
     icon: '⛔',
-    badge: 0,
+    badge: 24,
     category: 'Pending',
   },
   {
     id: 'my-closed-tickets',
     label: 'My Closed Tickets',
     icon: '✓',
-    badge: 0,
+    badge: 84,
     category: 'Actioned',
   },
   {
@@ -105,14 +105,14 @@ const MyList: React.FC<MyListProps> = ({
 
   // Merge static list items with live counts & synchronize active badge with table length
   const items: MyListItem[] = DEFAULT_LIST_ITEMS.map((item) => {
-    let badge = 0;
+    let badge = item.badge ?? 0;
     if (counts) {
-      if (item.id === 'my-new-tickets') {
-        badge = counts.active ?? 0;
-      } else if (item.id === 'my-on-hold-tickets') {
-        badge = counts.onHold ?? counts.pending ?? 0;
-      } else if (item.id === 'my-closed-tickets') {
-        badge = counts.actioned ?? 0;
+      if (item.id === 'my-new-tickets' && counts.active !== undefined) {
+        badge = counts.active;
+      } else if (item.id === 'my-on-hold-tickets' && (counts.onHold !== undefined || counts.pending !== undefined)) {
+        badge = counts.onHold ?? counts.pending ?? badge;
+      } else if (item.id === 'my-closed-tickets' && counts.actioned !== undefined) {
+        badge = counts.actioned;
       }
     }
     // Synchronize active view badge with real ticket list count (e.g. 12)

@@ -24,7 +24,7 @@ export const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
   const isCmdbOrChanges = activeModule === 'cmdb' || activeModule === 'change-requests';
 
   return (
-    <aside className="w-64 bg-white p-4 flex flex-col gap-6 shrink-0 border-r border-slate-200 select-none shadow-xs">
+    <aside className="w-60 bg-white p-4 flex flex-col gap-6 shrink-0 border-r border-slate-200 select-none shadow-xs">
       {/* Search Bar Input */}
       <div className="relative w-full">
         <input

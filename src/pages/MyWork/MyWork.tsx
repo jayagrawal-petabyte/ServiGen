@@ -519,8 +519,8 @@ export default function MyWork() {
       <div className="flex flex-1 min-h-0 w-full">
         {/* Left Sidebar Panel */}
         <aside
-          className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border-r border-[#d4887b] h-auto min-h-full ${
-            isSidebarCollapsed ? "w-16 px-2" : "w-64 px-4"
+          className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#e49b8e] border border-[#d4887b] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] my-3 ml-3 overflow-hidden ${
+            isSidebarCollapsed ? "w-16 px-2" : "w-[250px] px-4"
           }`}
         >
           {/* Sidebar Header with Collapse Toggle */}

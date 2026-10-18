@@ -90,7 +90,7 @@
 /* CATALOGUE LAYOUT */
 .catalogue-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 250px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -98,8 +98,10 @@
 /* CATEGORY SIDEBAR */
 .category-sidebar {
   padding: 20px 16px 32px 16px;
-  border-radius: 28px;
-  background: #ffc2b0;
+  border-radius: 20px;
+  background: #e49b8e;
+  border: 1px solid #d4887b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
 

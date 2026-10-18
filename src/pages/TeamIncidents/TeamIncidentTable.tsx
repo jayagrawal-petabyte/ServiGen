@@ -37,10 +37,10 @@ function TeamIncidentTable({
   const { user } = useAuth();
   const isSecondLine = team.toLowerCase().includes("2nd");
 
-  const [incidents, setIncidents] = useState<TeamIncident[]>(INITIAL_ALL_TEAM_INCIDENTS);
+  const [incidents, setIncidents] = useState<TeamIncident[]>([]);
   const [firstLineAgents, setFirstLineAgents] = useState<SupportAgent[]>([]);
   const [secondLineAgents, setSecondLineAgents] = useState<SupportAgent[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Sync incidents and agents with live backend API
   useEffect(() => {

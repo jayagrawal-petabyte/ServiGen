@@ -4,7 +4,7 @@
 .projects-page {
   --pj-bg: #fff7f3;
   --pj-surface: #ffffff;
-  --pj-panel: #f8c5b1;
+  --pj-panel: #e49b8e;
   --pj-btn: #f4a98d;
   --pj-btn-hover: #ef9373;
   --pj-accent: #f0694a;
@@ -22,7 +22,7 @@
   --pj-new: #1e6b35;
 
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 250px 1fr;
   gap: 40px;
   padding: 24px 32px 24px 24px;
   min-height: 100vh;
@@ -59,7 +59,9 @@
 
 .pj-side {
   background: var(--pj-panel);
-  border-radius: 32px;
+  border: 1px solid #d4887b;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   padding: 24px 10px 32px;
   display: flex;
   flex-direction: column;
