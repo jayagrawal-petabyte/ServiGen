@@ -108,44 +108,53 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   };
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#faf6f2] select-none">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Change Management
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Active change requests, implementation windows, risk review, and rollback checklists
-          </p>
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#faf6f2] select-none">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Change Requests</span>
         </div>
+        <GlobalNavbarActions />
+      </header>
 
-        <div className="flex items-center gap-2.5">
-          {/* Refresh button */}
-          <button
-            type="button"
-            onClick={() => loadData()}
-            disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
-            title="Fetch latest from backend API"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
-            <span>Refresh</span>
-          </button>
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        {/* Top Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Change Management
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              Active change requests, implementation windows, risk review, and rollback checklists
+            </p>
+          </div>
 
-          {/* New Change Request Button */}
-          <Button
-            variant="primary"
-            onClick={onOpenCreateModal}
-            className="shadow-md shadow-[#eb6a47]/20 whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4 shrink-0" />
-            <span>New Change Request</span>
-          </Button>
+          <div className="flex items-center gap-2.5">
+            {/* Refresh button */}
+            <button
+              type="button"
+              onClick={() => loadData()}
+              disabled={isLoading}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+              title="Fetch latest from backend API"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#eb6a47]' : ''}`} />
+              <span>Refresh</span>
+            </button>
 
-          <GlobalNavbarActions />
+            {/* New Change Request Button */}
+            <Button
+              variant="primary"
+              onClick={onOpenCreateModal}
+              className="shadow-md shadow-[#eb6a47]/20 whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>New Change Request</span>
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Error state */}
       {error && (
@@ -464,6 +473,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
           />
         </div>
       )}
+      </div>
     </div>
   );
 };

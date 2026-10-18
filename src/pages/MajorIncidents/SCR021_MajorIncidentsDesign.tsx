@@ -89,18 +89,10 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
     <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-100 overflow-hidden font-sans relative">
       {/* Top Navbar */}
       <header className="flex items-center justify-between px-6 py-2 bg-white border-b border-gray-200 shrink-0 min-h-[50px] w-full z-10">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span
-            onClick={() => navigate('/major-incidents/live')}
-            className="cursor-pointer hover:text-[#eb6a47] transition-colors"
-          >
-            Major Incidents
-          </span>
-          <span className="text-gray-400">&gt;</span>
-          <div className="flex items-center gap-1.5 text-gray-900 font-semibold">
-            <div className="w-3 h-3 bg-red-500 rounded-sm" />
-            Update Required (Design Preview)
-          </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Major Incidents</span>
         </div>
 
         <div className="flex items-center gap-3">

@@ -3256,8 +3256,8 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 Q
               </div>
               <div>
-                <span className="font-bold text-gray-900 block text-sm">Demo User</span>
-                <span className="text-gray-500 text-xs">user@servigen.io</span>
+                <span className="font-bold text-gray-900 block text-sm">Inesh Agarwal</span>
+                <span className="text-gray-500 text-xs">inesh@servigen.io</span>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">
                   ITSM Administrator ● Online
                 </span>

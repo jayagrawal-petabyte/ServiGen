@@ -651,20 +651,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
       {/* Full-width top navbar */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
-          <span
-            className="text-gray-400 hover:text-gray-700 cursor-pointer"
-            onClick={() => setSelectedListId('update-required')}
-          >
-            Major Incidents
-          </span>
-          <span className="text-gray-300">›</span>
-          <span className="flex items-center gap-1.5 font-bold text-gray-900">
-            {!['🌐', '📊', '📅'].some((icon) => (BREADCRUMB_LABELS[selectedListId] || '').includes(icon)) && (
-              <span className="w-2.5 h-2.5 bg-red-500 rounded-xs inline-block shrink-0" />
-            )}
-            {BREADCRUMB_LABELS[selectedListId] ?? selectedListId}
-          </span>
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Major Incidents</span>
         </div>
 
         <GlobalNavbarActions

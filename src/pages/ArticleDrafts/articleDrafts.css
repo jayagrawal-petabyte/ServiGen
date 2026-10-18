@@ -13,17 +13,16 @@
 
 /* --- Top Application Navbar --- */
 .article-drafts-top-navbar {
-  height: 52px;
+  height: 64px;
   background-color: #ffffff;
   border-bottom: 1px solid #f0ede8;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
+  justify-content: flex-end;
+  padding: 0 32px;
   width: 100%;
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  box-sizing: border-box;
 }
 
 .article-drafts-top-navbar-right {
@@ -35,24 +34,25 @@
 /* Main Layout Container (Sidebar + Content) */
 .article-drafts-main-layout {
   display: flex;
-  gap: 20px;
-  padding: 20px 24px 40px;
+  gap: 36px;
+  padding: 24px 32px 48px;
+  max-width: 1560px;
   width: 100%;
   align-items: stretch;
-  box-sizing: border-box;
+  margin: 0 auto;
 }
 
 /* --- Peach Sub-Navigation Panel --- */
 .article-drafts-subnav {
-  width: 280px;
+  width: 295px;
   min-height: calc(100vh - 120px);
-  min-height: 720px;
+  min-height: 780px;
   background-color: #f7c9bc;
-  border-radius: 28px;
-  padding: 24px 18px 36px 18px;
+  border-radius: 32px;
+  padding: 26px 20px 40px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   flex-shrink: 0;
   box-sizing: border-box;
   box-shadow: 0 6px 24px rgba(246, 192, 175, 0.35);
@@ -368,21 +368,18 @@
 }
 
 .sla-pill.warning {
-  background-color: var(--badge-draft-bg, #fefce8);
-  color: var(--text-sidebar-active, #b45309);
-  border: 1px solid var(--accent-tan, #fde68a);
+  background-color: #fefce8;
+  color: #ca8a04;
 }
 
 .sla-pill.safe {
-  background-color: var(--badge-approved-bg, #dcfce7);
-  color: var(--badge-approved-text, #16a34a);
-  border: 1px solid var(--badge-approved-bg, #bbf7d0);
+  background-color: #e6f9ed;
+  color: #059669;
 }
 
 .sla-pill.overdue {
-  background-color: var(--badge-overdue-bg, #ffe4e6);
-  color: var(--badge-overdue-text, #e11d48);
-  border: 1px solid var(--badge-overdue-bg, #fecdd3);
+  background-color: #ffeceb;
+  color: #e11d48;
 }
 
 .sla-dot {
@@ -393,15 +390,15 @@
 }
 
 .sla-dot.warning {
-  background-color: var(--text-sidebar-active, #d97706);
+  background-color: #ca8a04;
 }
 
 .sla-dot.safe {
-  background-color: var(--badge-approved-text, #16a34a);
+  background-color: #059669;
 }
 
 .sla-dot.overdue {
-  background-color: var(--badge-overdue-text, #e11d48);
+  background-color: #e11d48;
 }
 
 /* Summary Cell */
@@ -468,23 +465,23 @@
 }
 
 .status-pill.draft {
-  background-color: var(--badge-draft-bg, #fdeee8);
-  color: var(--badge-draft-text, #b84c2a);
+  background-color: #fde8e3;
+  color: #c2593f;
 }
 
 .status-pill.awaiting {
-  background-color: var(--badge-awaiting-bg, #1e293b);
-  color: var(--badge-awaiting-text, #ffffff);
+  background-color: #2b3d5b;
+  color: #ffffff;
 }
 
 .status-pill.rejected {
-  background-color: var(--badge-rejected-bg, #fee2e2);
-  color: var(--badge-rejected-text, #dc2626);
+  background-color: #ffeceb;
+  color: #e11d48;
 }
 
 .status-pill.published {
-  background-color: var(--badge-approved-bg, #dcfce7);
-  color: var(--badge-approved-text, #16a34a);
+  background-color: #dcfce7;
+  color: #16a34a;
 }
 
 /* Type & Date */

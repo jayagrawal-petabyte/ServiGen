@@ -38,7 +38,7 @@ export default function CreateArticleDraftModal({
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [priority, setPriority] = useState('High');
   const [body, setBody] = useState('');
-  const [author, setAuthor] = useState(user?.fullName || '');
+  const [author, setAuthor] = useState(user?.fullName || 'Inesh Agarwal');
   const [team, setTeam] = useState(user?.department || 'IT Operations');
   const [slaDays, setSlaDays] = useState('3');
   const [submitAsAwaiting, setSubmitAsAwaiting] = useState(false);
@@ -109,8 +109,8 @@ export default function CreateArticleDraftModal({
           month: 'short',
           year: 'numeric',
         }).replace(/ /g, '-'),
-        author: author.trim() || user?.fullName || '',
-        agent: author.trim() || user?.fullName || '',
+        author: author.trim() || user?.fullName || 'Inesh Agarwal',
+        agent: author.trim() || user?.fullName || 'Inesh Agarwal',
         team: team.trim() || 'General Operations',
         body: body.trim(),
       });

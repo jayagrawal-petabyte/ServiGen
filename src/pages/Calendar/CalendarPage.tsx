@@ -585,7 +585,7 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
-          <span className="text-gray-900">Calendar & Appointments</span>
+          <span className="text-gray-900">Calendar</span>
         </div>
         <GlobalNavbarActions />
       </header>

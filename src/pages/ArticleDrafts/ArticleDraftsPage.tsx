@@ -221,10 +221,10 @@ export default function ArticleDraftsPage() {
     <div className="article-drafts-page-wrapper">
       {/* Top Application Navbar with Unified Global Actions */}
       <header className="article-drafts-top-navbar">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Knowledge Base • Article Drafts
-          </span>
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Article Drafts</span>
         </div>
         <GlobalNavbarActions onNewTicket={() => setIsCreateModalOpen(true)} />
       </header>
