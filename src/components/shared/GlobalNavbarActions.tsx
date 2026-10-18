@@ -75,7 +75,34 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
   const [ticketSuccessNotice, setTicketSuccessNotice] = useState<string | null>(null);
 
   // User presence status
-  const [presence, setPresence] = useState<'available' | 'away' | 'busy' | 'offline'>('available');
+  const [presence, setPresence] = useState<'available' | 'away' | 'busy'>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_agent_presence');
+      if (saved === 'away' || saved === 'busy' || saved === 'available') return saved;
+    } catch {}
+    return 'available';
+  });
+
+  const handleSetPresence = (newPresence: 'available' | 'away' | 'busy') => {
+    setPresence(newPresence);
+    try {
+      localStorage.setItem('servigen_agent_presence', newPresence);
+      window.dispatchEvent(new CustomEvent('servigen-presence-change', { detail: newPresence }));
+      api.patch('/api/users/presence', { presence: newPresence, userId: user?.id }).catch(() => {});
+    } catch (e) {
+      console.warn('Failed to save presence:', e);
+    }
+  };
+
+  useEffect(() => {
+    const handlePresenceEvent = (e: any) => {
+      if (e?.detail && ['available', 'away', 'busy'].includes(e.detail)) {
+        setPresence(e.detail);
+      }
+    };
+    window.addEventListener('servigen-presence-change', handlePresenceEvent);
+    return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
+  }, []);
 
   // To-Do list state (matching Figma design)
   const [todoDate, setTodoDate] = useState(() => {
@@ -869,7 +896,21 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       {activeFlyout === 'profile' && (
         <div className="global-flyout-dropdown global-profile-flyout">
           <div className="global-profile-header-card">
-            <div className="global-profile-name">{user?.fullName || ''}</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="global-profile-name truncate">{user?.fullName || 'Agent'}</div>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                presence === 'available' ? 'bg-emerald-100 text-emerald-800' :
+                presence === 'away' ? 'bg-amber-100 text-amber-800' :
+                'bg-rose-100 text-rose-800'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  presence === 'available' ? 'bg-emerald-500' :
+                  presence === 'away' ? 'bg-amber-500' :
+                  'bg-rose-500'
+                }`} />
+                {presence === 'available' ? 'Available' : presence === 'away' ? 'Away' : 'Busy'}
+              </span>
+            </div>
             <div className="global-profile-email">{user?.email || 'user@servigen.io'}</div>
             <span className="global-profile-role-tag">{user?.role || 'Support Lead'}</span>
           </div>
@@ -879,27 +920,30 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
             <div className="global-presence-options">
               <button
                 type="button"
-                className={`global-presence-opt-btn ${presence === 'available' ? 'is-selected' : ''}`}
-                onClick={() => setPresence('available')}
+                className={`global-presence-opt-btn ${presence === 'available' ? 'is-selected available' : ''}`}
+                onClick={() => handleSetPresence('available')}
               >
                 <span className="global-nav-presence-dot" style={{ position: 'static' }} />
-                <span>Available</span>
+                <span className="flex-1">Available</span>
+                {presence === 'available' && <span className="font-bold text-xs text-emerald-600">✓</span>}
               </button>
               <button
                 type="button"
-                className={`global-presence-opt-btn ${presence === 'away' ? 'is-selected' : ''}`}
-                onClick={() => setPresence('away')}
+                className={`global-presence-opt-btn away ${presence === 'away' ? 'is-selected' : ''}`}
+                onClick={() => handleSetPresence('away')}
               >
                 <span className="global-nav-presence-dot away" style={{ position: 'static' }} />
-                <span>Away</span>
+                <span className="flex-1">Away</span>
+                {presence === 'away' && <span className="font-bold text-xs text-amber-600">✓</span>}
               </button>
               <button
                 type="button"
-                className={`global-presence-opt-btn ${presence === 'busy' ? 'is-selected' : ''}`}
-                onClick={() => setPresence('busy')}
+                className={`global-presence-opt-btn busy ${presence === 'busy' ? 'is-selected' : ''}`}
+                onClick={() => handleSetPresence('busy')}
               >
                 <span className="global-nav-presence-dot busy" style={{ position: 'static' }} />
-                <span>In Meeting / Busy</span>
+                <span className="flex-1">In Meeting / Busy</span>
+                {presence === 'busy' && <span className="font-bold text-xs text-rose-600">✓</span>}
               </button>
             </div>
           </div>

@@ -346,7 +346,7 @@ export async function createNewTicket(ticket: Partial<Ticket> & { summary: strin
       id: ticket.id || `TICK-${Date.now()}`,
       priority: ticket.priority || 'Medium',
       priorityColor: (ticket.priorityColor as any) || 'yellow',
-      org: ticket.org || 'consultancy/EMEA/Inesh Agarwal',
+      org: ticket.org || '',
       summary: ticket.summary,
       status: ticket.status || 'New',
       type: ticket.type || 'Incident',

@@ -143,7 +143,7 @@ export default function ServiceCatalogue() {
       const result = await submitServiceRequest(requestService.id, {
         details: requestDetails.trim(),
         urgency: "Medium",
-        requester: user?.fullName || "Inesh Agarwal",
+        requester: user?.fullName || "",
       });
       setSubmittedResult(result);
       setRequestState("success");

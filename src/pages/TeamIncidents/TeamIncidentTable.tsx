@@ -100,6 +100,25 @@ function TeamIncidentTable({
   const [isTableMenuOpen, setIsTableMenuOpen] = useState<boolean>(false);
   const tableMenuRef = useRef<HTMLDivElement>(null);
 
+  // Synced agent presence state
+  const [agentPresence, setAgentPresence] = useState<'available' | 'away' | 'busy'>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_agent_presence');
+      if (saved === 'away' || saved === 'busy' || saved === 'available') return saved;
+    } catch {}
+    return 'available';
+  });
+
+  useEffect(() => {
+    const handlePresenceEvent = (e: any) => {
+      if (e?.detail && ['available', 'away', 'busy'].includes(e.detail)) {
+        setAgentPresence(e.detail);
+      }
+    };
+    window.addEventListener('servigen-presence-change', handlePresenceEvent);
+    return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
+  }, []);
+
   // Click outside listener for dropdown menus
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -283,7 +302,7 @@ function TeamIncidentTable({
   };
 
   const handleBulkAssignToMe = () => {
-    const myName = user?.fullName || "Inesh Agarwal";
+    const myName = user?.fullName || "";
     setIncidents((prev) =>
       prev.map((inc) =>
         selectedIncidents.includes(inc.id) ? { ...inc, agent: myName } : inc
@@ -567,7 +586,21 @@ function TeamIncidentTable({
                             title={`View ${count} tickets assigned to ${agentName}`}
                           >
                             <div className="flex items-center gap-1.5 overflow-hidden">
-                              <span className="team-avatar-initials">{initials}</span>
+                              <span className="team-avatar-initials relative">
+                                {initials}
+                                <span
+                                  className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                                    isMe
+                                      ? agentPresence === 'available'
+                                        ? 'bg-emerald-500'
+                                        : agentPresence === 'away'
+                                        ? 'bg-amber-500'
+                                        : 'bg-rose-500'
+                                      : 'bg-emerald-500'
+                                  }`}
+                                  title={isMe ? `Your status: ${agentPresence}` : 'Available'}
+                                />
+                              </span>
                               <span className="truncate">
                                 {agentName}{isMe ? " (You)" : ""}
                               </span>
@@ -678,7 +711,21 @@ function TeamIncidentTable({
                             title={`View ${count} tickets assigned to ${agentName}`}
                           >
                             <div className="flex items-center gap-1.5 overflow-hidden">
-                              <span className="team-avatar-initials">{initials}</span>
+                              <span className="team-avatar-initials relative">
+                                {initials}
+                                <span
+                                  className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                                    isMe
+                                      ? agentPresence === 'available'
+                                        ? 'bg-emerald-500'
+                                        : agentPresence === 'away'
+                                        ? 'bg-amber-500'
+                                        : 'bg-rose-500'
+                                      : 'bg-emerald-500'
+                                  }`}
+                                  title={isMe ? `Your status: ${agentPresence}` : 'Available'}
+                                />
+                              </span>
                               <span className="truncate">
                                 {agentName}{isMe ? " (You)" : ""}
                               </span>

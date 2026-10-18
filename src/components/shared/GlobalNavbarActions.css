@@ -505,6 +505,16 @@
   font-weight: 600;
 }
 
+.global-presence-opt-btn.is-selected.away {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.global-presence-opt-btn.is-selected.busy {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .global-profile-menu-links {
   padding: 6px 0;
 }

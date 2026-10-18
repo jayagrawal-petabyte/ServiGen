@@ -56,6 +56,25 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.patch('/presence', async (req, res, next) => {
+  try {
+    const { presence, availability, userId } = req.body || {};
+    const targetStatus = presence || availability || 'Available';
+    const id = userId || req.user?.id;
+
+    if (id) {
+      await prisma.user.updateMany({
+        where: { id },
+        data: { availability: targetStatus }
+      });
+    }
+
+    res.status(200).json({ success: true, presence: targetStatus });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;

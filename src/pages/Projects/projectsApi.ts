@@ -195,6 +195,6 @@ export async function getSessionUserName(): Promise<string> {
   const storedFull = [stored?.firstName, stored?.lastName].filter(Boolean).join(" ").trim();
   return (
     text(stored?.fullName ?? stored?.name ?? stored?.displayName ?? storedFull ?? stored?.username ?? stored?.email) ||
-    "Inesh Agarwal"
+    ""
   );
 }

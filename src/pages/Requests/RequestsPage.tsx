@@ -201,7 +201,7 @@ export const RequestsPage: React.FC = () => {
       date: new Date().toLocaleDateString('en-GB'),
       agent: selectedAgent || 'Demo User',
       team: selectedTeam || '1st Line Support',
-      requester: user?.fullName || 'Inesh Agarwal',
+      requester: user?.fullName || '',
       description: newDescription.trim() || 'Service request submitted via Requests workspace.',
     };
 
@@ -693,7 +693,7 @@ export const RequestsPage: React.FC = () => {
             createdAt: `${selectedTicketForModal.date} 4:06 AM`,
           }}
           variant="incident"
-          currentUser={user?.fullName || 'Inesh Agarwal'}
+          currentUser={user?.fullName || ''}
           onClose={() => setSelectedTicketForModal(null)}
           onUpdateTicket={(updated: FullTicket) => {
             setRequestsList((prev) =>

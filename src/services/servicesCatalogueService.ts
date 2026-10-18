@@ -163,7 +163,7 @@ export async function submitServiceRequest(
   const payload = {
     details: submission.details,
     urgency: submission.urgency || 'Medium',
-    requester: submission.requester || 'Inesh Agarwal',
+    requester: submission.requester || '',
     businessJustification: submission.businessJustification || submission.details,
   };
 

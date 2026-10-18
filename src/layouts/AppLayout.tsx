@@ -12,7 +12,33 @@ export const AppLayout: React.FC = () => {
   const token = getStoredToken();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [presence, setPresence] = useState<'available' | 'away' | 'busy'>('available');
+  const [presence, setPresence] = useState<'available' | 'away' | 'busy'>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_agent_presence');
+      if (saved === 'away' || saved === 'busy' || saved === 'available') return saved;
+    } catch {}
+    return 'available';
+  });
+
+  const handleSetPresence = (newPresence: 'available' | 'away' | 'busy') => {
+    setPresence(newPresence);
+    try {
+      localStorage.setItem('servigen_agent_presence', newPresence);
+      window.dispatchEvent(new CustomEvent('servigen-presence-change', { detail: newPresence }));
+    } catch (e) {
+      console.warn('Failed to save presence:', e);
+    }
+  };
+
+  useEffect(() => {
+    const handlePresenceEvent = (e: any) => {
+      if (e?.detail && ['available', 'away', 'busy'].includes(e.detail)) {
+        setPresence(e.detail);
+      }
+    };
+    window.addEventListener('servigen-presence-change', handlePresenceEvent);
+    return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
+  }, []);
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -134,7 +160,7 @@ export const AppLayout: React.FC = () => {
                   <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
                       type="button"
-                      onClick={() => setPresence('available')}
+                      onClick={() => handleSetPresence('available')}
                       className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                         presence === 'available'
                           ? 'bg-white text-emerald-700 font-bold shadow-xs'
@@ -146,7 +172,7 @@ export const AppLayout: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPresence('away')}
+                      onClick={() => handleSetPresence('away')}
                       className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                         presence === 'away'
                           ? 'bg-white text-amber-700 font-bold shadow-xs'
@@ -158,7 +184,7 @@ export const AppLayout: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPresence('busy')}
+                      onClick={() => handleSetPresence('busy')}
                       className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                         presence === 'busy'
                           ? 'bg-white text-rose-700 font-bold shadow-xs'
