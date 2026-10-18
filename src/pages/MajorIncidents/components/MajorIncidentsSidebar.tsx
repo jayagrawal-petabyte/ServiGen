@@ -112,13 +112,6 @@ const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({ onSelectL
   const handleSelect = (item: SidebarListItem) => {
     setSelectedId(item.id);
     onSelectList?.(item.id);
-    if (item.id === 'calendar') {
-      navigate('/calendar');
-    } else if (item.id === 'dashboard') {
-      navigate('/dashboard');
-    } else if (item.id === 'board') {
-      navigate('/major-incidents/live');
-    }
   };
 
   const filteredGroups = useMemo(() => {

@@ -817,6 +817,81 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   })}
                 </div>
               </div>
+            ) : selectedListId === 'dashboard' ? (
+              <div className="flex flex-col gap-5 h-full overflow-y-auto">
+                {/* 1. Metric KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Major Incidents</span>
+                    <div className="text-2xl font-black text-rose-600 mt-1">
+                      {allIncidents.filter((i) => !i.lifecycleStages[5]?.isCompleted).length}
+                    </div>
+                    <span className="text-[11px] text-gray-400 mt-0.5 block">High &amp; Critical Priority</span>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Critical P1 Incidents</span>
+                    <div className="text-2xl font-black text-red-700 mt-1">
+                      {allIncidents.filter((i) => i.priority === 'Critical').length}
+                    </div>
+                    <span className="text-[11px] text-red-500 font-medium mt-0.5 block">Immediate response required</span>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">War Rooms Active</span>
+                    <div className="text-2xl font-black text-amber-600 mt-1">
+                      {allIncidents.filter((i) => i.lifecycleStages.some((s) => s.label === 'Diagnosed' && s.isActive)).length || 1}
+                    </div>
+                    <span className="text-[11px] text-amber-600 font-medium mt-0.5 block">Live collaboration ongoing</span>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resolved Today</span>
+                    <div className="text-2xl font-black text-emerald-600 mt-1">
+                      {allIncidents.filter((i) => i.lifecycleStages[5]?.isCompleted).length}
+                    </div>
+                    <span className="text-[11px] text-emerald-600 font-medium mt-0.5 block">SLA met</span>
+                  </div>
+                </div>
+
+                {/* 2. Lifecycle Pipeline Distribution */}
+                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-xs">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Major Incident Lifecycle Breakdown</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {['Started', 'Diagnosed', 'Mitigated', 'Resolved'].map((stg) => {
+                      const count = allIncidents.filter((i) => i.lifecycleStages.some((s) => s.label === stg && s.isActive)).length;
+                      return (
+                        <div key={stg} className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-center justify-between">
+                          <span className="text-xs font-semibold text-gray-700">{stg}</span>
+                          <span className="text-xs font-black bg-white px-2 py-0.5 rounded shadow-2xs text-gray-800">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Ongoing Major Incidents Summary Table */}
+                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-xs flex-1">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Live Active War Rooms &amp; Alerts</h3>
+                  <div className="divide-y divide-gray-100">
+                    {allIncidents.slice(0, 5).map((inc) => (
+                      <div
+                        key={inc.id}
+                        onClick={() => setSelectedIncidentId(inc.id)}
+                        className="py-3 flex items-center justify-between hover:bg-gray-50 px-2 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-xs font-mono font-bold text-[#eb6a47] bg-[#fdede7] px-2 py-0.5 rounded">
+                            #{inc.id}
+                          </span>
+                          <span className="text-xs font-bold text-gray-800 truncate">{inc.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <PriorityBadge priority={inc.priority} />
+                          <span className="text-[11px] text-gray-500">{inc.assignee}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : (
               displayedIncidents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-gray-400">
