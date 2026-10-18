@@ -61,7 +61,7 @@ export const DASHBOARD_STATS = [
   },
   {
     label: "Major Incidents",
-    value: "3",
+    value: "4",
     type: "major",
   },
   {

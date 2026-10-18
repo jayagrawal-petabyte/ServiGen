@@ -8,7 +8,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:5000',
+        target: process.env.VITE_BACKEND_URL || 'https://servigen-1.onrender.com',
         changeOrigin: true,
         secure: false,
       },

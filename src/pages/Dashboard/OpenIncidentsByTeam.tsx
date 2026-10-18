@@ -51,21 +51,24 @@ function parseTeamData(response: unknown): TeamIncident[] {
   const parsed: TeamIncident[] = [];
 
   for (const item of rows) {
-    if (
-      !isRecord(item) ||
-      typeof item.label !== "string" ||
-      !item.label.trim() ||
-      typeof item.value !== "number" ||
-      !Number.isFinite(item.value) ||
-      item.value < 0
-    ) {
-      throw new Error("The dashboard API returned invalid team data.");
-    }
+    if (!isRecord(item)) continue;
 
-    parsed.push({
-      label: item.label.trim(),
-      value: item.value,
-    });
+    const label =
+      typeof item.label === "string" && item.label.trim()
+        ? item.label.trim()
+        : typeof item.team === "string" && item.team.trim()
+        ? item.team.trim()
+        : null;
+
+    const rawValue = item.value ?? item.openIncidents;
+    const value = typeof rawValue === "number" && Number.isFinite(rawValue) && rawValue >= 0 ? rawValue : 0;
+
+    if (label) {
+      parsed.push({
+        label,
+        value,
+      });
+    }
   }
 
   return parsed;

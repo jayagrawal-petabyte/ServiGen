@@ -79,10 +79,10 @@ export const dashboardService = {
     }
 
     return {
-      openIncidents: 61,
-      slaBreaches: 7,
-      avgResolutionTimeMinutes: 185,
-      avgResolutionTimeFormatted: '3h 5m',
+      openIncidents: 0,
+      slaBreaches: 0,
+      avgResolutionTimeMinutes: 0,
+      avgResolutionTimeFormatted: '0m',
     };
   },
 
@@ -128,7 +128,7 @@ export const dashboardService = {
     } catch {
       // Fallback
     }
-    return TEAM_INCIDENTS;
+    return [];
   },
 
   /**
@@ -147,7 +147,7 @@ export const dashboardService = {
     } catch {
       // Fallback
     }
-    return CATEGORY_DATA;
+    return [];
   },
 
   /**
@@ -177,7 +177,7 @@ export const dashboardService = {
     } catch {
       // Fallback
     }
-    return DASHBOARD_TICKETS;
+    return [];
   },
 
   /**

@@ -191,8 +191,8 @@ export async function obtainDevAuthToken(): Promise<string | null> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'admin@servigen.local',
-          password: 'Adm!n#9vK2$7xLq',
+          email: 'agent001@servigen.local',
+          password: 'Ag3nt*8mP4!wR9t',
         }),
       });
       if (!res.ok) {
@@ -200,8 +200,8 @@ export async function obtainDevAuthToken(): Promise<string | null> {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: 'agent001@servigen.local',
-            password: 'Ag3nt*8mP4!wR9t',
+            email: 'admin@servigen.local',
+            password: 'Adm!n#9vK2$7xLq',
           }),
         });
       }

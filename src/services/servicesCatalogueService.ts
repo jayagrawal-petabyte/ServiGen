@@ -92,7 +92,7 @@ export async function fetchServices(category?: string, search?: string): Promise
     const res = await api.get('/api/services', { params });
     const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
 
-    if (rawList.length > 0) {
+    if (Array.isArray(rawList)) {
       return rawList.map((item: any, idx: number) => ({
         id: String(item.id || `srv-${idx + 1}`),
         name: item.name || 'Unnamed Service',
@@ -104,16 +104,10 @@ export async function fetchServices(category?: string, search?: string): Promise
       }));
     }
   } catch (err) {
-    console.warn('[servicesCatalogueService] Failed to fetch services from backend, using catalog cache:', err);
+    console.warn('[servicesCatalogueService] Failed to fetch services from backend:', err);
   }
 
-  // Graceful client fallback with filter applied
-  return FALLBACK_SERVICES.filter((item) => {
-    const matchesCat = !category || category === 'All Services' || item.category.toLowerCase() === category.toLowerCase();
-    const s = (search || '').toLowerCase().trim();
-    const matchesSearch = !s || item.name.toLowerCase().includes(s) || item.description.toLowerCase().includes(s) || item.category.toLowerCase().includes(s);
-    return matchesCat && matchesSearch;
-  });
+  return [];
 }
 
 /**
