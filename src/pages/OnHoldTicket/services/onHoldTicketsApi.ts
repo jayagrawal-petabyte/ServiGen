@@ -143,11 +143,8 @@ export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Tic
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
-      const serverIds = new Set(adapted.map((t) => t.id));
-      const userAdded = fallbackTickets.filter((t) => !serverIds.has(t.id));
-      const merged = [...adapted, ...userAdded];
-      setCachedOnHoldTickets(merged);
-      return merged;
+      setCachedOnHoldTickets(adapted);
+      return adapted;
     }
 
     const cached = getCachedOnHoldTickets();
@@ -162,7 +159,7 @@ export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Tic
 /**
  * Fetch all Active tickets from backend GET /api/my-work/active
  */
-export async function fetchActiveTickets(fallbackTickets: Ticket[]): Promise<Ticket[]> {
+export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/active');
     const ticketList: BackendOnHoldTicket[] = Array.isArray(response?.data)
@@ -173,11 +170,8 @@ export async function fetchActiveTickets(fallbackTickets: Ticket[]): Promise<Tic
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
-      const serverIds = new Set(adapted.map((t) => t.id));
-      const userAdded = fallbackTickets.filter((t) => !serverIds.has(t.id));
-      const merged = [...adapted, ...userAdded];
-      setCachedList(STORAGE_KEY_ACTIVE, merged);
-      return merged;
+      setCachedList(STORAGE_KEY_ACTIVE, adapted);
+      return adapted;
     }
 
     const cached = getCachedList(STORAGE_KEY_ACTIVE);
@@ -192,7 +186,7 @@ export async function fetchActiveTickets(fallbackTickets: Ticket[]): Promise<Tic
 /**
  * Fetch all Closed/Actioned tickets from backend GET /api/my-work/actioned
  */
-export async function fetchClosedTickets(fallbackTickets: Ticket[]): Promise<Ticket[]> {
+export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/actioned');
     const ticketList: BackendOnHoldTicket[] = Array.isArray(response?.data)
@@ -203,11 +197,8 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[]): Promise<Tic
 
     if (ticketList.length > 0) {
       const adapted = ticketList.map(adaptBackendTicket);
-      const serverIds = new Set(adapted.map((t) => t.id));
-      const userAdded = fallbackTickets.filter((t) => !serverIds.has(t.id));
-      const merged = [...adapted, ...userAdded];
-      setCachedList(STORAGE_KEY_ACTIONED, merged);
-      return merged;
+      setCachedList(STORAGE_KEY_ACTIONED, adapted);
+      return adapted;
     }
 
     const cached = getCachedList(STORAGE_KEY_ACTIONED);

@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import {
   type ArticleDraft,
   type ArticleDraftStatus,
-} from './mockArticleDraftsData';
+} from './articleDrafts.types';
 import { articleDraftsApi } from './services/articleDraftsApi';
 import ArticleDraftSidebar, {
   type ArticleDraftView,

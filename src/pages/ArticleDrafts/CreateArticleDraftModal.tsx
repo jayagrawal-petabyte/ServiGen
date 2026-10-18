@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ArticleDraft, ArticleDraftStatus } from './mockArticleDraftsData';
+import type { ArticleDraft, ArticleDraftStatus } from './articleDrafts.types';
 import { useAuth } from '../Auth/AuthContext';
 
 interface CreateArticleDraftModalProps {

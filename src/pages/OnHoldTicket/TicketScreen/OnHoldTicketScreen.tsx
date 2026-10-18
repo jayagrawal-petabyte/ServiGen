@@ -212,13 +212,13 @@ const OnHoldTicketScreen: React.FC = () => {
     try {
       let liveTickets: Ticket[] = [];
       if (activeView === "My New Tickets") {
-        liveTickets = await fetchActiveTickets(NEW_TICKETS_DATA);
+        liveTickets = await fetchActiveTickets([]);
       } else if (activeView === "My Closed Tickets") {
         liveTickets = await fetchClosedTickets([]);
       } else if (activeView === "My Followed Tickets") {
         liveTickets = [];
       } else {
-        liveTickets = await fetchOnHoldTickets(ALL_TICKETS);
+        liveTickets = await fetchOnHoldTickets([]);
       }
       setTickets(liveTickets);
     } catch (err) {

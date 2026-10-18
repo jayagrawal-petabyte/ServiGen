@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import type { ArticleDraft, ArticleDraftStatus } from './mockArticleDraftsData';
+import type { ArticleDraft, ArticleDraftStatus } from './articleDrafts.types';
 
 interface ArticleDraftsLiveViewProps {
   drafts: ArticleDraft[];

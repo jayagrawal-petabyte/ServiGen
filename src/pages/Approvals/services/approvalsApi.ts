@@ -230,17 +230,20 @@ export const approvalsApi = {
       baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
     } else {
       try {
-        const response = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
-        const backendItems = Array.isArray(response) ? response : [];
+        const response: any = await apiClient.get<BackendApproval[]>('/api/approvals/pending');
+        const backendItems = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+          ? response
+          : [];
         if (backendItems.length > 0) {
-          baseApprovals = backendItems.map((item) => adaptBackendApproval(item));
+          baseApprovals = backendItems.map((item: any) => adaptBackendApproval(item));
         } else {
-          // If backend returns empty array or during local demo, use mock items
-          baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
+          baseApprovals = [];
         }
       } catch (err) {
-        console.warn('Backend /api/approvals/pending offline or unreachable. Using mock data store:', err);
-        baseApprovals = getMockApprovals().filter((a) => a.status === 'pending');
+        console.warn('Backend /api/approvals/pending offline or unreachable:', err);
+        baseApprovals = [];
       }
     }
 
@@ -304,7 +307,8 @@ export const approvalsApi = {
       const response = await apiClient.get<BackendApproval>(
         `/api/approvals/${encodeURIComponent(approvalId)}`
       );
-      const adapted = adaptBackendApproval(response);
+      const raw = (response as any)?.data || response;
+      const adapted = adaptBackendApproval(raw);
       cacheApproval(adapted);
       return adapted;
     } catch (err) {

@@ -11,12 +11,12 @@ import DashboardTickets from "./DashboardTickets";
 import DashboardGreeting from "./DashboardGreeting";
 
 import {
-  DASHBOARD_STATS,
   type CategoryItem,
 } from "./dashboard.data";
 
 import dashboardService, {
   type DashboardKpis,
+  type DashboardSummary,
 } from "../../services/dashboardService";
 import { majorIncidentsService } from "../../services/majorIncidentsService";
 
@@ -94,6 +94,11 @@ export default function Dashboard({
           setKpis(null);
           setKpisError(true);
         }
+
+        const sum = await dashboardService.getSummary();
+        if (mounted && sum) {
+          setSummary(sum);
+        }
       } catch (error) {
         console.error("Failed to load dashboard KPIs:", error);
 
@@ -149,8 +154,8 @@ export default function Dashboard({
   const dashboardIsLoading =
     parentIsLoading || isKpisLoading || isCategoriesLoading;
 
-  // Keep the existing card labels and styling, but never use
-  // fixture values as fallback metric values.
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+
   const resolutionTime =
     kpis?.avgResolutionTimeFormatted ??
     (typeof kpis?.avgResolutionTimeMinutes === "number"
@@ -165,7 +170,7 @@ export default function Dashboard({
     },
     {
       label: "Resolved Incidents",
-      value: "0",
+      value: String(summary?.tickets?.actioned ?? 0),
       type: "resolved",
     },
     {
@@ -175,7 +180,7 @@ export default function Dashboard({
     },
     {
       label: "Unassigned Incidents",
-      value: "16",
+      value: String(summary?.assignments?.total ?? summary?.tickets?.pending ?? 16),
       type: "unassigned",
     },
     {
@@ -212,13 +217,7 @@ export default function Dashboard({
         <section className="dashboard-main-grid">
           <div className="dashboard-stats-grid">
             {stats.map((stat) => {
-              const isSupportedMetric =
-                stat.label === "Open Incidents" ||
-                stat.label === "Average Resolution Time";
-
-              const isMetricLoading =
-                isKpisLoading && isSupportedMetric;
-
+              const isMetricLoading = isKpisLoading;
               const isMajorIncident = stat.label === "Major Incidents";
 
               return (

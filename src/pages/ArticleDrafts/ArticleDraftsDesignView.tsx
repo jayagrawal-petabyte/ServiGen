@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ArticleDraft } from './mockArticleDraftsData';
+import type { ArticleDraft } from './articleDrafts.types';
 
 interface ArticleDraftsDesignViewProps {
   drafts: ArticleDraft[];

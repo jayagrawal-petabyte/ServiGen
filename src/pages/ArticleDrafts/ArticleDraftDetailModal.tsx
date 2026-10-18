@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type {
   ArticleDraft,
   ArticleDraftStatus,
-} from './mockArticleDraftsData';
+} from './articleDrafts.types';
 
 interface ArticleDraftDetailModalProps {
   article: ArticleDraft;

@@ -12,7 +12,7 @@ import {
   type SupportAgent,
 } from "../../services/teamIncidentsService";
 
-import type { TeamIncident } from "./teamIncidents.data";
+import type { TeamIncident } from "./teamIncidents.types";
 
 export type Incident = TeamIncident;
 

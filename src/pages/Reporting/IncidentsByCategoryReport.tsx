@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { api } from '../../services/apiClient';
 import './IncidentsByCategoryReport.css';
 
 interface FilterTag {
@@ -141,7 +142,7 @@ export default function IncidentsByCategoryReport() {
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
-  const [tickets, setTickets] = useState<ReportTicketRow[]>(DEFAULT_VPN_TICKETS);
+  const [tickets, setTickets] = useState<ReportTicketRow[]>([]);
   const [showTodoPopover, setShowTodoPopover] = useState(false);
   const [showKpiDashboard, setShowKpiDashboard] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
@@ -150,6 +151,49 @@ export default function IncidentsByCategoryReport() {
   const [todoItems, setTodoItems] = useState<Array<{ id: string; text: string; done: boolean }>>([]);
   const [newTodoText, setNewTodoText] = useState('');
   const [isAddingTodo, setIsAddingTodo] = useState(false);
+
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadIncidents() {
+      setIsRefreshing(true);
+      try {
+        const queryParams: Record<string, string | number> = { limit: 100 };
+        if (activeCategoryTag) {
+          queryParams.category = activeCategoryTag;
+        }
+        const res: any = await api.get('/api/incidents', { params: queryParams });
+        const list = res?.data?.incidents || (Array.isArray(res?.data) ? res.data : []);
+        if (mounted && Array.isArray(list) && list.length > 0) {
+          const mapped: ReportTicketRow[] = list.map((item: any) => ({
+            id: item.id || '',
+            summary: item.summary || 'Incident ticket',
+            category: item.incident?.category || item.category || 'General Support',
+            createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '12/05/2026',
+            site: item.siteName || item.organisation || 'EMEA',
+            team: item.assignedTeam || '1st Line Support',
+            priority: (item.priority || 'Medium') as any,
+            agent: item.assignedAgent
+              ? `${item.assignedAgent.firstName || ''} ${item.assignedAgent.lastName || ''}`.trim() || 'Unassigned'
+              : item.agent || 'Unassigned',
+            status: item.status || 'Active',
+            slaResolutionMet: typeof item.slaTimeLeft === 'number' && item.slaTimeLeft > 0 ? 1 : 0,
+          }));
+          setTickets(mapped);
+        } else if (mounted) {
+          setTickets(DEFAULT_VPN_TICKETS);
+        }
+      } catch (err) {
+        console.warn('Failed to load live incidents for report:', err);
+        if (mounted) setTickets(DEFAULT_VPN_TICKETS);
+      } finally {
+        if (mounted) setIsRefreshing(false);
+      }
+    }
+    void loadIncidents();
+    return () => {
+      mounted = false;
+    };
+  }, [activeCategoryTag]);
 
   // Filter rows matching Image 2 exactly
   const [filters, setFilters] = useState<FilterRow[]>([
@@ -529,7 +573,7 @@ export default function IncidentsByCategoryReport() {
             <span>Refresh Report</span>
           </button>
 
-          <span className="report-results-count">Results: 268</span>
+          <span className="report-results-count">Results: {tickets.length}</span>
         </div>
 
         {/* ── Data Table (Matching Image 1 & Image 2) ── */}

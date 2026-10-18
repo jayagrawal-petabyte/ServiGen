@@ -13,30 +13,17 @@
  */
 
 import {
-  INITIAL_ARTICLE_DRAFTS,
   type ArticleDraft,
   type ArticleDraftStatus,
   type ArticleDraftSlaStatus,
-} from '../mockArticleDraftsData';
+  type CreateArticleDraftDto,
+  type UpdateArticleDraftDto,
+  type BackendKnowledgeArticle,
+} from '../articleDrafts.types';
+import { INITIAL_ARTICLE_DRAFTS } from '../mockArticleDraftsData';
 import { apiClient, ApiError } from '../../../services/apiClient';
 
-export type CreateArticleDraftDto = Omit<ArticleDraft, 'id'>;
-export type UpdateArticleDraftDto = Partial<Omit<ArticleDraft, 'id'>>;
-
-export interface BackendKnowledgeArticle {
-  id: string;
-  title: string;
-  content: string;
-  category?: string;
-  priority?: string;
-  status: string;
-  approvalStatus?: string;
-  slaDueAt?: string | null;
-  author?: string;
-  authorId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type { CreateArticleDraftDto, UpdateArticleDraftDto, BackendKnowledgeArticle };
 
 const STORAGE_KEY = 'servigen_article_drafts_v3';
 const SIMULATED_LATENCY_MS = 150;
@@ -135,9 +122,14 @@ export const articleDraftsApi = {
   async getDrafts(): Promise<ArticleDraft[]> {
     const endpoint = getArticlesBackendEndpoint();
     try {
-      const response = await apiClient.get<BackendKnowledgeArticle[]>(endpoint);
-      if (Array.isArray(response) && response.length > 0) {
-        const adapted = response.map(adaptBackendArticle);
+      const response: any = await apiClient.get<BackendKnowledgeArticle[]>(endpoint);
+      const rawList = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+      if (rawList.length > 0) {
+        const adapted = rawList.map(adaptBackendArticle);
         setStoredDrafts(adapted);
         return adapted;
       }

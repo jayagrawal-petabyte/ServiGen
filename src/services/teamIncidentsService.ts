@@ -13,7 +13,7 @@
  */
 
 import { api } from './apiClient';
-import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.data';
+import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.types';
 
 export interface SupportAgent {
   id: string;
