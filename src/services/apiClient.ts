@@ -39,25 +39,39 @@ export class ApiError extends Error {
 }
 
 const USER_KEY = 'servigen_auth_user';
+const TOKEN_KEY = 'servigen_auth_token';
 
 /**
- * Retrieve the active JWT token from storage without logging or exposing secrets.
+ * Legacy token keys. The app previously wrote the same JWT under four names
+ * across both localStorage and sessionStorage; any one of them going stale
+ * produced auth behaviour that was very hard to trace. One key is canonical
+ * now, and these are read once then cleared.
  */
-export function getAuthToken(): string | null {
+const LEGACY_TOKEN_KEYS = ['token', 'jwt_token', 'access_token'] as const;
+
+function readStore(store: Storage, key: string): string | null {
   try {
-    return (
-      localStorage.getItem('token') ||
-      localStorage.getItem('jwt_token') ||
-      localStorage.getItem('servigen_auth_token') ||
-      localStorage.getItem('access_token') ||
-      sessionStorage.getItem('token') ||
-      sessionStorage.getItem('jwt_token') ||
-      sessionStorage.getItem('access_token') ||
-      null
-    );
+    return store.getItem(key);
   } catch {
     return null;
   }
+}
+
+/**
+ * Retrieve the active JWT, migrating any legacy key to the canonical one.
+ */
+export function getAuthToken(): string | null {
+  const current = readStore(localStorage, TOKEN_KEY) || readStore(sessionStorage, TOKEN_KEY);
+  if (current) return current;
+
+  for (const key of LEGACY_TOKEN_KEYS) {
+    const legacy = readStore(localStorage, key) || readStore(sessionStorage, key);
+    if (legacy) {
+      setAuthToken(legacy, true);
+      return legacy;
+    }
+  }
+  return null;
 }
 
 export const getStoredToken = getAuthToken;
@@ -66,21 +80,23 @@ export const getStoredToken = getAuthToken;
  * Store a JWT token for authenticated requests
  */
 export function setAuthToken(token: string | null, persist = true): void {
+  if (!token) {
+    clearAuthToken();
+    return;
+  }
   try {
-    if (token) {
-      if (persist) {
-        localStorage.setItem('jwt_token', token);
-        localStorage.setItem('token', token);
-        localStorage.setItem('servigen_auth_token', token);
-      } else {
-        sessionStorage.setItem('jwt_token', token);
-        sessionStorage.setItem('token', token);
-      }
-    } else {
-      clearAuthToken();
-    }
+    (persist ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
   } catch {
     // Quota exceeded or restricted environment
+  }
+  // A new token supersedes anything left under the legacy names.
+  for (const key of LEGACY_TOKEN_KEYS) {
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
   }
 }
 
@@ -90,16 +106,13 @@ export const setStoredToken = (token: string | null) => setAuthToken(token, true
  * Clear stored authentication tokens
  */
 export function clearAuthToken(): void {
-  try {
-    localStorage.removeItem('token');
-    localStorage.removeItem('jwt_token');
-    localStorage.removeItem('servigen_auth_token');
-    localStorage.removeItem('access_token');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('jwt_token');
-    sessionStorage.removeItem('access_token');
-  } catch {
-    // ignore
+  for (const key of [TOKEN_KEY, ...LEGACY_TOKEN_KEYS]) {
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
   }
 }
 
@@ -178,89 +191,73 @@ export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
-let autoLoginPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 /**
- * Automatically obtains a valid JWT token from the backend for the active session.
- * 1. Attempts session refresh if an existing token is present.
- * 2. Falls back to authenticating with standard demo credentials so protected endpoints are immediately usable.
+ * Attempt to renew the current session.
+ *
+ * This used to log in with hardcoded demo credentials
+ * (agent001@servigen.local, falling back to admin@servigen.local) whenever no
+ * token was present or a request returned 401. Three consequences:
+ *   - the login screen was decorative: the client authenticated regardless of
+ *     who, if anyone, had signed in;
+ *   - a token expiry silently replaced the signed-in user with agent001, or
+ *     escalated them to admin;
+ *   - both passwords shipped in the public production bundle.
+ *
+ * It now only renews an existing session. With no valid token the request
+ * fails with 401 and the app routes to the login screen, which is correct.
  */
-export async function obtainDevAuthToken(): Promise<string | null> {
-  if (autoLoginPromise) return autoLoginPromise;
-  autoLoginPromise = (async () => {
+export async function refreshSession(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
     try {
-      const baseUrl = getApiBaseUrl();
       const currentToken = getAuthToken();
+      if (!currentToken) return null;
 
-      // If a token already exists, attempt to refresh it
-      if (currentToken) {
-        try {
-          const refreshRes = await fetch(`${baseUrl}/api/auth/refresh`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentToken}`,
-            },
-            body: JSON.stringify({ token: currentToken }),
-          });
-          if (refreshRes.ok) {
-            const json = await refreshRes.json();
-            const tok = json?.data?.token || json?.token;
-            if (tok) {
-              setStoredToken(tok);
-              if (json?.data) {
-                setStoredUser(json.data);
-              }
-              return tok;
-            }
-          }
-        } catch {
-          // Token refresh failed, continue to fallback login
-        }
-      }
-
-      // Obtain a valid token via login endpoint
-      const loginUrl = `${baseUrl}/api/auth/login`;
-      let res = await fetch(loginUrl, {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'agent001@servigen.local',
-          password: 'Ag3nt*8mP4!wR9t',
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${currentToken}`,
+        },
       });
 
       if (!res.ok) {
-        res = await fetch(loginUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: 'admin@servigen.local',
-            password: 'Adm!n#9vK2$7xLq',
-          }),
-        });
+        clearAuthToken();
+        return null;
       }
 
-      if (res.ok) {
-        const json = await res.json();
-        const tok = json?.data?.token || json?.token;
-        if (tok) {
-          setStoredToken(tok);
-          if (json?.data) {
-            setStoredUser(json.data);
-          }
-          return tok;
-        }
+      const json = await res.json();
+      const token = json?.data?.token || json?.token;
+      if (!token) {
+        clearAuthToken();
+        return null;
       }
-      clearAuthToken();
+
+      setStoredToken(token);
+      if (json?.data?.user) setStoredUser(json.data.user);
+      return token;
     } catch {
-      // Offline fallback
+      return null;
     } finally {
-      autoLoginPromise = null;
+      refreshPromise = null;
     }
-    return null;
   })();
-  return autoLoginPromise;
+
+  return refreshPromise;
+}
+
+/**
+ * Notify the app that the session is over so it can route to /auth.
+ */
+function announceSessionExpiry(): void {
+  try {
+    window.dispatchEvent(new CustomEvent('servigen-session-expired'));
+  } catch {
+    // Non-browser environment
+  }
 }
 
 /**
@@ -277,7 +274,9 @@ export function isPublicEndpoint(endpoint: string): boolean {
   );
 }
 
-export const refreshAuthToken = obtainDevAuthToken;
+export const refreshAuthToken = refreshSession;
+/** @deprecated Retained for callers of the old name; no longer logs in with demo credentials. */
+export const obtainDevAuthToken = refreshSession;
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
  * standard error parsing, and transparent JWT auto-acquisition.
@@ -312,11 +311,8 @@ export async function apiRequest<T = any>(
     headers.set('Content-Type', 'application/json');
   }
 
-  // Attach JWT Bearer token for protected endpoints; auto-acquire if missing
-  let token = getAuthToken();
-  if (!token && !isPublicEndpoint(normalizedEndpoint)) {
-    token = await obtainDevAuthToken();
-  }
+  // Attach the signed-in user's JWT. Never acquire a session on their behalf.
+  const token = getAuthToken();
 
   // Early guard: If endpoint requires authentication and no token is present,
   // do not dispatch the HTTP request. This prevents 401 storms and protects against
@@ -353,8 +349,7 @@ export async function apiRequest<T = any>(
 
   // If unauthorized and haven't retried yet, transparently refresh token and retry
   if (response.status === 401 && !_isRetry && !isPublicEndpoint(normalizedEndpoint) && !endpoint.includes('/auth/refresh')) {
-    clearAuthToken();
-    const freshToken = await obtainDevAuthToken();
+    const freshToken = await refreshSession();
     if (freshToken) {
       const retryHeaders = new Headers(customHeaders || {});
       if (fetchOptions.body && !retryHeaders.has('Content-Type')) {
@@ -367,7 +362,9 @@ export async function apiRequest<T = any>(
         headers: retryHeaders,
       });
     }
+    // Refresh failed: the session is genuinely over.
     clearAuthToken();
+    announceSessionExpiry();
   }
 
   let responseData: any = null;

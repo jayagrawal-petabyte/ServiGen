@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import InlineErrorBanner from '../../components/shared/InlineErrorBanner';
 import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../Auth/AuthContext";
 import { usePersistentState } from "../../utils/persistentState";
@@ -149,6 +150,7 @@ export default function MyWork() {
   );
   const [serverTickets, setServerTickets] = useState<Ticket[]>([]);
   const [isFetchingTickets, setIsFetchingTickets] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [timeLogs, setTimeLogs] = usePersistentState<Record<string, TimeLog[]>>(
     "servigen_my_work_time_logs_v1",
     {}
@@ -161,9 +163,11 @@ export default function MyWork() {
     setIsFetchingTickets(true);
     try {
       const live = await myWorkService.getMyWorkTickets();
-      if (Array.isArray(live) && live.length > 0) {
-        setServerTickets(live);
-      }
+      // An empty queue is a valid answer; show it rather than stale rows.
+      setServerTickets(Array.isArray(live) ? live : []);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Could not load your tickets.');
     } finally {
       setIsFetchingTickets(false);
     }
@@ -500,6 +504,7 @@ export default function MyWork() {
 
   return (
     <div className="flex-1 w-full min-h-full flex flex-col bg-slate-50">
+      <InlineErrorBanner message={loadError} onRetry={loadTickets} />
       {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import InlineErrorBanner from '../../components/shared/InlineErrorBanner';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../Auth';
 import { usePersistentState } from '../../utils/persistentState';
@@ -12,14 +13,27 @@ import PriorityBadge from './components/PriorityBadge';
 import IncidentDetailPanel from './components/IncidentDetailPanel';
 import MajorIncidentConsole from './components/MajorIncidentConsole';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority, ActivityFeedEntry } from './types/majorIncident.types';
-import { majorIncidentsService, mapStageToBackendStatus } from '../../services/majorIncidentsService';
+import {
+  majorIncidentsService,
+  mapStageToBackendStatus,
+  resolvedAtForStage,
+  STAGE_LABELS,
+} from '../../services/majorIncidentsService';
 import { cmdbService } from '../../services/cmdbService';
 import { FeedPopover } from '../../components/shared/FeedPopover';
 import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
 import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
-const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'];
+/**
+ * Records whose IDs start with this prefix are legacy fixtures from the
+ * pre-integration mock data and are never shown. Kept as a named constant
+ * so the filter is greppable instead of a bare magic string.
+ */
+const LEGACY_FIXTURE_ID_PREFIX = '000267';
+
+// Single source of truth, shared with the API client and the backend.
+const STAGE_ORDER = STAGE_LABELS;
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
   switch (listId) {
@@ -104,6 +118,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [serverIncidents, setServerIncidents] = useState<MajorIncident[]>([]);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [isFetchingLive, setIsFetchingLive]   = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [searchQuery, setSearchQuery]       = useState<string>('');
   const [page, setPage]                     = useState<number>(1);
@@ -131,17 +146,19 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live)) {
         // Strip out any legacy mock incidents
-        const cleanLive = live.filter((inc) => !inc.id.startsWith('000267'));
+        const cleanLive = live.filter((inc) => !inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX));
         setServerIncidents(cleanLive);
         setLocalIncidents([]);
         setIsLiveConnected(true);
+        setLoadError(null);
       } else {
         setServerIncidents([]);
         setIsLiveConnected(false);
       }
-    } catch {
+    } catch (err) {
       setServerIncidents([]);
       setIsLiveConnected(false);
+      setLoadError(err instanceof Error ? err.message : 'Could not load major incidents.');
     } finally {
       setIsFetchingLive(false);
     }
@@ -210,13 +227,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
     serverIncidents.forEach((inc) => {
-      if (!inc.id.startsWith('000267')) {
+      if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
         map.set(inc.id, inc);
       }
     });
     if (!isFetchingLive) {
       localIncidents.forEach((inc) => {
-        if (!inc.id.startsWith('000267')) {
+        if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
           map.set(inc.id, inc);
         }
       });
@@ -261,7 +278,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const liveFeedEntries = useMemo<ActivityFeedEntry[]>(() => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
-      if (inc.id.startsWith('000267')) return;
+      if (inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) return;
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
@@ -402,7 +419,9 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
         return {
           ...inc,
-          resolutionTarget: targetStageIdx === 5 ? 'Completed' : (inc.resolutionTarget === 'Completed' ? '0d 4h 0m' : inc.resolutionTarget),
+          resolutionTarget: targetStageIdx >= STAGE_ORDER.indexOf('Resolved')
+            ? 'Completed'
+            : (inc.resolutionTarget === 'Completed' ? '—' : inc.resolutionTarget),
           lifecycleStages: newStages,
           updates: [...(inc.updates ?? []), stageUpdate],
         };
@@ -421,7 +440,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     const backendStatus = mapStageToBackendStatus(targetStageIdx);
     majorIncidentsService.updateMajorIncident(incidentId, {
       status: backendStatus,
-      resolvedAt: targetStageIdx === 5 ? new Date().toISOString() : null,
+      resolvedAt: resolvedAtForStage(targetStageIdx),
     }).then((updated) => {
       if (updated) {
         setServerIncidents((prev) => prev.map((i) => i.id === incidentId ? updated : i));
@@ -651,6 +670,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+      <InlineErrorBanner message={loadError} onRetry={loadLiveIncidents} />
       {/* Full-width top navbar */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">

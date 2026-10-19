@@ -71,6 +71,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // When apiClient determines the session is over (refresh failed on a 401),
+  // drop to the signed-out state instead of leaving a dead token in storage.
+  useEffect(() => {
+    const handleExpiry = () => {
+      setStoredToken(null);
+      setStoredUser(null);
+      setToken(null);
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+        error: 'Your session expired. Please sign in again.',
+      });
+    };
+    window.addEventListener('servigen-session-expired', handleExpiry);
+    return () => window.removeEventListener('servigen-session-expired', handleExpiry);
+  }, []);
+
   useEffect(() => {
     checkBackendHealth();
     

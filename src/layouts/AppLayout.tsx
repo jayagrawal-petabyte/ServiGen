@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../pages/Auth/AuthContext';
 import { getStoredToken } from '../services/apiClient';
 import BackendStatusBanner from '../components/shared/BackendStatusBanner';
+import ErrorBoundary from '../components/shared/ErrorBoundary';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -280,7 +281,9 @@ export const AppLayout: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="w-full min-h-full flex-1 flex flex-col"
           >
-            <Outlet />
+            <ErrorBoundary resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </div>

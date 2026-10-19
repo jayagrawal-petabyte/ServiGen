@@ -4,6 +4,7 @@ import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types
 import PriorityBadge from './PriorityBadge';
 import { useAuth } from '../../Auth/AuthContext';
 import { api } from '../../../services/apiClient';
+import { STAGE_LABELS } from '../../../services/majorIncidentsService';
 
 interface IncidentDetailPanelProps {
   incident: MajorIncident;
@@ -19,7 +20,7 @@ interface IncidentDetailPanelProps {
   onUpdateProduct?: (incidentId: string, newProduct: string) => void;
 }
 
-const STAGE_ORDER = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'] as const;
+const STAGE_ORDER = STAGE_LABELS;
 
 export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   incident,

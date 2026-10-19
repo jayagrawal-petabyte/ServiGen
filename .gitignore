@@ -29,3 +29,6 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+temp_backend_stash/
+

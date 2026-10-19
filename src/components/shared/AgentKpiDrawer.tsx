@@ -4,6 +4,13 @@ import { majorIncidentsService } from '../../services/majorIncidentsService';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import './AgentKpiDrawer.css';
 
+/**
+ * Records whose IDs start with this prefix are legacy fixtures from the
+ * pre-integration mock data and are never shown. Kept as a named constant
+ * so the filter is greppable instead of a bare magic string.
+ */
+const LEGACY_FIXTURE_ID_PREFIX = '000267';
+
 interface AgentKpiDrawerProps {
   onClose: () => void;
   onOpenTicket?: (ticketId: string) => void;
@@ -159,7 +166,7 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
 
     // Call backend API based on ticket type
     try {
-      if (ticket.isMajor || ticket.id.startsWith('MI-') || ticket.id.startsWith('000267')) {
+      if (ticket.isMajor || ticket.id.startsWith('MI-') || ticket.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
         await majorIncidentsService.updateMajorIncident(ticket.id, {
           commander: currentUserName,
         });

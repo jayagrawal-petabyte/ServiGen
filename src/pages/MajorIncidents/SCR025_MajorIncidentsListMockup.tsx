@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import InlineErrorBanner from '../../components/shared/InlineErrorBanner';
 import { useNavigate, Link } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import PageHeader from './components/PageHeader';
@@ -144,19 +145,20 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
   const [sortDir, setSortDir]               = useState<'asc' | 'desc'>('desc');
   const [page, setPage]                     = useState<number>(1);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const PAGE_SIZE = 5;
 
   const loadLiveIncidents = useCallback(async () => {
     try {
       const live = await majorIncidentsService.getMajorIncidents();
-      if (Array.isArray(live) && live.length > 0) {
-        setServerIncidents(live);
-        setIsLiveConnected(true);
-      } else {
-        setIsLiveConnected(false);
-      }
-    } catch {
+      // An empty list is a valid answer — render the empty state rather than
+      // keeping whatever was on screen before.
+      setServerIncidents(live);
+      setLoadError(null);
+      setIsLiveConnected(true);
+    } catch (err) {
       setIsLiveConnected(false);
+      setLoadError(err instanceof Error ? err.message : 'Could not load major incidents.');
     }
   }, []);
 
@@ -221,6 +223,7 @@ const SCR025_MajorIncidentsListMockup: React.FC = () => {
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+      <InlineErrorBanner message={loadError} onRetry={loadLiveIncidents} />
       {/* Full-width top navbar */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">

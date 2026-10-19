@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import InlineErrorBanner from '../../components/shared/InlineErrorBanner';
 import { useNavigate } from 'react-router-dom';
 import MajorIncidentsSidebar from './components/MajorIncidentsSidebar';
 import IncidentCard from './components/IncidentCard';
@@ -12,6 +13,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
   const [selectedListId, setSelectedListId] = useState<string>('update-required');
   const [allIncidents, setAllIncidents] = useState<MajorIncident[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
@@ -23,11 +25,12 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
     try {
       setIsRefreshing(true);
       const live = await majorIncidentsService.getMajorIncidents();
-      if (Array.isArray(live)) {
-        setAllIncidents(live);
-      }
-    } catch {
-      // Keep existing incidents on error
+      setAllIncidents(live);
+      setLoadError(null);
+    } catch (err) {
+      // Surface the failure instead of silently showing stale rows.
+      setAllIncidents([]);
+      setLoadError(err instanceof Error ? err.message : 'Could not load major incidents.');
     } finally {
       setIsRefreshing(false);
     }
@@ -87,6 +90,7 @@ const SCR021_MajorIncidentsDesign: React.FC = () => {
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-100 overflow-hidden font-sans relative">
+      <InlineErrorBanner message={loadError} onRetry={loadIncidents} />
       {/* Top Navbar */}
       <header className="flex items-center justify-between px-6 py-2 bg-white border-b border-gray-200 shrink-0 min-h-[50px] w-full z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">

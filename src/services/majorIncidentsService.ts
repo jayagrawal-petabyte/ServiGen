@@ -24,7 +24,7 @@ export interface BackendMajorIncident {
   id: string;
   title: string;
   description: string;
-  status: 'Investigating' | 'Identified' | 'Monitoring' | 'Resolved';
+  status: string;
   priority: 'P1' | 'P2';
   impact: string;
   affectedServices: string[];
@@ -42,92 +42,111 @@ export interface CreateMajorIncidentPayload {
   assignee?: string;
 }
 
-const STAGE_LABELS = ['Started', 'Escalated', 'Diagnosed', 'Mitigated', 'Resolved', 'Closed'] as const;
+/**
+ * The six-stage major-incident lifecycle, identical to the backend's
+ * LIFECYCLE_STAGES (backend/src/modules/major-incidents/major-incidents.lifecycle.js)
+ * and to the Figma pipeline. Because both sides share one vocabulary, the two
+ * mappers below are inverses — previously they were not, which made 'Started'
+ * unreachable and rendered 'Resolved' as 'Closed'.
+ */
+export const STAGE_LABELS = [
+  'Started',
+  'Escalated',
+  'Diagnosed',
+  'Mitigated',
+  'Resolved',
+  'Closed',
+] as const;
+
+export type StageLabel = (typeof STAGE_LABELS)[number];
+
+const RESOLVED_STAGES: readonly string[] = ['Resolved', 'Closed'];
 
 /**
- * Maps backend status to frontend lifecycle stages array.
+ * Pre-2026-10 four-status vocabulary. Retained so the UI renders correctly
+ * against a backend that has not yet deployed the six-stage change, and for
+ * rows written before the data migration.
+ */
+const LEGACY_STATUS_MAP: Record<string, StageLabel> = {
+  investigating: 'Started',
+  identified: 'Diagnosed',
+  monitoring: 'Mitigated',
+  resolved: 'Resolved',
+  closed: 'Closed',
+};
+
+/** Normalise any accepted status spelling to a canonical stage label. */
+export function normaliseStatus(value: string | null | undefined): StageLabel | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const trimmed = value.trim();
+  const exact = STAGE_LABELS.find((s) => s.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact;
+  return LEGACY_STATUS_MAP[trimmed.toLowerCase()] ?? null;
+}
+
+export function isResolvedStage(status: string | null | undefined): boolean {
+  const canonical = normaliseStatus(status);
+  return canonical !== null && RESOLVED_STAGES.includes(canonical);
+}
+
+function formatStageTime(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Expand a backend status into the pipeline's stage array.
+ * Inverse of mapStageToBackendStatus.
  */
 function buildLifecycleStages(
   backendStatus: string,
   startedAt?: string,
   resolvedAt?: string | null
 ): LifecycleStage[] {
-  let activeIndex = 0;
-  switch (backendStatus) {
-    case 'Started':
-      activeIndex = 0;
-      break;
-    case 'Escalated':
-      activeIndex = 1;
-      break;
-    case 'Investigating':
-      activeIndex = 1;
-      break;
-    case 'Identified':
-    case 'Diagnosed':
-      activeIndex = 2;
-      break;
-    case 'Monitoring':
-    case 'Mitigated':
-      activeIndex = 3;
-      break;
-    case 'Resolved':
-      activeIndex = resolvedAt ? 5 : 4;
-      break;
-    case 'Closed':
-      activeIndex = 5;
-      break;
-    default:
-      activeIndex = 0;
-  }
+  const canonical = normaliseStatus(backendStatus);
+  const activeIndex = canonical ? STAGE_LABELS.indexOf(canonical) : 0;
 
-  const formattedStarted = startedAt
-    ? new Date(startedAt).toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '';
-
-  const formattedResolved = resolvedAt
-    ? new Date(resolvedAt).toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '';
+  const formattedStarted = formatStageTime(startedAt);
+  const formattedResolved = formatStageTime(resolvedAt);
 
   return STAGE_LABELS.map((label, idx) => ({
     label,
     isActive: idx === activeIndex,
-    isCompleted: idx < activeIndex || (activeIndex === 5 && idx === 5),
-    timestamp: idx === 0 ? formattedStarted : idx === 4 || idx === 5 ? formattedResolved : undefined,
+    isCompleted: idx < activeIndex,
+    timestamp:
+      idx === 0
+        ? formattedStarted
+        : idx >= STAGE_LABELS.indexOf('Resolved') && idx <= activeIndex
+        ? formattedResolved
+        : undefined,
   }));
 }
 
 /**
- * Maps frontend lifecycle stage index to official backend status.
- * Per API_Documentation_Servigen.docx Section 5.9:
- * Valid statuses are: Investigating, Identified, Monitoring, Resolved.
+ * Collapse a pipeline index into the backend status.
+ * Inverse of buildLifecycleStages.
  */
-export function mapStageToBackendStatus(stageIndex: number): 'Investigating' | 'Identified' | 'Monitoring' | 'Resolved' {
-  switch (stageIndex) {
-    case 0: // Started
-    case 1: // Escalated
-      return 'Investigating';
-    case 2: // Diagnosed
-      return 'Identified';
-    case 3: // Mitigated
-      return 'Monitoring';
-    case 4: // Resolved
-    case 5: // Closed
-    default:
-      return 'Resolved';
+export function mapStageToBackendStatus(stageIndex: number): StageLabel {
+  if (!Number.isInteger(stageIndex) || stageIndex < 0 || stageIndex >= STAGE_LABELS.length) {
+    return STAGE_LABELS[0];
   }
+  return STAGE_LABELS[stageIndex];
+}
+
+/**
+ * The resolvedAt value that should accompany a move to `stageIndex`.
+ * Returning null (rather than omitting it) is what re-opens an incident.
+ */
+export function resolvedAtForStage(stageIndex: number): string | null {
+  return isResolvedStage(STAGE_LABELS[stageIndex]) ? new Date().toISOString() : null;
 }
 
 /**
@@ -181,18 +200,15 @@ export const majorIncidentsService = {
    * Fetch all major incidents from backend with fallback
    */
   async getMajorIncidents(filters?: { status?: string; priority?: string }): Promise<MajorIncident[]> {
-    try {
-      const res = await api.get('/api/major-incidents', { params: filters });
-      const listData = res?.data ?? res;
-      if (Array.isArray(listData)) {
-        return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
-      }
-    } catch (error) {
-      logServiceError('majorIncidents.getMajorIncidents', error);
-      // Backend unavailable or offline fallback
+    // Throws on failure. Returning [] for both "no incidents" and "request
+    // failed" is what made an unreachable database look like an empty queue,
+    // and let callers keep showing stale rows indefinitely.
+    const res = await api.get('/api/major-incidents', { params: filters });
+    const listData = res?.data ?? res;
+    if (!Array.isArray(listData)) {
+      throw new Error('Unexpected response shape from GET /api/major-incidents');
     }
-
-    return [];
+    return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
   },
 
   /**
@@ -241,7 +257,7 @@ export const majorIncidentsService = {
       }
     } catch (error) {
       logServiceError('majorIncidents.createMajorIncident', error);
-      // Fallback
+      throw error;
     }
 
     return null;
@@ -284,7 +300,7 @@ export const majorIncidentsService = {
       }
     } catch (error) {
       logServiceError('majorIncidents.updateMajorIncident', error);
-      // Fallback
+      throw error;
     }
     return null;
   },
@@ -305,7 +321,7 @@ export const majorIncidentsService = {
       }
     } catch (error) {
       logServiceError('majorIncidents.addMajorIncidentUpdate', error);
-      // Fallback
+      throw error;
     }
     return null;
   },
