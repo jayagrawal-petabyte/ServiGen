@@ -68,12 +68,6 @@ const createList = async (req, res) => {
       fields,
       status,
       createdBy,
-      scope,
-      group,
-      sequence,
-      columnProfile,
-      displayType,
-      filterCriteria,
     } = req.body || {};
 
     // BI-15: Validate list name
@@ -118,7 +112,17 @@ const createList = async (req, res) => {
     const sanitizedDesc = typeof description === 'string' ? description.slice(0, 500) : null;
     const organisationId = req.user?.organisationId || req.headers['x-org-id'] || 'org-001';
 
-    const parsedSequence = typeof sequence === 'number' ? sequence : (parseInt(sequence, 10) || 0);
+    // BUG-05: Check for duplicate list names
+    const existingLists = await getAllLists({ organisationId });
+    const isDuplicate = existingLists.some(
+      (l) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      return res.status(409).json({
+        success: false,
+        message: `A list with the name '${name.trim()}' already exists`,
+      });
+    }
 
     const newList = await createNewList({
       name: name.trim(),
@@ -127,12 +131,6 @@ const createList = async (req, res) => {
       status: sanitizedStatus,
       createdBy: effectiveCreatedBy,
       organisationId,
-      scope: typeof scope === 'string' ? scope.slice(0, 100) : null,
-      group: typeof group === 'string' ? group.slice(0, 100) : null,
-      sequence: parsedSequence,
-      columnProfile: typeof columnProfile === 'string' ? columnProfile.slice(0, 150) : columnProfile || null,
-      displayType: typeof displayType === 'string' ? displayType.slice(0, 50) : 'Default',
-      filterCriteria: filterCriteria || {},
     });
 
     return res.status(201).json({

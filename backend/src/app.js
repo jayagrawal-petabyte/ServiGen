@@ -66,10 +66,10 @@ app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
 app.use('/api/ai-core', createRateLimiter(env.RATE_LIMIT.AI_MAX));
 app.use(express.json({ limit: '100kb' }));
 
-// Authentication module: login is public with strict rate limiting; session requires verified token.
-app.use('/api/auth/login', createRateLimiter(20));
+// Authentication module: login and forgot-password are public with strict rate limiting; session requires verified token.
+app.use(['/api/auth/login', '/api/auth/forgot-password'], createRateLimiter(20));
 app.use('/api/auth', (req, res, next) => {
-  if (req.path === '/login') return next();
+  if (req.path === '/login' || req.path === '/forgot-password') return next();
   return requireAuth(req, res, (err) => {
     if (err) return next(err);
     req.headers['x-user-id'] = req.user.id;
@@ -135,7 +135,7 @@ app.use('/api/ai-core/retrieval', (req, res, next) => {
 app.use('/api/projects', restrictTo(...PERMISSIONS.STAFF));
 app.use('/api', projectsRouter);
 app.use('/api/cmdb', restrictTo(...PERMISSIONS.STAFF), cmdbRouter);
-app.use('/api/list-builder', restrictTo(...PERMISSIONS.STAFF), listsRouter);
+app.use(['/api/list-builder', '/api/lists'], restrictTo(...PERMISSIONS.STAFF), listsRouter);
 app.use('/api/calendar', restrictTo(...PERMISSIONS.STAFF), calendarRouter);
 app.use('/api/articles', restrictTo(...PERMISSIONS.STAFF), knowledgeRouter);
 app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);

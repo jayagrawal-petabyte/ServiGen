@@ -15,12 +15,10 @@ const {
   getSecondLineAgents,
   getSecondLineIncident,
 } = require('./incidents.controller');
-const { createTicketHandler } = require('../my-work/my-work.controller');
 
 const router = express.Router();
 
 // Existing Incidents endpoints
-router.post('/', createTicketHandler);
 router.get('/analytics/priority', getIncidentPriorityAnalytics);
 router.get('/analytics/category', getIncidentCategoryAnalytics);
 router.get('/recent', getRecentIncidentRecords);
@@ -41,4 +39,3 @@ router.get('/', listIncidentRecords);
 router.get('/:incidentId', getIncidentRecord);
 
 module.exports = router;
-

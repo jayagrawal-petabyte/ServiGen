@@ -59,7 +59,6 @@ async function main() {
 
   // 3. Seed Users with distinct secure passwords
   const adminPasswordHash = await bcrypt.hash('Adm!n#9vK2$7xLq', 10);
-  const ineshPasswordHash = await bcrypt.hash('Password@123', 10);
   const agentPasswordHash = await bcrypt.hash('Ag3nt*8mP4!wR9t', 10);
   const approverPasswordHash = await bcrypt.hash('Appr0v#5zY1$kE3s', 10);
   const userPasswordHash = await bcrypt.hash('Us3r@4bT7&mQ6wV', 10);
@@ -81,28 +80,6 @@ async function main() {
       passwordHash: adminPasswordHash,
       firstName: 'Adam',
       lastName: 'Admin',
-      role: 'Admin',
-      organisationId: acme.id,
-      siteId: londonSite.id,
-    },
-  });
-
-  await db.user.upsert({
-    where: { email: 'inesh@servigen.io' },
-    update: {
-      username: 'inesh.a',
-      passwordHash: ineshPasswordHash,
-      role: 'Admin',
-      organisationId: acme.id,
-      siteId: londonSite.id,
-    },
-    create: {
-      id: 'USR-000',
-      email: 'inesh@servigen.io',
-      username: 'inesh.a',
-      passwordHash: ineshPasswordHash,
-      firstName: 'Inesh',
-      lastName: 'Agarwal',
       role: 'Admin',
       organisationId: acme.id,
       siteId: londonSite.id,
@@ -316,161 +293,14 @@ async function main() {
     },
   });
 
-  await db.ticket.upsert({
-    where: { id: 'INC-1003' },
-    update: { slaTimeLeft: -120 },
-    create: {
-      id: 'INC-1003',
-      summary: 'Payment gateway timeout during checkout processing',
-      priority: 'Critical',
-      status: 'Active',
-      ticketType: 'Incident',
-      organisationId: acme.id,
-      siteName: 'London HQ',
-      assignedAgentId: agent1.id,
-      slaTimeLeft: -120,
-      timeRecord: 75,
-    },
-  });
-
-  await db.ticket.upsert({
-    where: { id: 'INC-1004' },
-    update: { slaTimeLeft: -45 },
-    create: {
-      id: 'INC-1004',
-      summary: 'Authentication service latency spike exceeding threshold',
-      priority: 'High',
-      status: 'Active',
-      ticketType: 'Incident',
-      organisationId: globex.id,
-      siteName: 'New York',
-      assignedAgentId: agent1.id,
-      slaTimeLeft: -45,
-      timeRecord: 60,
-    },
-  });
-
-  await db.ticket.upsert({
-    where: { id: 'INC-1005' },
-    update: { slaTimeLeft: -30 },
-    create: {
-      id: 'INC-1005',
-      summary: 'Core customer database connection pool exhausted',
-      priority: 'Critical',
-      status: 'Active',
-      ticketType: 'Incident',
-      organisationId: acme.id,
-      siteName: 'London HQ',
-      assignedAgentId: agent1.id,
-      slaTimeLeft: -30,
-      timeRecord: 40,
-    },
-  });
-
-  await db.ticket.upsert({
-    where: { id: 'INC-1006' },
-    update: { slaTimeLeft: -90 },
-    create: {
-      id: 'INC-1006',
-      summary: 'Production cluster disk storage nearing full capacity',
-      priority: 'High',
-      status: 'Pending',
-      ticketType: 'Incident',
-      organisationId: globex.id,
-      siteName: 'New York',
-      assignedAgentId: agent1.id,
-      slaTimeLeft: -90,
-      timeRecord: 30,
-    },
-  });
 
   await db.team.upsert({where:{name:'1st Line Support'},update:{},create:{id:'team-001',name:'1st Line Support'}});
   await db.teamMembership.upsert({where:{teamId_userId:{teamId:'team-001',userId:agent1.id}},update:{},create:{teamId:'team-001',userId:agent1.id}});
   await db.ticket.update({where:{id:'INC-1001'},data:{teamId:'team-001'}});
-  await db.ticket.update({where:{id:'INC-1003'},data:{teamId:'team-001'}});
-  await db.ticket.update({where:{id:'INC-1005'},data:{teamId:'team-001'}});
   await db.incident.upsert({where:{ticketId:'INC-1001'},update:{},create:{id:'incident-001',ticketId:'INC-1001',category:'Network'}});
-  await db.incident.upsert({where:{ticketId:'INC-1003'},update:{},create:{id:'incident-003',ticketId:'INC-1003',category:'Software',impact:'High',urgency:'Critical'}});
-  await db.incident.upsert({where:{ticketId:'INC-1004'},update:{},create:{id:'incident-004',ticketId:'INC-1004',category:'Access & Identity',impact:'High',urgency:'High'}});
-  await db.incident.upsert({where:{ticketId:'INC-1005'},update:{},create:{id:'incident-005',ticketId:'INC-1005',category:'Hardware',impact:'Critical',urgency:'Critical'}});
-  await db.incident.upsert({where:{ticketId:'INC-1006'},update:{},create:{id:'incident-006',ticketId:'INC-1006',category:'Network',impact:'High',urgency:'High'}});
-  const serviceCatalogueSeeds = [
-    { id: 'service-admin-rights', name: 'Administrator Rights', description: 'Request administrator access to your device.', icon: '⚙️', category: 'End-User Catalogue', requiresApproval: true },
-    { id: 'service-laptop', name: 'Request a Laptop', description: 'Standard high-performance laptop for developers.', icon: '🖥️', category: 'End-User Catalogue', requiresApproval: true },
-    { id: 'service-vpn', name: 'VPN Access', description: 'Secure remote corporate network access token.', icon: '🔒', category: 'Access', requiresApproval: false },
-    { id: 'service-adobe', name: 'Adobe Creative Cloud', description: 'Design and multimedia creative software suite.', icon: '🎨', category: 'Business Applications', requiresApproval: true },
-    { id: 'service-crm', name: 'CRM Platform Support', description: 'Customer relationship management workspace support.', icon: '👥', category: 'Business Applications', requiresApproval: false },
-    { id: 'service-data-integration', name: 'Data Integration', description: 'Enterprise application and data pipeline integration.', icon: '🧩', category: 'Business Applications', requiresApproval: true },
-    { id: 'service-database-admin', name: 'Database Administration', description: 'Database schema migration and DBA provisioning support.', icon: '🗄️', category: 'Business Applications', requiresApproval: true },
-    { id: 'service-desk-booking', name: 'Desk Booking', description: 'Hot-desk reservation and office seat relocation.', icon: '🪑', category: 'Services', requiresApproval: false },
-    { id: 'service-air-con', name: 'Air Con & Climate', description: 'Report an office air conditioning or temperature issue.', icon: '❄️', category: 'Services', requiresApproval: false },
-    { id: 'service-building-fabric', name: 'Building Fabric', description: 'Report facilities maintenance and infrastructure repairs.', icon: '🏢', category: 'Services', requiresApproval: false },
-    { id: 'service-absence', name: 'Absence Management', description: 'Submit leave request or emergency attendance notification.', icon: '📅', category: 'End-User Catalogue', requiresApproval: true },
-    { id: 'service-electrical', name: 'Electrical & Power', description: 'Report power outlet disruptions or UPS failures.', icon: '🔌', category: 'Services', requiresApproval: false }
-  ];
-  for (const s of serviceCatalogueSeeds) {
-    await db.serviceCatalogueItem.upsert({
-      where: { id: s.id },
-      update: { name: s.name, description: s.description, icon: s.icon, category: s.category, requiresApproval: s.requiresApproval },
-      create: { id: s.id, name: s.name, description: s.description, icon: s.icon, category: s.category, requiresApproval: s.requiresApproval }
-    });
-  }
+  await db.serviceCatalogueItem.upsert({where:{id:'service-admin-rights'},update:{},create:{id:'service-admin-rights',name:'Administrator Rights',description:'Developer workstation administrator access',category:'Access',requiresApproval:true}});
   await db.serviceRequest.upsert({where:{ticketId:'REQ-1002'},update:{},create:{id:'request-001',ticketId:'REQ-1002',serviceCatalogueItemId:'service-admin-rights'}});
   await db.approval.upsert({where:{id:'APP-1001'},update:{},create:{id:'APP-1001',ticketId:'REQ-1002',entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
-
-  // 8. Seed Major Incidents
-  const majorIncidentsSeed = [
-    {
-      id: '0002673',
-      title: 'System Login Failure',
-      description: 'Widespread authentication timeouts and system login failures impacting MyFinance PROD users.',
-      status: 'Investigating',
-      priority: 'P1',
-      impact: 'Critical customer login failure; users unable to access MyFinance PROD platform.',
-      affectedServices: ['MyFinance PROD', 'Authentication Gateway', 'SSO Service'],
-      commander: 'Demo User',
-      startedAt: new Date('2025-11-02T16:57:00Z'),
-    },
-    {
-      id: '0002672',
-      title: 'Financial Data Corruption',
-      description: 'Ledger synchronization discrepancy detected in MyFinance PROD database replica cluster.',
-      status: 'Investigating',
-      priority: 'P2',
-      impact: 'High performance degradation and reconciliation queue lag.',
-      affectedServices: ['MyFinance PROD', 'Ledger Sync', 'Reconciliation Engine'],
-      commander: 'Jennifer Williams',
-      startedAt: new Date('2025-11-02T16:56:00Z'),
-    },
-    {
-      id: '0002671',
-      title: 'Payment Processing Failure',
-      description: 'Merchant payment tokenization service returning intermittent 502 Bad Gateway errors.',
-      status: 'Investigating',
-      priority: 'P1',
-      impact: 'Payment gateway transactions failing for 15% of checkout traffic.',
-      affectedServices: ['MyFinance PROD', 'Payment Processing', 'Merchant Gateway'],
-      commander: 'Unassigned',
-      startedAt: new Date('2025-11-02T16:52:00Z'),
-    },
-  ];
-
-  for (const mi of majorIncidentsSeed) {
-    await db.majorIncident.upsert({
-      where: { id: mi.id },
-      update: {
-        title: mi.title,
-        description: mi.description,
-        status: mi.status,
-        priority: mi.priority,
-        impact: mi.impact,
-        affectedServices: mi.affectedServices,
-        commander: mi.commander,
-      },
-      create: mi,
-    });
-  }
-
   console.log('[servigen:seed] Seed completed successfully!');
 }
 

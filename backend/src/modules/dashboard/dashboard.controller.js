@@ -21,8 +21,12 @@ const respondWithError = (res, error, fallbackMessage) => {
 /**
  * Extract agent ID from request — header first, then query param, then dev default
  */
-const getAgentIdFromReq = (req) =>
-  req.headers['x-user-id'] || req.query.agentId || 'agent-001';
+const getAgentIdFromReq = (req) => {
+  if (req.user?.role === 'Admin' && typeof req.query?.agentId === 'string' && req.query.agentId.trim()) {
+    return req.query.agentId.trim();
+  }
+  return req.user?.id || req.headers['x-user-id'] || req.query?.agentId || 'agent-001';
+};
 
 // ─── SCR-014: KPIs ────────────────────────────────────────────────────────────
 
@@ -32,8 +36,7 @@ const getAgentIdFromReq = (req) =>
  */
 const getKpisHandler = async (req, res) => {
   try {
-    const userId = req.user?.id || req.headers['x-user-id'] || req.query.agentId || null;
-    const data = await getDashboardKpis(userId);
+    const data = await getDashboardKpis();
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard KPIs');

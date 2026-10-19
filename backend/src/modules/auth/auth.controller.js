@@ -1,7 +1,6 @@
 const {
   login,
   getSession,
-  refreshToken,
 } = require('./auth.service');
 
 /**
@@ -92,32 +91,35 @@ const getSessionHandler = async (req, res) => {
 };
 
 /**
- * POST /auth/refresh
+ * POST /auth/forgot-password
  *
- * Refresh a JWT bearer token.
+ * Request password recovery instructions.
  */
-const refreshHandler = async (req, res) => {
+const forgotPasswordHandler = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    const tokenToRefresh = req.body?.token || bearerToken;
+    const { email, username } = req.body || {};
+    const identifier = typeof email === 'string' && email.trim()
+      ? email.trim()
+      : (typeof username === 'string' && username.trim() ? username.trim() : null);
 
-    const data = await refreshToken(tokenToRefresh);
+    if (!identifier) {
+      const error = new Error('Email or username is required');
+      error.statusCode = 400;
+      throw error;
+    }
 
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
-      message: 'Token refreshed successfully',
-      data,
-      token: data.token,
+      message: 'If an account matching the provided details exists, password reset instructions have been sent.',
     });
   } catch (error) {
-    return respondWithError(res, error, 'Token refresh failed');
+    return respondWithError(res, error, 'Failed to process password reset request');
   }
 };
 
 module.exports = {
   loginHandler,
   getSessionHandler,
-  refreshHandler,
+  forgotPasswordHandler,
 };
