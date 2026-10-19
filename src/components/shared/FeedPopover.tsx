@@ -131,12 +131,16 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
     };
   }, []);
 
-  const handleTicketClick = (ticketId: string) => {
+  const handleTicketClick = (ticketId: string, category?: string) => {
     if (onOpenTicket) {
       onOpenTicket(ticketId);
     } else {
       onClose();
-      navigate(`/major-incidents/live?incident=${ticketId}`);
+      if (category === 'ticket') {
+        navigate('/incidents');
+      } else {
+        navigate(`/major-incidents/live?incident=${ticketId}`);
+      }
     }
   };
 
@@ -240,7 +244,7 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
                   <button
                     type="button"
                     className="feed-ticket-link"
-                    onClick={() => handleTicketClick(item.ticketId)}
+                    onClick={() => handleTicketClick(item.ticketId, item.category)}
                   >
                     <span className="ticket-num">#{item.ticketId}</span>
                     <span className="ticket-dash">-</span>
