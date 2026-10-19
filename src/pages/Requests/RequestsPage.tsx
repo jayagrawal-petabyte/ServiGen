@@ -71,20 +71,36 @@ export const RequestsPage: React.FC = () => {
       }
 
       if (items.length > 0) {
-        const mapped: RequestItem[] = items.map((t: any) => ({
-          id: String(t.id).padStart(7, '0'),
-          slaTimeLeft: t.slaTimeLeft || '-12:00',
-          summary: t.summary || t.title || 'Service Request',
-          category: t.category || 'General Access',
-          priority: (t.priority || 'Medium') as RequestItem['priority'],
-          status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
-          type: t.ticketType || 'Service Request',
-          date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
-          agent: typeof t.assignedAgent === 'string' ? t.assignedAgent : t.assignedAgent?.fullName || 'Support Agent',
-          team: t.assignedTeam || '1st Line Support',
-          requester: t.requester || 'User',
-          description: t.description || t.summary,
-        }));
+        const mapped: RequestItem[] = items.map((t: any) => {
+          let agentName = 'Support Agent';
+          if (typeof t.assignedAgent === 'string') {
+            agentName = t.assignedAgent;
+          } else if (t.assignedAgent?.fullName) {
+            agentName = t.assignedAgent.fullName;
+          } else if (t.assignedAgent?.firstName) {
+            agentName = `${t.assignedAgent.firstName} ${t.assignedAgent.lastName || ''}`.trim();
+          } else if (typeof t.agent === 'string') {
+            agentName = t.agent;
+          }
+
+          const rawSla = t.slaTimeLeft != null ? String(t.slaTimeLeft) : '-12:00';
+          const slaStr = t.slaFormatted || (rawSla.startsWith('-') ? rawSla : `${rawSla}m`);
+
+          return {
+            id: String(t.id).padStart(7, '0'),
+            slaTimeLeft: slaStr,
+            summary: t.summary || t.title || 'Service Request',
+            category: t.category || 'General Access',
+            priority: (t.priority || 'Medium') as RequestItem['priority'],
+            status: (t.status === 'Actioned' || t.status === 'Resolved' ? 'Resolved' : t.status === 'Active' ? 'In Progress' : 'New') as RequestItem['status'],
+            type: t.ticketType || 'Service Request',
+            date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : 'Today',
+            agent: agentName,
+            team: t.assignedTeam || t.team || '1st Line Support',
+            requester: t.requester || 'User',
+            description: t.description || t.summary,
+          };
+        });
         setRequestsList(mapped);
       }
     } catch (err) {
@@ -130,9 +146,9 @@ export const RequestsPage: React.FC = () => {
     return requestsList.filter((req) => {
       // Agent filter
       if (selectedAgent && selectedAgent !== 'All Agents') {
-        if (req.agent !== selectedAgent) return false;
+        if (req.agent.toLowerCase() !== selectedAgent.toLowerCase()) return false;
       } else if (selectedTeam && selectedTeam !== 'All Teams') {
-        if (req.team !== selectedTeam) return false;
+        if (req.team.toLowerCase() !== selectedTeam.toLowerCase()) return false;
       }
 
       // Status filter

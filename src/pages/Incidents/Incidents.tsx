@@ -32,7 +32,7 @@ export default function Incidents() {
   return (
     <div className="relative w-full h-full flex flex-col">
       <TeamIncidentTable
-        initialViewKind="breaching-sla"
+        initialViewKind="team"
         team="1st Line Support"
         mode="Live"
       />

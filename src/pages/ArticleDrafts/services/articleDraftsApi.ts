@@ -21,6 +21,7 @@ import {
   type BackendKnowledgeArticle,
 } from '../articleDrafts.types';
 import { apiClient, ApiError } from '../../../services/apiClient';
+import { MOCK_ARTICLES } from '../../../services/fallback/mockData';
 
 export type { CreateArticleDraftDto, UpdateArticleDraftDto, BackendKnowledgeArticle };
 
@@ -95,12 +96,15 @@ function getStoredDrafts(): ArticleDraft[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (err) {
     console.warn('Failed to read article drafts from storage:', err);
   }
-  return [];
+  const seeded = MOCK_ARTICLES.map(adaptBackendArticle);
+  setStoredDrafts(seeded);
+  return seeded;
 }
 
 /**

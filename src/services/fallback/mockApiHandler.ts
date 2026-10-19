@@ -20,6 +20,11 @@ import {
   MOCK_CONFIG_ITEMS,
   MOCK_SERVICES,
   MOCK_CALENDAR_EVENTS,
+  MOCK_ARTICLES,
+  MOCK_ON_HOLD_TICKETS,
+  MOCK_ACTIVE_TICKETS,
+  MOCK_CLOSED_TICKETS,
+  MOCK_CUSTOM_LISTS,
 } from './mockData';
 import { STAGE_LABELS, StageLabel } from '../majorIncidents.lifecycle';
 import type { MajorIncident } from '../../pages/MajorIncidents/types/majorIncident.types';
@@ -29,6 +34,11 @@ let mutableMajorIncidents: MajorIncident[] = JSON.parse(JSON.stringify(MOCK_MAJO
 let mutableTickets: any[] = JSON.parse(JSON.stringify(MOCK_TICKETS));
 let mutableMyWork: any[] = JSON.parse(JSON.stringify(MOCK_MY_WORK_TICKETS));
 let mutableApprovals: any[] = JSON.parse(JSON.stringify(MOCK_APPROVALS));
+let mutableArticles: any[] = JSON.parse(JSON.stringify(MOCK_ARTICLES));
+let mutableOnHoldTickets: any[] = JSON.parse(JSON.stringify(MOCK_ON_HOLD_TICKETS));
+let mutableActiveTickets: any[] = JSON.parse(JSON.stringify(MOCK_ACTIVE_TICKETS));
+let mutableClosedTickets: any[] = JSON.parse(JSON.stringify(MOCK_CLOSED_TICKETS));
+let mutableCustomLists: any[] = JSON.parse(JSON.stringify(MOCK_CUSTOM_LISTS));
 let currentAgentMood = 'Good';
 let currentAgentPresence = 'available';
 
@@ -145,7 +155,8 @@ export function handleOfflineRequest(
         status: 'Active',
         organisation: parsedBody?.organisation || 'Petabyte Corp',
         category: parsedBody?.category || 'Software & Applications',
-        assignedAgent: parsedBody?.assignedAgent || { firstName: 'Alex', lastName: 'Rivera' },
+        assignedTeam: parsedBody?.assignedTeam || '1st Line Support',
+        assignedAgent: parsedBody?.assignedAgent || { id: 'USR-001', firstName: 'Alex', lastName: 'Rivera', fullName: 'Alex Rivera' },
         createdAt: new Date().toISOString(),
         description: parsedBody?.description || '',
         slaTimeLeft: 120,
@@ -154,7 +165,27 @@ export function handleOfflineRequest(
       mutableTickets = [newTicket, ...mutableTickets];
       return { success: true, data: newTicket };
     }
-    return { success: true, data: mutableTickets };
+
+    let filtered = mutableTickets;
+    if (params?.ticketType) {
+      filtered = filtered.filter(
+        (t) => t.ticketType?.toLowerCase() === String(params.ticketType).toLowerCase()
+      );
+    }
+    if (params?.status) {
+      filtered = filtered.filter(
+        (t) => t.status?.toLowerCase() === String(params.status).toLowerCase()
+      );
+    }
+    return {
+      success: true,
+      data: filtered,
+      tickets: filtered,
+      items: filtered,
+      total: filtered.length,
+      page: 1,
+      totalPages: 1,
+    };
   }
 
   // Ticket status PATCH: /api/tickets/:id/status
@@ -188,12 +219,15 @@ export function handleOfflineRequest(
 
     if (path.includes('first-line') || path.includes('second-line')) {
       const isSecond = path.includes('second-line');
-      const items = isSecond ? mutableTickets.slice(4, 8) : mutableTickets.slice(0, 4);
+      const targetTeam = isSecond ? '2nd Line Support' : '1st Line Support';
+      const items = mutableTickets.filter(
+        (t) => (t.assignedTeam || t.team) === targetTeam || (!t.assignedTeam && !isSecond)
+      );
       const formatted = items.map((t) => ({
         ...t,
         ticketId: t.id,
-        assignedTeam: isSecond ? '2nd Line Support' : '1st Line Support',
-        slaTimeLeft: t.slaTimeLeft || 60,
+        assignedTeam: targetTeam,
+        slaTimeLeft: typeof t.slaTimeLeft === 'number' ? t.slaTimeLeft : 60,
         slaFormatted: t.slaFormatted || '1h SLA',
       }));
       return {
@@ -314,14 +348,60 @@ export function handleOfflineRequest(
     return { success: true, data: newUpdate };
   }
 
-  // 6. My Work personal queue
+  // 6. My Work personal queue & On Hold views
   if (path === '/api/my-work') {
     return { success: true, data: mutableMyWork };
+  }
+  if (path === '/api/my-work/on-hold') {
+    return {
+      success: true,
+      data: mutableOnHoldTickets,
+      tickets: mutableOnHoldTickets,
+      items: mutableOnHoldTickets,
+      pagination: { total: mutableOnHoldTickets.length, page: 1, limit: 50, totalPages: 1 },
+    };
+  }
+  if (path === '/api/my-work/active') {
+    return {
+      success: true,
+      data: mutableActiveTickets,
+      tickets: mutableActiveTickets,
+      items: mutableActiveTickets,
+      pagination: { total: mutableActiveTickets.length, page: 1, limit: 50, totalPages: 1 },
+    };
+  }
+  if (path === '/api/my-work/actioned' || path === '/api/my-work/closed') {
+    return {
+      success: true,
+      data: mutableClosedTickets,
+      tickets: mutableClosedTickets,
+      items: mutableClosedTickets,
+      pagination: { total: mutableClosedTickets.length, page: 1, limit: 50, totalPages: 1 },
+    };
+  }
+  if (path === '/api/my-work/summary') {
+    return {
+      success: true,
+      data: {
+        active: mutableActiveTickets.length,
+        onHold: mutableOnHoldTickets.length,
+        actioned: mutableClosedTickets.length,
+        pending: mutableOnHoldTickets.length,
+        total: mutableActiveTickets.length + mutableOnHoldTickets.length + mutableClosedTickets.length,
+      },
+      tickets: {
+        active: mutableActiveTickets.length,
+        onHold: mutableOnHoldTickets.length,
+        actioned: mutableClosedTickets.length,
+        pending: mutableOnHoldTickets.length,
+      },
+    };
   }
   const myWorkStatusMatch = path.match(/^\/api\/my-work\/([^/]+)\/status$/);
   if (myWorkStatusMatch && upperMethod === 'PATCH') {
     const ticketId = myWorkStatusMatch[1];
-    const found = mutableMyWork.find((t) => t.id === ticketId);
+    const allWork = [...mutableMyWork, ...mutableOnHoldTickets, ...mutableActiveTickets, ...mutableClosedTickets];
+    const found = allWork.find((t) => t.id === ticketId);
     if (found) {
       if (parsedBody?.status) found.status = parsedBody.status;
       if (parsedBody?.holdReason !== undefined) found.holdReason = parsedBody.holdReason;
@@ -393,6 +473,63 @@ export function handleOfflineRequest(
   // 13. Services Catalogue
   if (path === '/api/services' || path === '/api/services/categories') {
     return { success: true, data: MOCK_SERVICES };
+  }
+
+  // 14. Articles & Knowledge Articles
+  if (path === '/api/articles' || path === '/api/knowledge/articles' || path === '/api/knowledge') {
+    if (upperMethod === 'POST') {
+      const newId = `000${3650 + mutableArticles.length + 1}`;
+      const newArticle = {
+        id: newId,
+        title: parsedBody?.title || 'New Knowledge Article',
+        content: parsedBody?.content || parsedBody?.body || '',
+        category: parsedBody?.category || 'General',
+        priority: parsedBody?.priority || 'Medium',
+        status: parsedBody?.status || 'Draft',
+        approvalStatus: parsedBody?.approvalStatus || 'Draft',
+        author: parsedBody?.author || 'Alex Rivera',
+        createdAt: new Date().toISOString(),
+        slaDueAt: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+      };
+      mutableArticles = [newArticle, ...mutableArticles];
+      return { success: true, data: newArticle };
+    }
+    return {
+      success: true,
+      data: mutableArticles,
+      items: mutableArticles,
+      articles: mutableArticles,
+      total: mutableArticles.length,
+      page: 1,
+      totalPages: 1,
+    };
+  }
+
+  const singleArticleMatch = path.match(/^\/api\/(?:knowledge\/)?articles\/([^/]+)$/);
+  if (singleArticleMatch) {
+    const artId = singleArticleMatch[1];
+    const found = mutableArticles.find((a) => a.id === artId);
+    if (upperMethod === 'PATCH') {
+      if (found) {
+        if (parsedBody?.title) found.title = parsedBody.title;
+        if (parsedBody?.content) found.content = parsedBody.content;
+        if (parsedBody?.category) found.category = parsedBody.category;
+        if (parsedBody?.priority) found.priority = parsedBody.priority;
+        if (parsedBody?.status) found.status = parsedBody.status;
+      }
+      return { success: true, data: found || { id: artId, ...parsedBody } };
+    }
+    return { success: true, data: found || mutableArticles[0] };
+  }
+
+  // 15. Custom Lists Builder
+  if (path === '/api/list-builder/lists' || path === '/api/lists') {
+    return {
+      success: true,
+      data: mutableCustomLists,
+      lists: mutableCustomLists,
+      items: mutableCustomLists,
+    };
   }
 
   return undefined;

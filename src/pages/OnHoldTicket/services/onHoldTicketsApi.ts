@@ -1,4 +1,9 @@
 import { apiClient, ApiError } from '../../../services/apiClient';
+import {
+  MOCK_ON_HOLD_TICKETS,
+  MOCK_ACTIVE_TICKETS,
+  MOCK_CLOSED_TICKETS,
+} from '../../../services/fallback/mockData';
 import type { Ticket } from '../TicketScreen/OnHoldTicketScreen';
 
 export interface BackendOnHoldTicket {
@@ -146,7 +151,7 @@ function extractCount(res: any): number {
 /**
  * Fetch all On-Hold tickets from backend GET /api/my-work/on-hold
  */
-export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Ticket[]> {
+export async function fetchOnHoldTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/on-hold');
     const raw = response?.data?.tickets || response?.tickets || response?.data || response;
@@ -159,11 +164,15 @@ export async function fetchOnHoldTickets(fallbackTickets: Ticket[]): Promise<Tic
     }
 
     const cached = getCachedOnHoldTickets();
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_ON_HOLD_TICKETS.map(adaptBackendTicket);
   } catch (error) {
     console.warn('[OnHoldApi] Live on-hold fetch unavailable, falling back to cache:', error);
     const cached = getCachedOnHoldTickets();
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_ON_HOLD_TICKETS.map(adaptBackendTicket);
   }
 }
 
@@ -183,11 +192,15 @@ export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promis
     }
 
     const cached = getCachedList(STORAGE_KEY_ACTIVE);
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_ACTIVE_TICKETS.map(adaptBackendTicket);
   } catch (error) {
     console.warn('[OnHoldApi] Live active fetch unavailable, falling back to cache:', error);
     const cached = getCachedList(STORAGE_KEY_ACTIVE);
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_ACTIVE_TICKETS.map(adaptBackendTicket);
   }
 }
 
@@ -207,11 +220,15 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promis
     }
 
     const cached = getCachedList(STORAGE_KEY_ACTIONED);
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_CLOSED_TICKETS.map(adaptBackendTicket);
   } catch (error) {
     console.warn('[OnHoldApi] Live closed tickets fetch unavailable, falling back to cache:', error);
     const cached = getCachedList(STORAGE_KEY_ACTIONED);
-    return cached || fallbackTickets;
+    if (cached && cached.length > 0) return cached;
+    if (fallbackTickets.length > 0) return fallbackTickets;
+    return MOCK_CLOSED_TICKETS.map(adaptBackendTicket);
   }
 }
 

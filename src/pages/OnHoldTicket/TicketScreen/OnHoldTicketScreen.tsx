@@ -16,7 +16,12 @@ import {
   bulkUpdateTicketPriority,
   bulkAssignTickets,
   bulkDeleteTickets,
+  adaptBackendTicket,
 } from "../services/onHoldTicketsApi";
+import {
+  MOCK_ON_HOLD_TICKETS,
+  MOCK_ACTIVE_TICKETS,
+} from "../../../services/fallback/mockData";
 
 export interface Ticket {
   id: string;
@@ -33,14 +38,8 @@ export interface Ticket {
   targetSla?: string;
 }
 
-export const NEW_TICKETS_DATA: Ticket[] = [
-];
-// Mock data removed — data comes from backend API
-
-
-export const ALL_TICKETS: Ticket[] = [
-];
-// Mock data removed — data comes from backend API
+export const NEW_TICKETS_DATA: Ticket[] = MOCK_ACTIVE_TICKETS.map(adaptBackendTicket);
+export const ALL_TICKETS: Ticket[] = MOCK_ON_HOLD_TICKETS.map(adaptBackendTicket);
 
 
 const PRIORITY_DOT: Record<Ticket["priorityColor"], string> = {
@@ -184,18 +183,18 @@ const OnHoldTicketScreen: React.FC = () => {
     try {
       let liveTickets: Ticket[] = [];
       if (activeView === "My New Tickets") {
-        liveTickets = await fetchActiveTickets([]);
+        liveTickets = await fetchActiveTickets(NEW_TICKETS_DATA);
       } else if (activeView === "My Closed Tickets") {
         liveTickets = await fetchClosedTickets([]);
       } else if (activeView === "My Followed Tickets") {
         liveTickets = [];
       } else {
-        liveTickets = await fetchOnHoldTickets([]);
+        liveTickets = await fetchOnHoldTickets(ALL_TICKETS);
       }
       if (liveTickets && liveTickets.length > 0) {
         setTickets(liveTickets);
       } else {
-        setTickets([]);
+        setTickets(activeView === "My New Tickets" ? NEW_TICKETS_DATA : ALL_TICKETS);
       }
     } catch (err) {
       console.warn("Failed to fetch tickets from backend:", err);
