@@ -171,12 +171,42 @@ export function handleOfflineRequest(
 
   // Specific incident sub-routes
   if (path.startsWith('/api/incidents/')) {
-    if (path.includes('first-line')) {
-      return { success: true, data: mutableTickets.slice(0, 4) };
+    // Check support agents endpoints FIRST
+    if (path.includes('/agents')) {
+      const agents = [
+        { id: 'USR-001', firstName: 'Alex', lastName: 'Rivera', email: 'agent001@servigen.local', availability: 'Available' },
+        { id: 'USR-002', firstName: 'Sarah', lastName: 'Jenkins', email: 'support001@servigen.local', availability: 'Available' },
+        { id: 'USR-004', firstName: 'Marcus', lastName: 'Vance', email: 'marcus.vance@servigen.local', availability: 'Busy' },
+        { id: 'USR-005', firstName: 'Priya', lastName: 'Nair', email: 'priya.nair@servigen.local', availability: 'Available' },
+      ];
+      return {
+        success: true,
+        agents,
+        data: agents,
+      };
     }
-    if (path.includes('second-line')) {
-      return { success: true, data: mutableTickets.slice(4, 8) };
+
+    if (path.includes('first-line') || path.includes('second-line')) {
+      const isSecond = path.includes('second-line');
+      const items = isSecond ? mutableTickets.slice(4, 8) : mutableTickets.slice(0, 4);
+      const formatted = items.map((t) => ({
+        ...t,
+        ticketId: t.id,
+        assignedTeam: isSecond ? '2nd Line Support' : '1st Line Support',
+        slaTimeLeft: t.slaTimeLeft || 60,
+        slaFormatted: t.slaFormatted || '1h SLA',
+      }));
+      return {
+        success: true,
+        incidents: formatted,
+        data: formatted,
+        items: formatted,
+        total: formatted.length,
+        page: 1,
+        totalPages: 1,
+      };
     }
+
     if (path.includes('analytics/priority')) {
       return {
         success: true,
@@ -309,16 +339,35 @@ export function handleOfflineRequest(
     return { success: true, data: mutableApprovals };
   }
 
-  // 8. Users & Presence
-  if (path === '/api/users') {
-    return { success: true, data: MOCK_USERS };
+  // 8. Users & Presence & Organisation Users
+  if (path.startsWith('/api/organisations/') && path.includes('/users')) {
+    return {
+      success: true,
+      data: MOCK_USERS,
+      users: MOCK_USERS,
+      items: MOCK_USERS,
+    };
   }
-  if (path === '/api/users/presence') {
-    if (upperMethod === 'PATCH') {
-      currentAgentPresence = parsedBody?.presence || 'available';
+  if (path === '/api/users' || path.startsWith('/api/users/')) {
+    if (path === '/api/users/presence') {
+      if (upperMethod === 'PATCH') {
+        currentAgentPresence = parsedBody?.presence || 'available';
+        return { success: true, presence: currentAgentPresence };
+      }
       return { success: true, presence: currentAgentPresence };
     }
-    return { success: true, presence: currentAgentPresence };
+    const singleUserMatch = path.match(/^\/api\/users\/([^/]+)$/);
+    if (singleUserMatch) {
+      const uId = singleUserMatch[1];
+      const found = MOCK_USERS.find((u) => u.id === uId || u.username === uId);
+      return { success: true, data: found || MOCK_USERS[0] };
+    }
+    return {
+      success: true,
+      data: MOCK_USERS,
+      users: MOCK_USERS,
+      items: MOCK_USERS,
+    };
   }
 
   // 9. Calendar

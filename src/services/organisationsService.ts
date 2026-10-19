@@ -10,6 +10,7 @@
  */
 
 import { api, logServiceError } from './apiClient';
+import { MOCK_USERS } from './fallback/mockData';
 import type { User } from '../pages/Auth/types';
 
 export interface OrganisationsApiResponse<T> {
@@ -125,9 +126,17 @@ export async function fetchOrganisationUsers(organisationId?: string): Promise<U
   }
 
   // 2. Fetch from standard users directory
-  const res = await api.get('/api/users');
-  const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-  return rawList.map(normalizeOrganisationUser);
+  try {
+    const res = await api.get('/api/users');
+    const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    if (rawList.length > 0) {
+      return rawList.map(normalizeOrganisationUser);
+    }
+  } catch (err: any) {
+    logServiceError('organisations.fetchOrganisationUsers', err);
+  }
+
+  return MOCK_USERS.map(normalizeOrganisationUser);
 }
 
 /**

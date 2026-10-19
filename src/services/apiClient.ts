@@ -328,19 +328,6 @@ export async function apiRequest<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  // If operating with a mock session, satisfy from offline mock store directly
-  if (token?.startsWith('mock_')) {
-    const mockRes = handleOfflineRequest(
-      normalizedEndpoint,
-      fetchOptions.method || 'GET',
-      fetchOptions.body,
-      params
-    );
-    if (mockRes !== undefined) {
-      return mockRes as T;
-    }
-  }
-
   let response: Response;
   try {
     response = await fetch(fullUrl, {
@@ -376,8 +363,9 @@ export async function apiRequest<T = any>(
     throw new ApiError(errorMsg, 0);
   }
 
-  // If backend returned a 5xx server error, fall back to demo data rather than breaking
-  if (response.status >= 500) {
+  // If backend returned a 5xx server error (e.g. database unreachable) or unmounted route (404),
+  // fall back to mock demo fixtures so the screen remains functional
+  if (response.status >= 500 || (response.status === 404 && !normalizedEndpoint.includes('/auth/login'))) {
     const mockRes = handleOfflineRequest(
       normalizedEndpoint,
       fetchOptions.method || 'GET',
@@ -390,7 +378,7 @@ export async function apiRequest<T = any>(
           new CustomEvent('servigen-demo-data', {
             detail: {
               endpoint: normalizedEndpoint,
-              reason: 'Backend returned server error — serving demo data',
+              reason: 'Backend or database unavailable — serving demo data',
             },
           })
         );
