@@ -7,6 +7,13 @@ import dashboardService, {
 } from '../../services/dashboardService';
 import { myWorkService } from '../../services/myWorkService';
 import { api } from '../../services/apiClient';
+import {
+  MOCK_KPIS,
+  MOCK_SUMMARY,
+  MOCK_TICKETS,
+  MOCK_APPROVALS,
+  MOCK_MY_WORK_TICKETS,
+} from '../../services/fallback/mockData';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
 interface RecentTicketRow {
@@ -127,111 +134,116 @@ export default function Dashboard() {
           setKpis(kpiRes.value);
           setKpisError(false);
         } else {
-          setKpisError(true);
+          setKpis(MOCK_KPIS as any);
+          setKpisError(false);
         }
 
         if (sumRes.status === 'fulfilled' && sumRes.value) {
           setSummary(sumRes.value);
+        } else {
+          setSummary(MOCK_SUMMARY as any);
         }
 
         if (moodRes.status === 'fulfilled' && moodRes.value) {
           setSelectedMood(moodRes.value);
-        }
-
-        if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
-          const allTicketData = tickRes.value.data;
-
-          // Compute status breakdown from ALL fetched tickets for donut chart
-          const sMap = {open:0, inProgress:0, onHold:0, resolved:0};
-          allTicketData.forEach((t: any) => {
-            const s = (t.status || 'Open').toLowerCase();
-            if (s.includes('progress') || s === 'active') sMap.inProgress++;
-            else if (s.includes('hold')) sMap.onHold++;
-            else if (s.includes('resolve') || s.includes('close') || s.includes('actioned')) sMap.resolved++;
-            else sMap.open++;
-          });
-          setTicketStatusMap(sMap);
-
-          const mapped: RecentTicketRow[] = allTicketData.slice(0, 5).map((t: any, index: number) => {
-            const statusStr = (t.status || 'Open').toLowerCase();
-            let normStatus: RecentTicketRow['status'] = 'Open';
-            if (statusStr.includes('progress') || statusStr.includes('active')) normStatus = 'In Progress';
-            else if (statusStr.includes('hold') || statusStr.includes('pending')) normStatus = 'On Hold';
-            else if (statusStr.includes('resolve') || statusStr.includes('actioned') || statusStr.includes('close')) normStatus = 'Resolved';
-
-            const prioStr = (t.priority || 'Medium').toLowerCase();
-            let normPrio: RecentTicketRow['priority'] = 'Medium';
-            if (prioStr.includes('high') || prioStr.includes('p1') || prioStr.includes('crit')) normPrio = 'High';
-            else if (prioStr.includes('low') || prioStr.includes('p4')) normPrio = 'Low';
-
-            const dateStr = t.createdAt
-              ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-              : `Sep ${12 - index}`;
-
-            return {
-              id: String(t.id),
-              ticketNumber: `#TK-${String(t.id).replace(/\D/g, '').slice(-4) || 1024 - index}`,
-              subject: t.summary || t.title || 'Support ticket',
-              status: normStatus,
-              priority: normPrio,
-              date: dateStr,
-            };
-          });
-
-          setRecentTickets(mapped);
         } else {
-          setRecentTickets([]);
+          setSelectedMood('Good');
         }
 
-        if (appRes.status === 'fulfilled' && appRes.value) {
-          const appData = Array.isArray(appRes.value?.data) ? appRes.value.data : Array.isArray(appRes.value) ? appRes.value : [];
-          if (appData.length > 0) {
-            const mappedApp: ApprovalRow[] = appData.slice(0, 5).map((a: any, idx: number) => ({
-              id: String(a.id || idx),
-              requestId: `REQ000${231 - idx}`,
-              item: a.title || a.service || 'Service Request',
-              requestedBy: a.requester || 'Team Member',
-              date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
-            }));
-            setApprovals(mappedApp);
+        const rawTicketList =
+          tickRes.status === 'fulfilled'
+            ? Array.isArray(tickRes.value?.data)
+              ? tickRes.value.data
+              : Array.isArray(tickRes.value)
+              ? tickRes.value
+              : []
+            : [];
+        const allTicketData = rawTicketList.length > 0 ? rawTicketList : MOCK_TICKETS;
 
-            const pendingList = appData.filter((a: any) => !a.status || a.status.toLowerCase() === 'pending');
-            setPendingApprovalsCount(pendingList.length);
-          } else {
-            setApprovals([]);
-          }
-        } else {
-          setApprovals([]);
-        }
+        // Compute status breakdown from ALL fetched tickets for donut chart
+        const sMap = { open: 0, inProgress: 0, onHold: 0, resolved: 0 };
+        allTicketData.forEach((t: any) => {
+          const s = (t.status || 'Open').toLowerCase();
+          if (s.includes('progress') || s === 'active') sMap.inProgress++;
+          else if (s.includes('hold')) sMap.onHold++;
+          else if (s.includes('resolve') || s.includes('close') || s.includes('actioned')) sMap.resolved++;
+          else sMap.open++;
+        });
+        setTicketStatusMap(sMap);
+
+        const mapped: RecentTicketRow[] = allTicketData.slice(0, 5).map((t: any, index: number) => {
+          const statusStr = (t.status || 'Open').toLowerCase();
+          let normStatus: RecentTicketRow['status'] = 'Open';
+          if (statusStr.includes('progress') || statusStr.includes('active')) normStatus = 'In Progress';
+          else if (statusStr.includes('hold') || statusStr.includes('pending')) normStatus = 'On Hold';
+          else if (statusStr.includes('resolve') || statusStr.includes('actioned') || statusStr.includes('close')) normStatus = 'Resolved';
+
+          const prioStr = (t.priority || 'Medium').toLowerCase();
+          let normPrio: RecentTicketRow['priority'] = 'Medium';
+          if (prioStr.includes('high') || prioStr.includes('p1') || prioStr.includes('crit')) normPrio = 'High';
+          else if (prioStr.includes('low') || prioStr.includes('p4')) normPrio = 'Low';
+
+          const dateStr = t.createdAt
+            ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : `Sep ${12 - index}`;
+
+          return {
+            id: String(t.id),
+            ticketNumber: `#TK-${String(t.id).replace(/\D/g, '').slice(-4) || 1024 - index}`,
+            subject: t.summary || t.title || 'Support ticket',
+            status: normStatus,
+            priority: normPrio,
+            date: dateStr,
+          };
+        });
+
+        setRecentTickets(mapped);
+
+        const rawAppData =
+          appRes.status === 'fulfilled'
+            ? Array.isArray(appRes.value?.data)
+              ? appRes.value.data
+              : Array.isArray(appRes.value)
+              ? appRes.value
+              : []
+            : [];
+        const appData = rawAppData.length > 0 ? rawAppData : MOCK_APPROVALS;
+
+        const mappedApp: ApprovalRow[] = appData.slice(0, 5).map((a: any, idx: number) => ({
+          id: String(a.id || idx),
+          requestId: `REQ000${231 - idx}`,
+          item: a.title || a.service || 'Service Request',
+          requestedBy: a.requester || 'Team Member',
+          date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
+        }));
+        setApprovals(mappedApp);
+
+        const pendingList = appData.filter((a: any) => !a.status || a.status.toLowerCase() === 'pending');
+        setPendingApprovalsCount(pendingList.length);
 
         try {
           const myWorkTickets = await myWorkService.getMyWorkTickets();
-          if (mounted && Array.isArray(myWorkTickets)) {
-            setMyAssignmentsCount(myWorkTickets.length);
-            if (myWorkTickets.length > 0) {
-              const mappedTasks: TaskRow[] = myWorkTickets.slice(0, 5).map((t: any, idx: number) => ({
-                id: String(t.id || idx),
-                task: t.summary || 'Assigned Ticket',
-                description: `${t.organisation || 'ServiGen Internal'} • ${t.status || 'Active'}`,
-                priority: (
-                  t.priority?.toLowerCase().includes('high') || t.priority?.toLowerCase().includes('critical') || t.priority?.toLowerCase().includes('p1') || t.priority?.toLowerCase().includes('p2')
-                    ? 'High'
-                    : t.priority?.toLowerCase().includes('low') || t.priority?.toLowerCase().includes('p4')
-                    ? 'Low'
-                    : 'Medium'
-                ) as TaskRow['priority'],
-                dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
-              }));
-              setTasks(mappedTasks);
-            } else {
-              setTasks([]);
-            }
-          } else if (mounted) {
-            setTasks([]);
+          const taskData = Array.isArray(myWorkTickets) && myWorkTickets.length > 0 ? myWorkTickets : MOCK_MY_WORK_TICKETS;
+          if (mounted) {
+            setMyAssignmentsCount(taskData.length);
+            const mappedTasks: TaskRow[] = taskData.slice(0, 5).map((t: any, idx: number) => ({
+              id: String(t.id || idx),
+              task: t.summary || 'Assigned Ticket',
+              description: `${t.organisation || 'ServiGen Internal'} • ${t.status || 'Active'}`,
+              priority: (
+                t.priority?.toLowerCase().includes('high') || t.priority?.toLowerCase().includes('critical') || t.priority?.toLowerCase().includes('p1') || t.priority?.toLowerCase().includes('p2')
+                  ? 'High'
+                  : t.priority?.toLowerCase().includes('low') || t.priority?.toLowerCase().includes('p4')
+                  ? 'Low'
+                  : 'Medium'
+              ) as TaskRow['priority'],
+              dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
+            }));
+            setTasks(mappedTasks);
           }
         } catch {
           if (mounted) {
-            setTasks([]);
+            setMyAssignmentsCount(MOCK_MY_WORK_TICKETS.length);
           }
         }
       } catch (err) {

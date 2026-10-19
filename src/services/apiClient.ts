@@ -363,9 +363,14 @@ export async function apiRequest<T = any>(
     throw new ApiError(errorMsg, 0);
   }
 
-  // If backend returned a 5xx server error (e.g. database unreachable) or unmounted route (404),
-  // fall back to mock demo fixtures so the screen remains functional
-  if (response.status >= 500 || (response.status === 404 && !normalizedEndpoint.includes('/auth/login'))) {
+  // If backend returned a 5xx server error (e.g. database unreachable), unmounted route (404),
+  // or rejected a mock session token (401), fall back to mock demo fixtures
+  const isMockToken = Boolean(token?.startsWith('mock_'));
+  const isAuthFailureWithMock = response.status === 401 && isMockToken;
+  const isServerError = response.status >= 500;
+  const isUnmountedRoute = response.status === 404 && !normalizedEndpoint.includes('/auth/login');
+
+  if (isServerError || isUnmountedRoute || isAuthFailureWithMock) {
     const mockRes = handleOfflineRequest(
       normalizedEndpoint,
       fetchOptions.method || 'GET',
@@ -378,7 +383,9 @@ export async function apiRequest<T = any>(
           new CustomEvent('servigen-demo-data', {
             detail: {
               endpoint: normalizedEndpoint,
-              reason: 'Backend or database unavailable — serving demo data',
+              reason: isAuthFailureWithMock
+                ? 'Running in offline demo mode — showing local demo data'
+                : 'Backend or database unavailable — serving demo data',
             },
           })
         );
