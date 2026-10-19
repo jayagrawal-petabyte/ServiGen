@@ -37,12 +37,12 @@ describe('Major Incidents Service', () => {
     const incident = await majorIncidentsService.changeMajorIncident('MI-001', {
       title: 'Customer portal availability issue',
       commander: 'Jasmini',
-      status: 'Monitoring',
+      status: 'Diagnosed',
     });
 
     assert.equal(incident.title, 'Customer portal availability issue');
     assert.equal(incident.commander, 'Jasmini');
-    assert.equal(incident.status, 'Monitoring');
+    assert.equal(incident.status, 'Diagnosed');
   });
 
   it('generates distinct incident and activity IDs under a fixed clock', async () => {

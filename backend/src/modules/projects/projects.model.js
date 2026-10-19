@@ -98,7 +98,9 @@ const getProjects = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -135,7 +137,9 @@ const getActiveProjects = async (options = {}) => {
 
       return formatted.filter((p) => !organisationId || !p.organisationId || p.organisationId === organisationId);
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -174,7 +178,9 @@ const getProjectById = async (projectId, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -205,7 +211,9 @@ const getSubtasksByProject = async (projectId, organisationId = null) => {
         }));
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

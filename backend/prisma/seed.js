@@ -294,13 +294,61 @@ async function main() {
   });
 
 
-  await db.team.upsert({where:{name:'1st Line Support'},update:{},create:{id:'team-001',name:'1st Line Support'}});
+  await db.team.upsert({where:{name:'1st Line Support'},update:{organisationId: acme.id},create:{id:'team-001',name:'1st Line Support',organisationId: acme.id}});
   await db.teamMembership.upsert({where:{teamId_userId:{teamId:'team-001',userId:agent1.id}},update:{},create:{teamId:'team-001',userId:agent1.id}});
   await db.ticket.update({where:{id:'INC-1001'},data:{teamId:'team-001'}});
   await db.incident.upsert({where:{ticketId:'INC-1001'},update:{},create:{id:'incident-001',ticketId:'INC-1001',category:'Network'}});
   await db.serviceCatalogueItem.upsert({where:{id:'service-admin-rights'},update:{},create:{id:'service-admin-rights',name:'Administrator Rights',description:'Developer workstation administrator access',category:'Access',requiresApproval:true}});
   await db.serviceRequest.upsert({where:{ticketId:'REQ-1002'},update:{},create:{id:'request-001',ticketId:'REQ-1002',serviceCatalogueItemId:'service-admin-rights'}});
-  await db.approval.upsert({where:{id:'APP-1001'},update:{},create:{id:'APP-1001',ticketId:'REQ-1002',entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
+  await db.approval.upsert({where:{id:'APP-1001'},update:{organisationId: globex.id},create:{id:'APP-1001',ticketId:'REQ-1002',organisationId: globex.id,entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
+
+  // 8. Seed Major Incidents
+  await db.majorIncident.upsert({
+    where: { id: 'MI-1001' },
+    update: { organisationId: acme.id },
+    create: {
+      id: 'MI-1001',
+      organisationId: acme.id,
+      title: 'Customer Portal & Auth Gateway Outage',
+      description: 'Self-service customer portal is returning 502 Bad Gateway intermittently.',
+      priority: 'P1',
+      status: 'Started',
+      impact: 'Critical customer-facing services unavailable.',
+      affectedServices: ['Customer Portal', 'Authentication API'],
+      commander: 'Adam Admin',
+      startedAt: new Date('2026-10-01T08:00:00Z'),
+    },
+  });
+
+  await db.majorIncidentUpdate.upsert({
+    where: { id: 'MI-1001-U1' },
+    update: {},
+    create: {
+      id: 'MI-1001-U1',
+      majorIncidentId: 'MI-1001',
+      message: 'Incident commander assigned. War room initiated.',
+      author: 'Adam Admin',
+      timestamp: new Date('2026-10-01T08:15:00Z'),
+    },
+  });
+
+  await db.majorIncident.upsert({
+    where: { id: 'MI-1002' },
+    update: { organisationId: acme.id },
+    create: {
+      id: 'MI-1002',
+      organisationId: acme.id,
+      title: 'Global VPN Concentrator Connectivity Degradation',
+      description: 'Multiple remote regions experiencing dropped packet rates exceeding 35%.',
+      priority: 'P2',
+      status: 'Mitigated',
+      impact: 'High latency for remote staff.',
+      affectedServices: ['Corporate VPN'],
+      commander: 'Agent 001',
+      startedAt: new Date('2026-10-02T10:00:00Z'),
+    },
+  });
+
   console.log('[servigen:seed] Seed completed successfully!');
 }
 

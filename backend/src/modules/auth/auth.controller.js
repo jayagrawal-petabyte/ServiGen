@@ -1,6 +1,9 @@
 const {
   login,
   getSession,
+  refreshToken,
+  requestPasswordReset,
+  resetPassword,
 } = require('./auth.service');
 
 /**
@@ -108,13 +111,62 @@ const forgotPasswordHandler = async (req, res) => {
       throw error;
     }
 
+    const resetInfo = await requestPasswordReset(identifier);
+
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
       message: 'If an account matching the provided details exists, password reset instructions have been sent.',
+      ...(process.env.NODE_ENV !== 'production' && resetInfo ? { resetToken: resetInfo.resetToken } : {}),
     });
   } catch (error) {
     return respondWithError(res, error, 'Failed to process password reset request');
+  }
+};
+
+/**
+ * POST /auth/reset-password
+ *
+ * Complete password reset using token and new password.
+ */
+const resetPasswordHandler = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body || {};
+    await resetPassword(token, newPassword);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully',
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to reset password');
+  }
+};
+
+/**
+ * POST /auth/refresh
+ *
+ * Refresh an existing JWT token.
+ */
+const refreshHandler = async (req, res) => {
+  try {
+    let token = req.body?.token;
+    const authHeader = req.headers.authorization;
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+
+    const user = await refreshToken(token);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: user,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to refresh token');
   }
 };
 
@@ -122,4 +174,6 @@ module.exports = {
   loginHandler,
   getSessionHandler,
   forgotPasswordHandler,
+  resetPasswordHandler,
+  refreshHandler,
 };

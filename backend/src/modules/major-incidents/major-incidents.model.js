@@ -7,7 +7,7 @@ const mockMajorIncidents = [
     id: 'MI-001',
     title: 'Customer portal unavailable',
     description: 'Customers cannot access the self-service portal.',
-    status: 'Investigating',
+    status: 'Started',
     priority: 'P1',
     impact: 'Customer-facing portal is unavailable.',
     affectedServices: ['Customer Portal', 'Authentication API'],
@@ -57,7 +57,9 @@ const getMajorIncidents = async (filters = {}) => {
         })),
       }));
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -98,7 +100,9 @@ const getMajorIncidentById = async (id) => {
         };
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -113,7 +117,7 @@ const saveMajorIncident = async (incident) => {
           id: incident.id,
           title: incident.title,
           description: incident.description,
-          status: incident.status || 'Investigating',
+          status: incident.status || 'Started',
           priority: incident.priority,
           impact: incident.impact || 'High',
           affectedServices: incident.affectedServices || [],
@@ -121,7 +125,9 @@ const saveMajorIncident = async (incident) => {
         },
       });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -132,12 +138,18 @@ const saveMajorIncident = async (incident) => {
 const updateMajorIncident = async (id, changes) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
+      const data = { ...changes };
+      if ('resolvedAt' in data) {
+        data.resolvedAt = data.resolvedAt ? new Date(data.resolvedAt) : null;
+      }
       await db.majorIncident.update({
         where: { id },
-        data: changes,
+        data,
       });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -159,7 +171,9 @@ const addIncidentUpdate = async (id, update) => {
         },
       });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

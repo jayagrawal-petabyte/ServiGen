@@ -26,3 +26,29 @@ test('team, knowledge and scheduling models have relational ownership', () => {
   assert.equal(field('CalendarEvent','agent').type,'User');
   assert.equal(field('KnowledgeArticle','author').type,'User');
 });
+
+test('domain entities have organisationId foreign key and organisation relation', () => {
+  const tenantScopedModels = [
+    'MajorIncident',
+    'Approval',
+    'ConfigurationItem',
+    'ChangeRequest',
+    'Project',
+    'KnowledgeArticle',
+    'ServiceCatalogueItem',
+    'CustomList',
+    'Team',
+    'AgentMood',
+    'CalendarEvent',
+  ];
+  for (const model of tenantScopedModels) {
+    const orgIdField = field(model, 'organisationId');
+    assert.ok(orgIdField, `${model} must have organisationId field`);
+    assert.equal(orgIdField.type, 'String');
+    assert.equal(orgIdField.isRequired, false);
+
+    const orgRel = field(model, 'organisation');
+    assert.ok(orgRel, `${model} must have organisation relation`);
+    assert.equal(orgRel.type, 'Organisation');
+  }
+});

@@ -7,21 +7,33 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 // ─── Organisation & Multi-Tenancy ──────────────────────────────────────────
 
 model Organisation {
-  id        String   @id @default(uuid())
-  name      String
-  domain    String?  @unique
-  tier      String   @default("Standard")
-  sites     Site[]
-  users     User[]
-  tickets   Ticket[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String                 @id @default(uuid())
+  name                  String
+  domain                String?                @unique
+  tier                  String                 @default("Standard")
+  sites                 Site[]
+  users                 User[]
+  tickets               Ticket[]
+  majorIncidents        MajorIncident[]
+  approvals             Approval[]
+  configurationItems    ConfigurationItem[]
+  changeRequests        ChangeRequest[]
+  projects              Project[]
+  knowledgeArticles     KnowledgeArticle[]
+  serviceCatalogueItems ServiceCatalogueItem[]
+  customLists           CustomList[]
+  teams                 Team[]
+  agentMoods            AgentMood[]
+  calendarEvents        CalendarEvent[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
   @@map("organisations")
 }
@@ -124,12 +136,14 @@ model Incident {
 
 model MajorIncident {
   id               String                @id // e.g., "MI-1001"
+  organisationId   String?
+  organisation     Organisation?         @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   incidentId       String?               @unique
   incident         Incident?             @relation(fields: [incidentId], references: [id], onDelete: SetNull)
   title            String
   description      String                @db.Text
   priority         String                // "P1", "P2"
-  status           String                @default("Investigating") // "Investigating", "Identified", "Monitoring", "Resolved"
+  status           String                @default("Started") // "Started", "Escalated", "Diagnosed", "Mitigated", "Resolved", "Closed"
   impact           String
   affectedServices String[]              // List of affected service names
   responseTargetAt DateTime?
@@ -143,6 +157,7 @@ model MajorIncident {
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 
+  @@index([organisationId, status])
   @@map("major_incidents")
 }
 
@@ -161,6 +176,8 @@ model MajorIncidentUpdate {
 
 model ServiceCatalogueItem {
   id               String           @id @default(uuid())
+  organisationId   String?
+  organisation     Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name             String
   description      String           @db.Text
   category         String           // "Hardware", "Software Access", "Cloud Resources"
@@ -172,6 +189,7 @@ model ServiceCatalogueItem {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@index([organisationId, status])
   @@map("service_catalogue_items")
 }
 
@@ -193,6 +211,8 @@ model ServiceRequest {
 
 model Approval {
   id         String    @id // e.g., "APP-1001"
+  organisationId String?
+  organisation   Organisation?   @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   ticketId   String?
   ticket     Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   entityType String    // "Service Request", "Change Request"
@@ -210,6 +230,7 @@ model Approval {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  @@index([organisationId, status])
   @@index([approverId, status])
   @@map("approvals")
 }
@@ -218,6 +239,8 @@ model Approval {
 
 model ConfigurationItem {
   id             String          @id // e.g., "CI-001"
+  organisationId String?
+  organisation   Organisation?   @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name           String
   type           String          // "Server", "Database", "Application", "Network"
   tag            String          @unique // "PAY-001", "DB-001"
@@ -230,6 +253,7 @@ model ConfigurationItem {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([organisationId, status])
   @@map("configuration_items")
 }
 
@@ -237,6 +261,8 @@ model ConfigurationItem {
 
 model ChangeRequest {
   id                  String             @id // e.g., "CR-001"
+  organisationId      String?
+  organisation        Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   summary             String
   changeType          String             // "Standard", "Normal", "Emergency"
   status              String             @default("Active") // "Draft", "Pending Approval", "Approved", "Active", "Scheduled", "Completed", "Rejected"
@@ -252,22 +278,26 @@ model ChangeRequest {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
+  @@index([organisationId, status])
   @@map("change_requests")
 }
 
 // ─── Projects & Tasks ──────────────────────────────────────────────────────
 
 model Project {
-  id        String           @id // e.g., "P-001"
-  name      String
-  status    String           @default("ACTIVE") // "ACTIVE", "COMPLETED"
-  startDate DateTime?
-  endDate   DateTime?
-  timeSpent Int              @default(0) // Hours or minutes spent
-  subtasks  ProjectSubtask[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id             String           @id // e.g., "P-001"
+  organisationId String?
+  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  name           String
+  status         String           @default("ACTIVE") // "ACTIVE", "COMPLETED"
+  startDate      DateTime?
+  endDate        DateTime?
+  timeSpent      Int              @default(0) // Hours or minutes spent
+  subtasks       ProjectSubtask[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
+  @@index([organisationId, status])
   @@map("projects")
 }
 
@@ -286,10 +316,12 @@ model ProjectSubtask {
 // ─── List Builder (Custom Lists) ───────────────────────────────────────────
 
 model CustomList {
-  id             String   @id // e.g., "LIST-001"
+  id             String        @id // e.g., "LIST-001"
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name           String
   description    String?
-  status         String   @default("Draft")
+  status         String        @default("Draft")
   fields         String[] // Display column names
   filterCriteria Json?    @default("{}")
   scope          String?
@@ -303,18 +335,22 @@ model CustomList {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@index([organisationId])
   @@map("custom_lists")
 }
 
 // ─── Agent Mood Tracker (Dashboard SCR-014) ────────────────────────────────
 
 model AgentMood {
-  id          String   @id @default(uuid())
-  agentId     String
-  agent       User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  mood        String   // "Great", "Good", "Neutral", "Struggling", "Overwhelmed"
-  submittedAt DateTime @default(now())
+  id             String        @id @default(uuid())
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  agentId        String
+  agent          User          @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mood           String   // "Great", "Good", "Neutral", "Struggling", "Overwhelmed"
+  submittedAt    DateTime @default(now())
 
+  @@index([organisationId, submittedAt])
   @@map("agent_moods")
 }
 
@@ -322,12 +358,16 @@ model AgentMood {
 // The shared permission layer validates them. Multi-role membership and
 // cross-organisation access policy are not inferred from the functional document.
 model Team {
-  id String @id @default(uuid())
-  name String @unique
-  memberships TeamMembership[]
-  tickets Ticket[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(uuid())
+  organisationId String?
+  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  name           String           @unique
+  memberships    TeamMembership[]
+  tickets        Ticket[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organisationId])
   @@map("teams")
 }
 model TeamMembership {
@@ -340,30 +380,39 @@ model TeamMembership {
   @@map("team_memberships")
 }
 model KnowledgeArticle {
-  id String @id @default(uuid())
-  title String
-  content String @db.Text
-  category String?
-  priority String?
-  status String @default("Draft")
-  approvalStatus String @default("Pending")
-  slaDueAt DateTime?
-  authorId String?
-  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String                      @id @default(uuid())
+  organisationId String?
+  organisation   Organisation?               @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  title          String
+  content        String                      @db.Text
+  category       String?
+  priority       String?
+  status         String                      @default("Draft")
+  approvalStatus String                      @default("Pending")
+  slaDueAt       DateTime?
+  authorId       String?
+  author         User?                       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  embedding      Unsupported("vector(384)")?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@index([organisationId, status])
   @@map("knowledge_articles")
 }
 model CalendarEvent {
-  id String @id @default(uuid())
-  title String
+  id              String        @id @default(uuid())
+  organisationId  String?
+  organisation    Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  title           String
   appointmentType String
-  startsAt DateTime
-  endsAt DateTime
-  agentId String
-  agent User @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  startsAt        DateTime
+  endsAt          DateTime
+  agentId         String
+  agent           User          @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organisationId, startsAt])
   @@index([agentId, startsAt])
   @@map("calendar_events")
 }

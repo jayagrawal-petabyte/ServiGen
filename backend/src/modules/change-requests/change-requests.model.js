@@ -139,7 +139,9 @@ const getChangeRequests = async (options = {}) => {
       // `records` is always an array (possibly empty) — return directly.
       return applyTenantFilter(records.map(formatRecord), organisationId);
     } catch (_err) {
-      // Database unreachable — fall through to in-memory mock.
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -169,7 +171,9 @@ const getChangeRequestById = async (id, organisationId = null) => {
       }
       return formatted;
     } catch (_err) {
-      // Database unreachable — fall through to in-memory mock.
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -199,7 +203,9 @@ const getActiveChangeRequests = async (options = {}) => {
       });
       return applyTenantFilter(records.map(formatRecord), organisationId);
     } catch (_err) {
-      // Database unreachable — fall through to in-memory mock.
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -255,7 +261,9 @@ const createChangeRequest = async (payload) => {
       });
       return formatRecord(cr);
     } catch (_err) {
-      // Database unreachable — fall through to in-memory mock.
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -313,7 +321,9 @@ const updateChangeRequest = async (id, organisationId, patch) => {
       });
       return formatRecord(updated);
     } catch (_err) {
-      // Database unreachable — fall through to mock
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

@@ -54,7 +54,9 @@ const getLists = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -93,7 +95,9 @@ const getListById = async (id, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -128,7 +132,9 @@ const createList = async (listData) => {
         },
       });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

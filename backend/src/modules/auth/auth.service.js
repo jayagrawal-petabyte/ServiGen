@@ -107,7 +107,127 @@ const getSession = async (userId) => {
   return safeUser;
 };
 
+/**
+ * Refresh an existing valid JWT token and return fresh credentials.
+ */
+const refreshToken = async (tokenString) => {
+  if (!tokenString) {
+    const error = new Error('Token is required');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const jwt = require('jsonwebtoken');
+  const env = require('../../config/env');
+  let decoded;
+  try {
+    decoded = jwt.verify(tokenString, env.JWT.SECRET, { algorithms: ['HS256'] });
+  } catch (err) {
+    const error = new Error(err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await findUserById(decoded.id);
+  if (!user || !user.active) {
+    const error = new Error('User no longer active or found');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const { password: _p, passwordHash: _ph, ...safeUser } = user;
+
+  const token = generateToken({
+    id: safeUser.id,
+    email: safeUser.email,
+    role: safeUser.role,
+    organisationId: safeUser.organisationId,
+  });
+
+  return {
+    ...safeUser,
+    token,
+  };
+};
+
+/**
+ * Generate password reset token if user exists.
+ */
+const requestPasswordReset = async (identifier) => {
+  const user = await findUserByEmail(identifier);
+  if (!user || !user.active) {
+    return null;
+  }
+
+  const jwt = require('jsonwebtoken');
+  const env = require('../../config/env');
+  const resetToken = jwt.sign(
+    { id: user.id, email: user.email, type: 'password-reset' },
+    env.JWT.SECRET,
+    { expiresIn: '1h' }
+  );
+
+  return { resetToken, user };
+};
+
+/**
+ * Reset password using a valid reset token.
+ */
+const resetPassword = async (tokenString, newPassword) => {
+  if (!tokenString || typeof tokenString !== 'string') {
+    const error = new Error('Reset token is required');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+    const error = new Error('New password must be at least 6 characters long');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const jwt = require('jsonwebtoken');
+  const env = require('../../config/env');
+  let decoded;
+  try {
+    decoded = jwt.verify(tokenString, env.JWT.SECRET, { algorithms: ['HS256'] });
+  } catch (err) {
+    const error = new Error(err.name === 'TokenExpiredError' ? 'Reset token has expired' : 'Invalid reset token');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (decoded.type !== 'password-reset') {
+    const error = new Error('Invalid token type for password reset');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await findUserById(decoded.id);
+  if (!user || !user.active) {
+    const error = new Error('User not found or inactive');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const newHash = await bcrypt.hash(newPassword, 10);
+  if (process.env.NODE_ENV !== 'test') {
+    const db = require('../../config/db');
+    await db.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash },
+    });
+  } else {
+    user.passwordHash = newHash;
+    user.password = newPassword;
+  }
+
+  return { success: true };
+};
+
 module.exports = {
   login,
   getSession,
+  refreshToken,
+  requestPasswordReset,
+  resetPassword,
 };

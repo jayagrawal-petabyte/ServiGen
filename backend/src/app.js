@@ -32,6 +32,7 @@ const ticketsRouter = require('./modules/tickets/tickets.routes');
 const usersRouter = require('./modules/users/users.routes');
 
 const app = express();
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 // ─── Core Middleware ────────────────────────────────────────────────────────
@@ -110,8 +111,7 @@ app.use('/api/dashboard', (req, res, next) => {
 app.use('/api/approvals', restrictTo(...PERMISSIONS.APPROVALS),
   approvalScope(require('./modules/approvals/approvals.model').getApprovalById), approvalsRouter);
 app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
-app.use('/api/major-incidents', (req, res, next) =>
-  restrictTo(...(['GET', 'HEAD'].includes(req.method) ? PERMISSIONS.STAFF : PERMISSIONS.ADMIN_ONLY))(req, res, next), majorIncidentsRouter);
+app.use('/api/major-incidents', restrictTo(...PERMISSIONS.STAFF), majorIncidentsRouter);
 app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
   if (req.user.role !== 'Admin') {

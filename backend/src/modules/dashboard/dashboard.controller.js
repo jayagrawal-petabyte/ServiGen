@@ -36,7 +36,8 @@ const getAgentIdFromReq = (req) => {
  */
 const getKpisHandler = async (req, res) => {
   try {
-    const data = await getDashboardKpis();
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getDashboardKpis(organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard KPIs');
@@ -130,7 +131,8 @@ const getNewTicketsHandler = async (req, res) => {
 const getSummaryHandler = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const data = await getAgentSummary(agentId);
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getAgentSummary(agentId, organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard summary');

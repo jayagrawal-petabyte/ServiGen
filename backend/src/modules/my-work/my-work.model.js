@@ -133,6 +133,9 @@ const getTickets = async (filters = {}) => {
       if (filters.organisation) {
         where.organisation = { name: { contains: filters.organisation, mode: 'insensitive' } };
       }
+      if (filters.organisationId) {
+        where.organisationId = filters.organisationId;
+      }
 
       const dbTickets = await db.ticket.findMany({
         where,
@@ -157,7 +160,9 @@ const getTickets = async (filters = {}) => {
         updatedAt: t.updatedAt.toISOString(),
       }));
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -210,7 +215,9 @@ const getTicketById = async (id) => {
         };
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -234,7 +241,9 @@ const saveTicket = async (ticket) => {
         },
       });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -269,7 +278,9 @@ const updateTicket = async (id, changes) => {
         });
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

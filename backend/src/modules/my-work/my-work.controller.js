@@ -30,12 +30,24 @@ const getAgentIdFromReq = (req) => {
 };
 
 /**
+ * Extract active organisation ID from auth user or admin query override
+ */
+const getOrganisationIdFromReq = (req) => {
+  if (req.user?.role === 'Admin' && typeof req.query?.organisationId === 'string' && req.query.organisationId.trim()) {
+    return req.query.organisationId.trim();
+  }
+  return req.user?.organisationId || null;
+};
+
+/**
  * GET /my-work - List agent's personal tickets (Active, Pending, Actioned, On Hold)
  */
 const listMyWorkTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const { tickets, pagination } = await getAgentTickets(agentId, req.query);
+    const orgId = getOrganisationIdFromReq(req);
+    const query = orgId ? { ...req.query, organisationId: orgId } : req.query;
+    const { tickets, pagination } = await getAgentTickets(agentId, query);
     return res.status(200).json({
       success: true,
       data: tickets,
@@ -52,7 +64,9 @@ const listMyWorkTickets = async (req, res) => {
 const listActiveTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const { tickets, pagination } = await getActiveTickets(agentId, req.query);
+    const orgId = getOrganisationIdFromReq(req);
+    const query = orgId ? { ...req.query, organisationId: orgId } : req.query;
+    const { tickets, pagination } = await getActiveTickets(agentId, query);
     return res.status(200).json({
       success: true,
       data: tickets,
@@ -69,7 +83,9 @@ const listActiveTickets = async (req, res) => {
 const listPendingTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const { tickets, pagination } = await getPendingTickets(agentId, req.query);
+    const orgId = getOrganisationIdFromReq(req);
+    const query = orgId ? { ...req.query, organisationId: orgId } : req.query;
+    const { tickets, pagination } = await getPendingTickets(agentId, query);
     return res.status(200).json({
       success: true,
       data: tickets,
@@ -86,7 +102,9 @@ const listPendingTickets = async (req, res) => {
 const listActionedTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const { tickets, pagination } = await getActionedTickets(agentId, req.query);
+    const orgId = getOrganisationIdFromReq(req);
+    const query = orgId ? { ...req.query, organisationId: orgId } : req.query;
+    const { tickets, pagination } = await getActionedTickets(agentId, query);
     return res.status(200).json({
       success: true,
       data: tickets,
@@ -103,7 +121,9 @@ const listActionedTickets = async (req, res) => {
 const listOnHoldTickets = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const { tickets, pagination } = await getOnHoldTickets(agentId, req.query);
+    const orgId = getOrganisationIdFromReq(req);
+    const query = orgId ? { ...req.query, organisationId: orgId } : req.query;
+    const { tickets, pagination } = await getOnHoldTickets(agentId, query);
     return res.status(200).json({
       success: true,
       data: tickets,

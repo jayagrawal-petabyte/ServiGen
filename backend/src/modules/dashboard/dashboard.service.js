@@ -26,8 +26,8 @@ const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
  * Return live KPI metrics: open incidents, SLA breaches, average resolution time.
  * Formatted resolution time is appended for UI convenience.
  */
-const getDashboardKpis = async () => {
-  const kpis = await getKpis();
+const getDashboardKpis = async (organisationId = null) => {
+  const kpis = await getKpis(organisationId);
   const { avgResolutionTimeMinutes } = kpis;
   const hours = Math.floor(avgResolutionTimeMinutes / 60);
   const minutes = avgResolutionTimeMinutes % 60;
@@ -118,9 +118,9 @@ const getNewTicketsPanel = async (query = {}, organisationId = null) => {
  *   - Assignments count
  *   - Tasks count
  */
-const getAgentSummary = async (agentId) => {
+const getAgentSummary = async (agentId, organisationId = null) => {
   // Pull all tickets owned by this agent from the my-work model
-  const allTickets = await getTickets({ assignedAgentId: agentId });
+  const allTickets = await getTickets({ assignedAgentId: agentId, organisationId });
 
   const ticketCounts = {
     active: allTickets.filter((t) => t.status === 'Active').length,

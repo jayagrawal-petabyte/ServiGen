@@ -6,7 +6,14 @@ const {
   addIncidentUpdate,
 } = require('./major-incidents.model');
 
-const VALID_STATUSES = ['Investigating', 'Identified', 'Monitoring', 'Resolved'];
+const VALID_STATUSES = [
+  'Started',
+  'Escalated',
+  'Diagnosed',
+  'Mitigated',
+  'Resolved',
+  'Closed',
+];
 const VALID_PRIORITIES = ['P1', 'P2'];
 const EDITABLE_FIELDS = new Set([
   'title',
@@ -16,6 +23,7 @@ const EDITABLE_FIELDS = new Set([
   'impact',
   'affectedServices',
   'commander',
+  'resolvedAt',
 ]);
 
 let incidentSequence = 0;
@@ -56,7 +64,7 @@ const createMajorIncident = async (payload) => {
     id: nextIncidentId(),
     title,
     description,
-    status: 'Investigating',
+    status: payload.status || 'Started',
     priority,
     impact,
     affectedServices,
@@ -97,10 +105,16 @@ const changeMajorIncident = async (id, payload) => {
       throw createValidationError('affectedServices must be an array');
     }
 
+    if (field === 'resolvedAt') {
+      if (value !== null && typeof value !== 'string') {
+        throw createValidationError('resolvedAt must be an ISO date string or null');
+      }
+    }
+
     changes[field] = value;
   }
 
-  if (changes.status === 'Resolved' && !changes.resolvedAt) {
+  if (['Resolved', 'Closed'].includes(changes.status) && changes.resolvedAt === undefined) {
     changes.resolvedAt = new Date().toISOString();
   }
 

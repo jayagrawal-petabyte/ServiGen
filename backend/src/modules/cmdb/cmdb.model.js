@@ -73,7 +73,9 @@ const getConfigurationItems = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -135,7 +137,9 @@ const getConfigurationItemById = async (id, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

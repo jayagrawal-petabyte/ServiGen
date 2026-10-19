@@ -25,6 +25,9 @@ const getArticles = async (filter = {}) => {
         updatedAt: a.updatedAt.toISOString(),
       }));
     } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
       return [];
     }
   }
@@ -54,6 +57,9 @@ const getArticleById = async (id) => {
         updatedAt: a.updatedAt.toISOString(),
       };
     } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
       return null;
     }
   }
@@ -88,7 +94,9 @@ const createArticle = async (data) => {
         updatedAt: created.updatedAt.toISOString(),
       };
     } catch (_err) {
-      // Fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
   return { id: 'art-' + Date.now(), ...data };
@@ -120,6 +128,9 @@ const updateArticle = async (id, data) => {
         updatedAt: updated.updatedAt.toISOString(),
       };
     } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
       return null;
     }
   }

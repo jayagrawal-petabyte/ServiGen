@@ -38,20 +38,32 @@ const getPendingApprovals = async () => {
     try {
       const list = await db.approval.findMany({
         where: { status: 'Pending' },
-        include: { approver: true },
+        include: {
+          approver: true,
+          ticket: {
+            include: { requester: true, organisation: true },
+          },
+        },
       });
-      return list.map((a) => ({
-        id: a.id,
-        title: a.summary,
-        requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
-        service: a.entityType || 'General',
-        status: a.status,
-        submittedAt: a.createdAt.toISOString(),
-        description: a.comments || a.summary,
-        approverId: a.approverId,
-      }));
+      return list.map((a) => {
+        const requester = a.ticket?.requester
+          ? `${a.ticket.requester.firstName} ${a.ticket.requester.lastName || ''}`.trim()
+          : (a.ticket?.organisation?.name || 'System User');
+        return {
+          id: a.id,
+          title: a.summary,
+          requester,
+          service: a.entityType || 'General',
+          status: a.status,
+          submittedAt: a.createdAt.toISOString(),
+          description: a.comments || a.summary,
+          approverId: a.approverId,
+        };
+      });
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -63,13 +75,21 @@ const getApprovalById = async (id) => {
     try {
       const a = await db.approval.findUnique({
         where: { id },
-        include: { approver: true },
+        include: {
+          approver: true,
+          ticket: {
+            include: { requester: true, organisation: true },
+          },
+        },
       });
       if (a) {
+        const requester = a.ticket?.requester
+          ? `${a.ticket.requester.firstName} ${a.ticket.requester.lastName || ''}`.trim()
+          : (a.ticket?.organisation?.name || 'System User');
         return {
           id: a.id,
           title: a.summary,
-          requester: a.approver?.firstName ? `${a.approver.firstName} ${a.approver.lastName}` : 'System User',
+          requester,
           service: a.entityType || 'General',
           status: a.status,
           submittedAt: a.createdAt.toISOString(),
@@ -78,7 +98,9 @@ const getApprovalById = async (id) => {
         };
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -86,6 +108,24 @@ const getApprovalById = async (id) => {
 };
 
 const updateStatus = async (id, status) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const updated = await db.approval.update({
+        where: { id },
+        data: { status, decidedAt: new Date() },
+      });
+      return {
+        id: updated.id,
+        title: updated.summary,
+        status: updated.status,
+      };
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+
   const index = mockApprovals.findIndex(a => a.id === id);
   if (index !== -1) {
     mockApprovals[index] = {
@@ -120,7 +160,9 @@ const conditionalUpdateStatus = async (id, requiredStatus, newStatus) => {
         };
       }
     } catch (_err) {
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

@@ -4,6 +4,8 @@ const {
   loginHandler,
   getSessionHandler,
   forgotPasswordHandler,
+  resetPasswordHandler,
+  refreshHandler,
 } = require('./auth.controller');
 
 const router = express.Router();
@@ -16,11 +18,25 @@ const router = express.Router();
 router.post('/login', loginHandler);
 
 /**
+ * POST /auth/refresh
+ *
+ * Refresh authenticated user token.
+ */
+router.post('/refresh', refreshHandler);
+
+/**
  * POST /auth/forgot-password
  *
  * Submit password recovery request.
  */
 router.post('/forgot-password', forgotPasswordHandler);
+
+/**
+ * POST /auth/reset-password
+ *
+ * Reset account password using token.
+ */
+router.post('/reset-password', resetPasswordHandler);
 
 /**
  * GET /auth/session

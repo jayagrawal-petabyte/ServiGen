@@ -136,9 +136,10 @@ test('approvers can only list, view and act on assigned approvals; Admin can acc
   assert.equal((await fetch(base+'/api/approvals/a2/reject',{method:'PATCH',headers:authFor('Admin')})).status,200);
   assert.equal((await fetch(base+'/api/approvals/a2',{headers:authFor('Admin')})).status,200);
 });
-test('unspecified major-incident mutation permission is reserved for Admin', async () => {
-  assert.equal((await fetch(base+'/api/major-incidents',{method:'POST',headers:authFor('Service Agent')})).status,403);
-  // Empty request fails business validation, proving Admin reached the controller.
+test('major-incident mutation is permitted for STAFF and blocked for Service User', async () => {
+  assert.equal((await fetch(base+'/api/major-incidents',{method:'POST',headers:authFor('Service User')})).status,403);
+  // Empty request fails business validation (400), proving Service Agent reached the controller.
+  assert.equal((await fetch(base+'/api/major-incidents',{method:'POST',headers:{...authFor('Service Agent'),'content-type':'application/json'},body:'{}'})).status,400);
   assert.equal((await fetch(base+'/api/major-incidents',{method:'POST',headers:{...authFor('Admin'),'content-type':'application/json'},body:'{}'})).status,400);
 });
 
