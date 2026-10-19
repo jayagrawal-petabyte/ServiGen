@@ -524,6 +524,25 @@ export function handleOfflineRequest(
 
   // 15. Custom Lists Builder
   if (path === '/api/list-builder/lists' || path === '/api/lists') {
+    if (upperMethod === 'POST') {
+      const newList = {
+        id: `list-${Date.now()}`,
+        name: parsedBody?.name || 'New Custom List',
+        description: parsedBody?.description || 'Custom filtered list',
+        fields: parsedBody?.fields || ['id', 'summary', 'status', 'priority'],
+        status: parsedBody?.status || 'Published',
+        scope: parsedBody?.scope || 'Tickets (All Areas)',
+        group: parsedBody?.group || 'General',
+        sequence: parsedBody?.sequence || 30,
+        columnProfile: parsedBody?.columnProfile || 'Default',
+        displayType: parsedBody?.displayType || 'Default',
+        filterCriteria: parsedBody?.filterCriteria || {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mutableCustomLists = [newList, ...mutableCustomLists];
+      return { success: true, data: newList };
+    }
     return {
       success: true,
       data: mutableCustomLists,

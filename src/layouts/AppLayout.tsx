@@ -271,6 +271,7 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Page Viewport */}
       <div className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
+        <BackendStatusBanner />
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

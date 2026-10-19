@@ -122,7 +122,18 @@ const CustomLists: React.FC = () => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
               {isSubmitting ? 'Saving to Backend...' : 'Save'}
             </button>
-            {submitStatus === 'success' && <span className="cl-status-msg success">{statusMessage || 'List created successfully!'}</span>}
+            {submitStatus === 'success' && (
+              <div className="flex items-center gap-2">
+                <span className="cl-status-msg success">{statusMessage || 'List created successfully!'}</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/on-hold')}
+                  className="px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded hover:bg-emerald-200 transition-colors cursor-pointer border border-emerald-300"
+                >
+                  View in My Lists →
+                </button>
+              </div>
+            )}
             {submitStatus === 'error' && <span className="cl-status-msg error">{statusMessage || 'Failed to create list.'}</span>}
           </div>
           <div className="cl-header-right">
