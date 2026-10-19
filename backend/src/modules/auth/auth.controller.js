@@ -90,7 +90,36 @@ const getSessionHandler = async (req, res) => {
   }
 };
 
+/**
+ * POST /auth/forgot-password
+ *
+ * Request password recovery instructions.
+ */
+const forgotPasswordHandler = async (req, res) => {
+  try {
+    const { email, username } = req.body || {};
+    const identifier = typeof email === 'string' && email.trim()
+      ? email.trim()
+      : (typeof username === 'string' && username.trim() ? username.trim() : null);
+
+    if (!identifier) {
+      const error = new Error('Email or username is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'If an account matching the provided details exists, password reset instructions have been sent.',
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to process password reset request');
+  }
+};
+
 module.exports = {
   loginHandler,
   getSessionHandler,
+  forgotPasswordHandler,
 };

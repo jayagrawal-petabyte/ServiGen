@@ -121,13 +121,20 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
       throw error;
     }
     const formattedStatus = query.status.trim();
-    const matched = VALID_STATUSES.find(
-      (s) => s.toLowerCase() === formattedStatus.toLowerCase()
+    const lowerStatus = formattedStatus.toLowerCase();
+    let matched = VALID_STATUSES.find(
+      (s) => s.toLowerCase() === lowerStatus
     );
     if (!matched) {
-      const error = new Error(`status must be one of: ${VALID_STATUSES.join(', ')}`);
-      error.statusCode = 400;
-      throw error;
+      if (lowerStatus === 'new') {
+        matched = 'Active';
+      } else if (lowerStatus === 'on-hold' || lowerStatus === 'onhold') {
+        matched = 'On Hold';
+      } else {
+        const error = new Error(`status must be one of: ${VALID_STATUSES.join(', ')}`);
+        error.statusCode = 400;
+        throw error;
+      }
     }
     filters.status = matched;
   }

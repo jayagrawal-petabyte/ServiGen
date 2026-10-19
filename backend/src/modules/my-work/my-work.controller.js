@@ -23,7 +23,10 @@ const respondWithError = (res, error, fallbackMessage) => {
  * Extract active agent/user ID from headers or query (defaults to dev mock 'agent-001')
  */
 const getAgentIdFromReq = (req) => {
-  return req.headers['x-user-id'] || req.query.agentId || 'agent-001';
+  if (req.user?.role === 'Admin' && typeof req.query?.agentId === 'string' && req.query.agentId.trim()) {
+    return req.query.agentId.trim();
+  }
+  return req.user?.id || req.headers['x-user-id'] || req.query?.agentId || 'agent-001';
 };
 
 /**

@@ -12,7 +12,11 @@ const listTickets = async (req, res, next) => {
     const where = {};
 
     if (status) {
-      where.status = { equals: status, mode: 'insensitive' };
+      let statusVal = status;
+      const lower = statusVal.toLowerCase();
+      if (lower === 'new') statusVal = 'Active';
+      else if (lower === 'on-hold' || lower === 'onhold') statusVal = 'On Hold';
+      where.status = { equals: statusVal, mode: 'insensitive' };
     }
     if (ticketType) {
       where.ticketType = { equals: ticketType, mode: 'insensitive' };

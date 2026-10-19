@@ -112,6 +112,18 @@ const createList = async (req, res) => {
     const sanitizedDesc = typeof description === 'string' ? description.slice(0, 500) : null;
     const organisationId = req.user?.organisationId || req.headers['x-org-id'] || 'org-001';
 
+    // BUG-05: Check for duplicate list names
+    const existingLists = await getAllLists({ organisationId });
+    const isDuplicate = existingLists.some(
+      (l) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      return res.status(409).json({
+        success: false,
+        message: `A list with the name '${name.trim()}' already exists`,
+      });
+    }
+
     const newList = await createNewList({
       name: name.trim(),
       description: sanitizedDesc,

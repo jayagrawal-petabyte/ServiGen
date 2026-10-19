@@ -121,7 +121,13 @@ const getTickets = async (filters = {}) => {
     try {
       const where = {};
       if (filters.assignedAgentId) where.assignedAgentId = filters.assignedAgentId;
-      if (filters.status) where.status = { equals: filters.status, mode: 'insensitive' };
+      if (filters.status) {
+        let statusVal = filters.status;
+        const lower = statusVal.toLowerCase();
+        if (lower === 'new') statusVal = 'Active';
+        else if (lower === 'on-hold' || lower === 'onhold') statusVal = 'On Hold';
+        where.status = { equals: statusVal, mode: 'insensitive' };
+      }
       if (filters.priority) where.priority = { equals: filters.priority, mode: 'insensitive' };
       if (filters.ticketType) where.ticketType = { equals: filters.ticketType, mode: 'insensitive' };
       if (filters.organisation) {
@@ -155,11 +161,15 @@ const getTickets = async (filters = {}) => {
     }
   }
 
+  let normalizedMockStatus = filters.status ? filters.status.toLowerCase() : null;
+  if (normalizedMockStatus === 'new') normalizedMockStatus = 'active';
+  else if (normalizedMockStatus === 'on-hold' || normalizedMockStatus === 'onhold') normalizedMockStatus = 'on hold';
+
   return tickets.filter((ticket) => {
     const matchesAgent =
       !filters.assignedAgentId || ticket.assignedAgentId === filters.assignedAgentId;
     const matchesStatus =
-      !filters.status || ticket.status.toLowerCase() === filters.status.toLowerCase();
+      !normalizedMockStatus || ticket.status.toLowerCase() === normalizedMockStatus;
     const matchesPriority =
       !filters.priority || ticket.priority.toLowerCase() === filters.priority.toLowerCase();
     const matchesType =

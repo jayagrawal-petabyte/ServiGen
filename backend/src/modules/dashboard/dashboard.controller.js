@@ -21,8 +21,12 @@ const respondWithError = (res, error, fallbackMessage) => {
 /**
  * Extract agent ID from request — header first, then query param, then dev default
  */
-const getAgentIdFromReq = (req) =>
-  req.headers['x-user-id'] || req.query.agentId || 'agent-001';
+const getAgentIdFromReq = (req) => {
+  if (req.user?.role === 'Admin' && typeof req.query?.agentId === 'string' && req.query.agentId.trim()) {
+    return req.query.agentId.trim();
+  }
+  return req.user?.id || req.headers['x-user-id'] || req.query?.agentId || 'agent-001';
+};
 
 // ─── SCR-014: KPIs ────────────────────────────────────────────────────────────
 
