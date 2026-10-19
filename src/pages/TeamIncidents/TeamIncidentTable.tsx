@@ -13,7 +13,6 @@ import {
 } from "../../services/teamIncidentsService";
 
 import type { TeamIncident } from "./teamIncidents.types";
-import { INITIAL_ALL_TEAM_INCIDENTS } from "./teamIncidents.data";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 
 export type Incident = TeamIncident;

@@ -64,22 +64,6 @@ export function getServiceIcon(name: string, category: string): string {
   return '📦';
 }
 
-// Standard fallback services if backend database is completely empty or offline
-export const FALLBACK_SERVICES: ServiceItem[] = [
-  { id: 'service-admin-rights', name: 'Administrator Rights', description: 'Request administrator access to your device.', icon: '⚙️', category: 'End-User Catalogue', status: 'Active' },
-  { id: 'service-laptop', name: 'Request a Laptop', description: 'Standard high-performance laptop for developers.', icon: '🖥️', category: 'End-User Catalogue', status: 'Active' },
-  { id: 'service-vpn', name: 'VPN Access', description: 'Secure remote corporate network access token.', icon: '🔒', category: 'Access', status: 'Active' },
-  { id: 'service-adobe', name: 'Adobe Creative Cloud', description: 'Design and multimedia creative software suite.', icon: '🎨', category: 'Business Applications', status: 'Active' },
-  { id: 'service-crm', name: 'CRM Platform Support', description: 'Customer relationship management workspace support.', icon: '👥', category: 'Business Applications', status: 'Active' },
-  { id: 'service-data-integration', name: 'Data Integration', description: 'Enterprise application and data pipeline integration.', icon: '🧩', category: 'Business Applications', status: 'Active' },
-  { id: 'service-database-admin', name: 'Database Administration', description: 'Database schema migration and DBA provisioning support.', icon: '🗄️', category: 'Business Applications', status: 'Active' },
-  { id: 'service-desk-booking', name: 'Desk Booking', description: 'Hot-desk reservation and office seat relocation.', icon: '🪑', category: 'Services', status: 'Active' },
-  { id: 'service-air-con', name: 'Air Con & Climate', description: 'Report an office air conditioning or temperature issue.', icon: '❄️', category: 'Services', status: 'Active' },
-  { id: 'service-building-fabric', name: 'Building Fabric', description: 'Report facilities maintenance and infrastructure repairs.', icon: '🏢', category: 'Services', status: 'Active' },
-  { id: 'service-absence', name: 'Absence Management', description: 'Submit leave request or emergency attendance notification.', icon: '📅', category: 'End-User Catalogue', status: 'Active' },
-  { id: 'service-electrical', name: 'Electrical & Power', description: 'Report power outlet disruptions or UPS failures.', icon: '🔌', category: 'Services', status: 'Active' },
-];
-
 /**
  * Fetch list of services from live backend API (GET /api/services)
  */
@@ -150,7 +134,7 @@ export async function fetchServiceById(serviceId: string): Promise<ServiceItem |
     console.warn(`[servicesCatalogueService] Failed to fetch service ${serviceId}:`, err);
   }
 
-  return FALLBACK_SERVICES.find((s) => s.id === serviceId) || null;
+  return null;
 }
 
 /**
