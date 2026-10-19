@@ -4,7 +4,12 @@
  * with live /api/major-incidents backend endpoints.
  */
 
-import { api, logServiceError } from './apiClient';
+import { api, ApiError, logServiceError } from './apiClient';
+import {
+  STAGE_LABELS,
+  normaliseStatus,
+} from './majorIncidents.lifecycle';
+import { FALLBACK_MAJOR_INCIDENTS } from './fallback/majorIncidents.fallback';
 import type {
   MajorIncident,
   IncidentUpdate,
@@ -42,52 +47,19 @@ export interface CreateMajorIncidentPayload {
   assignee?: string;
 }
 
-/**
- * The six-stage major-incident lifecycle, identical to the backend's
- * LIFECYCLE_STAGES (backend/src/modules/major-incidents/major-incidents.lifecycle.js)
- * and to the Figma pipeline. Because both sides share one vocabulary, the two
- * mappers below are inverses — previously they were not, which made 'Started'
- * unreachable and rendered 'Resolved' as 'Closed'.
- */
-export const STAGE_LABELS = [
-  'Started',
-  'Escalated',
-  'Diagnosed',
-  'Mitigated',
-  'Resolved',
-  'Closed',
-] as const;
+// The six-stage lifecycle vocabulary lives in its own dependency-free module
+// so the offline fixtures can import it without forming a cycle with this file.
+// Re-exported here because existing call sites import it from this service.
+export {
+  STAGE_LABELS,
+  RESOLVED_STAGES,
+  normaliseStatus,
+  isResolvedStage,
+  mapStageToBackendStatus,
+  resolvedAtForStage,
+} from './majorIncidents.lifecycle';
+export type { StageLabel } from './majorIncidents.lifecycle';
 
-export type StageLabel = (typeof STAGE_LABELS)[number];
-
-const RESOLVED_STAGES: readonly string[] = ['Resolved', 'Closed'];
-
-/**
- * Pre-2026-10 four-status vocabulary. Retained so the UI renders correctly
- * against a backend that has not yet deployed the six-stage change, and for
- * rows written before the data migration.
- */
-const LEGACY_STATUS_MAP: Record<string, StageLabel> = {
-  investigating: 'Started',
-  identified: 'Diagnosed',
-  monitoring: 'Mitigated',
-  resolved: 'Resolved',
-  closed: 'Closed',
-};
-
-/** Normalise any accepted status spelling to a canonical stage label. */
-export function normaliseStatus(value: string | null | undefined): StageLabel | null {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  const trimmed = value.trim();
-  const exact = STAGE_LABELS.find((s) => s.toLowerCase() === trimmed.toLowerCase());
-  if (exact) return exact;
-  return LEGACY_STATUS_MAP[trimmed.toLowerCase()] ?? null;
-}
-
-export function isResolvedStage(status: string | null | undefined): boolean {
-  const canonical = normaliseStatus(status);
-  return canonical !== null && RESOLVED_STAGES.includes(canonical);
-}
 
 function formatStageTime(value?: string | null): string {
   if (!value) return '';
@@ -130,24 +102,6 @@ function buildLifecycleStages(
   }));
 }
 
-/**
- * Collapse a pipeline index into the backend status.
- * Inverse of buildLifecycleStages.
- */
-export function mapStageToBackendStatus(stageIndex: number): StageLabel {
-  if (!Number.isInteger(stageIndex) || stageIndex < 0 || stageIndex >= STAGE_LABELS.length) {
-    return STAGE_LABELS[0];
-  }
-  return STAGE_LABELS[stageIndex];
-}
-
-/**
- * The resolvedAt value that should accompany a move to `stageIndex`.
- * Returning null (rather than omitting it) is what re-opens an incident.
- */
-export function resolvedAtForStage(stageIndex: number): string | null {
-  return isResolvedStage(STAGE_LABELS[stageIndex]) ? new Date().toISOString() : null;
-}
 
 /**
  * Converts a backend major incident object to the frontend MajorIncident shape.
@@ -195,20 +149,51 @@ export function mapBackendToFrontendIncident(backend: BackendMajorIncident): Maj
   };
 }
 
+/**
+ * Tell the app this screen is rendering local fixtures because the API could
+ * not be reached, so it can show the demo-data badge.
+ */
+function announceOfflineFallback(endpoint: string): void {
+  try {
+    window.dispatchEvent(
+      new CustomEvent('servigen-demo-data', {
+        detail: { endpoint, reason: 'API unreachable — showing local demo data' },
+      })
+    );
+  } catch {
+    // Non-browser environment
+  }
+}
+
 export const majorIncidentsService = {
   /**
    * Fetch all major incidents from backend with fallback
    */
   async getMajorIncidents(filters?: { status?: string; priority?: string }): Promise<MajorIncident[]> {
-    // Throws on failure. Returning [] for both "no incidents" and "request
-    // failed" is what made an unreachable database look like an empty queue,
-    // and let callers keep showing stale rows indefinitely.
-    const res = await api.get('/api/major-incidents', { params: filters });
-    const listData = res?.data ?? res;
-    if (!Array.isArray(listData)) {
-      throw new Error('Unexpected response shape from GET /api/major-incidents');
+    // Three distinct outcomes, kept distinct:
+    //   - live rows (possibly an empty list, which is a valid answer)
+    //   - API reachable but degraded: it returns its own fixtures tagged
+    //     meta.source="mock"; apiClient raises `servigen-demo-data` for the badge
+    //   - API unreachable: fall back to local fixtures so the screen is not
+    //     blank, and announce it so the UI labels the data as demo
+    try {
+      const res = await api.get('/api/major-incidents', { params: filters });
+      const listData = res?.data ?? res;
+      if (!Array.isArray(listData)) {
+        throw new ApiError('Unexpected response shape from GET /api/major-incidents', 0);
+      }
+      return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
+    } catch (error) {
+      logServiceError('majorIncidents.getMajorIncidents', error);
+
+      // Only substitute fixtures when the API could not be reached at all.
+      // A 4xx/5xx from a live API is a real error the user should see.
+      const unreachable = error instanceof ApiError && error.statusCode === 0;
+      if (!unreachable) throw error;
+
+      announceOfflineFallback('/api/major-incidents');
+      return FALLBACK_MAJOR_INCIDENTS;
     }
-    return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
   },
 
   /**

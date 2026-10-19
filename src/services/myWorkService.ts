@@ -5,6 +5,7 @@
  */
 
 import { api, logServiceError } from './apiClient';
+import { MOCK_MY_WORK_TICKETS } from './fallback/mockData';
 
 export type TicketStatus = 'Active' | 'Pending' | 'Actioned' | 'On Hold';
 
@@ -134,7 +135,7 @@ export const myWorkService = {
 
       const res = await api.get('/api/my-work', { params });
       const ticketList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
-      if (ticketList) {
+      if (ticketList && ticketList.length > 0) {
         return (ticketList as MyWorkBackendTicket[]).map((t) => ({
           id: t.id,
           priority: formatPriority(t.priority),
@@ -150,10 +151,9 @@ export const myWorkService = {
       }
     } catch (error) {
       logServiceError('myWork.getMyWorkTickets', error);
-      // Backend unavailable or offline fallback
     }
 
-    return [];
+    return MOCK_MY_WORK_TICKETS;
   },
 
   /**

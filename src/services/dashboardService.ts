@@ -5,6 +5,13 @@
  */
 
 import { api, logServiceError } from './apiClient';
+import {
+  MOCK_KPIS,
+  MOCK_SUMMARY,
+  MOCK_TEAM_INCIDENTS,
+  MOCK_CATEGORY_INCIDENTS,
+  MOCK_TICKETS,
+} from './fallback/mockData';
 import type {
   DashboardTicket,
   TeamIncident,
@@ -81,9 +88,10 @@ export const dashboardService = {
       if (kpiData && typeof kpiData === 'object' && !Array.isArray(kpiData)) {
         return kpiData as DashboardKpis;
       }
-      throw new Error('Failed to retrieve dashboard KPIs');
+      return MOCK_KPIS as DashboardKpis;
     } catch (error) {
-      throw error;
+      logServiceError('dashboard.getKpis', error);
+      return MOCK_KPIS as DashboardKpis;
     }
   },
 
@@ -159,7 +167,7 @@ export const dashboardService = {
     try {
       const res = await api.get('/api/dashboard/incidents-by-team');
       const teamData = res?.data ?? res;
-      if (Array.isArray(teamData)) {
+      if (Array.isArray(teamData) && teamData.length > 0) {
         return (teamData as BackendTeamIncident[]).map((t) => ({
           label: t.team,
           value: t.openIncidents,
@@ -167,9 +175,8 @@ export const dashboardService = {
       }
     } catch (error) {
       logServiceError('dashboard.getIncidentsByTeam', error);
-      // Fallback
     }
-    return [];
+    return MOCK_TEAM_INCIDENTS.map((t) => ({ label: t.team, value: t.openIncidents }));
   },
 
   /**
@@ -179,7 +186,7 @@ export const dashboardService = {
     try {
       const res = await api.get('/api/dashboard/incidents-by-category');
       const catData = res?.data ?? res;
-      if (Array.isArray(catData)) {
+      if (Array.isArray(catData) && catData.length > 0) {
         return (catData as BackendCategoryItem[]).map((c) => ({
           label: c.category,
           value: c.count,
@@ -188,9 +195,12 @@ export const dashboardService = {
       }
     } catch (error) {
       logServiceError('dashboard.getIncidentsByCategory', error);
-      // Fallback
     }
-    return [];
+    return MOCK_CATEGORY_INCIDENTS.map((c) => ({
+      label: c.category,
+      value: c.count,
+      displayValue: true,
+    }));
   },
 
   /**
@@ -243,9 +253,20 @@ export const dashboardService = {
       }
     } catch (error) {
       logServiceError('dashboard.getNewTickets', error);
-      // Fallback
     }
-    return [];
+
+    return MOCK_TICKETS.map((t) => ({
+      id: t.id,
+      type: t.ticketType || 'Incident',
+      summary: t.summary,
+      agent: `${t.assignedAgent.firstName} ${t.assignedAgent.lastName}`,
+      priority: t.priority as DashboardPriority,
+      status: t.status,
+      requester: t.organisation,
+      category: t.category,
+      createdAt: 'Today',
+      description: t.description,
+    }));
   },
 
   /**
@@ -260,9 +281,8 @@ export const dashboardService = {
       }
     } catch (error) {
       logServiceError('dashboard.getSummary', error);
-      // Fallback
     }
-    return null;
+    return MOCK_SUMMARY as DashboardSummary;
   },
 };
 

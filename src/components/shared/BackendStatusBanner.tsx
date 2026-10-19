@@ -14,11 +14,13 @@ export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [demoDataNotice, setDemoDataNotice] = useState<string | null>(null);
 
   const check = useCallback(async () => {
     setChecking(true);
     const next = await fetchBackendDbStatus();
     setStatus(next);
+    if (next.connected) setDemoDataNotice(null);
     setChecking(false);
     return next;
   }, []);
@@ -37,7 +39,18 @@ export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60
     };
   }, [pollMs]);
 
-  const problem = describeBackendProblem(status);
+  // Any request that came back as demo data flags it straight away, so the
+  // badge does not wait for the next health poll.
+  useEffect(() => {
+    const onDemoData = (event: Event) => {
+      const detail = (event as CustomEvent<{ endpoint?: string; reason?: string }>).detail;
+      setDemoDataNotice(detail?.reason || 'Some screens are showing demo data.');
+    };
+    window.addEventListener('servigen-demo-data', onDemoData);
+    return () => window.removeEventListener('servigen-demo-data', onDemoData);
+  }, []);
+
+  const problem = describeBackendProblem(status) ?? demoDataNotice;
   if (!problem || dismissed) return null;
 
   const counts = status?.counts || {};
@@ -48,7 +61,9 @@ export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60
   return (
     <div className="w-full border-b border-amber-300 bg-amber-50 px-4 py-2 text-[12px] text-amber-900">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-semibold">Data source issue:</span>
+        <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide">
+          Demo data
+        </span>
         <span className="flex-1 min-w-[200px]">{problem}</span>
 
         <button
@@ -81,7 +96,9 @@ export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60
           <div>
             api: {status.reachable ? 'reachable' : 'unreachable'} · db:{' '}
             {status.connected ? `connected (${status.latencyMs}ms)` : 'disconnected'} · env:{' '}
-            {status.env || 'unknown'}
+            {status.env || 'unknown'} · read-fallback:{' '}
+            {status.readFallbackEnabled ? 'on' : 'off'} · write-fallback:{' '}
+            {status.writeFallbackEnabled ? 'ON (unsafe)' : 'off'}
           </div>
           {status.datasource && (
             <div>

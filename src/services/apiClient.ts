@@ -10,6 +10,8 @@
  * - Full backward compatibility for both `apiClient` and `api` interfaces
  */
 
+import { handleOfflineRequest } from './fallback/mockApiHandler';
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -215,6 +217,7 @@ export async function refreshSession(): Promise<string | null> {
     try {
       const currentToken = getAuthToken();
       if (!currentToken) return null;
+      if (currentToken.startsWith('mock_')) return currentToken;
 
       const res = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
         method: 'POST',
@@ -325,6 +328,19 @@ export async function apiRequest<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
+  // If operating with a mock session, satisfy from offline mock store directly
+  if (token?.startsWith('mock_')) {
+    const mockRes = handleOfflineRequest(
+      normalizedEndpoint,
+      fetchOptions.method || 'GET',
+      fetchOptions.body,
+      params
+    );
+    if (mockRes !== undefined) {
+      return mockRes as T;
+    }
+  }
+
   let response: Response;
   try {
     response = await fetch(fullUrl, {
@@ -332,11 +348,55 @@ export async function apiRequest<T = any>(
       headers,
     });
   } catch (err: unknown) {
+    // If backend is unreachable (Render asleep or network down), seamlessly fall back
+    const mockRes = handleOfflineRequest(
+      normalizedEndpoint,
+      fetchOptions.method || 'GET',
+      fetchOptions.body,
+      params
+    );
+    if (mockRes !== undefined) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('servigen-demo-data', {
+            detail: {
+              endpoint: normalizedEndpoint,
+              reason: 'Running in offline demo mode — Render backend is unreachable',
+            },
+          })
+        );
+      } catch {}
+      return mockRes as T;
+    }
+
     const errorMsg =
       err instanceof Error && err.message
         ? `Network Error: ${err.message}. Backend server may not be reachable at ${fullUrl}.`
         : `Network Error: Unable to connect to backend server at ${fullUrl}.`;
     throw new ApiError(errorMsg, 0);
+  }
+
+  // If backend returned a 5xx server error, fall back to demo data rather than breaking
+  if (response.status >= 500) {
+    const mockRes = handleOfflineRequest(
+      normalizedEndpoint,
+      fetchOptions.method || 'GET',
+      fetchOptions.body,
+      params
+    );
+    if (mockRes !== undefined) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('servigen-demo-data', {
+            detail: {
+              endpoint: normalizedEndpoint,
+              reason: 'Backend returned server error — serving demo data',
+            },
+          })
+        );
+      } catch {}
+      return mockRes as T;
+    }
   }
 
   // If rate limited by backend, immediately throw rate limit error without retrying
@@ -380,6 +440,26 @@ export async function apiRequest<T = any>(
       responseData = await response.text();
     } catch {
       responseData = null;
+    }
+  }
+
+  // The API tags any payload it had to build from demo fixtures. Surface it so
+  // the UI can label the data instead of presenting fixtures as live records.
+  const dataSource =
+    response.headers.get('X-Data-Source') ||
+    (responseData && typeof responseData === 'object' ? (responseData as any)?.meta?.source : null);
+  if (dataSource === 'mock') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('servigen-demo-data', {
+          detail: {
+            endpoint: normalizedEndpoint,
+            reason: (responseData as any)?.meta?.reason ?? null,
+          },
+        })
+      );
+    } catch {
+      // Non-browser environment
     }
   }
 
