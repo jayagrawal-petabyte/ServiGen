@@ -145,21 +145,41 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
         <div className="flex items-center gap-2">
+          {/* Both chips used to navigate to the full, unfiltered list with no
+              reference to this CI, so you lost your place and saw everything.
+              They now carry the CI through in the query string, and a chip with
+              nothing behind it is inert rather than a dead end. */}
           <button
             type="button"
-            onClick={() => navigate('/incidents')}
-            title={`View incidents for ${ci.name}`}
-            className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px] cursor-pointer transition-colors"
+            disabled={!ci.activeIncidentsCount}
+            onClick={() =>
+              navigate(`/incidents?ci=${encodeURIComponent(ci.id)}&ciName=${encodeURIComponent(ci.name)}`)
+            }
+            title={
+              ci.activeIncidentsCount
+                ? `View ${ci.activeIncidentsCount} incident(s) for ${ci.name}`
+                : `No active incidents for ${ci.name}`
+            }
+            className="px-2 py-0.5 bg-amber-50 enabled:hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px] enabled:cursor-pointer disabled:opacity-50 disabled:cursor-default transition-colors"
           >
-            Incidents: {ci.activeIncidentsCount} →
+            Incidents: {ci.activeIncidentsCount ?? 0}
+            {ci.activeIncidentsCount ? ' →' : ''}
           </button>
           <button
             type="button"
-            onClick={() => navigate('/change-requests')}
-            title={`View change requests for ${ci.name}`}
-            className="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-md font-bold text-[10px] cursor-pointer transition-colors"
+            disabled={!ci.linkedChangesCount}
+            onClick={() =>
+              navigate(`/change-requests?ci=${encodeURIComponent(ci.id)}&ciName=${encodeURIComponent(ci.name)}`)
+            }
+            title={
+              ci.linkedChangesCount
+                ? `View ${ci.linkedChangesCount} change request(s) for ${ci.name}`
+                : `No linked change requests for ${ci.name}`
+            }
+            className="px-2 py-0.5 bg-purple-50 enabled:hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-md font-bold text-[10px] enabled:cursor-pointer disabled:opacity-50 disabled:cursor-default transition-colors"
           >
-            Changes: {ci.linkedChangesCount} →
+            Changes: {ci.linkedChangesCount ?? 0}
+            {ci.linkedChangesCount ? ' →' : ''}
           </button>
         </div>
         <span className="text-[10px] text-slate-400 font-medium">

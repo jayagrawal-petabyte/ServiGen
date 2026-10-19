@@ -543,6 +543,10 @@ export const MOCK_CHANGE_REQUESTS = [
     category: 'Database',
     riskLevel: 'Medium',
     status: 'Scheduled',
+    linkedCiId: 'CI-102',
+    linkedCiName: 'Primary PostgreSQL Database Cluster',
+    type: 'Normal',
+    agentName: 'Priya Nair',
     plannedStart: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
     plannedEnd: new Date(Date.now() + 52 * 3600 * 1000).toISOString(),
     requestedBy: 'Priya Nair',
@@ -553,17 +557,37 @@ export const MOCK_CHANGE_REQUESTS = [
     category: 'Network',
     riskLevel: 'High',
     status: 'Approved',
+    linkedCiId: 'CI-104',
+    linkedCiName: 'Cloudflare Edge CDN & WAF',
+    type: 'Emergency',
+    agentName: 'Marcus Vance',
     plannedStart: new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
     plannedEnd: new Date(Date.now() + 74 * 3600 * 1000).toISOString(),
     requestedBy: 'Marcus Vance',
   },
+  {
+    id: 'CR-503',
+    title: 'Auth0 SAML Encryption Key Rotation',
+    category: 'Security',
+    riskLevel: 'Low',
+    status: 'Scheduled',
+    linkedCiId: 'CI-101',
+    linkedCiName: 'Auth0 Identity Provider',
+    type: 'Standard',
+    agentName: 'Alex Rivera',
+    plannedStart: new Date(Date.now() + 96 * 3600 * 1000).toISOString(),
+    plannedEnd: new Date(Date.now() + 98 * 3600 * 1000).toISOString(),
+    requestedBy: 'Alex Rivera',
+  },
 ];
 
 export const MOCK_CONFIG_ITEMS = [
-  { id: 'CI-101', name: 'Auth0 Identity Provider', type: 'Service', status: 'Operational', owner: 'Alex Rivera', environment: 'Production' },
-  { id: 'CI-102', name: 'Primary PostgreSQL Database Cluster', type: 'Database', status: 'Operational', owner: 'Priya Nair', environment: 'Production' },
-  { id: 'CI-103', name: 'Kubernetes Production Cluster EKS-01', type: 'Infrastructure', status: 'Operational', owner: 'Marcus Vance', environment: 'Production' },
-  { id: 'CI-104', name: 'Cloudflare Edge CDN & WAF', type: 'Network', status: 'Operational', owner: 'Alex Rivera', environment: 'Production' },
+  // activeIncidentsCount / linkedChangesCount were absent, so every CMDB card
+  // rendered "Incidents: 0 → Changes: 0 →" regardless of the data.
+  { id: 'CI-101', name: 'Auth0 Identity Provider', type: 'Service', status: 'Operational', owner: 'Alex Rivera', environment: 'Production', activeIncidentsCount: 2, linkedChangesCount: 1 },
+  { id: 'CI-102', name: 'Primary PostgreSQL Database Cluster', type: 'Database', status: 'Operational', owner: 'Priya Nair', environment: 'Production', activeIncidentsCount: 1, linkedChangesCount: 2 },
+  { id: 'CI-103', name: 'Kubernetes Production Cluster EKS-01', type: 'Infrastructure', status: 'Operational', owner: 'Marcus Vance', environment: 'Production', activeIncidentsCount: 3, linkedChangesCount: 0 },
+  { id: 'CI-104', name: 'Cloudflare Edge CDN & WAF', type: 'Network', status: 'Operational', owner: 'Alex Rivera', environment: 'Production', activeIncidentsCount: 0, linkedChangesCount: 1 },
 ];
 
 export const MOCK_SERVICES = [

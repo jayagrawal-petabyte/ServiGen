@@ -159,7 +159,7 @@ export function getApiBaseUrl(): string {
   }
   // In production builds (e.g. Vercel), default to the live Render backend
   if (import.meta.env.PROD) {
-    return 'https://servigen-1.onrender.com';
+    return 'https://servigen-backend.onrender.com';
   }
   // In local development, empty string leverages Vite's dev proxy to Render
   return '';

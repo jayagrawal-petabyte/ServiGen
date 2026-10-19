@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
@@ -28,11 +28,32 @@ interface TeamIncidentTableProps {
   initialViewKind?: "team" | "agent" | "breaching-sla";
 }
 
+/**
+ * Incident categories.
+ *
+ * These must match the values used elsewhere (ticket records, the category
+ * chart, the dashboard breakdown). The form previously offered four invented
+ * paths — "Collaboration Tools > Zoom/Teams" and friends — so anything created
+ * here carried a category no filter or report recognised.
+ */
+const INCIDENT_CATEGORIES = [
+  'Network & Connectivity',
+  'Software & Applications',
+  'Hardware & Equipment',
+  'Access & Permissions',
+  'Email & Communication',
+  'Infrastructure & Cloud',
+  'General Support',
+] as const;
+
 function TeamIncidentTable({
   team = "1st Line Support",
   initialViewKind,
 }: TeamIncidentTableProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ciParam = searchParams.get('ci');
+  const ciNameParam = searchParams.get('ciName');
   const { user } = useAuth();
   const isSecondLine = team.toLowerCase().includes("2nd");
 
@@ -197,7 +218,9 @@ function TeamIncidentTable({
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
   const [showNewIncidentModal, setShowNewIncidentModal] = useState<boolean>(false);
   const [newSummary, setNewSummary] = useState("");
-  const [newCategory, setNewCategory] = useState(isSecondLine ? "Hardware>Workstation>Operating System" : "Network>VPN>Connectivity");
+  const [newCategory, setNewCategory] = useState<string>(
+    isSecondLine ? "Infrastructure & Cloud" : "Network & Connectivity"
+  );
   const [newPriority, setNewPriority] = useState<string>("Medium");
 
   // Filtered incidents based on active sidebar view selection, status filter & search query
@@ -234,16 +257,29 @@ function TeamIncidentTable({
       base = base.filter((i) => i.status === "Resolved" || i.status === "Closed");
     }
 
-    if (!search.trim()) return base;
+    if (!search.trim() && !ciParam && !ciNameParam) return base;
     const q = search.toLowerCase();
-    return base.filter(
-      (incident) =>
+    const qCi = (ciNameParam || ciParam || '').toLowerCase();
+
+    return base.filter((incident) => {
+      const matchesSearch =
+        !search.trim() ||
         incident.id.toLowerCase().includes(q) ||
         incident.summary.toLowerCase().includes(q) ||
         incident.category.toLowerCase().includes(q) ||
-        incident.agent.toLowerCase().includes(q)
-    );
-  }, [incidents, selectedView, statusFilter, search]);
+        incident.agent.toLowerCase().includes(q);
+
+      const matchesCi =
+        !ciParam && !ciNameParam
+          ? true
+          : incident.id.toLowerCase().includes(qCi) ||
+            incident.summary.toLowerCase().includes(qCi) ||
+            incident.category.toLowerCase().includes(qCi) ||
+            (ciParam && incident.id.toLowerCase().includes(ciParam.toLowerCase()));
+
+      return matchesSearch && matchesCi;
+    });
+  }, [incidents, selectedView, statusFilter, search, ciParam, ciNameParam]);
 
   const handleExportCSV = () => {
     if (filteredIncidents.length === 0) return;
@@ -1121,10 +1157,11 @@ function TeamIncidentTable({
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
               >
-                <option value="Office Applications>Microsoft 365">Office Applications &gt; Microsoft 365</option>
-                <option value="Collaboration Tools>Zoom/Teams">Collaboration Tools &gt; Zoom/Teams</option>
-                <option value="Security>Password Management">Security &gt; Password Management</option>
-                <option value="Network>VPN>Connectivity">Network &gt; VPN &gt; Connectivity</option>
+                {INCIDENT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
 
               <label htmlFor="inc-pri">Priority</label>

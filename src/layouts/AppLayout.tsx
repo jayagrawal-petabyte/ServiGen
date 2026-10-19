@@ -4,7 +4,6 @@ import Sidebar from '../components/shared/Sidebar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../pages/Auth/AuthContext';
 import { getStoredToken } from '../services/apiClient';
-import BackendStatusBanner from '../components/shared/BackendStatusBanner';
 import ErrorBoundary from '../components/shared/ErrorBoundary';
 
 export const AppLayout: React.FC = () => {
@@ -271,7 +270,6 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Page Viewport */}
       <div className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
-        <BackendStatusBanner />
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { ChangeRequest, SubTask } from '../../types/cmdb';
 import {
   fetchChangeRequests,
@@ -39,6 +39,10 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   onRefreshData,
 }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ciId = searchParams.get('ci');
+  const ciName = searchParams.get('ciName');
+
   const [internalRequests, setInternalRequests] = useState<ChangeRequest[]>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'active'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -92,7 +96,14 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     const matchesStatus = selectedStatus === 'ALL' || cr.status === selectedStatus;
     const matchesActiveTab = filterMode === 'all' || cr.status !== 'Completed';
 
-    return matchesSearch && matchesType && matchesStatus && matchesActiveTab;
+    const matchesCi =
+      !ciId && !ciName
+        ? true
+        : (cr.linkedCiId && cr.linkedCiId.toLowerCase() === ciId?.toLowerCase()) ||
+          (cr.linkedCiName && ciName && cr.linkedCiName.toLowerCase().includes(ciName.toLowerCase())) ||
+          (cr.title.toLowerCase().includes((ciName || ciId || '').toLowerCase()));
+
+    return matchesSearch && matchesType && matchesStatus && matchesActiveTab && matchesCi;
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
@@ -120,6 +131,28 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
       </header>
 
       <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+        {(ciId || ciName) && (
+          <div className="mb-4 px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center justify-between text-xs font-semibold shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-purple-600"></span>
+              <span>
+                Showing change requests linked to Configuration Item: <strong>{ciName || ciId}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.delete('ci');
+                nextParams.delete('ciName');
+                setSearchParams(nextParams);
+              }}
+              className="text-purple-700 hover:text-purple-950 font-bold cursor-pointer underline text-[11px]"
+            >
+              Clear filter ✕
+            </button>
+          </div>
+        )}
         {/* Top Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>

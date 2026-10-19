@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { MajorIncident, Priority } from '../types/majorIncident.types';
 import { api } from '../../../services/apiClient';
+import Combobox from '../../../components/shared/Combobox';
 
 interface NewIncidentModalProps {
   onClose: () => void;
@@ -33,6 +34,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
   const [assignee, setAssignee] = useState('');
   const [errors, setErrors]     = useState<{ title?: string }>({});
   const [users, setUsers]       = useState<Array<{ id: string; fullName: string; role: string }>>([]);
+  const [services, setServices] = useState<Array<{ name: string; type?: string }>>([]);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -49,6 +51,19 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
         })));
       }
     }).catch(() => {});
+
+    // Product / CI options. The old <datalist id="cmdb-products-list"> was
+    // declared but left empty, so the field never suggested anything.
+    api.get('/api/cmdb/configuration-items').then((res: any) => {
+      if (!active) return;
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setServices(
+        list
+          .map((ci: any) => ({ name: ci.name || ci.ciName || '', type: ci.type || ci.ciType }))
+          .filter((ci: { name: string }) => ci.name)
+      );
+    }).catch(() => {});
+
     return () => {
       active = false;
     };
@@ -170,35 +185,26 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             <label className="block text-xs font-medium text-gray-600 mb-1">
               Product / CI Service
             </label>
-            <input
-              type="text"
-              list="cmdb-products-list"
+            <Combobox
               value={product}
-              onChange={(e) => setProduct(e.target.value)}
+              onChange={setProduct}
               placeholder="Select or enter CI Service (e.g. Database, API Gateway)…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400"
+              options={services.map((s) => ({ value: s.name, hint: s.type }))}
             />
-            <datalist id="cmdb-products-list">
-            </datalist>
           </div>
 
           {/* Assignee */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Assignee</label>
-            <input
-              type="text"
-              list="org-users-list"
+            <Combobox
               value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
+              onChange={setAssignee}
               placeholder="Select or type team member…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400"
+              options={[
+                ...users.map((u) => ({ value: u.fullName, hint: u.role })),
+                { value: 'Unassigned' },
+              ]}
             />
-            <datalist id="org-users-list">
-              {users.map((u) => (
-                <option key={u.id} value={u.fullName} label={u.role} />
-              ))}
-              <option value="Unassigned" />
-            </datalist>
           </div>
 
           {/* Footer */}

@@ -1,19 +1,28 @@
 /* ── Sleek, Modern Agent KPI Dashboard Drawer ── */
 .agent-kpi-drawer-floating {
+  /* Offset from the top of the viewport to the bottom of the app header.
+     This was a hardcoded 56px, which assumed the header was always exactly
+     that tall and always flush with the viewport top — so anything rendered
+     above it (a status banner, a toolbar) pushed the header down while the
+     drawer stayed put and covered it. Override --app-header-offset on a page
+     that has extra chrome above its header. */
+  --app-header-offset: 58px;
+  --agent-kpi-gutter: 16px;
+
   position: fixed;
-  top: 56px;
-  right: 16px;
+  top: var(--app-header-offset);
+  right: var(--agent-kpi-gutter);
   width: 380px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 72px);
-  height: calc(100vh - 72px);
+  max-width: calc(100vw - (var(--agent-kpi-gutter) * 2));
+  height: calc(100vh - var(--app-header-offset) - var(--agent-kpi-gutter));
+  max-height: calc(100vh - var(--app-header-offset) - var(--agent-kpi-gutter));
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(15, 23, 42, 0.08);
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  z-index: 1000;
+  z-index: 50;
   overflow: hidden;
   animation: agentKpiSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

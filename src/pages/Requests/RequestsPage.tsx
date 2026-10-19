@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import GetStartedGuide from '../../components/shared/GetStartedGuide';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
@@ -44,6 +45,7 @@ export const RequestsPage: React.FC = () => {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const [activeCrCount, setActiveCrCount] = useState<number | null>(null);
 
@@ -278,10 +280,7 @@ export const RequestsPage: React.FC = () => {
 
         <div className="requests-header-right-actions">
           <GlobalNavbarActions
-            onGetStarted={() => {
-              setStatusMessage('Onboarding tour initiated for Requests workspace');
-              setTimeout(() => setStatusMessage(null), 2500);
-            }}
+            onGetStarted={() => setIsGuideOpen(true)}
             onNewTicket={() => setIsNewRequestModalOpen(true)}
             onOpenTicket={(id) => {
               const found = requestsList.find((r) => r.id === id);
@@ -838,6 +837,47 @@ export const RequestsPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {isGuideOpen && (
+        <GetStartedGuide
+          title="Getting Started with Service Requests"
+          subtitle="How requests are raised, triaged and fulfilled"
+          onClose={() => setIsGuideOpen(false)}
+          primaryActionLabel="Create First Request →"
+          onPrimaryAction={() => setIsNewRequestModalOpen(true)}
+          steps={[
+            {
+              title: 'Raise a Request',
+              body: (
+                <>
+                  Click <strong>+ New Ticket</strong> to log a service request — a laptop, access to a
+                  system, a licence. Pick a category and priority so it routes to the right queue.
+                </>
+              ),
+            },
+            {
+              title: 'Triage by Team and Agent',
+              body: (
+                <>
+                  Use the left-hand tree to switch between <strong>1st Line</strong>,{' '}
+                  <strong>2nd Line</strong> and <strong>Infrastructure</strong>, or pick an individual
+                  agent. The status filter narrows to Open, In Progress or New.
+                </>
+              ),
+            },
+            {
+              title: 'Approve and Fulfil',
+              body: (
+                <>
+                  Requests needing sign-off appear in <strong>Approvals</strong>. Once approved, work the
+                  request to completion and it moves to Resolved. Select one and use{' '}
+                  <strong>Create Change Request</strong> if it needs a controlled change.
+                </>
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );
