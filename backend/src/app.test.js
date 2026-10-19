@@ -20,6 +20,23 @@ test('health is public but business APIs reject anonymous access', async () => {
   }
 });
 
+test('database readiness is public and does not expose database metadata', async () => {
+  const db = require('./config/db');
+  const originalQuery = db.$queryRaw;
+  db.$queryRaw = async () => [{ '?column?': 1 }];
+  try {
+    const response = await fetch(base + '/api/health/db');
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(body.success, true);
+    assert.equal(body.connected, true);
+    for (const field of ['datasource', 'counts', 'recentFailures', 'error']) assert.equal(body[field], undefined);
+  } finally {
+    db.$queryRaw = originalQuery;
+  }
+});
+
 test('development header identities and the published signing key cannot bypass authentication', async () => {
   const spoofed = {'x-user-id':'attacker', 'x-user-role':'Admin'};
   assert.equal((await fetch(base+'/api/major-incidents', {headers:spoofed})).status, 401);

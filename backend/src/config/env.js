@@ -3,6 +3,7 @@
 const path = require('path');
 const { randomBytes } = require('node:crypto');
 const dotenv = require('dotenv');
+const { configureDatabaseUrl } = require('./database-url');
 
 // Load .env from backend root if present
 // Tests must not inherit credentials or development overrides from a local file.
@@ -63,13 +64,9 @@ if (!/^\d+$/.test(String(process.env.PORT || 3000)) || !Number.isInteger(PORT) |
 if (isProduction && !process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL must be provided in production');
 }
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/servigen?schema=public';
-try {
-  const url = new URL(DATABASE_URL);
-  if (!['postgres:', 'postgresql:'].includes(url.protocol) || !url.hostname || url.pathname.length < 2) throw new Error();
-} catch {
-  throw new Error('DATABASE_URL must be a valid PostgreSQL connection URL');
-}
+const DATABASE_URL = configureDatabaseUrl(
+  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/servigen?schema=public'
+);
 
 const env = {
   NODE_ENV,

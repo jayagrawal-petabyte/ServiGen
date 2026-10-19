@@ -5,8 +5,13 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 const env = require('./config/env');
+const createDatabaseHealthHandler = require('./config/database-health');
 const { createRateLimiter } = require('./shared/middleware/rate-limit.middleware');
 const { requestLogger, errorHandler, requireAuth, restrictTo, PERMISSIONS, approvalScope } = require('./shared');
+const {
+  probeDatabase,
+  getDbDiagnostics,
+} = require('./shared/utils/db-guard');
 
 // ─── Module Routers ─────────────────────────────────────────────────────────
 const myWorkRouter = require('./modules/my-work/my-work.routes');
@@ -60,6 +65,14 @@ app.get('/api/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Public because the existing frontend sends no token for this check. The
+// handler returns readiness only; datasource details and raw errors stay private.
+app.get('/api/health/db', createDatabaseHealthHandler({
+  probeDatabase,
+  getDbDiagnostics,
+  environment: env.NODE_ENV,
+}));
 
 // Limits run before body parsing and authentication. Health and browser
 // preflights stay available; AI receives an additional, smaller IP budget.
