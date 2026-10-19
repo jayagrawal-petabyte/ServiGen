@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const backendTarget = env.VITE_BACKEND_URL || 'https://servigen-backend.onrender.com';
+  let backendTarget = env.VITE_BACKEND_URL || 'https://servigen-backend.onrender.com';
+  if (backendTarget.includes('servigen-1.onrender.com')) {
+    backendTarget = 'https://servigen-backend.onrender.com';
+  }
 
   return {
     plugins: [react()],

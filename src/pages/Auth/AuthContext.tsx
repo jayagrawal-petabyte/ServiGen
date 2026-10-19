@@ -515,8 +515,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const knownCredentials: Record<string, { password: string; email: string }> = {
       agent001: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
       agent: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
-      admin001: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
-      admin: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
+      admin001: { password: 'Adm!n#9vK2$7xLq', email: 'admin@servigen.local' },
+      admin: { password: 'Adm!n#9vK2$7xLq', email: 'admin@servigen.local' },
+      'admin@servigen.local': { password: 'Adm!n#9vK2$7xLq', email: 'admin@servigen.local' },
       'agent001@servigen.local': { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
       support001: { password: 'Supp0rt!2xL8^pD5', email: 'support001@servigen.local' },
       support: { password: 'Supp0rt!2xL8^pD5', email: 'support001@servigen.local' },
@@ -524,10 +525,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user001: { password: 'Us3r@4bT7&mQ6wV', email: 'user001@servigen.local' },
       user: { password: 'Us3r@4bT7&mQ6wV', email: 'user001@servigen.local' },
       'user001@servigen.local': { password: 'Us3r@4bT7&mQ6wV', email: 'user001@servigen.local' },
-      approver001: { password: 'Appr0v!3mK9#vL2', email: 'approver001@servigen.local' },
-      approver: { password: 'Appr0v!3mK9#vL2', email: 'approver001@servigen.local' },
-      'approver001@servigen.local': { password: 'Appr0v!3mK9#vL2', email: 'approver001@servigen.local' },
-      'inesh.a': { password: 'Ag3nt*8mP4!wR9t', email: 'inesh.a@servigen.local' },
+      approver001: { password: 'Appr0v#5zY1$kE3s', email: 'approver001@servigen.local' },
+      approver: { password: 'Appr0v#5zY1$kE3s', email: 'approver001@servigen.local' },
+      'approver001@servigen.local': { password: 'Appr0v#5zY1$kE3s', email: 'approver001@servigen.local' },
+      'inesh.a': { password: 'Adm!n#9vK2$7xLq', email: 'inesh.a@servigen.local' },
     };
 
     const known = knownCredentials[cleanUsername.toLowerCase()];
@@ -558,10 +559,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       attempts.push({ email: known.email, password: known.password });
     }
 
-    // 5. Universal fallback for agent001 if input was agent001/admin/agent
-    if (['agent001', 'agent', 'admin', 'admin001'].includes(cleanUsername.toLowerCase())) {
+    // 5. Universal fallback credentials if input was a known role
+    if (['agent001', 'agent'].includes(cleanUsername.toLowerCase())) {
       attempts.push({ email: 'agent001@servigen.local', password: 'Ag3nt*8mP4!wR9t' });
       attempts.push({ username: 'agent001', password: 'Ag3nt*8mP4!wR9t' });
+    } else if (['admin001', 'admin'].includes(cleanUsername.toLowerCase())) {
+      attempts.push({ email: 'admin@servigen.local', password: 'Adm!n#9vK2$7xLq' });
+      attempts.push({ username: 'admin001', password: 'Adm!n#9vK2$7xLq' });
+    } else if (['support001', 'support'].includes(cleanUsername.toLowerCase())) {
+      attempts.push({ email: 'support001@servigen.local', password: 'Supp0rt!2xL8^pD5' });
+      attempts.push({ username: 'support001', password: 'Supp0rt!2xL8^pD5' });
+    } else if (['user001', 'user'].includes(cleanUsername.toLowerCase())) {
+      attempts.push({ email: 'user001@servigen.local', password: 'Us3r@4bT7&mQ6wV' });
+      attempts.push({ username: 'user001', password: 'Us3r@4bT7&mQ6wV' });
+    } else if (['approver001', 'approver'].includes(cleanUsername.toLowerCase())) {
+      attempts.push({ email: 'approver001@servigen.local', password: 'Appr0v#5zY1$kE3s' });
+      attempts.push({ username: 'approver001', password: 'Appr0v#5zY1$kE3s' });
     }
 
     let successfulRes: any = null;

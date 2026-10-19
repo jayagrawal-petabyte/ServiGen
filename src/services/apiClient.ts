@@ -152,10 +152,13 @@ export const setStoredUser = (user: any | null): void => {
  * Defaults to empty string (same host / Vite proxy) or VITE_API_BASE_URL.
  */
 export function getApiBaseUrl(): string {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL;
   if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
-    // Strip trailing slash for consistency
-    return envUrl.replace(/\/+$/, '');
+    let clean = envUrl.trim().replace(/\/+$/, '');
+    if (clean.includes('servigen-1.onrender.com')) {
+      return 'https://servigen-backend.onrender.com';
+    }
+    return clean;
   }
   // In production builds (e.g. Vercel), default to the live Render backend
   if (import.meta.env.PROD) {

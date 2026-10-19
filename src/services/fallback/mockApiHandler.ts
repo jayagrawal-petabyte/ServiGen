@@ -89,7 +89,26 @@ export function handleOfflineRequest(
     };
   }
 
-  // 2. Auth Session
+  // 2. Auth Session & Login
+  if (path === '/api/auth/login' || path === '/auth/login') {
+    const ident = parsedBody?.username || parsedBody?.email || 'agent001';
+    const found =
+      MOCK_USERS.find(
+        (u) =>
+          u.username.toLowerCase() === String(ident).toLowerCase() ||
+          u.email.toLowerCase() === String(ident).toLowerCase()
+      ) || MOCK_USERS[0];
+    const token = `mock_jwt_token_${found.username}_${Date.now()}`;
+    return {
+      success: true,
+      message: 'Login successful',
+      token,
+      data: {
+        ...found,
+        token,
+      },
+    };
+  }
   if (path === '/api/auth/session') {
     return {
       success: true,
