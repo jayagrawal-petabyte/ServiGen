@@ -105,6 +105,14 @@ export function setAuthToken(token: string | null, persist = true): void {
 export const setStoredToken = (token: string | null) => setAuthToken(token, true);
 
 /**
+ * Check if the active JWT is a resilient offline fallback token
+ */
+export function isOfflineFallbackToken(token: string | null): boolean {
+  if (!token) return false;
+  return token.includes('offline_fallback') || token.includes('isOfflineFallback');
+}
+
+/**
  * Clear stored authentication tokens
  */
 export function clearAuthToken(): void {
@@ -228,14 +236,18 @@ export async function refreshSession(): Promise<string | null> {
       });
 
       if (!res.ok) {
-        clearAuthToken();
+        if (!isOfflineFallbackToken(currentToken)) {
+          clearAuthToken();
+        }
         return null;
       }
 
       const json = await res.json();
       const token = json?.data?.token || json?.token;
       if (!token) {
-        clearAuthToken();
+        if (!isOfflineFallbackToken(currentToken)) {
+          clearAuthToken();
+        }
         return null;
       }
 
@@ -417,9 +429,11 @@ export async function apiRequest<T = any>(
         headers: retryHeaders,
       });
     }
-    // Refresh failed: the session is genuinely over.
-    clearAuthToken();
-    announceSessionExpiry();
+    // Refresh failed: the session is genuinely over unless running an offline fallback token
+    if (!isOfflineFallbackToken(token)) {
+      clearAuthToken();
+      announceSessionExpiry();
+    }
   }
 
   let responseData: any = null;
