@@ -183,9 +183,9 @@ export const majorIncidentsService = {
   async getMajorIncidents(filters?: { status?: string; priority?: string }): Promise<MajorIncident[]> {
     try {
       const res = await api.get('/api/major-incidents', { params: filters });
-      if (res?.success && Array.isArray(res.data)) {
-        const liveList = (res.data as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
-        return liveList;
+      const listData = res?.data ?? res;
+      if (Array.isArray(listData)) {
+        return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
       }
     } catch {
       // Backend unavailable or offline fallback
@@ -201,8 +201,9 @@ export const majorIncidentsService = {
   async getMajorIncidentById(id: string): Promise<MajorIncident | null> {
     try {
       const res = await api.get(`/api/major-incidents/${id}`);
-      if (res?.success && res.data) {
-        return mapBackendToFrontendIncident(res.data as BackendMajorIncident);
+      const singleData = res?.data ?? res;
+      if (singleData && (singleData.id || singleData.title)) {
+        return mapBackendToFrontendIncident(singleData as BackendMajorIncident);
       }
     } catch {
       // Fallback
@@ -232,8 +233,9 @@ export const majorIncidentsService = {
       };
 
       const res = await api.post('/api/major-incidents', body);
-      if (res?.success && res.data) {
-        return mapBackendToFrontendIncident(res.data as BackendMajorIncident);
+      const createData = res?.data ?? res;
+      if (createData && (createData.id || createData.title)) {
+        return mapBackendToFrontendIncident(createData as BackendMajorIncident);
       }
     } catch {
       // Fallback
@@ -273,8 +275,9 @@ export const majorIncidentsService = {
       else if (changes.assignee !== undefined) payload.commander = changes.assignee;
 
       const res = await api.patch(`/api/major-incidents/${id}`, payload);
-      if (res?.success && res.data) {
-        return mapBackendToFrontendIncident(res.data as BackendMajorIncident);
+      const updateData = res?.data ?? res;
+      if (updateData && (updateData.id || updateData.title)) {
+        return mapBackendToFrontendIncident(updateData as BackendMajorIncident);
       }
     } catch {
       // Fallback
@@ -292,8 +295,9 @@ export const majorIncidentsService = {
   ): Promise<MajorIncident | null> {
     try {
       const res = await api.post(`/api/major-incidents/${incidentId}/updates`, payload);
-      if (res?.success && res.data) {
-        return mapBackendToFrontendIncident(res.data as BackendMajorIncident);
+      const updateRes = res?.data ?? res;
+      if (updateRes && (updateRes.id || updateRes.title)) {
+        return mapBackendToFrontendIncident(updateRes as BackendMajorIncident);
       }
     } catch {
       // Fallback

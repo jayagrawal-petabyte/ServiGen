@@ -337,15 +337,14 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   useEffect(() => {
     if (!selectedIncidentId) return;
-    // Only refresh from backend if this is a server-confirmed incident (not a locally-created optimistic ID)
-    const isServerIncident = serverIncidents.some((i) => i.id === selectedIncidentId);
-    if (!isServerIncident) return;
+    // Skip locally-created optimistic IDs (format: MI-{timestamp}-{n}) — they don't exist on backend yet
+    if (/^MI-\d+-\d+$/.test(selectedIncidentId)) return;
     majorIncidentsService.getMajorIncidentById(selectedIncidentId).then((fresh) => {
       if (fresh) {
         setServerIncidents((prev) => prev.map((i) => i.id === fresh.id ? fresh : i));
       }
     }).catch(() => {});
-  }, [selectedIncidentId, serverIncidents]);
+  }, [selectedIncidentId]);
 
   const handleAddIncident = (incident: MajorIncident) => {
     setLocalIncidents((prev) => [incident, ...prev]);
