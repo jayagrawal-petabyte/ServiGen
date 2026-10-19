@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
-  AGENTS,
   APPOINTMENT_TYPES,
   type CalendarEvent,
   type EventType,
   toDateKey,
-} from "./mockCalendar";
-import { api } from "../../services/apiClient";
+} from "./calendar.types";
+import { apiClient, api } from "../../services/apiClient";
+import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -22,6 +22,8 @@ const VIEWS: { id: View; label: string }[] = [
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const HOUR_HEIGHT = 48;
+
+/* ---------- date helpers ---------- */
 
 function addDays(d: Date, n: number) {
   const r = new Date(d);
@@ -89,6 +91,7 @@ function rangeLabel(days: Date[]) {
   return `${short(first)} - ${short(last)}`;
 }
 
+/* Lays out overlapping events side by side within a single day column. */
 function layoutDay(events: CalendarEvent[]) {
   const sorted = [...events].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   const laneEnds: number[] = [];
@@ -108,16 +111,25 @@ function layoutDay(events: CalendarEvent[]) {
 
 type Draft = Omit<CalendarEvent, "id">;
 
-function emptyDraft(date: Date, hour = 9, defaultAgent = 'Support Agent'): Draft {
+function emptyDraft(date: Date, hour = 9): Draft {
   return {
     title: "",
     date: toDateKey(date),
     start: `${String(hour).padStart(2, "0")}:00`,
     end: `${String(Math.min(hour + 1, 23)).padStart(2, "0")}:00`,
     type: "meeting",
-    agent: defaultAgent,
+    agent: "",
     description: "",
   };
+}
+
+function normalizeEventType(type?: string): EventType {
+  if (!type) return "meeting";
+  const lower = type.toLowerCase().trim().replace(/[\s_]+/g, "-");
+  if (lower.includes("phone") || lower.includes("call")) return "phone-call";
+  if (lower.includes("site") || lower.includes("visit")) return "site-visit";
+  if (lower.includes("resource") || lower.includes("booking")) return "resource-booking";
+  return "meeting";
 }
 
 export default function CalendarPage() {
@@ -126,11 +138,12 @@ export default function CalendarPage() {
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<View>("week");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [agentsList, setAgentsList] = useState<string[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [hiddenTypes, setHiddenTypes] = useState<EventType[]>([]);
   const [hiddenAgents, setHiddenAgents] = useState<string[]>([]);
+  const [agentList, setAgentList] = useState<string[]>([]);
   const [typesOpen, setTypesOpen] = useState(true);
   const [agentsOpen, setAgentsOpen] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -141,62 +154,105 @@ export default function CalendarPage() {
   const [draftError, setDraftError] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const availableAgents = useMemo(() => {
-    return agentsList.length > 0 ? agentsList : AGENTS;
-  }, [agentsList]);
+  // Fetch calendar events on mount
+  useEffect(() => {
+    let active = true;
+    async function fetchCalendarEvents() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res: any = await apiClient.get('/api/calendar');
+        if (!active) return;
+        const rawEvents = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (rawEvents.length > 0) {
+          const mapped: CalendarEvent[] = rawEvents.map((item: any) => {
+            if (item.date && item.start && item.end) {
+              return {
+                id: String(item.id),
+                title: item.title || "Untitled Event",
+                date: item.date,
+                start: item.start,
+                end: item.end,
+                type: normalizeEventType(item.type || item.appointmentType),
+                agent: item.agent || item.agentName || "",
+                allDay: Boolean(item.allDay),
+                description: item.description || "",
+              };
+            }
+            const startDt = item.startsAt ? new Date(item.startsAt) : new Date();
+            const endDt = item.endsAt
+              ? new Date(item.endsAt)
+              : new Date(startDt.getTime() + 60 * 60 * 1000);
+            const pad = (n: number) => String(n).padStart(2, "0");
+            return {
+              id: String(item.id),
+              title: item.title || "Untitled Event",
+              date: toDateKey(startDt),
+              start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
+              end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
+              type: normalizeEventType(item.appointmentType || item.type),
+              agent: item.agent || "",
+              description: item.description || "",
+            };
+          });
+          setEvents(mapped);
+        } else {
+          // If database is unseeded, use default mock calendar events so page is not empty
+          setEvents([]);
+        }
+      } catch (err: any) {
+        if (!active) return;
+        setEvents([]);
+        console.warn("[CalendarPage] Backend fetch error, using fallback events:", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
 
+    void fetchCalendarEvents();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Load agent list from API
+  useEffect(() => {
+    async function loadAgents() {
+      try {
+        const { api: apiAgent } = await import("../../services/apiClient");
+        const [r1, r2]: any[] = await Promise.all([
+          apiAgent.get('/api/incidents/support/first-line/agents'),
+          apiAgent.get('/api/incidents/support/second-line/agents'),
+        ]);
+        const extract = (res: any): string[] => {
+          const arr = Array.isArray(res?.data?.agents) ? res.data.agents
+            : Array.isArray(res?.data) ? res.data
+            : Array.isArray(res?.agents) ? res.agents : [];
+          return arr.map((a: any) => {
+            const u = a.user ?? a;
+            return [u.firstName, u.lastName].filter(Boolean).join(' ') || u.fullName || u.username || '';
+          }).filter(Boolean);
+        };
+        const combined = [...new Set([...extract(r1), ...extract(r2)])];
+        if (combined.length > 0) setAgentList(combined);
+      } catch { }
+    }
+    void loadAgents();
+  }, []);
+
+  // Fallback: derive from loaded events
+  useEffect(() => {
+    if (agentList.length === 0 && events.length > 0) {
+      setAgentList([...new Set(events.map((e) => e.agent).filter(Boolean))]);
+    }
+  }, [events, agentList.length]);
+
+  // Keep the red "now" line moving.
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    async function loadCalendarData() {
-      setIsLoadingEvents(true);
-      try {
-        const [calRes, usersRes]: [any, any] = await Promise.allSettled([
-          api.get('/api/calendar'),
-          api.get('/api/users'),
-        ]).then(([c, u]) => [
-          c.status === 'fulfilled' ? c.value : null,
-          u.status === 'fulfilled' ? u.value : null,
-        ]);
-
-        if (!mounted) return;
-
-        if (usersRes) {
-          const uList = Array.isArray(usersRes?.data) ? usersRes.data : Array.isArray(usersRes) ? usersRes : [];
-          if (uList.length > 0) {
-            const names = uList.map((u: any) => u.fullName || u.username || 'Agent');
-            setAgentsList(Array.from(new Set(names)));
-          }
-        }
-
-        const cList = Array.isArray(calRes?.data) ? calRes.data : Array.isArray(calRes) ? calRes : [];
-        const mapped: CalendarEvent[] = cList.map((item: any) => {
-          const startDate = item.startsAt ? new Date(item.startsAt) : new Date();
-          const endDate = item.endsAt ? new Date(item.endsAt) : new Date();
-          return {
-            id: String(item.id || Date.now()),
-            title: item.title || 'Untitled Event',
-            date: toDateKey(startDate),
-            start: `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`,
-            end: `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`,
-            type: (item.appointmentType?.toLowerCase() || 'meeting') as EventType,
-            agent: item.agentName || item.agentId || 'Support Agent',
-            description: item.description || '',
-          };
-        });
-        setEvents(mapped);
-      } catch (err) {
-        console.warn('Failed to load live calendar events:', err);
-      } finally {
-        if (mounted) setIsLoadingEvents(false);
-      }
-    }
-    void loadCalendarData();
-    return () => { mounted = false; };
   }, []);
 
   const dayStart = workingHoursOnly ? 8 : 0;
@@ -229,6 +285,8 @@ export default function CalendarPage() {
       .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   }
 
+  /* ---------- navigation ---------- */
+
   function goTo(date: Date) {
     setAnchor(date);
     setMiniMonth(date);
@@ -247,6 +305,8 @@ export default function CalendarPage() {
       ? anchor.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
       : rangeLabel(weekDays);
 
+  /* ---------- sidebar toggles ---------- */
+
   function toggleType(id: EventType) {
     setHiddenTypes((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
   }
@@ -255,48 +315,46 @@ export default function CalendarPage() {
     setHiddenAgents((prev) => (prev.includes(name) ? prev.filter((a) => a !== name) : [...prev, name]));
   }
 
+  /* ---------- create / delete ---------- */
+
   function openDraft(date: Date, hour?: number) {
     setDraftError("");
-    setDraft(emptyDraft(date, hour, availableAgents[0]));
+    setDraft(emptyDraft(date, hour));
   }
 
-  async function saveDraft() {
+  function saveDraft() {
     if (!draft) return;
     if (!draft.title.trim()) return setDraftError("Please enter a title.");
     if (toMinutes(draft.end) <= toMinutes(draft.start)) return setDraftError("End time must be after start time.");
-
-    const tempId = String(Date.now());
-    const optimisticEvent: CalendarEvent = {
-      ...draft,
-      title: draft.title.trim(),
-      id: tempId,
-    };
-    setEvents((prev) => [...prev, optimisticEvent]);
+    const newEvent: CalendarEvent = { ...draft, title: draft.title.trim(), id: String(Date.now()) };
+    setEvents((prev) => [...prev, newEvent]);
+    // Ensure the created event's type is visible
+    setHiddenTypes((prev) => prev.filter((t) => t !== draft.type));
     setDraft(null);
 
-    try {
-      const startsAt = new Date(`${draft.date}T${draft.start}:00`).toISOString();
-      const endsAt = new Date(`${draft.date}T${draft.end}:00`).toISOString();
-      const res: any = await api.post('/api/calendar', {
-        title: draft.title.trim(),
-        appointmentType: draft.type,
-        startsAt,
-        endsAt,
-      });
-      if (res?.data?.id) {
-        setEvents((prev) =>
-          prev.map((e) => (e.id === tempId ? { ...e, id: String(res.data.id) } : e))
-        );
+    const startsAt = new Date(`${draft.date}T${draft.start}:00`).toISOString();
+    const endsAt = new Date(`${draft.date}T${draft.end}:00`).toISOString();
+    apiClient.post('/api/calendar', {
+      title: draft.title.trim(),
+      appointmentType: draft.type,
+      startsAt,
+      endsAt,
+    }).then((res: any) => {
+      const createdId = res?.data?.id || res?.id;
+      if (createdId) {
+        setEvents((prev) => prev.map((ev) => ev.id === newEvent.id ? { ...ev, id: String(createdId) } : ev));
       }
-    } catch (err) {
-      console.warn('Saved locally; server sync error:', err);
-    }
+    }).catch((err) => {
+      console.warn('[CalendarPage] Failed to persist event:', err);
+    });
   }
 
   function deleteEvent(id: string) {
     setEvents((prev) => prev.filter((e) => e.id !== id));
     setSelected(null);
   }
+
+  /* ---------- views ---------- */
 
   function renderTimeGrid(days: Date[]) {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -308,8 +366,14 @@ export default function CalendarPage() {
           {days.map((d) => {
             const isToday = isSameDay(d, now);
             return (
-              <button key={toDateKey(d)} className={`cal-day-head ${isToday ? "is-today" : ""}`}
-                onClick={() => { goTo(d); setView("day"); }}>
+              <button
+                key={toDateKey(d)}
+                className={`cal-day-head ${isToday ? "is-today" : ""}`}
+                onClick={() => {
+                  goTo(d);
+                  setView("day");
+                }}
+              >
                 <span className="cal-day-name">{WEEKDAYS[d.getDay()]}</span>
                 <span className="cal-day-num">{d.getDate()}</span>
               </button>
@@ -321,11 +385,18 @@ export default function CalendarPage() {
           <div className="cal-gutter-label small">all-day</div>
           {days.map((d) => (
             <div key={toDateKey(d)} className={`cal-allday-cell ${isSameDay(d, now) ? "is-today" : ""}`}>
-              {eventsOn(d).filter((e) => e.allDay).map((e) => (
-                <button key={e.id} className="cal-chip" style={{ background: typeMeta(e.type).color }} onClick={() => setSelected(e)}>
-                  {e.title}
-                </button>
-              ))}
+              {eventsOn(d)
+                .filter((e) => e.allDay)
+                .map((e) => (
+                  <button
+                    key={e.id}
+                    className="cal-chip"
+                    style={{ background: typeMeta(e.type).color }}
+                    onClick={() => setSelected(e)}
+                  >
+                    {e.title}
+                  </button>
+                ))}
             </div>
           ))}
         </div>
@@ -333,9 +404,12 @@ export default function CalendarPage() {
         <div className="cal-grid-body">
           <div className="cal-hours">
             {hours.map((h) => (
-              <div key={h} className="cal-hour-label" style={{ height: HOUR_HEIGHT }}>{formatHour(h)}</div>
+              <div key={h} className="cal-hour-label" style={{ height: HOUR_HEIGHT }}>
+                {formatHour(h)}
+              </div>
             ))}
           </div>
+
           {days.map((d) => {
             const isToday = isSameDay(d, now);
             const timed = eventsOn(d).filter((e) => !e.allDay);
@@ -343,17 +417,24 @@ export default function CalendarPage() {
             return (
               <div key={toDateKey(d)} className={`cal-day-col ${isToday ? "is-today" : ""}`}>
                 {hours.map((h) => (
-                  <button key={h} className="cal-slot" style={{ height: HOUR_HEIGHT }}
+                  <button
+                    key={h}
+                    className="cal-slot"
+                    style={{ height: HOUR_HEIGHT }}
                     aria-label={`New appointment ${d.toDateString()} ${formatHour(h)}`}
-                    onClick={() => openDraft(d, h)} />
+                    onClick={() => openDraft(d, h)}
+                  />
                 ))}
+
                 {timed.map((e) => {
                   const start = Math.max(toMinutes(e.start), dayStart * 60);
                   const end = Math.min(toMinutes(e.end), dayEnd * 60);
                   if (end <= start) return null;
                   const lane = lanes.get(e.id) ?? 0;
                   return (
-                    <button key={e.id} className={`cal-event ${end - start < 45 ? "short" : ""}`}
+                    <button
+                      key={e.id}
+                      className={`cal-event ${end - start < 45 ? "short" : ""}`}
                       style={{
                         top: ((start - dayStart * 60) / 60) * HOUR_HEIGHT,
                         height: Math.max(((end - start) / 60) * HOUR_HEIGHT - 2, 20),
@@ -361,14 +442,21 @@ export default function CalendarPage() {
                         width: `calc(${100 / laneCount}% - 4px)`,
                         background: typeMeta(e.type).color,
                       }}
-                      onClick={() => setSelected(e)}>
+                      onClick={() => setSelected(e)}
+                    >
                       <span className="cal-event-title">{e.title}</span>
-                      <span className="cal-event-time">{formatTime(e.start)} – {formatTime(e.end)}</span>
+                      <span className="cal-event-time">
+                        {formatTime(e.start)} – {formatTime(e.end)}
+                      </span>
                     </button>
                   );
                 })}
+
                 {isToday && showNow && (
-                  <div className="cal-now-line" style={{ top: ((nowMinutes - dayStart * 60) / 60) * HOUR_HEIGHT }} />
+                  <div
+                    className="cal-now-line"
+                    style={{ top: ((nowMinutes - dayStart * 60) / 60) * HOUR_HEIGHT }}
+                  />
                 )}
               </div>
             );
@@ -382,26 +470,53 @@ export default function CalendarPage() {
     const days = monthGrid(anchor);
     return (
       <div className="cal-month">
-        {WEEKDAYS.map((w) => <div key={w} className="cal-month-head">{w}</div>)}
+        {WEEKDAYS.map((w) => (
+          <div key={w} className="cal-month-head">
+            {w}
+          </div>
+        ))}
         {days.map((d) => {
           const dayEvents = eventsOn(d);
           const outside = d.getMonth() !== anchor.getMonth();
           return (
-            <div key={toDateKey(d)}
+            <div
+              key={toDateKey(d)}
               className={`cal-month-cell ${outside ? "is-outside" : ""} ${isSameDay(d, now) ? "is-today" : ""}`}
-              onClick={() => openDraft(d)}>
-              <button className="cal-month-num" onClick={(ev) => { ev.stopPropagation(); goTo(d); setView("day"); }}>
+              onClick={() => openDraft(d)}
+            >
+              <button
+                className="cal-month-num"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  goTo(d);
+                  setView("day");
+                }}
+              >
                 {d.getDate()}
               </button>
               {dayEvents.slice(0, 3).map((e) => (
-                <button key={e.id} className="cal-chip" style={{ background: typeMeta(e.type).color }}
-                  onClick={(ev) => { ev.stopPropagation(); setSelected(e); }}>
+                <button
+                  key={e.id}
+                  className="cal-chip"
+                  style={{ background: typeMeta(e.type).color }}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setSelected(e);
+                  }}
+                >
                   {!e.allDay && <span className="cal-chip-time">{formatTime(e.start)}</span>}
                   {e.title}
                 </button>
               ))}
               {dayEvents.length > 3 && (
-                <button className="cal-more" onClick={(ev) => { ev.stopPropagation(); goTo(d); setView("day"); }}>
+                <button
+                  className="cal-more"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    goTo(d);
+                    setView("day");
+                  }}
+                >
                   +{dayEvents.length - 3} more
                 </button>
               )}
@@ -443,7 +558,7 @@ export default function CalendarPage() {
   }
 
   function renderTimeline() {
-    const agents = availableAgents.filter((a) => !hiddenAgents.includes(a));
+    const agents = agentList.filter((a) => !hiddenAgents.includes(a));
     return (
       <div className="cal-timeline" style={{ "--cols": weekDays.length } as CSSProperties}>
         <div className="cal-timeline-row cal-timeline-head">
@@ -461,14 +576,26 @@ export default function CalendarPage() {
               {agent}
             </div>
             {weekDays.map((d) => (
-              <div key={toDateKey(d)} className={`cal-timeline-cell ${isSameDay(d, now) ? "is-today" : ""}`}
-                onClick={() => setDraft({ ...emptyDraft(d), agent })}>
-                {eventsOn(d).filter((e) => e.agent === agent).map((e) => (
-                  <button key={e.id} className="cal-chip" style={{ background: typeMeta(e.type).color }}
-                    onClick={(ev) => { ev.stopPropagation(); setSelected(e); }}>
-                    {e.title}
-                  </button>
-                ))}
+              <div
+                key={toDateKey(d)}
+                className={`cal-timeline-cell ${isSameDay(d, now) ? "is-today" : ""}`}
+                onClick={() => setDraft({ ...emptyDraft(d), agent })}
+              >
+                {eventsOn(d)
+                  .filter((e) => e.agent === agent)
+                  .map((e) => (
+                    <button
+                      key={e.id}
+                      className="cal-chip"
+                      style={{ background: typeMeta(e.type).color }}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setSelected(e);
+                      }}
+                    >
+                      {e.title}
+                    </button>
+                  ))}
               </div>
             ))}
           </div>
@@ -477,29 +604,36 @@ export default function CalendarPage() {
     );
   }
 
+  /* ---------- render ---------- */
+
   const miniDays = monthGrid(miniMonth);
   const anchorWeek = startOfWeek(anchor);
 
-  if (isLoadingEvents) {
-    return (
-      <div style={{ padding: "60px", textAlign: "center", color: "#64748b", fontSize: "16px" }}>
-        <div style={{
-          width: "36px", height: "36px", border: "4px solid #e2e8f0",
-          borderTop: "4px solid #eb6a47", borderRadius: "50%",
-          animation: "spin 0.8s linear infinite", margin: "0 auto 12px"
-        }} />
-        Loading calendar…
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
   return (
-    <div className="calendar-page">
-      <aside className="cal-side">
+    <div className="flex-1 w-full h-full flex flex-col bg-[#fff7f3] overflow-hidden">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Calendar</span>
+        </div>
+        <GlobalNavbarActions />
+      </header>
+
+      <div className="calendar-page flex-1 min-h-0">
+        <aside className="cal-side">
         <div className="cal-search">
-          <input ref={searchRef} placeholder="Search Calendar" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button aria-label={search ? "Clear search" : "Search"} onClick={() => (search ? setSearch("") : searchRef.current?.focus())}>
+          <input
+            ref={searchRef}
+            placeholder="Search Calendar"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            aria-label={search ? "Clear search" : "Search"}
+            onClick={() => (search ? setSearch("") : searchRef.current?.focus())}
+          >
             {search ? "✕" : "⌕"}
           </button>
         </div>
@@ -513,7 +647,11 @@ export default function CalendarPage() {
             </div>
           </div>
           <div className="cal-mini-grid">
-            {WEEKDAYS.map((w) => <span key={w} className="cal-mini-dow">{w.slice(0, 2)}</span>)}
+            {WEEKDAYS.map((w) => (
+              <span key={w} className="cal-mini-dow">
+                {w.slice(0, 2)}
+              </span>
+            ))}
             {miniDays.map((d) => {
               const inWeek = view !== "month" && view !== "day" && isSameDay(startOfWeek(d), anchorWeek);
               const classes = [
@@ -523,7 +661,11 @@ export default function CalendarPage() {
                 isSameDay(d, anchor) ? "is-selected" : "",
                 isSameDay(d, now) ? "is-today" : "",
               ].join(" ");
-              return <button key={toDateKey(d)} className={classes} onClick={() => goTo(d)}>{d.getDate()}</button>;
+              return (
+                <button key={toDateKey(d)} className={classes} onClick={() => goTo(d)}>
+                  {d.getDate()}
+                </button>
+              );
             })}
           </div>
         </div>
@@ -531,32 +673,108 @@ export default function CalendarPage() {
         <section className="cal-side-section">
           <div className="cal-side-title">
             <h3>Appointment Types</h3>
-            <button className={`cal-caret ${typesOpen ? "" : "closed"}`} aria-label="Toggle appointment types" onClick={() => setTypesOpen(!typesOpen)}>▾</button>
-            <button className="cal-reset" aria-label="Show all types" title="Show all" onClick={() => setHiddenTypes([])}>↻</button>
+            <button
+              className={`cal-caret ${typesOpen ? "" : "closed"}`}
+              aria-label="Toggle appointment types"
+              onClick={() => setTypesOpen(!typesOpen)}
+            >
+              ▾
+            </button>
+            <button
+              className="cal-reset-btn"
+              title={hiddenTypes.length > 0 ? "Show all appointment types" : "Hide all appointment types"}
+              onClick={() => {
+                if (hiddenTypes.length > 0) {
+                  setHiddenTypes([]);
+                } else {
+                  setHiddenTypes(APPOINTMENT_TYPES.map((t) => t.id));
+                }
+              }}
+            >
+              {hiddenTypes.length > 0 ? "Select All" : "Clear"}
+            </button>
           </div>
-          {typesOpen && APPOINTMENT_TYPES.map((t) => {
-            const off = hiddenTypes.includes(t.id);
-            return (
-              <button key={t.id} className={`cal-side-item ${off ? "is-off" : ""}`} onClick={() => toggleType(t.id)}>
-                <span className="cal-dot big" style={{ background: off ? "transparent" : t.color, borderColor: t.color }} />
-                {t.label}
-              </button>
-            );
-          })}
+          {typesOpen &&
+            APPOINTMENT_TYPES.map((t) => {
+              const off = hiddenTypes.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  className={`cal-side-item ${off ? "is-off" : "is-active"}`}
+                  onClick={() => toggleType(t.id)}
+                  title={`${off ? "Show" : "Hide"} ${t.label}`}
+                >
+                  <span
+                    className={`cal-dot big ${off ? "is-off" : ""}`}
+                    style={{
+                      backgroundColor: off ? "transparent" : t.color,
+                      borderColor: t.color,
+                    }}
+                  >
+                    {!off && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="cal-side-item-label">{t.label}</span>
+                </button>
+              );
+            })}
         </section>
 
         <section className="cal-side-section">
           <div className="cal-side-title">
             <h3>Agent Calendars</h3>
-            <button className={`cal-caret ${agentsOpen ? "" : "closed"}`} aria-label="Toggle agent calendars" onClick={() => setAgentsOpen(!agentsOpen)}>▾</button>
-            <button className="cal-reset" aria-label="Show all agents" title="Show all" onClick={() => setHiddenAgents([])}>↻</button>
-          </div>
-          {agentsOpen && availableAgents.map((a) => (
-            <button key={a} className={`cal-side-item ${hiddenAgents.includes(a) ? "is-off" : ""}`} onClick={() => toggleAgent(a)}>
-              <span className="cal-avatar">👤</span>
-              {a}
+            <button
+              className={`cal-caret ${agentsOpen ? "" : "closed"}`}
+              aria-label="Toggle agent calendars"
+              onClick={() => setAgentsOpen(!agentsOpen)}
+            >
+              ▾
             </button>
-          ))}
+            <button
+              className="cal-reset-btn"
+              title={hiddenAgents.length > 0 ? "Show all agent calendars" : "Hide all agent calendars"}
+              onClick={() => {
+                if (hiddenAgents.length > 0) {
+                  setHiddenAgents([]);
+                } else {
+                  setHiddenAgents([...agentList]);
+                }
+              }}
+            >
+              {hiddenAgents.length > 0 ? "Select All" : "Clear"}
+            </button>
+          </div>
+          {agentsOpen &&
+            agentList.map((a) => {
+              const off = hiddenAgents.includes(a);
+              return (
+                <button
+                  key={a}
+                  className={`cal-side-item ${off ? "is-off" : "is-active"}`}
+                  onClick={() => toggleAgent(a)}
+                  title={`${off ? "Show" : "Hide"} calendar for ${a}`}
+                >
+                  <span
+                    className={`cal-dot big agent-dot ${off ? "is-off" : ""}`}
+                    style={{
+                      backgroundColor: off ? "transparent" : "#263a5e",
+                      borderColor: "#263a5e",
+                    }}
+                  >
+                    {!off && (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="cal-avatar">👤</span>
+                  <span className="cal-side-item-label">{a}</span>
+                </button>
+              );
+            })}
         </section>
       </aside>
 
@@ -567,15 +785,26 @@ export default function CalendarPage() {
             <button onClick={() => step(-1)}>‹ Previous</button>
             <button onClick={() => step(1)}>Next ›</button>
           </div>
-          <h2 className="cal-title">{title}</h2>
+
+          <h2 className="cal-title">
+            {title}
+            {loading && <span style={{ fontSize: "12px", marginLeft: "10px", opacity: 0.6, fontWeight: "normal" }}>Loading...</span>}
+          </h2>
+
           <div className="cal-toolbar-right">
             <div className="cal-views">
               {VIEWS.map((v) => (
-                <button key={v.id} className={view === v.id ? "active" : ""} onClick={() => setView(v.id)}>{v.label}</button>
+                <button key={v.id} className={view === v.id ? "active" : ""} onClick={() => setView(v.id)}>
+                  {v.label}
+                </button>
               ))}
             </div>
             <div className="cal-filter-wrap">
-              <button className={`cal-filter-btn ${filterOpen ? "active" : ""}`} aria-label="Calendar options" onClick={() => setFilterOpen(!filterOpen)}>
+              <button
+                className={`cal-filter-btn ${filterOpen ? "active" : ""}`}
+                aria-label="Calendar options"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 4h18l-7 9v6l-4 2v-8z" />
                 </svg>
@@ -587,10 +816,18 @@ export default function CalendarPage() {
                     Show weekends
                   </label>
                   <label>
-                    <input type="checkbox" checked={workingHoursOnly} onChange={(e) => setWorkingHoursOnly(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={workingHoursOnly}
+                      onChange={(e) => setWorkingHoursOnly(e.target.checked)}
+                    />
                     Working hours only (8 AM – 7 PM)
                   </label>
-                  <button className="cal-btn primary" onClick={() => { setFilterOpen(false); openDraft(anchor); }}>
+                  <button className="cal-btn primary" onClick={() => {
+                      setFilterOpen(false);
+                      openDraft(anchor);
+                    }}
+                  >
                     + New appointment
                   </button>
                 </div>
@@ -598,6 +835,7 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+        {error && <div className="cal-error" style={{ margin: "8px 16px" }}>{error}</div>}
 
         {view === "week" && renderTimeGrid(weekDays)}
         {view === "day" && renderTimeGrid([anchor])}
@@ -612,21 +850,38 @@ export default function CalendarPage() {
             <div className="cal-modal-head">
               <span className="cal-dot big" style={{ background: typeMeta(selected.type).color }} />
               <h2>{selected.title}</h2>
-              <button className="cal-close" aria-label="Close" onClick={() => setSelected(null)}>✕</button>
+              <button className="cal-close" aria-label="Close" onClick={() => setSelected(null)}>
+                ✕
+              </button>
             </div>
             <dl className="cal-details">
-              <dt>Type</dt><dd>{typeMeta(selected.type).label}</dd>
+              <dt>Type</dt>
+              <dd>{typeMeta(selected.type).label}</dd>
               <dt>When</dt>
               <dd>
-                {new Date(`${selected.date}T00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                {new Date(`${selected.date}T00:00`).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
                 {selected.allDay ? " · All day" : ` · ${formatTime(selected.start)} – ${formatTime(selected.end)}`}
               </dd>
-              <dt>Agent</dt><dd>{selected.agent}</dd>
-              {selected.description && (<><dt>Notes</dt><dd>{selected.description}</dd></>)}
+              <dt>Agent</dt>
+              <dd>{selected.agent}</dd>
+              {selected.description && (
+                <>
+                  <dt>Notes</dt>
+                  <dd>{selected.description}</dd>
+                </>
+              )}
             </dl>
             <div className="cal-modal-actions">
-              <button className="cal-btn danger" onClick={() => deleteEvent(selected.id)}>Delete</button>
-              <button className="cal-btn" onClick={() => setSelected(null)}>Close</button>
+              <button className="cal-btn danger" onClick={() => deleteEvent(selected.id)}>
+                Delete
+              </button>
+              <button className="cal-btn" onClick={() => setSelected(null)}>
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -637,45 +892,79 @@ export default function CalendarPage() {
           <div className="cal-modal" onClick={(e) => e.stopPropagation()}>
             <div className="cal-modal-head">
               <h2>New Appointment</h2>
-              <button className="cal-close" aria-label="Close" onClick={() => setDraft(null)}>✕</button>
+              <button className="cal-close" aria-label="Close" onClick={() => setDraft(null)}>
+                ✕
+              </button>
             </div>
             <div className="cal-form">
               <label>
                 Title *
-                <input autoFocus value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Client call" />
+                <input
+                  autoFocus
+                  value={draft.title}
+                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                  placeholder="e.g. Client call"
+                />
               </label>
               <div className="cal-form-row">
-                <label>Date<input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>
-                <label>Start<input type="time" value={draft.start} onChange={(e) => setDraft({ ...draft, start: e.target.value })} /></label>
-                <label>End<input type="time" value={draft.end} onChange={(e) => setDraft({ ...draft, end: e.target.value })} /></label>
+                <label>
+                  Date
+                  <input type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
+                </label>
+                <label>
+                  Start
+                  <input type="time" value={draft.start} onChange={(e) => setDraft({ ...draft, start: e.target.value })} />
+                </label>
+                <label>
+                  End
+                  <input type="time" value={draft.end} onChange={(e) => setDraft({ ...draft, end: e.target.value })} />
+                </label>
               </div>
               <div className="cal-form-row">
                 <label>
                   Type
-                  <select value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as EventType })}>
-                    {APPOINTMENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  <select
+                    value={draft.type}
+                    onChange={(e) => setDraft({ ...draft, type: e.target.value as EventType })}
+                  >
+                    {APPOINTMENT_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label>
                   Agent
                   <select value={draft.agent} onChange={(e) => setDraft({ ...draft, agent: e.target.value })}>
-                    {availableAgents.map((a) => <option key={a}>{a}</option>)}
+                    {agentList.map((a) => (
+                      <option key={a}>{a}</option>
+                    ))}
                   </select>
                 </label>
               </div>
               <label>
                 Notes
-                <textarea rows={3} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+                <textarea
+                  rows={3}
+                  value={draft.description}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                />
               </label>
               {draftError && <p className="cal-error">{draftError}</p>}
             </div>
             <div className="cal-modal-actions">
-              <button className="cal-btn" onClick={() => setDraft(null)}>Cancel</button>
-              <button className="cal-btn primary" onClick={saveDraft}>Save</button>
+              <button className="cal-btn" onClick={() => setDraft(null)}>
+                Cancel
+              </button>
+              <button className="cal-btn primary" onClick={saveDraft}>
+                Save
+              </button>
             </div>
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
