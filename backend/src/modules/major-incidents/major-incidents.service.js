@@ -16,6 +16,7 @@ const EDITABLE_FIELDS = new Set([
   'impact',
   'affectedServices',
   'commander',
+  'resolvedAt', // allowed so frontend can set/clear on stage changes
 ]);
 
 let incidentSequence = 0;
@@ -97,15 +98,28 @@ const changeMajorIncident = async (id, payload) => {
       throw createValidationError('affectedServices must be an array');
     }
 
+    if (field === 'resolvedAt') {
+      // Accept ISO date string or null; skip invalid values
+      if (value !== null && typeof value === 'string') {
+        const parsed = new Date(value);
+        if (isNaN(parsed.getTime())) {
+          throw createValidationError('resolvedAt must be a valid ISO 8601 date string or null');
+        }
+      }
+      // null resolvedAt is valid (unresolving); handled separately below
+    }
+
     changes[field] = value;
   }
 
+  // Auto-set resolvedAt when status transitions to Resolved and no resolvedAt provided
   if (changes.status === 'Resolved' && !changes.resolvedAt) {
     changes.resolvedAt = new Date().toISOString();
   }
 
   return updateMajorIncident(id, changes);
 };
+
 
 const createIncidentUpdate = async (id, payload) => {
   if (!payload.message) {

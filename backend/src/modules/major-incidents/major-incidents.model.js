@@ -132,20 +132,31 @@ const saveMajorIncident = async (incident) => {
 const updateMajorIncident = async (id, changes) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
+      // Build the Prisma data object — null DateTime fields need { set: null } syntax
+      const dbData = { ...changes };
+      if ('resolvedAt' in dbData) {
+        dbData.resolvedAt = dbData.resolvedAt === null ? null : new Date(dbData.resolvedAt);
+      }
+
       await db.majorIncident.update({
         where: { id },
-        data: changes,
+        data: dbData,
       });
+
+      // Re-fetch from DB to return fully consistent data (includes relations)
+      return getMajorIncidentById(id);
     } catch (_err) {
-      // Database connection fallback
+      // Database connection fallback — fall through to in-memory mock
     }
   }
 
-  const incident = await getMajorIncidentById(id);
+  // In-memory mock fallback (test env or DB unavailable)
+  const incident = mockMajorIncidents.find((i) => i.id === id);
   if (!incident) return null;
   Object.assign(incident, changes);
   return incident;
 };
+
 
 const addIncidentUpdate = async (id, update) => {
   if (process.env.NODE_ENV !== 'test') {
@@ -158,18 +169,23 @@ const addIncidentUpdate = async (id, update) => {
           author: update.author || 'System',
         },
       });
+
+      // Re-fetch from DB to return fully consistent data with all updates
+      return getMajorIncidentById(id);
     } catch (_err) {
-      // Database connection fallback
+      // Database connection fallback — fall through to in-memory mock
     }
   }
 
-  const incident = await getMajorIncidentById(id);
+  // In-memory mock fallback (test env or DB unavailable)
+  const incident = mockMajorIncidents.find((i) => i.id === id);
   if (!incident) return null;
   if (!incident.updates.some((u) => u.id === update.id)) {
     incident.updates.push(update);
   }
   return incident;
 };
+
 
 module.exports = {
   getMajorIncidents,
