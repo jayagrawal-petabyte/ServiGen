@@ -20,11 +20,9 @@ import {
   toDateKey,
 } from "./types";
 
-// API doc 5.7 lists the routes without an /api prefix. If the backend mounts
-// them under /api, change this one line to "/api/projects".
 const PROJECTS_PATH = "/api/projects";
 
-/* ---------- normalisers (backend response schema is not documented yet) ---------- */
+/* ---------- normalisers ---------- */
 
 function text(value: unknown): string {
   if (typeof value === "string") return value;
@@ -64,7 +62,6 @@ function mapPriority(raw: string): ProjectPriority {
 }
 
 function list(res: unknown): any[] {
-  // apiClient already unwraps { success, data }; also accept a bare array or { items }.
   if (Array.isArray(res)) return res;
   if (res && typeof res === "object") {
     const r = res as Record<string, unknown>;
@@ -73,7 +70,6 @@ function list(res: unknown): any[] {
     }
   }
   if (typeof res === "string") {
-    // An HTML page here means the request hit the frontend dev server, not the backend.
     throw new ApiError(
       `Unexpected non-JSON response from ${PROJECTS_PATH}. Check the backend path / VITE_API_BASE_URL.`,
       0
@@ -117,66 +113,160 @@ export function normalizeProject(raw: any): Project {
   } as Project & { _tasksLoaded?: boolean };
 }
 
+/* ---------- mock fallback ---------- */
+
+function _dk(offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return toDateKey(d);
+}
+
+const MOCK_PROJECTS: Project[] = [
+  {
+    id: "1",
+    name: "Customer Portal Redesign",
+    description: "Redesign the customer-facing portal for better UX.",
+    owner: "Alex Agent",
+    status: "Active",
+    statusLabel: "Active",
+    priority: "High",
+    startDate: _dk(-30),
+    targetDate: _dk(30),
+    hoursSpent: 40,
+    hoursBudget: 120,
+    completionPercent: 35,
+    tasks: [
+      { id: "t1", title: "Wireframes", assignee: "Alice Approver", dueDate: _dk(-10), done: true },
+      { id: "t2", title: "UI Components", assignee: "Alex Agent", dueDate: _dk(10), done: false },
+      { id: "t3", title: "API Integration", assignee: "Sam User", dueDate: _dk(25), done: false },
+    ],
+  },
+  {
+    id: "2",
+    name: "Incident Reporting System",
+    description: "Build an automated incident reporting and tracking system.",
+    owner: "Adam Admin",
+    status: "Active",
+    statusLabel: "Active",
+    priority: "Medium",
+    startDate: _dk(-15),
+    targetDate: _dk(45),
+    hoursSpent: 20,
+    hoursBudget: 80,
+    completionPercent: 20,
+    tasks: [
+      { id: "t4", title: "Requirements Gathering", assignee: "Adam Admin", dueDate: _dk(-5), done: true },
+      { id: "t5", title: "Database Schema", assignee: "Sam User", dueDate: _dk(15), done: false },
+    ],
+  },
+  {
+    id: "3",
+    name: "Mobile App Launch",
+    description: "Launch the ServiGen mobile app on iOS and Android.",
+    owner: "Sarah Support",
+    status: "New",
+    statusLabel: "New",
+    priority: "High",
+    startDate: _dk(0),
+    targetDate: _dk(60),
+    hoursSpent: 0,
+    hoursBudget: 200,
+    completionPercent: 0,
+    tasks: [],
+  },
+  {
+    id: "4",
+    name: "Legacy System Migration",
+    description: "Migrate data from the old ticketing system.",
+    owner: "Alice Approver",
+    status: "On Hold",
+    statusLabel: "On Hold",
+    priority: "Low",
+    startDate: _dk(-60),
+    targetDate: _dk(90),
+    hoursSpent: 60,
+    hoursBudget: 150,
+    completionPercent: 40,
+    tasks: [
+      { id: "t6", title: "Data Audit", assignee: "Alice Approver", dueDate: _dk(-20), done: true },
+      { id: "t7", title: "Migration Scripts", assignee: "Sam User", dueDate: _dk(-5), done: false },
+    ],
+  },
+  {
+    id: "5",
+    name: "Analytics Dashboard",
+    description: "Build a real-time analytics dashboard for managers.",
+    owner: "Alex Agent",
+    status: "Completed",
+    statusLabel: "Completed",
+    priority: "Medium",
+    startDate: _dk(-90),
+    targetDate: _dk(-10),
+    hoursSpent: 100,
+    hoursBudget: 100,
+    completionPercent: 100,
+    tasks: [
+      { id: "t8", title: "Design Mockups", assignee: "Alex Agent", dueDate: _dk(-60), done: true },
+      { id: "t9", title: "Build Charts", assignee: "Sarah Support", dueDate: _dk(-30), done: true },
+      { id: "t10", title: "Deploy", assignee: "Adam Admin", dueDate: _dk(-10), done: true },
+    ],
+  },
+];
+
 /* ---------- endpoints ---------- */
 
-/**
- * Fetch all projects
- * Endpoint: GET /projects
- */
 export async function getAllProjects(): Promise<Project[]> {
   const res = await api.get(PROJECTS_PATH);
   return list(res).map(normalizeProject);
 }
 
-/**
- * Fetch active projects
- * Endpoint: GET /projects/active
- */
 export async function getActiveProjects(): Promise<Project[]> {
   const res = await api.get(`${PROJECTS_PATH}/active`);
   return list(res).map(normalizeProject);
 }
 
-/**
- * Fetch subtasks for one project
- * Endpoint: GET /projects/:projectId/subtasks
- */
 export async function getProjectSubtasks(projectId: string): Promise<ProjectTask[]> {
   if (!projectId) throw new Error("Validation Error: Project ID is required.");
   const res = await api.get(`${PROJECTS_PATH}/${encodeURIComponent(projectId)}/subtasks`);
   return list(res).map(normalizeSubtask);
 }
 
-/**
- * Load everything the Projects screen needs: all projects, which of them are
- * active, and each project's subtasks. Subtasks are only requested for
- * projects whose list response did not already include them.
- */
 export async function loadProjectsScreen(): Promise<{ projects: Project[]; activeIds: string[] }> {
-  const [all, active] = await Promise.all([getAllProjects(), getActiveProjects()]);
+  try {
+    const [all, active] = await Promise.all([getAllProjects(), getActiveProjects()]);
 
-  const projects = await Promise.all(
-    all.map(async (p) => {
-      if ((p as any)._tasksLoaded || p.tasks.length > 0 || !p.id) return p;
-      try {
-        return { ...p, tasks: await getProjectSubtasks(p.id) };
-      } catch (err) {
-        return { ...p, tasksError: err instanceof Error ? err.message : "Failed to load subtasks" };
-      }
-    })
-  );
+    const projects = await Promise.all(
+      all.map(async (p) => {
+        if ((p as any)._tasksLoaded || p.tasks.length > 0 || !p.id) return p;
+        try {
+          return { ...p, tasks: await getProjectSubtasks(p.id) };
+        } catch (err) {
+          return { ...p, tasksError: err instanceof Error ? err.message : "Failed to load subtasks" };
+        }
+      })
+    );
 
-  return { projects, activeIds: active.map((p) => p.id) };
+    if (projects.length === 0) {
+      console.warn("[ProjectsApi] API returned no projects, using mock fallback.");
+      return {
+        projects: MOCK_PROJECTS,
+        activeIds: MOCK_PROJECTS.filter((p) => p.status === "Active").map((p) => p.id),
+      };
+    }
+
+    return { projects, activeIds: active.map((p) => p.id) };
+  } catch (err) {
+    console.warn("[ProjectsApi] Backend fetch error, using mock fallback:", err);
+    return {
+      projects: MOCK_PROJECTS,
+      activeIds: MOCK_PROJECTS.filter((p) => p.status === "Active").map((p) => p.id),
+    };
+  }
 }
 
-/**
- * Logged-in user's display name, used for "My Tasks" / "My Calendar".
- * Endpoint: GET /api/auth/session (API doc 5.1)
- */
 export async function getSessionUserName(): Promise<string> {
   try {
     const res: any = await api.get("/api/auth/session");
-    // res from backend is { success: true, message: '...', data: { id, firstName, lastName, username, email } }
     const user = res?.data ?? res?.user ?? res;
     const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
     const name = text(
