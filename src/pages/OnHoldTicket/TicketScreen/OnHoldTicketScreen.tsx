@@ -910,13 +910,14 @@ const OnHoldTicketScreen: React.FC = () => {
               </div>
 
               <div>
-                <strong style={{ color: "#0f172a", display: "block", marginBottom: 4 }}>⚡ Key Features Available:</strong>
+                <strong style={{ color: "#0f172a", display: "block", marginBottom: 4 }}>Key Features Available:</strong>
                 <ul style={{ paddingLeft: 18, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                   <li><strong>Full Detail View:</strong> Click anywhere on a ticket row or ID to inspect the full request description and specifications.</li>
                   <li><strong>Bulk Operations:</strong> Select multiple checkboxes to batch reassign agents, change priorities, or update status in one click.</li>
                   <li><strong>Interactive Ticket Creation:</strong> Use the <code>+ New Ticket</code> or green <code>+ New</code> buttons to record new tickets with custom input.</li>
-                  <li><strong>Export Data:</strong> Access the <code>···</code> toolbar menu to instantly export the current table to CSV format.</li>
+                  <li><strong>Export Data:</strong> Access the <code>...</code> toolbar menu to instantly export the current table to CSV format.</li>
                 </ul>
+
               </div>
             </div>
 
