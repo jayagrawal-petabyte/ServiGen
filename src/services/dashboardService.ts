@@ -77,8 +77,9 @@ export const dashboardService = {
   async getKpis(): Promise<DashboardKpis> {
     try {
       const res = await api.get('/api/dashboard/kpis');
-      if (res?.success && res.data) {
-        return res.data as DashboardKpis;
+      const kpiData = res?.data ?? res;
+      if (kpiData && typeof kpiData === 'object' && !Array.isArray(kpiData)) {
+        return kpiData as DashboardKpis;
       }
       throw new Error('Failed to retrieve dashboard KPIs');
     } catch (error) {
@@ -123,12 +124,12 @@ export const dashboardService = {
   async getMood(): Promise<string | null> {
     try {
       const res = await api.get('/api/dashboard/mood');
-      if (res?.success && res.data) {
-        const raw = res.data.mood || res.data;
+      const moodData = res?.data ?? res;
+      if (moodData) {
+        const raw = (moodData as any).mood || (typeof moodData === 'string' ? moodData : null);
         if (typeof raw === 'string') {
           return dashboardService.moodToFrontend(raw);
         }
-        return null;
       }
     } catch {
       // Fallback
@@ -143,7 +144,7 @@ export const dashboardService = {
     try {
       const backendMood = dashboardService.moodToBackend(mood);
       const res = await api.post('/api/dashboard/mood', { mood: backendMood });
-      return res?.success === true;
+      return res?.success === true || res?.status === 'ok' || !!(res?.data ?? res);
     } catch {
       return false;
     }
@@ -155,8 +156,9 @@ export const dashboardService = {
   async getIncidentsByTeam(): Promise<TeamIncident[]> {
     try {
       const res = await api.get('/api/dashboard/incidents-by-team');
-      if (res?.success && Array.isArray(res.data)) {
-        return (res.data as BackendTeamIncident[]).map((t) => ({
+      const teamData = res?.data ?? res;
+      if (Array.isArray(teamData)) {
+        return (teamData as BackendTeamIncident[]).map((t) => ({
           label: t.team,
           value: t.openIncidents,
         }));
@@ -173,8 +175,9 @@ export const dashboardService = {
   async getIncidentsByCategory(): Promise<CategoryItem[]> {
     try {
       const res = await api.get('/api/dashboard/incidents-by-category');
-      if (res?.success && Array.isArray(res.data)) {
-        return (res.data as BackendCategoryItem[]).map((c) => ({
+      const catData = res?.data ?? res;
+      if (Array.isArray(catData)) {
+        return (catData as BackendCategoryItem[]).map((c) => ({
           label: c.category,
           value: c.count,
           displayValue: true,
@@ -192,7 +195,7 @@ export const dashboardService = {
   async getNewTickets(): Promise<DashboardTicket[]> {
     try {
       const res = await api.get('/api/dashboard/new-tickets', { params: { limit: 30 } });
-      const rawList = res?.success && Array.isArray(res.data) ? res.data : [];
+      const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       if (rawList.length > 0) {
         return (rawList as BackendTicketItem[]).map((t) => {
           let agentName = 'Unassigned';
@@ -246,8 +249,9 @@ export const dashboardService = {
   async getSummary(): Promise<DashboardSummary | null> {
     try {
       const res = await api.get('/api/dashboard/summary');
-      if (res?.success && res.data) {
-        return res.data as DashboardSummary;
+      const summaryData = res?.data ?? res;
+      if (summaryData && typeof summaryData === 'object' && !Array.isArray(summaryData)) {
+        return summaryData as DashboardSummary;
       }
     } catch {
       // Fallback

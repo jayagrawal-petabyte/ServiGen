@@ -159,6 +159,8 @@ function resolveErrorMessage(status: number, backendMessage?: string): string {
       return 'Forbidden (403): Access denied due to insufficient permissions or organization boundary.';
     case 404:
       return 'Not Found (404): The requested resource or endpoint does not exist.';
+    case 409:
+      return 'Conflict (409): A resource with this name or identifier already exists.';
     case 429:
       return 'Rate Limit Exceeded (429): Maximum 100 requests per 15 minutes reached. Please wait.';
     case 500:

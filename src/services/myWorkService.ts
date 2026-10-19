@@ -118,10 +118,12 @@ export const myWorkService = {
     agentId?: string;
   }): Promise<MyWorkTicket[]> {
     try {
-      const agentId = filters?.agentId || 'agent-001';
-      const params: Record<string, string | undefined> = {
-        agentId,
-      };
+      // Do not send agentId — backend resolves it from the JWT token
+      const params: Record<string, string | undefined> = {};
+      if (filters?.agentId) {
+        // Only admins pass an explicit agentId to inspect another agent's queue
+        params.agentId = filters.agentId;
+      }
       if (filters?.status && filters.status !== 'All') {
         params.status = filters.status;
       }
@@ -131,8 +133,9 @@ export const myWorkService = {
       }
 
       const res = await api.get('/api/my-work', { params });
-      if (res?.success && Array.isArray(res.data)) {
-        return (res.data as MyWorkBackendTicket[]).map((t) => ({
+      const ticketList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
+      if (ticketList) {
+        return (ticketList as MyWorkBackendTicket[]).map((t) => ({
           id: t.id,
           priority: formatPriority(t.priority),
           organisation: t.organisation || 'ServiGen Internal',
@@ -158,19 +161,17 @@ export const myWorkService = {
   async updateTicketStatus(
     ticketId: string,
     status: TicketStatus,
-    holdReason?: string,
-    agentId = 'agent-001'
+    holdReason?: string
   ): Promise<MyWorkTicket | null> {
     try {
       const res = await api.patch(`/api/my-work/${ticketId}/status`, {
         status,
         holdReason: status === 'On Hold' ? holdReason || 'Awaiting third-party response' : null,
-      }, {
-        params: { agentId },
       });
 
-      if (res?.success && res.data) {
-        const t = res.data as MyWorkBackendTicket;
+      const updateData = res?.data ?? res;
+      if (updateData && (updateData as any).id) {
+        const t = updateData as MyWorkBackendTicket;
         return {
           id: t.id,
           priority: formatPriority(t.priority),
@@ -196,18 +197,16 @@ export const myWorkService = {
    */
   async logTime(
     ticketId: string,
-    minutesSpent: number,
-    agentId = 'agent-001'
+    minutesSpent: number
   ): Promise<MyWorkTicket | null> {
     try {
       const res = await api.post(`/api/my-work/${ticketId}/time`, {
         minutesSpent,
-      }, {
-        params: { agentId },
       });
 
-      if (res?.success && res.data) {
-        const t = res.data as MyWorkBackendTicket;
+      const logData = res?.data ?? res;
+      if (logData && (logData as any).id) {
+        const t = logData as MyWorkBackendTicket;
         return {
           id: t.id,
           priority: formatPriority(t.priority),

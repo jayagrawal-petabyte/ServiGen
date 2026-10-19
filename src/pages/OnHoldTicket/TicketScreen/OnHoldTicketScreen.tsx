@@ -352,7 +352,7 @@ const OnHoldTicketScreen: React.FC = () => {
       )
     );
     setSelectedItems([]);
-    await bulkAssignTickets(affectedIds, "agent-001");
+    await bulkAssignTickets(affectedIds, user?.id || "");
   };
 
   const handleBulkSetPriority = async (priority: string) => {

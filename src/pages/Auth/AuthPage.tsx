@@ -5,6 +5,7 @@ import SplashScreen from './SplashScreen';
 import OrganisationUsersScreen from './OrganisationUsersScreen';
 import { AuthTab, LoginCredentials } from './types';
 import { useAuth } from './AuthContext';
+import { api } from '../../services/apiClient';
 import './auth.css';
 
 export const AuthPage: React.FC = () => {
@@ -33,7 +34,7 @@ export const AuthPage: React.FC = () => {
     return false;
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetIdentifier.trim()) {
       setResetError('Please enter your email or username.');
@@ -41,10 +42,15 @@ export const AuthPage: React.FC = () => {
     }
     setResetLoading(true);
     setResetError(null);
-    setTimeout(() => {
-      setResetLoading(false);
+    try {
+      await api.post('/api/auth/forgot-password', { email: resetIdentifier.trim() });
       setResetSubmitted(true);
-    }, 600);
+    } catch {
+      // Backend returns generic 200 to prevent user enumeration; show success regardless
+      setResetSubmitted(true);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleCloseResetModal = () => {
