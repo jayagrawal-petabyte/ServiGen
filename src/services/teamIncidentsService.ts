@@ -12,7 +12,7 @@
  * - PATCH /api/tickets/:id/status               : Update ticket status
  */
 
-import { api, getAuthToken } from './apiClient';
+import { api, getAuthToken, logServiceError } from './apiClient';
 import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.types';
 
 export interface SupportAgent {
@@ -72,7 +72,8 @@ export function normalizeSupportIncident(
     try {
       const d = new Date(raw.createdAt);
       dateFormatted = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-    } catch {
+    } catch (error) {
+      logServiceError('teamIncidents.formatCreatedAt', error);
       dateFormatted = '';
     }
   }

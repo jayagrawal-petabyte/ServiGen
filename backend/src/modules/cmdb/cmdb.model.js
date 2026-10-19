@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockConfigurationItems = [
   {
@@ -73,6 +74,7 @@ const getConfigurationItems = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
+      handleDbError('cmdb.getConfigurationItems', _err);
       // Database connection fallback
     }
   }
@@ -135,6 +137,7 @@ const getConfigurationItemById = async (id, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
+      handleDbError('cmdb.getConfigurationItemById', _err);
       // Database connection fallback
     }
   }

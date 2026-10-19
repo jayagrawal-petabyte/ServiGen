@@ -301,6 +301,78 @@ async function main() {
   await db.serviceCatalogueItem.upsert({where:{id:'service-admin-rights'},update:{},create:{id:'service-admin-rights',name:'Administrator Rights',description:'Developer workstation administrator access',category:'Access',requiresApproval:true}});
   await db.serviceRequest.upsert({where:{ticketId:'REQ-1002'},update:{},create:{id:'request-001',ticketId:'REQ-1002',serviceCatalogueItemId:'service-admin-rights'}});
   await db.approval.upsert({where:{id:'APP-1001'},update:{},create:{id:'APP-1001',ticketId:'REQ-1002',entityType:'Service Request',entityId:'request-001',serviceRequestId:'request-001',summary:'Administrator rights request',approverId:'approver-001'}});
+
+  // ─── Major Incidents ──────────────────────────────────────────────────────
+  // Previously absent from the seed: GET /api/major-incidents returned an empty
+  // array from a healthy database, which was indistinguishable from "no data".
+  const majorIncidents = [
+    {
+      id: 'MI-1001',
+      title: 'Customer portal unavailable',
+      description: 'Customers cannot access the self-service portal. Load balancer health checks failing across both regions.',
+      priority: 'P1',
+      status: 'Investigating',
+      impact: 'Customer-facing portal is unavailable for all tenants.',
+      affectedServices: ['Customer Portal', 'Authentication API'],
+      productTags: ['Portal', 'Identity'],
+      commander: 'Alex Morgan',
+      startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      updates: [
+        { id: 'MI-1001-U1', message: 'Incident declared and investigation started.', author: 'System', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+        { id: 'MI-1001-U2', message: 'Load balancer health checks failing in eu-west-1. Failover in progress.', author: 'Alex Morgan', timestamp: new Date(Date.now() - 80 * 60 * 1000) },
+      ],
+    },
+    {
+      id: 'MI-1002',
+      title: 'Email notifications delayed',
+      description: 'Outbound notification queue is backing up; ticket updates are not reaching requesters.',
+      priority: 'P2',
+      status: 'Identified',
+      impact: 'Notification delivery delayed by up to 45 minutes.',
+      affectedServices: ['Notification Service'],
+      productTags: ['Messaging'],
+      commander: 'Priya Nair',
+      startedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+      updates: [
+        { id: 'MI-1002-U1', message: 'Queue depth alert triggered.', author: 'System', timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000) },
+        { id: 'MI-1002-U2', message: 'Root cause identified: SMTP relay throttling. Rate limit increase requested.', author: 'Priya Nair', timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) },
+      ],
+    },
+    {
+      id: 'MI-1003',
+      title: 'Reporting dashboard timeouts',
+      description: 'Scheduled report generation exceeded the query timeout for large tenants.',
+      priority: 'P2',
+      status: 'Resolved',
+      impact: 'Reporting unavailable for tenants above 10k tickets.',
+      affectedServices: ['Reporting'],
+      productTags: ['Analytics'],
+      commander: 'Sam Okafor',
+      startedAt: new Date(Date.now() - 30 * 60 * 60 * 1000),
+      resolvedAt: new Date(Date.now() - 26 * 60 * 60 * 1000),
+      updates: [
+        { id: 'MI-1003-U1', message: 'Timeouts reported by three tenants.', author: 'System', timestamp: new Date(Date.now() - 30 * 60 * 60 * 1000) },
+        { id: 'MI-1003-U2', message: 'Index added to ticket aggregation query. Service restored.', author: 'Sam Okafor', timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000) },
+      ],
+    },
+  ];
+
+  for (const { updates, ...incident } of majorIncidents) {
+    await db.majorIncident.upsert({
+      where: { id: incident.id },
+      update: {},
+      create: incident,
+    });
+    for (const update of updates) {
+      await db.majorIncidentUpdate.upsert({
+        where: { id: update.id },
+        update: {},
+        create: { ...update, majorIncidentId: incident.id },
+      });
+    }
+  }
+  console.log(`[servigen:seed] Major incidents seeded: ${majorIncidents.length}`);
+
   console.log('[servigen:seed] Seed completed successfully!');
 }
 

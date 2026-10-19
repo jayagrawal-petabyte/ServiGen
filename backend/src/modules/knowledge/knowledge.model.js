@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const getArticles = async (filter = {}) => {
   if (process.env.NODE_ENV !== 'test') {
@@ -25,6 +26,7 @@ const getArticles = async (filter = {}) => {
         updatedAt: a.updatedAt.toISOString(),
       }));
     } catch (_err) {
+      handleDbError('knowledge.getArticles', _err);
       return [];
     }
   }
@@ -54,6 +56,7 @@ const getArticleById = async (id) => {
         updatedAt: a.updatedAt.toISOString(),
       };
     } catch (_err) {
+      handleDbError('knowledge.getArticleById', _err);
       return null;
     }
   }
@@ -88,6 +91,7 @@ const createArticle = async (data) => {
         updatedAt: created.updatedAt.toISOString(),
       };
     } catch (_err) {
+      handleDbError('knowledge.createArticle', _err);
       // Fallback
     }
   }
@@ -120,6 +124,7 @@ const updateArticle = async (id, data) => {
         updatedAt: updated.updatedAt.toISOString(),
       };
     } catch (_err) {
+      handleDbError('knowledge.updateArticle', _err);
       return null;
     }
   }

@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 // Mock Data Layer for Approvals
 const mockApprovals = [
@@ -51,6 +52,7 @@ const getPendingApprovals = async () => {
         approverId: a.approverId,
       }));
     } catch (_err) {
+      handleDbError('approvals.getPendingApprovals', _err);
       // Database connection fallback
     }
   }
@@ -78,6 +80,7 @@ const getApprovalById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('approvals.getApprovalById', _err);
       // Database connection fallback
     }
   }
@@ -120,6 +123,7 @@ const conditionalUpdateStatus = async (id, requiredStatus, newStatus) => {
         };
       }
     } catch (_err) {
+      handleDbError('approvals.conditionalUpdateStatus', _err);
       // Database connection fallback
     }
   }

@@ -115,6 +115,7 @@ const tickets = [
 ];
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const getTickets = async (filters = {}) => {
   if (process.env.NODE_ENV !== 'test') {
@@ -157,6 +158,7 @@ const getTickets = async (filters = {}) => {
         updatedAt: t.updatedAt.toISOString(),
       }));
     } catch (_err) {
+      handleDbError('my-work.getTickets', _err);
       // Database connection fallback
     }
   }
@@ -210,6 +212,7 @@ const getTicketById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('my-work.getTicketById', _err);
       // Database connection fallback
     }
   }
@@ -234,6 +237,7 @@ const saveTicket = async (ticket) => {
         },
       });
     } catch (_err) {
+      handleDbError('my-work.saveTicket', _err);
       // Database connection fallback
     }
   }
@@ -269,6 +273,7 @@ const updateTicket = async (id, changes) => {
         });
       }
     } catch (_err) {
+      handleDbError('my-work.updateTicket', _err);
       // Database connection fallback
     }
   }

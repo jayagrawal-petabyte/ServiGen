@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockProjects = [
   {
@@ -98,6 +99,7 @@ const getProjects = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
+      handleDbError('projects.getProjects', _err);
       // Database connection fallback
     }
   }
@@ -135,6 +137,7 @@ const getActiveProjects = async (options = {}) => {
 
       return formatted.filter((p) => !organisationId || !p.organisationId || p.organisationId === organisationId);
     } catch (_err) {
+      handleDbError('projects.getActiveProjects', _err);
       // Database connection fallback
     }
   }
@@ -174,6 +177,7 @@ const getProjectById = async (projectId, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
+      handleDbError('projects.getProjectById', _err);
       // Database connection fallback
     }
   }
@@ -205,6 +209,7 @@ const getSubtasksByProject = async (projectId, organisationId = null) => {
         }));
       }
     } catch (_err) {
+      handleDbError('projects.getSubtasksByProject', _err);
       // Database connection fallback
     }
   }

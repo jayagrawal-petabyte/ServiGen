@@ -4,7 +4,7 @@
  * with fallback resilience for offline / mock testing.
  */
 
-import { api } from './apiClient';
+import { api, logServiceError } from './apiClient';
 import type {
   DashboardTicket,
   TeamIncident,
@@ -131,7 +131,8 @@ export const dashboardService = {
           return dashboardService.moodToFrontend(raw);
         }
       }
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.getMood', error);
       // Fallback
     }
     return null;
@@ -145,7 +146,8 @@ export const dashboardService = {
       const backendMood = dashboardService.moodToBackend(mood);
       const res = await api.post('/api/dashboard/mood', { mood: backendMood });
       return res?.success === true || res?.status === 'ok' || !!(res?.data ?? res);
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.submitMood', error);
       return false;
     }
   },
@@ -163,7 +165,8 @@ export const dashboardService = {
           value: t.openIncidents,
         }));
       }
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.getIncidentsByTeam', error);
       // Fallback
     }
     return [];
@@ -183,7 +186,8 @@ export const dashboardService = {
           displayValue: true,
         }));
       }
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.getIncidentsByCategory', error);
       // Fallback
     }
     return [];
@@ -237,7 +241,8 @@ export const dashboardService = {
           description: inc.description || inc.summary,
         }));
       }
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.getNewTickets', error);
       // Fallback
     }
     return [];
@@ -253,7 +258,8 @@ export const dashboardService = {
       if (summaryData && typeof summaryData === 'object' && !Array.isArray(summaryData)) {
         return summaryData as DashboardSummary;
       }
-    } catch {
+    } catch (error) {
+      logServiceError('dashboard.getSummary', error);
       // Fallback
     }
     return null;

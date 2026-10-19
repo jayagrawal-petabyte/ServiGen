@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockServices = [
   { id: '1', name: 'Request a Laptop', category: 'Hardware', description: 'Standard laptop for developers', status: 'Active' },
@@ -30,6 +31,7 @@ const getAllServices = async () => {
         status: s.status,
       }));
     } catch (_err) {
+      handleDbError('services-catalogue.getAllServices', _err);
       // Database connection fallback
     }
   }
@@ -46,6 +48,7 @@ const getAllCategories = async () => {
       });
       return items.map((c, i) => ({ id: `c${i + 1}`, name: c.category }));
     } catch (_err) {
+      handleDbError('services-catalogue.getAllCategories', _err);
       // Database connection fallback
     }
   }
@@ -69,6 +72,7 @@ const getServiceById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('services-catalogue.getServiceById', _err);
       // Database connection fallback
     }
   }

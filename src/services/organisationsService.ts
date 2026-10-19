@@ -9,7 +9,7 @@
  * - GET /api/users/:id                                   : Retrieve specific user by ID
  */
 
-import { api } from './apiClient';
+import { api, logServiceError } from './apiClient';
 import type { User } from '../pages/Auth/types';
 
 export interface OrganisationsApiResponse<T> {
@@ -146,7 +146,8 @@ export async function fetchOrganisationUserById(
       if (user && (user.id || user.username)) {
         return normalizeOrganisationUser(user);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('organisations.request', error);
       // Fall back to /api/users/:id
     }
   }

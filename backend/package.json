@@ -1,7 +1,7 @@
 {
   "name": "servigen-backend",
   "version": "1.0.0",
-  "description": "ServiGen backend API — Node.js / Express",
+  "description": "ServiGen backend API \u2014 Node.js / Express",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -14,7 +14,9 @@
     "prisma:studio": "prisma studio",
     "seed": "node prisma/seed.js",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "postinstall": "prisma generate",
+    "build": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",

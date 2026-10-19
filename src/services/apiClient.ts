@@ -398,6 +398,30 @@ export async function apiRequest<T = any>(
   return responseData as T;
 }
 
+/**
+ * Report a swallowed service-layer failure.
+ *
+ * Service methods intentionally degrade to empty results so a single broken
+ * endpoint cannot blank the whole app, but the cause must still be visible:
+ * silent catches are what made "backend integrated, no data" undiagnosable.
+ */
+export function logServiceError(context: string, error: unknown): void {
+  const detail =
+    error instanceof ApiError
+      ? `[${error.statusCode}] ${error.message}`
+      : error instanceof Error
+      ? error.message
+      : String(error);
+  console.error(`[servigen:api] ${context} failed — ${detail}`);
+  try {
+    window.dispatchEvent(
+      new CustomEvent('servigen-api-error', { detail: { context, message: detail } })
+    );
+  } catch {
+    // Non-browser environment
+  }
+}
+
 export const apiClient = {
   get: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: 'GET' }),

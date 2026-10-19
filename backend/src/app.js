@@ -7,6 +7,12 @@ const helmet = require('helmet');
 const env = require('./config/env');
 const { createRateLimiter } = require('./shared/middleware/rate-limit.middleware');
 const { requestLogger, errorHandler, requireAuth, restrictTo, PERMISSIONS, approvalScope } = require('./shared');
+const {
+  probeDatabase,
+  countKeyTables,
+  describeDatasource,
+  getDbDiagnostics,
+} = require('./shared/utils/db-guard');
 
 // ─── Module Routers ─────────────────────────────────────────────────────────
 const myWorkRouter = require('./modules/my-work/my-work.routes');
@@ -60,6 +66,35 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// ─── Database Health / Diagnostics ──────────────────────────────────────────
+// Public on purpose: when the API silently serves mock data this is the only
+// way to see *why* from a deployed frontend. It never exposes credentials —
+// the datasource is reported host/port/database only.
+app.get('/api/health/db', async (_req, res) => {
+  const probe = await probeDatabase();
+  const diagnostics = getDbDiagnostics();
+  const payload = {
+    success: probe.connected,
+    connected: probe.connected,
+    latencyMs: probe.latencyMs,
+    env: env.NODE_ENV,
+    datasource: describeDatasource(),
+    mockFallbackEnabled: diagnostics.mockFallbackEnabled,
+    lastSuccessAt: diagnostics.lastSuccessAt,
+    lastFailureAt: diagnostics.lastFailureAt,
+    recentFailures: diagnostics.recentFailures,
+    timestamp: new Date().toISOString(),
+  };
+
+  if (probe.connected) {
+    payload.counts = await countKeyTables();
+  } else {
+    payload.error = probe.error;
+  }
+
+  return res.status(probe.connected ? 200 : 503).json(payload);
+});
+
 // Limits run before body parsing and authentication. Health and browser
 // preflights stay available; AI receives an additional, smaller IP budget.
 app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
@@ -110,8 +145,7 @@ app.use('/api/dashboard', (req, res, next) => {
 app.use('/api/approvals', restrictTo(...PERMISSIONS.APPROVALS),
   approvalScope(require('./modules/approvals/approvals.model').getApprovalById), approvalsRouter);
 app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
-app.use('/api/major-incidents', (req, res, next) =>
-  restrictTo(...(['GET', 'HEAD'].includes(req.method) ? PERMISSIONS.STAFF : PERMISSIONS.ADMIN_ONLY))(req, res, next), majorIncidentsRouter);
+app.use('/api/major-incidents', restrictTo(...PERMISSIONS.STAFF), majorIncidentsRouter);
 app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
   if (req.user.role !== 'Admin') {

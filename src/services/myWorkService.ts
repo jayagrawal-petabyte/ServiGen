@@ -4,7 +4,7 @@
  * to live /api/my-work backend endpoints with offline fallback resilience.
  */
 
-import { api } from './apiClient';
+import { api, logServiceError } from './apiClient';
 
 export type TicketStatus = 'Active' | 'Pending' | 'Actioned' | 'On Hold';
 
@@ -148,7 +148,8 @@ export const myWorkService = {
           needsEscalation: t.needsEscalation,
         }));
       }
-    } catch {
+    } catch (error) {
+      logServiceError('myWork.getMyWorkTickets', error);
       // Backend unavailable or offline fallback
     }
 
@@ -185,7 +186,8 @@ export const myWorkService = {
           needsEscalation: t.needsEscalation,
         };
       }
-    } catch {
+    } catch (error) {
+      logServiceError('myWork.updateTicketStatus', error);
       // Fallback
     }
 
@@ -219,7 +221,8 @@ export const myWorkService = {
           needsEscalation: t.needsEscalation,
         };
       }
-    } catch {
+    } catch (error) {
+      logServiceError('myWork.logTime', error);
       // Fallback
     }
 

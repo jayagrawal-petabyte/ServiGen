@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 /**
  * Authentication Data Model.
@@ -154,6 +155,7 @@ const findUserByCredential = async (lookup) => {
         };
       }
     } catch (_err) {
+      handleDbError('auth.findUserByCredential', _err, { allowFallback: true });
       // Database connection fallback
     }
   }
@@ -202,6 +204,7 @@ const findUserById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('auth.findUserById', _err, { allowFallback: true });
       // Database connection fallback
     }
   }

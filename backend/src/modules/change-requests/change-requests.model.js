@@ -2,6 +2,7 @@
 
 const { randomUUID } = require('node:crypto');
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 // ─── Domain Constants ─────────────────────────────────────────────────────────
 
@@ -139,6 +140,7 @@ const getChangeRequests = async (options = {}) => {
       // `records` is always an array (possibly empty) — return directly.
       return applyTenantFilter(records.map(formatRecord), organisationId);
     } catch (_err) {
+      handleDbError('change-requests.getChangeRequests', _err);
       // Database unreachable — fall through to in-memory mock.
     }
   }
@@ -169,6 +171,7 @@ const getChangeRequestById = async (id, organisationId = null) => {
       }
       return formatted;
     } catch (_err) {
+      handleDbError('change-requests.getChangeRequestById', _err);
       // Database unreachable — fall through to in-memory mock.
     }
   }
@@ -199,6 +202,7 @@ const getActiveChangeRequests = async (options = {}) => {
       });
       return applyTenantFilter(records.map(formatRecord), organisationId);
     } catch (_err) {
+      handleDbError('change-requests.getActiveChangeRequests', _err);
       // Database unreachable — fall through to in-memory mock.
     }
   }
@@ -255,6 +259,7 @@ const createChangeRequest = async (payload) => {
       });
       return formatRecord(cr);
     } catch (_err) {
+      handleDbError('change-requests.createChangeRequest', _err);
       // Database unreachable — fall through to in-memory mock.
     }
   }
@@ -313,6 +318,7 @@ const updateChangeRequest = async (id, organisationId, patch) => {
       });
       return formatRecord(updated);
     } catch (_err) {
+      handleDbError('change-requests.updateChangeRequest', _err);
       // Database unreachable — fall through to mock
     }
   }

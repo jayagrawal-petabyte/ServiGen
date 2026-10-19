@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const getCalendarEvents = async (agentId) => {
   if (process.env.NODE_ENV !== 'test') {
@@ -19,6 +20,7 @@ const getCalendarEvents = async (agentId) => {
         agentId: e.agentId,
       }));
     } catch (_err) {
+      handleDbError('calendar.getCalendarEvents', _err);
       // Return empty if db table empty or query fails
       return [];
     }
@@ -47,6 +49,7 @@ const createCalendarEvent = async (data) => {
         agentId: created.agentId,
       };
     } catch (_err) {
+      handleDbError('calendar.createCalendarEvent', _err);
       // Fallback
     }
   }

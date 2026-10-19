@@ -4,7 +4,7 @@
  * with live /api/major-incidents backend endpoints.
  */
 
-import { api } from './apiClient';
+import { api, logServiceError } from './apiClient';
 import type {
   MajorIncident,
   IncidentUpdate,
@@ -187,7 +187,8 @@ export const majorIncidentsService = {
       if (Array.isArray(listData)) {
         return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('majorIncidents.getMajorIncidents', error);
       // Backend unavailable or offline fallback
     }
 
@@ -205,7 +206,8 @@ export const majorIncidentsService = {
       if (singleData && (singleData.id || singleData.title)) {
         return mapBackendToFrontendIncident(singleData as BackendMajorIncident);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('majorIncidents.getMajorIncidentById', error);
       // Fallback
     }
 
@@ -237,7 +239,8 @@ export const majorIncidentsService = {
       if (createData && (createData.id || createData.title)) {
         return mapBackendToFrontendIncident(createData as BackendMajorIncident);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('majorIncidents.createMajorIncident', error);
       // Fallback
     }
 
@@ -279,7 +282,8 @@ export const majorIncidentsService = {
       if (updateData && (updateData.id || updateData.title)) {
         return mapBackendToFrontendIncident(updateData as BackendMajorIncident);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('majorIncidents.updateMajorIncident', error);
       // Fallback
     }
     return null;
@@ -299,7 +303,8 @@ export const majorIncidentsService = {
       if (updateRes && (updateRes.id || updateRes.title)) {
         return mapBackendToFrontendIncident(updateRes as BackendMajorIncident);
       }
-    } catch {
+    } catch (error) {
+      logServiceError('majorIncidents.addMajorIncidentUpdate', error);
       // Fallback
     }
     return null;

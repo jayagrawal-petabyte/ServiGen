@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockMajorIncidents = [
   {
@@ -57,6 +58,7 @@ const getMajorIncidents = async (filters = {}) => {
         })),
       }));
     } catch (_err) {
+      handleDbError('major-incidents.getMajorIncidents', _err);
       // Database connection fallback
     }
   }
@@ -98,6 +100,7 @@ const getMajorIncidentById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('major-incidents.getMajorIncidentById', _err);
       // Database connection fallback
     }
   }
@@ -121,6 +124,7 @@ const saveMajorIncident = async (incident) => {
         },
       });
     } catch (_err) {
+      handleDbError('major-incidents.saveMajorIncident', _err);
       // Database connection fallback
     }
   }
@@ -146,6 +150,7 @@ const updateMajorIncident = async (id, changes) => {
       // Re-fetch from DB to return fully consistent data (includes relations)
       return getMajorIncidentById(id);
     } catch (_err) {
+      handleDbError('major-incidents.updateMajorIncident', _err);
       // Database connection fallback — fall through to in-memory mock
     }
   }
@@ -173,6 +178,7 @@ const addIncidentUpdate = async (id, update) => {
       // Re-fetch from DB to return fully consistent data with all updates
       return getMajorIncidentById(id);
     } catch (_err) {
+      handleDbError('major-incidents.addIncidentUpdate', _err);
       // Database connection fallback — fall through to in-memory mock
     }
   }

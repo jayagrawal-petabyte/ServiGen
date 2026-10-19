@@ -116,6 +116,7 @@ const getMoodEntries = async (agentId = null) => {
 };
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 /**
  * Save a new mood check-in for an agent. Replaces any existing entry for today (SCR-014)
@@ -138,6 +139,7 @@ const saveMoodEntry = async (agentId, mood) => {
         },
       });
     } catch (_err) {
+      handleDbError('dashboard.saveMoodEntry', _err);
       // Database connection fallback
     }
   }
@@ -179,6 +181,7 @@ const getNewTickets = async (organisationId = null) => {
         createdAt: t.createdAt.toISOString(),
       }));
     } catch (_err) {
+      handleDbError('dashboard.getNewTickets', _err);
       // Database connection fallback
     }
   }

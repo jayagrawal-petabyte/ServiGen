@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockLists = [
   {
@@ -54,6 +55,7 @@ const getLists = async (options = {}) => {
       }
       return formatted;
     } catch (_err) {
+      handleDbError('list-builder.getLists', _err);
       // Database connection fallback
     }
   }
@@ -93,6 +95,7 @@ const getListById = async (id, organisationId = null) => {
         return formatted;
       }
     } catch (_err) {
+      handleDbError('list-builder.getListById', _err);
       // Database connection fallback
     }
   }
@@ -128,6 +131,7 @@ const createList = async (listData) => {
         },
       });
     } catch (_err) {
+      handleDbError('list-builder.createList', _err);
       // Database connection fallback
     }
   }

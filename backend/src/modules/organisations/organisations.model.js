@@ -1,6 +1,7 @@
 'use strict';
 
 const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockUsers = [
   {
@@ -50,6 +51,7 @@ const getOrganisationUsers = async (organisationId) => {
         active: u.availability !== 'Inactive',
       }));
     } catch (_err) {
+      handleDbError('organisations.getOrganisationUsers', _err);
       // Database connection fallback
     }
   }
@@ -81,6 +83,7 @@ const getUserById = async (id) => {
         };
       }
     } catch (_err) {
+      handleDbError('organisations.getUserById', _err);
       // Database connection fallback
     }
   }
