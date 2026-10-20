@@ -1,4 +1,5 @@
 import React from 'react';
+import appLogo from '../../assets/app-logo.png';
 
 interface BrandLogoProps {
   size?: number;
@@ -11,8 +12,8 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
 }) => {
   return (
     <img
-      src="/src/assets/app-logo.png"
-      alt="BrainMint"
+      src={appLogo}
+      alt="BrainMint Logo"
       className={className}
       style={{
         width: '100%',
