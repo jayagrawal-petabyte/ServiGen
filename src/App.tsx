@@ -209,10 +209,12 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/incidents" element={<Incidents />} />
             <Route path="/my-work" element={<MyWork />} />
+            <Route path="/major-incidents" element={<Navigate to="/major-incidents/live" replace />} />
             <Route path="/major-incidents/design" element={<MajorIncidentsDesign />} />
             <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
             <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
             <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
+            <Route path="/problems" element={<Incidents />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/requests" element={<RequestsPage />} />
@@ -222,6 +224,7 @@ export default function App() {
             <Route path="/on-hold" element={<OnHoldTicketScreen />} />
             <Route path="/custom-lists" element={<CustomLists />} />
             <Route path="/organisations" element={<OrganisationUsersScreen />} />
+            <Route path="/contacts" element={<OrganisationUsersScreen />} />
             <Route path="/team/1st-line-live" element={<FirstLineLive />} />
             <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
             <Route path="/team/2nd-line-live" element={<SecondLineLive />} />

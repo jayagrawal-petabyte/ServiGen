@@ -1,99 +1,259 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import BrandLogo from './BrandLogo';
+import { NavLink, useLocation } from 'react-router-dom';
 import './Sidebar.css';
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Icon Definitions (Accurately styled to match reference screenshot)
+   - Size: 22x22
+   - Stroke / Fill: Crisp white
+   - Uniform stroke width ~2.2px for outline icons
+   ────────────────────────────────────────────────────────────────────────── */
+
+// 1. Dashboard: House with doorway cut out
+const DashboardIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+  </svg>
+);
+
+// 2. My Work: Clipboard with top clip and 3 horizontal lines
+const MyWorkIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+  </svg>
+);
+
+// 3. Incidents: Tilted price/luggage tag with loop thread at top
+const IncidentsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" />
+    <path d="M6 3.5C5.8 2 4.8 1.2 3.5 1.2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+// 4. Major Incidents: Hollow upright triangle outline
+const MajorIncidentsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M12 3.8L2.5 20.2h19L12 3.8z" />
+  </svg>
+);
+
+// 5. Problems: Solid upright triangle with question mark cut out
+const ProblemsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" className={className} aria-hidden="true">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      fill="currentColor"
+      d="M12 2.5L1.5 21h21L12 2.5zm-.93 8.22c0-.51.41-.93.93-.93.51 0 .93.42.93.93 0 .42-.28.69-.64.96-.53.4-.72.76-.72 1.32v.5h.9v-.45c0-.4.18-.62.59-.94.46-.35.8-.75.8-1.39 0-1.07-.86-1.83-1.86-1.83-1 0-1.83.79-1.83 1.83h.9zm.93 7.08a.7.7 0 1 0 0-1.4.7.7 0 0 0 0 1.4z"
+    />
+  </svg>
+);
+
+// 6. Requests: Shopping cart with wheels
+const RequestsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <circle cx="8" cy="20.5" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="18" cy="20.5" r="1.5" fill="currentColor" stroke="none" />
+    <path d="M2 3h3.5l2.4 11.2a1.8 1.8 0 0 0 1.8 1.4h8.8a1.8 1.8 0 0 0 1.7-1.3l2.2-7.8H6.2" />
+  </svg>
+);
+
+// 7. Change Requests: Two curved circular refresh arrows
+const ChangeRequestsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </svg>
+);
+
+// 8. Projects: Outline briefcase with top handle and two vertical divider stripes
+const ProjectsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <rect x="3.5" y="7" width="17" height="13.5" rx="2" />
+    <path d="M8.5 7V4.5a1.5 1.5 0 0 1 1.5-1.5h4a1.5 1.5 0 0 1 1.5 1.5V7" />
+    <line x1="8.5" y1="7" x2="8.5" y2="20.5" />
+    <line x1="15.5" y1="7" x2="15.5" y2="20.5" />
+  </svg>
+);
+
+// 9. Article Drafts: Bookmark ribbon outline with notch
+const ArticleDraftsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M19 21l-7-4.5L5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+// 10. Calendar: Calendar with binder rings at top
+const CalendarNavIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <rect width="18" height="17" x="3" y="4" rx="2.5" />
+    <line x1="16" x2="16" y1="2" y2="6" />
+    <line x1="8" x2="8" y1="2" y2="6" />
+    <line x1="3" x2="21" y1="10" y2="10" />
+  </svg>
+);
+
+// 11. Organisations: Two people outline
+const OrganisationsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="3.5" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a3.5 3.5 0 0 1 0 6.75" />
+  </svg>
+);
+
+// 12. CMDB: 3 stacked database discs
+const CmdbIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <ellipse cx="12" cy="5.5" rx="8.5" ry="3" />
+    <path d="M3.5 5.5v13a8.5 3 0 0 0 17 0v-13" />
+    <path d="M3.5 12a8.5 3 0 0 0 17 0" />
+  </svg>
+);
+
+// 13. Contacts: ID badge / contact notebook with spiral pins at top and person inside
+const ContactsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5" />
+    <circle cx="12" cy="11.5" r="2.8" />
+    <path d="M7.5 21v-1.8a2.2 2.2 0 0 1 2.2-2.2h4.6a2.2 2.2 0 0 1 2.2 2.2V21" />
+    <line x1="8" y1="2" x2="8" y2="4.5" />
+    <line x1="16" y1="2" x2="16" y2="4.5" />
+  </svg>
+);
+
+// 14. My Approvals: Shield outline with checkmark
+const MyApprovalsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Navigation Items Configuration
+   Exact order:
+   1. Dashboard
+   2. My Work
+   3. Incidents
+   4. Major Incidents
+   5. Problems
+   6. Requests
+   7. Change Requests
+   8. Projects
+   9. Article Drafts
+   10. Calendar
+   11. Organisations
+   12. CMDB
+   13. Contacts
+   14. My Approvals
+   ────────────────────────────────────────────────────────────────────────── */
 
 interface NavItemConfig {
   to: string;
   label: string;
-  smallText?: boolean;
-  iconPath: string;
-  viewBox?: string;
+  line1?: string;
+  line2?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  matchActive?: (pathname: string) => boolean;
 }
 
 const NAV_ITEMS: NavItemConfig[] = [
   {
     to: '/dashboard',
     label: 'Dashboard',
-    iconPath: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
-  },
-  {
-    to: '/incidents',
-    label: 'Incidents',
-    iconPath: 'M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z',
+    icon: DashboardIcon,
+    matchActive: (path) => path === '/' || path === '/dashboard',
   },
   {
     to: '/my-work',
     label: 'My Work',
-    iconPath: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z',
+    icon: MyWorkIcon,
+    matchActive: (path) => path.startsWith('/my-work'),
+  },
+  {
+    to: '/incidents',
+    label: 'Incidents',
+    icon: IncidentsIcon,
+    matchActive: (path) => path === '/incidents' || path.startsWith('/team'),
   },
   {
     to: '/major-incidents/live',
     label: 'Major Incidents',
-    smallText: true,
-    iconPath: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+    line1: 'Major',
+    line2: 'Incidents',
+    icon: MajorIncidentsIcon,
+    matchActive: (path) => path.startsWith('/major-incidents'),
+  },
+  {
+    to: '/problems',
+    label: 'Problems',
+    icon: ProblemsIcon,
+    matchActive: (path) => path.startsWith('/problems'),
   },
   {
     to: '/requests',
     label: 'Requests',
-    iconPath: 'M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 12h2v2H8v-2zm0 4h2v2H8v-2zm4-4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-4h2v2h-2v-2zm0 4h2v2h-2v-2z',
+    icon: RequestsIcon,
+    matchActive: (path) => path.startsWith('/requests') || path.startsWith('/services-catalogue'),
   },
   {
     to: '/change-requests',
     label: 'Change Requests',
-    smallText: true,
-    iconPath: 'M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z',
-  },
-  {
-    to: '/services-catalogue',
-    label: 'Services',
-    viewBox: '0 -960 960 960',
-    iconPath: 'M260-320q47 0 91.5 10.5T440-278v-394q-41-24-87-36t-93-12q-36 0-71.5 7T120-692v396q35-12 69.5-18t70.5-6Zm260 42q44-21 88.5-31.5T700-320q36 0 70.5 6t69.5 18v-396q-33-14-68.5-21t-71.5-7q-47 0-93 12t-87 36v394Zm-40 97q-14 0-26.5-3.5T430-194q-39-23-82-34.5T260-240q-42 0-82.5 11T100-198q-21 11-40.5-1T40-234v-482q0-11 5.5-21T62-752q46-24 96-36t102-12q58 0 113.5 15T480-740q51-30 106.5-45T700-800q52 0 102 12t96 36q11 5 16.5 15t5.5 21v482q0 23-19.5 35t-40.5 1q-37-20-77.5-31T700-240q-45 0-88 11.5T530-194q-11 6-23.5 9.5T480-181ZM280-494Z',
+    line1: 'Change',
+    line2: 'Requests',
+    icon: ChangeRequestsIcon,
+    matchActive: (path) => path.startsWith('/change-requests'),
   },
   {
     to: '/projects',
     label: 'Projects',
-    iconPath: 'M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z',
+    icon: ProjectsIcon,
+    matchActive: (path) => path.startsWith('/projects'),
   },
   {
     to: '/article-drafts',
     label: 'Article Drafts',
-    smallText: true,
-    iconPath: 'M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z',
+    line1: 'Article',
+    line2: 'Drafts',
+    icon: ArticleDraftsIcon,
+    matchActive: (path) => path.startsWith('/article-drafts'),
   },
   {
     to: '/calendar',
     label: 'Calendar',
-    iconPath: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z',
-  },
-  {
-    to: '/on-hold',
-    label: 'On-Hold Tickets',
-    smallText: true,
-    iconPath: 'M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z',
-  },
-  {
-    to: '/custom-lists',
-    label: 'Custom Lists',
-    smallText: true,
-    iconPath: 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z',
+    icon: CalendarNavIcon,
+    matchActive: (path) => path.startsWith('/calendar'),
   },
   {
     to: '/organisations',
     label: 'Organisations',
-    smallText: true,
-    iconPath: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
+    icon: OrganisationsIcon,
+    matchActive: (path) => path === '/organisations',
   },
   {
     to: '/cmdb',
     label: 'CMDB',
-    iconPath: 'M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zm-2 6h-2v-2h2v2zm-4 0h-2v-2h2v2zm-4 0H8v-2h2v2zm10-11H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-2 6h-2v-2h2v2zm-4 0h-2v-2h2v2zm-4 0H8v-2h2v2zM4 1h16c.55 0 1 .45 1 1v3H3V2c0-.55.45-1 1-1z',
+    icon: CmdbIcon,
+    matchActive: (path) => path.startsWith('/cmdb'),
+  },
+  {
+    to: '/contacts',
+    label: 'Contacts',
+    icon: ContactsIcon,
+    matchActive: (path) => path.startsWith('/contacts'),
   },
   {
     to: '/approvals',
     label: 'My Approvals',
-    smallText: true,
-    iconPath: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+    line1: 'My',
+    line2: 'Approvals',
+    icon: MyApprovalsIcon,
+    matchActive: (path) => path.startsWith('/approvals'),
   },
 ];
 
@@ -103,48 +263,62 @@ export interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
+  const location = useLocation();
+
   return (
     <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
-      <div className="sidebar-logo">
+      {/* Top Circular Peach Avatar Placeholder */}
+      <div className="sidebar-avatar-container">
         <NavLink
           to="/dashboard"
           onClick={onCloseMobile}
-          className="flex items-center justify-center transition-transform hover:scale-105"
-          style={{ textDecoration: 'none' }}
+          className="sidebar-avatar-circle"
           title="ServiGen Dashboard"
-        >
-          <BrandLogo size={32} />
-        </NavLink>
+          aria-label="User Profile"
+        />
         {mobileOpen && (
           <button
             type="button"
             onClick={onCloseMobile}
-            className="md:hidden absolute right-2 text-white/70 hover:text-white p-1 rounded-md"
+            className="md:hidden absolute right-2 top-3 text-white/70 hover:text-white p-1 rounded-md"
             aria-label="Close sidebar"
           >
             ✕
           </button>
         )}
       </div>
+
+      {/* Vertically Stacked Navigation Items */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onCloseMobile}
-            className={({ isActive }) =>
-              `sidebar-nav-link ${isActive ? 'active' : ''}`
-            }
-            title={item.label}
-          >
-            <svg viewBox={item.viewBox || "0 0 24 24"} width="20" height="20" fill="currentColor">
-              <path d={item.iconPath} />
-            </svg>
-            <span className={`nav-label ${item.smallText ? 'nav-label-sm' : ''}`}>
-              {item.label}
-            </span>
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = item.matchActive
+            ? item.matchActive(location.pathname)
+            : location.pathname.startsWith(item.to);
+
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onCloseMobile}
+              className={`sidebar-nav-link ${isActive ? 'active' : ''}`}
+              title={item.label}
+              data-active={isActive ? 'true' : undefined}
+            >
+              <Icon className="sidebar-nav-icon" />
+              {item.line1 ? (
+                <span className="nav-label">
+                  <span>{item.line1}</span>
+                  <span>{item.line2}</span>
+                </span>
+              ) : (
+                <span className="nav-label">
+                  {item.label}
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
     </aside>
   );
