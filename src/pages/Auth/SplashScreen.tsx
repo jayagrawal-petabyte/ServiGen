@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import BrandLogo from '../../components/shared/BrandLogo';
 import './auth.css';
+import brainmintDark from '../../assets/brainmint-dark.png';
 
 export interface SplashScreenProps {
   userName?: string;
@@ -47,7 +47,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         {/* Brand Icon with Orbiting Dots */}
         <div className="splash-logo-container">
           {/* Main Cyan Chat Bubble Badge */}
-          <BrandLogo size={94} />
+          <img
+          src={brainmintDark}
+          alt="BrainMint"
+          className="splash-brainmint-logo"
+          />
 
           {/* Rotating Orbiting Dots */}
           <svg className="splash-loader-orbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">

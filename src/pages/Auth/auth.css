@@ -719,3 +719,10 @@
     transform: translateY(0);
   }
 }
+.splash-brainmint-logo {
+  width: 180px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
