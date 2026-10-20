@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import BrandLogo from './BrandLogo';
 import './Sidebar.css';
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -267,20 +268,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
 
   return (
     <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
-      {/* Top Circular Peach Avatar Placeholder */}
-      <div className="sidebar-avatar-container">
+      {/* Brand Logo */}
+      <div className="sidebar-logo">
         <NavLink
           to="/dashboard"
           onClick={onCloseMobile}
-          className="sidebar-avatar-circle"
+          className="flex items-center justify-center transition-transform hover:scale-105"
+          style={{ textDecoration: 'none' }}
           title="ServiGen Dashboard"
-          aria-label="User Profile"
-        />
+        >
+          <BrandLogo size={32} />
+        </NavLink>
         {mobileOpen && (
           <button
             type="button"
             onClick={onCloseMobile}
-            className="md:hidden absolute right-2 top-3 text-white/70 hover:text-white p-1 rounded-md"
+            className="md:hidden absolute right-2 text-white/70 hover:text-white p-1 rounded-md"
             aria-label="Close sidebar"
           >
             ✕
