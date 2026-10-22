@@ -216,6 +216,8 @@ export const RequestsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Open Requests' | 'In Progress' | 'New'>('Open Requests');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
+  const teamDropdownRef = useRef<HTMLDivElement>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -237,6 +239,9 @@ export const RequestsPage: React.FC = () => {
       }
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setIsMoreMenuOpen(false);
+      }
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target as Node)) {
+        setIsTeamDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -609,28 +614,46 @@ export const RequestsPage: React.FC = () => {
 
           {/* Section Header */}
           <div className="requests-tree-header">
-            <div
-              className="tree-header-left cursor-pointer"
-              onClick={() => {
-                setSelectedTeam('All Teams');
-                setSelectedAgent('All Agents');
-                setStatusFilter('All');
-                setStatusMessage('Showing all requests across all teams');
-                setTimeout(() => setStatusMessage(null), 1800);
-              }}
-              title="Click to show requests from All Teams"
-            >
+            <div className="tree-header-left" ref={teamDropdownRef}>
               <div className="tree-group-icon">
                 <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M4.5 3.75A2.25 2.25 0 002.25 6v9a2.25 2.25 0 002.25 2.25h1.5v3.75l4.5-3.75h9.75A2.25 2.25 0 0022.5 15V6a2.25 2.25 0 00-2.25-2.25H4.5z" />
                 </svg>
               </div>
               {!isTreeCollapsed && (
-                <div className="tree-title-block">
+                <div className="tree-title-block" style={{ position: 'relative' }}>
                   <span className="tree-title">Requests by Team</span>
-                  <span className="tree-subtitle">
+                  <button
+                    type="button"
+                    className="tree-subtitle tree-team-dropdown-btn"
+                    onClick={() => setIsTeamDropdownOpen((p) => !p)}
+                    aria-haspopup="listbox"
+                    aria-expanded={isTeamDropdownOpen}
+                  >
                     {selectedTeam === 'All Teams' ? '▾ All Teams' : `▾ ${selectedTeam}`}
-                  </span>
+                  </button>
+                  {isTeamDropdownOpen && (
+                    <div className="tree-team-dropdown-menu" role="listbox">
+                      {(['All Teams', '1st Line Support', '2nd Line Support', 'Infrastructure'] as const).map((team) => (
+                        <button
+                          key={team}
+                          type="button"
+                          role="option"
+                          aria-selected={selectedTeam === team}
+                          className={`tree-team-dropdown-item ${selectedTeam === team ? 'selected' : ''}`}
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setSelectedAgent('All Agents');
+                            if (team === 'All Teams') setStatusFilter('All');
+                            setIsTeamDropdownOpen(false);
+                          }}
+                        >
+                          {selectedTeam === team && <span>✓</span>}
+                          <span>{team}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
