@@ -580,15 +580,26 @@
   background: #ffffff;
   border-radius: 4px;
   font-size: 11px;
-  color: #94a3b8;
+  color: #334155;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
+.pag-btn:hover:not(:disabled):not(.disabled) {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.pag-btn:disabled,
 .pag-btn.disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
+  color: #94a3b8;
+  pointer-events: none;
 }
 
 .toolbar-refresh-btn {
@@ -800,4 +811,57 @@
 .status-new {
   background-color: #065f46;
   color: #ffffff;
+}
+
+/* Collapsed Tree Sidebar */
+.requests-tree-sidebar.collapsed {
+  width: 52px;
+  min-width: 52px;
+  padding: 8px 4px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.requests-tree-sidebar.collapsed .tree-header-left {
+  justify-content: center;
+  width: 100%;
+}
+
+.requests-tree-sidebar.collapsed .tree-collapse-btn {
+  margin-top: 8px;
+}
+
+/* More Actions Dropdown */
+.more-actions-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  min-width: 190px;
+  padding: 4px 0;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.more-actions-item {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #334155;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.more-actions-item:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
 }

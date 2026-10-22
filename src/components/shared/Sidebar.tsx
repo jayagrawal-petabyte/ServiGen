@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import BrandLogo from './BrandLogo';
+import { useAuth } from '../../pages/Auth/AuthContext';
+import type { User } from '../../pages/Auth/types';
 import './Sidebar.css';
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -152,18 +154,24 @@ const MyApprovalsIcon: React.FC<{ className?: string }> = ({ className }) => (
    12. CMDB
    13. Contacts
    14. My Approvals
+
+   RBAC Filter:
+   - Items with roles restricted according to QA-RBAC-01
+   - End User ('user001') hides administrative menus: CMDB, Change Requests, Organisations, Article Drafts, Problems, Major Incidents, Approvals.
+   - Administrator retains full access to all 14 items.
    ────────────────────────────────────────────────────────────────────────── */
 
-interface NavItemConfig {
+export interface NavItemConfig {
   to: string;
   label: string;
   line1?: string;
   line2?: string;
   icon: React.ComponentType<{ className?: string }>;
   matchActive?: (pathname: string) => boolean;
+  roles?: User['role'][];
 }
 
-const NAV_ITEMS: NavItemConfig[] = [
+export const NAV_ITEMS: NavItemConfig[] = [
   {
     to: '/dashboard',
     label: 'Dashboard',
@@ -189,12 +197,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Incidents',
     icon: MajorIncidentsIcon,
     matchActive: (path) => path.startsWith('/major-incidents'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/problems',
     label: 'Problems',
     icon: ProblemsIcon,
     matchActive: (path) => path.startsWith('/problems'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/requests',
@@ -209,12 +219,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Requests',
     icon: ChangeRequestsIcon,
     matchActive: (path) => path.startsWith('/change-requests'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/projects',
     label: 'Projects',
     icon: ProjectsIcon,
     matchActive: (path) => path.startsWith('/projects'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/article-drafts',
@@ -223,6 +235,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Drafts',
     icon: ArticleDraftsIcon,
     matchActive: (path) => path.startsWith('/article-drafts'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/calendar',
@@ -235,12 +248,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     label: 'Organisations',
     icon: OrganisationsIcon,
     matchActive: (path) => path === '/organisations',
+    roles: ['Administrator', 'System Manager'],
   },
   {
     to: '/cmdb',
     label: 'CMDB',
     icon: CmdbIcon,
     matchActive: (path) => path.startsWith('/cmdb'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
     to: '/contacts',
@@ -255,6 +270,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Approvals',
     icon: MyApprovalsIcon,
     matchActive: (path) => path.startsWith('/approvals'),
+    roles: ['Administrator', 'System Manager', 'Team Lead'],
   },
 ];
 
@@ -265,6 +281,17 @@ export interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
   const location = useLocation();
+  const { user } = useAuth();
+  const currentRole: User['role'] = user?.role || 'Administrator';
+
+  // QA-RBAC-01: Filter sidebar items by user role.
+  // Administrators see all items. End users are restricted from CMDB, Change Requests, Organisations, Article Drafts, etc.
+  const visibleNavItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      if (!item.roles || item.roles.length === 0) return true;
+      return item.roles.includes(currentRole);
+    });
+  }, [currentRole]);
 
   return (
     <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
@@ -293,7 +320,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
 
       {/* Vertically Stacked Navigation Items */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.matchActive
             ? item.matchActive(location.pathname)

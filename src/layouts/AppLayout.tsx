@@ -62,6 +62,22 @@ export const AppLayout: React.FC = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  // QA-RBAC-01: End Users cannot directly access restricted administrative routes
+  if (user?.role === 'End User') {
+    const isRestrictedEndUserRoute =
+      location.pathname.startsWith('/cmdb') ||
+      location.pathname.startsWith('/change-requests') ||
+      location.pathname === '/organisations' ||
+      location.pathname.startsWith('/article-drafts') ||
+      location.pathname.startsWith('/major-incidents') ||
+      location.pathname.startsWith('/problems') ||
+      location.pathname.startsWith('/approvals');
+
+    if (isRestrictedEndUserRoute) {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
   const initials = user?.fullName
     ? user.fullName
         .split(' ')
