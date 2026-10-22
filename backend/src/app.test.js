@@ -233,6 +233,17 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
     body: JSON.stringify({ email: 1234, password: 'Ag3nt*8mP4!wR9t' }),
   })).status, 400);
 
+  const rejectedLoginResponse = await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 'agent001', password: 'wrongPassword1999' }),
+  });
+  assert.equal(rejectedLoginResponse.status, 401);
+  assert.deepEqual(await rejectedLoginResponse.json(), {
+    success: false,
+    message: 'Invalid credentials',
+  });
+
   const loginResponse = await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
