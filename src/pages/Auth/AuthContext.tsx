@@ -543,38 +543,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (known && isDemoPlaceholderPassword) {
       attempts.push({ username: cleanUsername, password: known.password });
       attempts.push({ email: known.email, password: known.password });
-    }
+    } else {
+      // 2. User's exact entered input
+      attempts.push({ username: cleanUsername, password: cleanPassword });
 
-    // 2. User's exact entered input
-    attempts.push({ username: cleanUsername, password: cleanPassword });
-
-    // 3. User's entered input stripped of accidental trailing '='
-    if (cleanPassword.endsWith('=')) {
-      attempts.push({ username: cleanUsername, password: cleanPassword.slice(0, -1) });
-    }
-
-    // 4. If known credential exists and wasn't tried yet
-    if (known && !isDemoPlaceholderPassword) {
-      attempts.push({ username: cleanUsername, password: known.password });
-      attempts.push({ email: known.email, password: known.password });
-    }
-
-    // 5. Universal fallback credentials if input was a known role
-    if (['agent001', 'agent'].includes(cleanUsername.toLowerCase())) {
-      attempts.push({ email: 'agent001@servigen.local', password: 'Ag3nt*8mP4!wR9t' });
-      attempts.push({ username: 'agent001', password: 'Ag3nt*8mP4!wR9t' });
-    } else if (['admin001', 'admin'].includes(cleanUsername.toLowerCase())) {
-      attempts.push({ email: 'admin@servigen.local', password: 'Adm!n#9vK2$7xLq' });
-      attempts.push({ username: 'admin001', password: 'Adm!n#9vK2$7xLq' });
-    } else if (['support001', 'support'].includes(cleanUsername.toLowerCase())) {
-      attempts.push({ email: 'support001@servigen.local', password: 'Supp0rt!2xL8^pD5' });
-      attempts.push({ username: 'support001', password: 'Supp0rt!2xL8^pD5' });
-    } else if (['user001', 'user'].includes(cleanUsername.toLowerCase())) {
-      attempts.push({ email: 'user001@servigen.local', password: 'Us3r@4bT7&mQ6wV' });
-      attempts.push({ username: 'user001', password: 'Us3r@4bT7&mQ6wV' });
-    } else if (['approver001', 'approver'].includes(cleanUsername.toLowerCase())) {
-      attempts.push({ email: 'approver001@servigen.local', password: 'Appr0v#5zY1$kE3s' });
-      attempts.push({ username: 'approver001', password: 'Appr0v#5zY1$kE3s' });
+      // 3. User's entered input stripped of accidental trailing '='
+      if (cleanPassword.endsWith('=')) {
+        attempts.push({ username: cleanUsername, password: cleanPassword.slice(0, -1) });
+      }
     }
 
     let successfulRes: any = null;
