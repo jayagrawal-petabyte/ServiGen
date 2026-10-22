@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LoginCredentials } from './types';
 import './auth.css';
 
@@ -20,23 +20,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = setTimeout(() => {
-      setToastMessage(null);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
 
   const handleInputChange = (field: keyof LoginCredentials, value: string) => {
     setCredentials((prev) => ({ ...prev, [field]: value }));
     if (errorMessage) {
       setErrorMessage(null);
-    }
-    if (toastMessage) {
-      setToastMessage(null);
     }
   };
 
@@ -44,32 +32,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     e.preventDefault();
 
     if (!credentials.username.trim() || !credentials.password.trim()) {
-      const msg = 'Please enter both User Name and Password.';
-      setErrorMessage(msg);
-      setToastMessage(msg);
+      setErrorMessage('Please enter both User Name and Password.');
       return;
     }
 
     setLoading(true);
     setErrorMessage(null);
-    setToastMessage(null);
 
     try {
       if (onLoginSubmit) {
         const result = await onLoginSubmit(credentials);
 
         if (result === false) {
-          const msg = 'Invalid username or password.';
-          setErrorMessage(msg);
-          setToastMessage(msg);
+          setErrorMessage('Invalid username or password.');
         }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 600));
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Invalid username or password.';
-      setErrorMessage(msg);
-      setToastMessage(msg);
+      setErrorMessage(err?.response?.data?.message || err?.message || 'Invalid username or password.');
     } finally {
       setLoading(false);
     }
@@ -77,28 +58,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   return (
     <div className="figma-login-page">
-      {/* Floating Error Toast Notification (QA-BUG-01) */}
-      {toastMessage && (
-        <div className="login-toast-banner" role="alert" aria-live="assertive">
-          <svg className="toast-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="toast-text">{toastMessage}</span>
-          <button
-            type="button"
-            className="toast-close-btn"
-            onClick={() => setToastMessage(null)}
-            aria-label="Dismiss toast"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Central Organic Shape SVG matching Figma screenshot */}
       <svg
         className="figma-svg-bg"
