@@ -8,6 +8,14 @@ import { api } from '../../services/apiClient';
 import { fetchActiveChangeRequests } from '../../services/changeRequestsService';
 import './RequestsPage.css';
 
+export interface CustomView {
+  id: string;
+  name: string;
+  status: 'All' | 'Open Requests' | 'In Progress' | 'New';
+  team: string;
+  priority: string;
+}
+
 export interface RequestItem {
   id: string;
   slaTimeLeft: string;
@@ -216,8 +224,22 @@ export const RequestsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Open Requests' | 'In Progress' | 'New'>('Open Requests');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
-  const teamDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Custom Saved Views (Halo AI Style)
+  const [customViews, setCustomViews] = useState<CustomView[]>(() => {
+    try {
+      const saved = localStorage.getItem('sg_custom_views');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [activeCustomView, setActiveCustomView] = useState<CustomView | null>(null);
+  const [isCreateViewModalOpen, setIsCreateViewModalOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState('');
+  const [newViewStatus, setNewViewStatus] = useState<'All' | 'Open Requests' | 'In Progress' | 'New'>('Open Requests');
+  const [newViewTeam, setNewViewTeam] = useState('All Teams');
+  const [newViewPriority, setNewViewPriority] = useState('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -240,13 +262,48 @@ export const RequestsPage: React.FC = () => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setIsMoreMenuOpen(false);
       }
-      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target as Node)) {
-        setIsTeamDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleSaveCustomView = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newViewName.trim()) return;
+
+    const newView: CustomView = {
+      id: `view-${Date.now()}`,
+      name: newViewName.trim(),
+      status: newViewStatus,
+      team: newViewTeam,
+      priority: newViewPriority,
+    };
+
+    const updated = [...customViews, newView];
+    setCustomViews(updated);
+    try {
+      localStorage.setItem('sg_custom_views', JSON.stringify(updated));
+    } catch {}
+
+    setActiveCustomView(newView);
+    setIsCreateViewModalOpen(false);
+    setNewViewName('');
+    setStatusMessage(`✓ Custom view "${newView.name}" created and applied`);
+    setTimeout(() => setStatusMessage(null), 2500);
+  };
+
+  const handleDeleteCustomView = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const updated = customViews.filter((v) => v.id !== id);
+    setCustomViews(updated);
+    try {
+      localStorage.setItem('sg_custom_views', JSON.stringify(updated));
+    } catch {}
+    if (activeCustomView?.id === id) {
+      setActiveCustomView(null);
+      setStatusFilter('Open Requests');
+    }
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -347,23 +404,38 @@ export const RequestsPage: React.FC = () => {
   // Filter requests based on selected agent, team, and filter mode
   const filteredRequests = useMemo(() => {
     return requestsList.filter((req) => {
-      // Agent & Team filter
-      if (selectedAgent && selectedAgent !== 'All Agents') {
-        if (req.agent.toLowerCase() !== selectedAgent.toLowerCase()) return false;
-        if (selectedTeam && selectedTeam !== 'All Teams' && req.team.toLowerCase() !== selectedTeam.toLowerCase()) {
-          return false;
-        }
-      } else if (selectedTeam && selectedTeam !== 'All Teams') {
-        if (req.team.toLowerCase() !== selectedTeam.toLowerCase()) return false;
-      }
+      // If a custom view is active, evaluate its specific criteria
+      if (activeCustomView) {
+        if (activeCustomView.status === 'Open Requests' && req.status === 'Resolved') return false;
+        if (activeCustomView.status === 'In Progress' && req.status !== 'In Progress') return false;
+        if (activeCustomView.status === 'New' && req.status !== 'New') return false;
 
-      // Status filter
-      if (statusFilter === 'Open Requests') {
-        if (req.status === 'Resolved') return false;
-      } else if (statusFilter === 'In Progress') {
-        if (req.status !== 'In Progress') return false;
-      } else if (statusFilter === 'New') {
-        if (req.status !== 'New') return false;
+        if (activeCustomView.team && activeCustomView.team !== 'All Teams') {
+          if (req.team.toLowerCase() !== activeCustomView.team.toLowerCase()) return false;
+        }
+
+        if (activeCustomView.priority && activeCustomView.priority !== 'All') {
+          if (req.priority !== activeCustomView.priority) return false;
+        }
+      } else {
+        // Standard Agent & Team filter
+        if (selectedAgent && selectedAgent !== 'All Agents') {
+          if (req.agent.toLowerCase() !== selectedAgent.toLowerCase()) return false;
+          if (selectedTeam && selectedTeam !== 'All Teams' && req.team.toLowerCase() !== selectedTeam.toLowerCase()) {
+            return false;
+          }
+        } else if (selectedTeam && selectedTeam !== 'All Teams') {
+          if (req.team.toLowerCase() !== selectedTeam.toLowerCase()) return false;
+        }
+
+        // Standard Status filter
+        if (statusFilter === 'Open Requests') {
+          if (req.status === 'Resolved') return false;
+        } else if (statusFilter === 'In Progress') {
+          if (req.status !== 'In Progress') return false;
+        } else if (statusFilter === 'New') {
+          if (req.status !== 'New') return false;
+        }
       }
 
       // Search filter
@@ -380,7 +452,7 @@ export const RequestsPage: React.FC = () => {
 
       return true;
     });
-  }, [requestsList, selectedAgent, selectedTeam, statusFilter, searchTree]);
+  }, [requestsList, selectedAgent, selectedTeam, statusFilter, activeCustomView, searchTree]);
 
   // Reset page to 1 whenever filters change
   useEffect(() => {
@@ -612,48 +684,20 @@ export const RequestsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Section Header */}
+          {/* Section Header (Halo AI Style) */}
           <div className="requests-tree-header">
-            <div className="tree-header-left" ref={teamDropdownRef}>
+            <div className="tree-header-left">
               <div className="tree-group-icon">
                 <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M4.5 3.75A2.25 2.25 0 002.25 6v9a2.25 2.25 0 002.25 2.25h1.5v3.75l4.5-3.75h9.75A2.25 2.25 0 0022.5 15V6a2.25 2.25 0 00-2.25-2.25H4.5z" />
                 </svg>
               </div>
               {!isTreeCollapsed && (
-                <div className="tree-title-block" style={{ position: 'relative' }}>
+                <div className="tree-title-block">
                   <span className="tree-title">Requests by Team</span>
-                  <button
-                    type="button"
-                    className="tree-subtitle tree-team-dropdown-btn"
-                    onClick={() => setIsTeamDropdownOpen((p) => !p)}
-                    aria-haspopup="listbox"
-                    aria-expanded={isTeamDropdownOpen}
-                  >
-                    {selectedTeam === 'All Teams' ? '▾ All Teams' : `▾ ${selectedTeam}`}
-                  </button>
-                  {isTeamDropdownOpen && (
-                    <div className="tree-team-dropdown-menu" role="listbox">
-                      {(['All Teams', '1st Line Support', '2nd Line Support', 'Infrastructure'] as const).map((team) => (
-                        <button
-                          key={team}
-                          type="button"
-                          role="option"
-                          aria-selected={selectedTeam === team}
-                          className={`tree-team-dropdown-item ${selectedTeam === team ? 'selected' : ''}`}
-                          onClick={() => {
-                            setSelectedTeam(team);
-                            setSelectedAgent('All Agents');
-                            if (team === 'All Teams') setStatusFilter('All');
-                            setIsTeamDropdownOpen(false);
-                          }}
-                        >
-                          {selectedTeam === team && <span>✓</span>}
-                          <span>{team}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <span className="tree-subtitle">
+                    {selectedTeam === 'All Teams' ? 'All Teams' : selectedTeam}
+                  </span>
                 </div>
               )}
             </div>
@@ -899,24 +943,22 @@ export const RequestsPage: React.FC = () => {
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                 aria-expanded={isFilterDropdownOpen}
               >
-                <span className="view-title font-bold text-gray-800">{statusFilter}</span>
+                <span className="view-title font-bold text-gray-800">
+                  {activeCustomView ? activeCustomView.name : statusFilter}
+                </span>
                 <span className="view-caret">▾</span>
               </button>
 
               <button
                 type="button"
                 className="add-view-btn"
-                title="Save current filters as quick view"
+                title="Create custom view"
                 onClick={() => {
-                  const saved = JSON.parse(localStorage.getItem('sg_pinned_views') || '[]');
-                  if (!saved.includes(statusFilter)) {
-                    saved.push(statusFilter);
-                    localStorage.setItem('sg_pinned_views', JSON.stringify(saved));
-                    setStatusMessage(`✓ "${statusFilter}" pinned to your quick views`);
-                  } else {
-                    setStatusMessage(`"${statusFilter}" is already pinned`);
-                  }
-                  setTimeout(() => setStatusMessage(null), 2000);
+                  setNewViewName('');
+                  setNewViewStatus(activeCustomView ? activeCustomView.status : statusFilter);
+                  setNewViewTeam(activeCustomView?.team || (selectedTeam !== 'All Teams' ? selectedTeam : 'All Teams'));
+                  setNewViewPriority(activeCustomView?.priority || 'All');
+                  setIsCreateViewModalOpen(true);
                 }}
               >
                 +
@@ -924,20 +966,57 @@ export const RequestsPage: React.FC = () => {
 
               {isFilterDropdownOpen && (
                 <div className="view-dropdown-menu">
+                  <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Standard Views
+                  </div>
                   {(['Open Requests', 'In Progress', 'New', 'All'] as const).map((opt) => (
                     <button
                       key={opt}
                       type="button"
-                      className={`view-dropdown-item ${statusFilter === opt ? 'selected' : ''}`}
+                      className={`view-dropdown-item ${!activeCustomView && statusFilter === opt ? 'selected' : ''}`}
                       onClick={() => {
+                        setActiveCustomView(null);
                         setStatusFilter(opt);
                         setIsFilterDropdownOpen(false);
                       }}
                     >
                       <span>{opt}</span>
-                      {statusFilter === opt && <span>✓</span>}
+                      {!activeCustomView && statusFilter === opt && <span>✓</span>}
                     </button>
                   ))}
+
+                  {customViews.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-100 my-1 pt-1 px-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Custom Views
+                      </div>
+                      {customViews.map((cv) => (
+                        <div
+                          key={cv.id}
+                          className={`view-dropdown-item flex items-center justify-between cursor-pointer ${
+                            activeCustomView?.id === cv.id ? 'selected' : ''
+                          }`}
+                          onClick={() => {
+                            setActiveCustomView(cv);
+                            setIsFilterDropdownOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            {activeCustomView?.id === cv.id && <span>✓</span>}
+                            <span className="truncate">{cv.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-gray-400 hover:text-red-500 p-0.5 rounded cursor-pointer border-none bg-transparent ml-2"
+                            title="Delete custom view"
+                            onClick={(e) => handleDeleteCustomView(e, cv.id)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1347,6 +1426,109 @@ export const RequestsPage: React.FC = () => {
                   className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
                 >
                   Create Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create Custom View Modal (Halo AI Style) ── */}
+      {isCreateViewModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp">
+            <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-cyan-600 to-teal-700 text-white">
+              <div className="flex items-center gap-2">
+                <span className="text-base">✨</span>
+                <h3 className="font-bold text-sm">Create Custom View</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateViewModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xs cursor-pointer border-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomView} className="p-5 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                  View Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newViewName}
+                  onChange={(e) => setNewViewName(e.target.value)}
+                  placeholder="e.g. Critical Hardware Requests"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                  Status Filter
+                </label>
+                <select
+                  value={newViewStatus}
+                  onChange={(e) => setNewViewStatus(e.target.value as any)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                >
+                  <option value="Open Requests">Open Requests</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="New">New</option>
+                  <option value="All">All</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                  Team Filter
+                </label>
+                <select
+                  value={newViewTeam}
+                  onChange={(e) => setNewViewTeam(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                >
+                  <option value="All Teams">All Teams</option>
+                  <option value="1st Line Support">1st Line Support</option>
+                  <option value="2nd Line Support">2nd Line Support</option>
+                  <option value="Infrastructure">Infrastructure</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                  Priority Filter
+                </label>
+                <select
+                  value={newViewPriority}
+                  onChange={(e) => setNewViewPriority(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                >
+                  <option value="All">All Priorities</option>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateViewModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-700 font-semibold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
+                >
+                  Save View
                 </button>
               </div>
             </form>
