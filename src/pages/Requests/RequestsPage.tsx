@@ -565,6 +565,7 @@ export const RequestsPage: React.FC = () => {
             onClick={() => {
               setSelectedTeam('All Teams');
               setSelectedAgent('All Agents');
+              setStatusFilter('All');
             }}
             className="breadcrumb-link text-xs font-bold text-gray-900 uppercase tracking-wider bg-transparent border-none cursor-pointer p-0"
             title="Click to view all requests"
@@ -613,6 +614,7 @@ export const RequestsPage: React.FC = () => {
               onClick={() => {
                 setSelectedTeam('All Teams');
                 setSelectedAgent('All Agents');
+                setStatusFilter('All');
                 setStatusMessage('Showing all requests across all teams');
                 setTimeout(() => setStatusMessage(null), 1800);
               }}
@@ -652,6 +654,7 @@ export const RequestsPage: React.FC = () => {
                   onClick={() => {
                     setSelectedTeam('All Teams');
                     setSelectedAgent('All Agents');
+                    setStatusFilter('All');
                   }}
                   title="View all service requests"
                 >
