@@ -1,90 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects | BrainMint Software Consultancy</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-<header class="site-header">
-  <a class="logo" href="index.html" aria-label="BrainMint home">
-    <img src="assets/logo.svg" alt="">
-    <span class="wordmark"><b class="g">Brain</b><b class="b">Mi</b><b class="o">nt</b></span>
-  </a>
-  <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
-  <nav class="nav" id="nav">
-    <a href="#">Home</a>
-    <a href="#">About</a>
-    <a href="#" class="has-sub">Service</a>
-    <a href="#" class="has-sub active">Project</a>
-    <a href="#">Contact Us</a>
-    <div class="social">
-      <a href="#" aria-label="Facebook">f</a>
-      <a href="#" aria-label="Twitter">t</a>
-      <a href="#" aria-label="LinkedIn">in</a>
-    </div>
-  </nav>
-</header>
-
-<main class="page">
-  <img class="deco" src="assets/shape.svg" alt="">
-  <button class="back" aria-label="Go back" onclick="history.back()">&#8592;</button>
-
-  <section class="hero">
-    <h1>We Help Our Clients Grow Their Business</h1>
-    <p>BrainMint AI Consultancy is dedicated to fusing cutting-edge AI engineering, machine learning architecture, and enterprise software solutions. We transform complex data landscapes into autonomous workflows, predictive insights, and high-impact business systems</p>
-  </section>
-
-  <section class="panel">
-    <div class="tabs" role="tablist">
-      <button class="tab active" role="tab" data-tab="verticals" aria-selected="true">Check Our Verticals</button>
-      <button class="tab" role="tab" data-tab="projects" aria-selected="false">Our Projects</button>
-    </div>
-
-    <div class="tab-body" id="verticals">
-      <div class="vertical open">
-        <button class="v-head" aria-expanded="true">
-          <span class="icon"></span>
-          <span class="v-text"><strong>Enterprise AI &amp; Automation</strong><small>Custom LLMs, multi-agent workflows, and scalable machine learning pipelines engineered for seamless integration</small></span>
-        </button>
-      </div>
-      <div class="vertical">
-        <button class="v-head" aria-expanded="false">
-          <span class="icon"></span>
-          <span class="v-text"><strong>Custom Software Engineering</strong><small>Complete lifecycle support covering architectural design, model fine-tuning, cloud deployment, and system scaling.</small></span>
-        </button>
-      </div>
-      <div class="vertical">
-        <button class="v-head" aria-expanded="false">
-          <span class="icon"></span>
-          <span class="v-text"><strong>Management Consulting</strong><small>Direct access to experienced AI strategists, cloud architects, and software leaders.</small></span>
-        </button>
-      </div>
-      <div class="vertical">
-        <button class="v-head" aria-expanded="false">
-          <span class="icon"></span>
-          <span class="v-text"><strong>Enterprise Security &amp; Compliance</strong><small>SOC2-aligned development standards, strict data governance, and secure infrastructure options.</small></span>
-        </button>
-      </div>
-      <div class="vertical">
-        <button class="v-head" aria-expanded="false">
-          <span class="icon"></span>
-          <span class="v-text"><strong>Alliance Partner Program</strong><small>Program drives strategic co-innovation, ecosystem integration, and technology alliances by co-developing and integrating enterprise solutions alongside tech leaders while expanding market reach through joint technical</small></span>
-        </button>
-      </div>
-    </div>
-
-    <div class="tab-body" id="projects" hidden>
-      <div class="filters" id="filters"></div>
-      <div class="grid" id="grid"></div>
-    </div>
-  </section>
-</main>
-
-<footer class="site-footer">&copy; 2026 BrainMint Software Consultancy. All rights reserved.</footer>
-<script src="js/main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ServiGen</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
