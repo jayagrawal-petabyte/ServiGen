@@ -31,24 +31,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Field validation - SG-10 compliant (no console.log of passwords or credentials)
     if (!credentials.username.trim() || !credentials.password.trim()) {
       setErrorMessage('Please enter both User Name and Password.');
       return;
     }
 
     setLoading(true);
+    setErrorMessage(null);
 
-    if (onLoginSubmit) {
-      const result = await onLoginSubmit(credentials);
-      if (result === false) {
-        setErrorMessage('Invalid username or password.');
+    try {
+      if (onLoginSubmit) {
+        const result = await onLoginSubmit(credentials);
+
+        if (result === false) {
+          setErrorMessage('Invalid username or password.');
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 600));
       }
+    } catch {
+      setErrorMessage('Unable to log in. Please try again.');
+    } finally {
       setLoading(false);
-    } else {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
     }
   };
 
