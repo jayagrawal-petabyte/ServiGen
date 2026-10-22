@@ -885,7 +885,14 @@ export const RequestsPage: React.FC = () => {
                 className="add-view-btn"
                 title="Save current filters as quick view"
                 onClick={() => {
-                  setStatusMessage(`✓ Filter "${statusFilter}" pinned to your views`);
+                  const saved = JSON.parse(localStorage.getItem('sg_pinned_views') || '[]');
+                  if (!saved.includes(statusFilter)) {
+                    saved.push(statusFilter);
+                    localStorage.setItem('sg_pinned_views', JSON.stringify(saved));
+                    setStatusMessage(`✓ "${statusFilter}" pinned to your quick views`);
+                  } else {
+                    setStatusMessage(`"${statusFilter}" is already pinned`);
+                  }
                   setTimeout(() => setStatusMessage(null), 2000);
                 }}
               >
