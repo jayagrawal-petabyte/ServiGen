@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, useDeferredValue } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import PriorityIndicator from "./PriorityIndicator";
@@ -45,6 +45,85 @@ const INCIDENT_CATEGORIES = [
   'Infrastructure & Cloud',
   'General Support',
 ] as const;
+
+interface IncidentTableRowProps {
+  incident: Incident;
+  isSelected: boolean;
+  isActive: boolean;
+  onSelect: (incident: Incident) => void;
+  onToggleSelect: (id: string) => void;
+}
+
+const IncidentTableRow = React.memo(function IncidentTableRow({
+  incident,
+  isSelected,
+  isActive,
+  onSelect,
+  onToggleSelect,
+}: IncidentTableRowProps) {
+  const handleRowClick = () => onSelect(incident);
+  const handleCheckboxClick = (e: React.MouseEvent) => e.stopPropagation();
+  const handleCheckboxChange = () => onToggleSelect(incident.id);
+
+  const statusLower = incident.status.toLowerCase();
+  const statusClass =
+    statusLower === "new" || statusLower === "active"
+      ? "status-pill-new"
+      : statusLower === "in progress" || statusLower === "actioned"
+      ? "status-pill-in-progress"
+      : statusLower === "on hold"
+      ? "status-pill-on-hold"
+      : "status-pill-resolved";
+
+  return (
+    <tr
+      className={isActive ? "row-viewing-active" : isSelected ? "selected" : ""}
+      onClick={handleRowClick}
+      style={{ cursor: "pointer" }}
+    >
+      <td onClick={handleCheckboxClick}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={handleCheckboxChange}
+        />
+      </td>
+      <td>
+        {incident.isStarred ? (
+          <span className="star-indicator" title="Starred / Flagged">⭐</span>
+        ) : (
+          <span className="viewing-dash">—</span>
+        )}
+      </td>
+      <td className="font-bold text-gray-900">
+        {incident.id}
+      </td>
+      <td>
+        <SlaBadge slaTimeLeft={incident.sla} />
+      </td>
+      <td className="team-table-summary-link font-medium">
+        {incident.summary}
+      </td>
+      <td className="text-gray-600 text-xs">
+        {incident.category}
+      </td>
+      <td>
+        <PriorityIndicator priority={incident.priority} />
+      </td>
+      <td>
+        <span className={statusClass}>
+          {incident.status}
+        </span>
+      </td>
+      <td className="text-gray-600 text-xs">
+        {incident.type}
+      </td>
+      <td className="text-gray-500 text-xs">
+        {incident.dateLogged || "28/07/2026"}
+      </td>
+    </tr>
+  );
+});
 
 function TeamIncidentTable({
   team = "1st Line Support",
@@ -176,56 +255,66 @@ function TeamIncidentTable({
     return Array.from(new Set([...fromRoster, ...fromIncidents]));
   }, [secondLineAgents, incidents]);
 
-  // Dynamic live counts for 1st Line Support
-  const count1stLineTotal = useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support").length,
-    [incidents]
-  );
-  const count1stLineUnassigned = useMemo(
-    () => incidents.filter((i) => i.team === "1st Line Support" && (!i.agent || i.agent === "Unassigned")).length,
-    [incidents]
-  );
+  // Single-pass computation for all sidebar metrics & agent counts O(N)
+  const {
+    count1stLineTotal,
+    count1stLineUnassigned,
+    count2ndLineTotal,
+    count2ndLineUnassigned,
+    countInfrastructure,
+    countBreachingSLA,
+    agentIncidentCounts,
+  } = useMemo(() => {
+    let c1Total = 0;
+    let c1Unassigned = 0;
+    let c2Total = 0;
+    let c2Unassigned = 0;
+    let cInfra = 0;
+    let cBreaching = 0;
+    const agentCounts: Record<string, number> = {};
 
-  // Dynamic live counts for 2nd Line Support
-  const count2ndLineTotal = useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support").length,
-    [incidents]
-  );
-  const count2ndLineUnassigned = useMemo(
-    () => incidents.filter((i) => i.team === "2nd Line Support" && (!i.agent || i.agent === "Unassigned")).length,
-    [incidents]
-  );
-
-  // Dynamic live counts for Infrastructure
-  const countInfrastructure = useMemo(
-    () => incidents.filter((i) => i.team === "Infrastructure").length,
-    [incidents]
-  );
-
-  // Dynamic live counts for Breaching SLA
-  const countBreachingSLA = useMemo(
-    () => incidents.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach")).length,
-    [incidents]
-  );
-
-  // Precomputed agent incident counts for O(1) sidebar lookups
-  const agentIncidentCounts = useMemo(() => {
-    const map: Record<string, number> = {};
     for (let idx = 0; idx < incidents.length; idx++) {
       const inc = incidents[idx];
+      const isUnassigned = !inc.agent || inc.agent === "Unassigned";
+
+      if (inc.team === "1st Line Support") {
+        c1Total++;
+        if (isUnassigned) c1Unassigned++;
+      } else if (inc.team === "2nd Line Support") {
+        c2Total++;
+        if (isUnassigned) c2Unassigned++;
+      } else if (inc.team === "Infrastructure") {
+        cInfra++;
+      }
+
+      if (inc.sla && (inc.sla.startsWith("-") || inc.sla.toLowerCase().includes("breach"))) {
+        cBreaching++;
+      }
+
       if (inc.agent && inc.team) {
         const key = `${inc.team}::${inc.agent.toLowerCase()}`;
-        map[key] = (map[key] || 0) + 1;
+        agentCounts[key] = (agentCounts[key] || 0) + 1;
       }
     }
-    return map;
+
+    return {
+      count1stLineTotal: c1Total,
+      count1stLineUnassigned: c1Unassigned,
+      count2ndLineTotal: c2Total,
+      count2ndLineUnassigned: c2Unassigned,
+      countInfrastructure: cInfra,
+      countBreachingSLA: cBreaching,
+      agentIncidentCounts: agentCounts,
+    };
   }, [incidents]);
+
+  const deferredSearch = useDeferredValue(search);
 
   // Reset page and selection when view, search, or status filter changes
   useEffect(() => {
     setCurrentPage(1);
     setSelectedIncidents([]);
-  }, [selectedView, search, statusFilter]);
+  }, [selectedView, deferredSearch, statusFilter]);
 
   // Get Started & New incident modals
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
@@ -270,13 +359,13 @@ function TeamIncidentTable({
       base = base.filter((i) => i.status === "Resolved" || i.status === "Closed");
     }
 
-    if (!search.trim() && !ciParam && !ciNameParam) return base;
-    const q = search.toLowerCase();
+    if (!deferredSearch.trim() && !ciParam && !ciNameParam) return base;
+    const q = deferredSearch.toLowerCase();
     const qCi = (ciNameParam || ciParam || '').toLowerCase();
 
     return base.filter((incident) => {
       const matchesSearch =
-        !search.trim() ||
+        !deferredSearch.trim() ||
         incident.id.toLowerCase().includes(q) ||
         incident.summary.toLowerCase().includes(q) ||
         incident.category.toLowerCase().includes(q) ||
@@ -292,7 +381,7 @@ function TeamIncidentTable({
 
       return matchesSearch && matchesCi;
     });
-  }, [incidents, selectedView, statusFilter, search, ciParam, ciNameParam]);
+  }, [incidents, selectedView, statusFilter, deferredSearch, ciParam, ciNameParam]);
 
   const handleExportCSV = () => {
     if (filteredIncidents.length === 0) return;
@@ -345,11 +434,17 @@ function TeamIncidentTable({
     }
   }, [allFilteredSelected, paginatedIncidents, selectedIncidents]);
 
-  const toggleIncidentSelection = (id: string) => {
+  const toggleIncidentSelection = useCallback((id: string) => {
     setSelectedIncidents((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-  };
+  }, []);
+
+  const handleSelectIncident = useCallback((inc: Incident) => {
+    setSelectedIncident(inc);
+  }, []);
+
+  const selectedIncidentsSet = useMemo(() => new Set(selectedIncidents), [selectedIncidents]);
 
   const handleBulkAssignToMe = () => {
     const myName = user?.fullName || "";
@@ -1026,68 +1121,16 @@ function TeamIncidentTable({
                     </td>
                   </tr>
                 ) : paginatedIncidents.length > 0 ? (
-                  paginatedIncidents.map((incident) => {
-                    const isSelected = selectedIncidents.includes(incident.id);
-                    return (
-                      <tr
-                        key={incident.id}
-                        className={selectedIncident?.id === incident.id ? "row-viewing-active" : isSelected ? "selected" : ""}
-                        onClick={() => setSelectedIncident(incident)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleIncidentSelection(incident.id)}
-                          />
-                        </td>
-                        <td>
-                          {incident.isStarred ? (
-                            <span className="star-indicator" title="Starred / Flagged">⭐</span>
-                          ) : (
-                            <span className="viewing-dash">—</span>
-                          )}
-                        </td>
-                        <td className="font-bold text-gray-900">
-                          {incident.id}
-                        </td>
-                        <td>
-                          <SlaBadge slaTimeLeft={incident.sla} />
-                        </td>
-                        <td className="team-table-summary-link font-medium">
-                          {incident.summary}
-                        </td>
-                        <td className="text-gray-600 text-xs">
-                          {incident.category}
-                        </td>
-                        <td>
-                          <PriorityIndicator priority={incident.priority} />
-                        </td>
-                        <td>
-                          <span
-                            className={
-                              incident.status.toLowerCase() === "new" || incident.status.toLowerCase() === "active"
-                                ? "status-pill-new"
-                                : incident.status.toLowerCase() === "in progress" || incident.status.toLowerCase() === "actioned"
-                                ? "status-pill-in-progress"
-                                : incident.status.toLowerCase() === "on hold"
-                                ? "status-pill-on-hold"
-                                : "status-pill-resolved"
-                            }
-                          >
-                            {incident.status}
-                          </span>
-                        </td>
-                        <td className="text-gray-600 text-xs">
-                          {incident.type}
-                        </td>
-                        <td className="text-gray-500 text-xs">
-                          {incident.dateLogged || "28/07/2026"}
-                        </td>
-                      </tr>
-                    );
-                  })
+                  paginatedIncidents.map((incident) => (
+                    <IncidentTableRow
+                      key={incident.id}
+                      incident={incident}
+                      isSelected={selectedIncidentsSet.has(incident.id)}
+                      isActive={selectedIncident?.id === incident.id}
+                      onSelect={handleSelectIncident}
+                      onToggleSelect={toggleIncidentSelection}
+                    />
+                  ))
                 ) : (
                   <tr>
                     <td colSpan={10} className="empty-state text-center py-12 text-gray-500">

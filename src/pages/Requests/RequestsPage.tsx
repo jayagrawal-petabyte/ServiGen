@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef, useDeferredValue } from 'react';
 import GetStartedGuide from '../../components/shared/GetStartedGuide';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
@@ -202,6 +202,98 @@ export const DEFAULT_REQUESTS: RequestItem[] = [
   },
 ];
 
+interface RequestTableRowProps {
+  request: RequestItem;
+  isChecked: boolean;
+  onSelect: (request: RequestItem) => void;
+  onToggleCheck: (id: string) => void;
+}
+
+const RequestTableRow = React.memo(function RequestTableRow({
+  request: req,
+  isChecked,
+  onSelect,
+  onToggleCheck,
+}: RequestTableRowProps) {
+  const handleRowClick = () => onSelect(req);
+  const handleCheckboxClick = (e: React.MouseEvent) => e.stopPropagation();
+  const handleCheckboxChange = () => onToggleCheck(req.id);
+
+  return (
+    <tr
+      className={`request-table-row ${isChecked ? 'row-selected' : ''}`}
+      onClick={handleRowClick}
+      title="Click to view details"
+    >
+      <td className="col-check" onClick={handleCheckboxClick}>
+        <input
+          type="checkbox"
+          checked={isChecked}
+          onChange={handleCheckboxChange}
+          aria-label={`Select request ${req.id}`}
+        />
+      </td>
+
+      <td className="col-viewing"></td>
+
+      <td className="col-id font-medium text-gray-700">{req.id}</td>
+
+      <td className="col-sla">
+        <span
+          className={`sla-red-pill font-bold ${
+            req.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800' : ''
+          }`}
+        >
+          {req.slaTimeLeft}
+        </span>
+      </td>
+
+      <td className="col-summary">
+        <span className="request-summary-link font-medium" title={req.summary}>
+          {req.summary}
+        </span>
+      </td>
+
+      <td className="col-category text-gray-600 truncate max-w-[190px]">{req.category}</td>
+
+      <td className="col-priority">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`priority-square-dot ${
+              req.priority === 'Critical'
+                ? 'bg-rose-600'
+                : req.priority === 'High'
+                ? 'bg-amber-500'
+                : req.priority === 'Medium'
+                ? 'bg-yellow-400'
+                : 'bg-emerald-500'
+            }`}
+          />
+          <span className="priority-label text-xs text-gray-700">{req.priority}</span>
+        </div>
+      </td>
+
+      <td className="col-status">
+        <span
+          className={`status-pill ${
+            req.status === 'In Progress'
+              ? 'status-in-progress'
+              : req.status === 'Resolved'
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'status-new'
+          }`}
+        >
+          {req.status}
+        </span>
+      </td>
+
+      <td className="col-type text-gray-700 text-xs">{req.type}</td>
+
+      <td className="col-date text-gray-600 text-xs font-mono">{req.date}</td>
+    </tr>
+  );
+});
+
 export const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -216,6 +308,7 @@ export const RequestsPage: React.FC = () => {
   const [isInfraExpanded, setIsInfraExpanded] = useState<boolean>(false);
   const [isTreeCollapsed, setIsTreeCollapsed] = useState<boolean>(false);
   const [searchTree, setSearchTree] = useState<string>('');
+  const deferredSearchTree = useDeferredValue(searchTree);
 
   // Table Data State with guaranteed offline fallback
   const [requestsList, setRequestsList] = useState<RequestItem[]>(DEFAULT_REQUESTS);
@@ -439,8 +532,8 @@ export const RequestsPage: React.FC = () => {
       }
 
       // Search filter
-      if (searchTree.trim()) {
-        const query = searchTree.toLowerCase();
+      if (deferredSearchTree.trim()) {
+        const query = deferredSearchTree.toLowerCase();
         return (
           req.id.toLowerCase().includes(query) ||
           req.summary.toLowerCase().includes(query) ||
@@ -452,12 +545,12 @@ export const RequestsPage: React.FC = () => {
 
       return true;
     });
-  }, [requestsList, selectedAgent, selectedTeam, statusFilter, activeCustomView, searchTree]);
+  }, [requestsList, selectedAgent, selectedTeam, statusFilter, activeCustomView, deferredSearchTree]);
 
   // Reset page to 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTeam, selectedAgent, statusFilter, searchTree]);
+  }, [selectedTeam, selectedAgent, statusFilter, deferredSearchTree]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
@@ -547,6 +640,12 @@ export const RequestsPage: React.FC = () => {
   const toggleSelectOne = useCallback((id: string) => {
     setSelectedRequestIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   }, []);
+
+  const handleSelectTicketForModal = useCallback((req: RequestItem) => {
+    setSelectedTicketForModal(req);
+  }, []);
+
+  const selectedRequestsSet = useMemo(() => new Set(selectedRequestIds), [selectedRequestIds]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -837,7 +936,7 @@ export const RequestsPage: React.FC = () => {
                       <span className="agent-icon-silhouette">👤</span>
                       <span className="agent-name">Unassigned</span>
                       <span className="agent-count-badge">
-                        {requestsList.filter((r) => r.team === '2nd Line Support' && r.agent === 'Unassigned').length}
+                        {counts.secondLineAgents['Unassigned'] || 0}
                       </span>
                     </div>
 
@@ -892,7 +991,7 @@ export const RequestsPage: React.FC = () => {
                       <span className="agent-icon-silhouette">👤</span>
                       <span className="agent-name">Unassigned</span>
                       <span className="agent-count-badge">
-                        {requestsList.filter((r) => r.team === 'Infrastructure' && r.agent === 'Unassigned').length}
+                        {counts.infraAgents['Unassigned'] || 0}
                       </span>
                     </div>
 
@@ -1182,83 +1281,15 @@ export const RequestsPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedRequests.map((req) => {
-                    const isChecked = selectedRequestIds.includes(req.id);
-                    return (
-                      <tr
-                        key={req.id}
-                        className={`request-table-row ${isChecked ? 'row-selected' : ''}`}
-                        onClick={() => setSelectedTicketForModal(req)}
-                        title="Click to view details"
-                      >
-                        <td className="col-check" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleSelectOne(req.id)}
-                            aria-label={`Select request ${req.id}`}
-                          />
-                        </td>
-
-                        <td className="col-viewing"></td>
-
-                        <td className="col-id font-medium text-gray-700">{req.id}</td>
-
-                        <td className="col-sla">
-                          <span
-                            className={`sla-red-pill font-bold ${
-                              req.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800' : ''
-                            }`}
-                          >
-                            {req.slaTimeLeft}
-                          </span>
-                        </td>
-
-                        <td className="col-summary">
-                          <span className="request-summary-link font-medium" title={req.summary}>
-                            {req.summary}
-                          </span>
-                        </td>
-
-                        <td className="col-category text-gray-600 truncate max-w-[190px]">{req.category}</td>
-
-                        <td className="col-priority">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`priority-square-dot ${
-                                req.priority === 'Critical'
-                                  ? 'bg-rose-600'
-                                  : req.priority === 'High'
-                                  ? 'bg-amber-500'
-                                  : req.priority === 'Medium'
-                                  ? 'bg-yellow-400'
-                                  : 'bg-emerald-500'
-                              }`}
-                            />
-                            <span className="priority-label text-xs text-gray-700">{req.priority}</span>
-                          </div>
-                        </td>
-
-                        <td className="col-status">
-                          <span
-                            className={`status-pill ${
-                              req.status === 'In Progress'
-                                ? 'status-in-progress'
-                                : req.status === 'Resolved'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'status-new'
-                            }`}
-                          >
-                            {req.status}
-                          </span>
-                        </td>
-
-                        <td className="col-type text-gray-700 text-xs">{req.type}</td>
-
-                        <td className="col-date text-gray-600 text-xs font-mono">{req.date}</td>
-                      </tr>
-                    );
-                  })
+                  paginatedRequests.map((req) => (
+                    <RequestTableRow
+                      key={req.id}
+                      request={req}
+                      isChecked={selectedRequestsSet.has(req.id)}
+                      onSelect={handleSelectTicketForModal}
+                      onToggleCheck={toggleSelectOne}
+                    />
+                  ))
                 )}
               </tbody>
             </table>
