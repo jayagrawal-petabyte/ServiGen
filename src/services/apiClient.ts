@@ -295,11 +295,28 @@ export function isPublicEndpoint(endpoint: string): boolean {
 export const refreshAuthToken = refreshSession;
 /** @deprecated Retained for callers of the old name; no longer logs in with demo credentials. */
 export const obtainDevAuthToken = refreshSession;
+
+const GET_CACHE_TTL_MS = 3000; // 3 seconds for rapid navigation and duplicate mounts
+interface CacheRecord {
+  data: any;
+  timestamp: number;
+}
+const apiGetCache = new Map<string, CacheRecord>();
+const apiInFlightGetRequests = new Map<string, Promise<any>>();
+
+/**
+ * Clear cached GET responses. Called automatically on any mutation (POST/PUT/PATCH/DELETE)
+ * or manually when fresh data is required.
+ */
+export function clearApiCache(): void {
+  apiGetCache.clear();
+}
+
 /**
  * Core HTTP fetch wrapper with authorization header, request payload handling,
  * standard error parsing, and transparent JWT auto-acquisition.
  */
-export async function apiRequest<T = any>(
+async function executeRequest<T = any>(
   endpoint: string,
   options: RequestOptions & { _isRetry?: boolean } = {}
 ): Promise<T> {
@@ -485,6 +502,65 @@ export async function apiRequest<T = any>(
   }
 
   return responseData as T;
+}
+
+/**
+ * Public apiRequest entrypoint with transparent in-flight deduplication and short TTL cache.
+ */
+export async function apiRequest<T = any>(
+  endpoint: string,
+  options: RequestOptions & { _isRetry?: boolean } = {}
+): Promise<T> {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET') {
+    clearApiCache();
+    return executeRequest<T>(endpoint, options);
+  }
+
+  const baseUrl = getApiBaseUrl();
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let fullUrl = `${baseUrl}${normalizedEndpoint}`;
+  if (options.params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      fullUrl += (fullUrl.includes('?') ? '&' : '?') + queryString;
+    }
+  }
+
+  const token = getAuthToken();
+  const cacheKey = `${token || 'anon'}::${fullUrl}`;
+
+  // Check short TTL cache
+  const cached = apiGetCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < GET_CACHE_TTL_MS) {
+    return cached.data as T;
+  }
+
+  // Check in-flight request to deduplicate
+  const inFlight = apiInFlightGetRequests.get(cacheKey);
+  if (inFlight) {
+    return inFlight as Promise<T>;
+  }
+
+  const promise = executeRequest<T>(endpoint, options)
+    .then((result) => {
+      apiGetCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      apiInFlightGetRequests.delete(cacheKey);
+      return result;
+    })
+    .catch((err) => {
+      apiInFlightGetRequests.delete(cacheKey);
+      throw err;
+    });
+
+  apiInFlightGetRequests.set(cacheKey, promise);
+  return promise;
 }
 
 /**

@@ -221,7 +221,7 @@ export default function CalendarPage() {
   useEffect(() => {
     async function loadAgents() {
       try {
-        const { api: apiAgent } = await import("../../services/apiClient");
+        const apiAgent = api;
         const [r1, r2]: any[] = await Promise.all([
           apiAgent.get('/api/incidents/support/first-line/agents'),
           apiAgent.get('/api/incidents/support/second-line/agents'),

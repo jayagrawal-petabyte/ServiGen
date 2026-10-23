@@ -41,7 +41,7 @@ interface TodoItem {
   createdAt: number;
 }
 
-export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
+export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.memo(({
   className = '',
   onOpenTicket,
   onGetStarted,
@@ -1165,6 +1165,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default GlobalNavbarActions;

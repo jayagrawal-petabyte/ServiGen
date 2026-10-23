@@ -90,7 +90,7 @@ export interface SlaBadgeProps {
   className?: string;
 }
 
-export const SlaBadge: React.FC<SlaBadgeProps> = ({
+export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   slaTimeLeft,
   slaFormatted,
   className = '',
@@ -144,6 +144,6 @@ export const SlaBadge: React.FC<SlaBadgeProps> = ({
       <span>{text}</span>
     </span>
   );
-};
+});
 
 export default SlaBadge;

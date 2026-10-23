@@ -6,14 +6,16 @@ interface BrandLogoProps {
   className?: string;
 }
 
-const BrandLogo: React.FC<BrandLogoProps> = ({
-  size = 32,
+const BrandLogo: React.FC<BrandLogoProps> = React.memo(({
   className = '',
 }) => {
   return (
     <img
       src={appLogo}
       alt="BrainMint Logo"
+      width={110}
+      height={54}
+      decoding="async"
       className={className}
       style={{
         width: '100%',
@@ -27,7 +29,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
       }}
     />
   );
-};
+});
 
 export default BrandLogo;
 export { BrandLogo };

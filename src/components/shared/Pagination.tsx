@@ -10,7 +10,7 @@ export interface PaginationProps {
   className?: string;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
+export const Pagination: React.FC<PaginationProps> = React.memo(({
   currentRange,
   hasPrevious = false,
   hasNext = false,
@@ -37,6 +37,6 @@ export const Pagination: React.FC<PaginationProps> = ({
       </button>
     </div>
   );
-};
+});
 
 export default Pagination;

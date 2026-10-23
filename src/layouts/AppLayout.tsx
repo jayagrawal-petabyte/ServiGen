@@ -289,14 +289,25 @@ export const AppLayout: React.FC = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="w-full min-h-full flex-1 flex flex-col"
           >
             <ErrorBoundary resetKey={location.pathname}>
-              <Outlet />
+              <React.Suspense
+                fallback={
+                  <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-transparent py-16">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs font-semibold text-slate-500">Loading view...</span>
+                    </div>
+                  </div>
+                }
+              >
+                <Outlet />
+              </React.Suspense>
             </ErrorBoundary>
           </motion.div>
         </AnimatePresence>

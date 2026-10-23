@@ -274,12 +274,38 @@ export const NAV_ITEMS: NavItemConfig[] = [
   },
 ];
 
+const PREFETCH_MAP: Record<string, () => Promise<any>> = {
+  '/dashboard': () => import('../../pages/Dashboard/Dashboard'),
+  '/my-work': () => import('../../pages/MyWork/MyWork'),
+  '/incidents': () => import('../../pages/Incidents'),
+  '/major-incidents/live': () => import('../../pages/MajorIncidents'),
+  '/problems': () => import('../../pages/Incidents'),
+  '/requests': () => import('../../pages/Requests/RequestsPage'),
+  '/change-requests': () => import('../../pages/ChangeRequests/ChangeRequestsPage'),
+  '/projects': () => import('../../pages/Projects/ProjectsPage'),
+  '/article-drafts': () => import('../../pages/ArticleDrafts/ArticleDraftsPage'),
+  '/calendar': () => import('../../pages/Calendar/CalendarPage'),
+  '/organisations': () => import('../../pages/Auth'),
+  '/cmdb': () => import('../../pages/CMDB/CmdbPage'),
+  '/contacts': () => import('../../pages/Auth'),
+  '/approvals': () => import('../../pages/Approvals/ApprovalsPage'),
+};
+
+const prefetchRoute = (to: string) => {
+  const loader = PREFETCH_MAP[to];
+  if (loader) {
+    try {
+      loader();
+    } catch {}
+  }
+};
+
 export interface SidebarProps {
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onCloseMobile }) => {
   const location = useLocation();
   const { user } = useAuth();
   const currentRole: User['role'] = user?.role || 'Administrator';
@@ -300,6 +326,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         <NavLink
           to="/dashboard"
           onClick={onCloseMobile}
+          onMouseEnter={() => prefetchRoute('/dashboard')}
+          onFocus={() => prefetchRoute('/dashboard')}
           className="flex items-center justify-center transition-transform hover:scale-105"
           style={{ textDecoration: 'none' }}
           title="ServiGen Dashboard"
@@ -331,6 +359,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
               key={item.to}
               to={item.to}
               onClick={onCloseMobile}
+              onMouseEnter={() => prefetchRoute(item.to)}
+              onFocus={() => prefetchRoute(item.to)}
               className={`sidebar-nav-link ${isActive ? 'active' : ''}`}
               title={item.label}
               data-active={isActive ? 'true' : undefined}
@@ -352,6 +382,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
       </nav>
     </aside>
   );
-};
+});
 
 export default Sidebar;

@@ -1,10 +1,12 @@
+import React from 'react';
+
 interface PriorityIndicatorProps {
   priority: string;
 }
 
-function PriorityIndicator({
+const PriorityIndicator: React.FC<PriorityIndicatorProps> = React.memo(({
   priority,
-}: PriorityIndicatorProps) {
+}) => {
   return (
     <span
       className={`priority-indicator priority-${priority.toLowerCase()}`}
@@ -13,6 +15,6 @@ function PriorityIndicator({
       {priority}
     </span>
   );
-}
+});
 
 export default PriorityIndicator;

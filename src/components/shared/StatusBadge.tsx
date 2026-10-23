@@ -116,7 +116,7 @@ const sizeStyles: Record<string, string> = {
   lg: 'px-3 py-1 text-sm',
 };
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
+export const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({
   label,
   status,
   variant,
@@ -147,7 +147,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       {displayLabel}
     </span>
   );
-};
+});
 
 export const StatusPill = StatusBadge;
 
