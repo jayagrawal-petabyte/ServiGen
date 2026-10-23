@@ -492,27 +492,31 @@ export const RequestsPage: React.FC = () => {
   }, [requestsList]);
 
   const counts = useMemo(() => {
-    const unassignedCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === 'Unassigned').length;
-    const demoUserCount = requestsList.filter((r) => r.team === '1st Line Support' && r.agent.toLowerCase() === currentUserName.toLowerCase()).length;
-    const firstLineTotal = requestsList.filter((r) => r.team === '1st Line Support').length;
-    const secondLineTotal = requestsList.filter((r) => r.team === '2nd Line Support').length;
-    const infraTotal = requestsList.filter((r) => r.team === 'Infrastructure').length;
-    const allTotal = requestsList.length;
-
     const otherCounts: Record<string, number> = {};
-    firstLineAgents.forEach((name) => {
-      otherCounts[name] = requestsList.filter((r) => r.team === '1st Line Support' && r.agent === name).length;
-    });
-
     const secondLineOtherCounts: Record<string, number> = {};
-    secondLineAgents.forEach((name) => {
-      secondLineOtherCounts[name] = requestsList.filter((r) => r.team === '2nd Line Support' && r.agent === name).length;
-    });
-
     const infraOtherCounts: Record<string, number> = {};
-    infraAgents.forEach((name) => {
-      infraOtherCounts[name] = requestsList.filter((r) => r.team === 'Infrastructure' && r.agent === name).length;
-    });
+    let unassignedCount = 0;
+    let demoUserCount = 0;
+    let firstLineTotal = 0;
+    let secondLineTotal = 0;
+    let infraTotal = 0;
+    const lowerCurrentUser = currentUserName.toLowerCase();
+
+    for (let i = 0; i < requestsList.length; i++) {
+      const r = requestsList[i];
+      if (r.team === '1st Line Support') {
+        firstLineTotal++;
+        if (r.agent === 'Unassigned') unassignedCount++;
+        if (r.agent.toLowerCase() === lowerCurrentUser) demoUserCount++;
+        otherCounts[r.agent] = (otherCounts[r.agent] || 0) + 1;
+      } else if (r.team === '2nd Line Support') {
+        secondLineTotal++;
+        secondLineOtherCounts[r.agent] = (secondLineOtherCounts[r.agent] || 0) + 1;
+      } else if (r.team === 'Infrastructure') {
+        infraTotal++;
+        infraOtherCounts[r.agent] = (infraOtherCounts[r.agent] || 0) + 1;
+      }
+    }
 
     return {
       unassigned: unassignedCount,
@@ -523,23 +527,26 @@ export const RequestsPage: React.FC = () => {
       firstLine: firstLineTotal,
       secondLine: secondLineTotal,
       infra: infraTotal,
-      all: allTotal,
+      all: requestsList.length,
     };
-  }, [requestsList, currentUserName, firstLineAgents, secondLineAgents, infraAgents]);
+  }, [requestsList, currentUserName]);
 
   // Checkbox handling
-  const allSelected = paginatedRequests.length > 0 && paginatedRequests.every((r) => selectedRequestIds.includes(r.id));
-  const toggleSelectAll = () => {
+  const allSelected = useMemo(() => {
+    return paginatedRequests.length > 0 && paginatedRequests.every((r) => selectedRequestIds.includes(r.id));
+  }, [paginatedRequests, selectedRequestIds]);
+
+  const toggleSelectAll = useCallback(() => {
     if (allSelected) {
       setSelectedRequestIds([]);
     } else {
       setSelectedRequestIds(paginatedRequests.map((r) => r.id));
     }
-  };
+  }, [allSelected, paginatedRequests]);
 
-  const toggleSelectOne = (id: string) => {
+  const toggleSelectOne = useCallback((id: string) => {
     setSelectedRequestIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-  };
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

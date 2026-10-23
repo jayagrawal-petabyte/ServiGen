@@ -321,16 +321,18 @@ function TeamIncidentTable({
   const itemsPerPage = 50;
   const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedIncidents = filteredIncidents.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const paginatedIncidents = useMemo(() => {
+    return filteredIncidents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredIncidents, startIndex, itemsPerPage]);
 
-  const allFilteredSelected =
-    paginatedIncidents.length > 0 &&
-    paginatedIncidents.every((inc) => selectedIncidents.includes(inc.id));
+  const allFilteredSelected = useMemo(() => {
+    return (
+      paginatedIncidents.length > 0 &&
+      paginatedIncidents.every((inc) => selectedIncidents.includes(inc.id))
+    );
+  }, [paginatedIncidents, selectedIncidents]);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (allFilteredSelected) {
       setSelectedIncidents((prev) =>
         prev.filter((id) => !paginatedIncidents.some((p) => p.id === id))
@@ -341,7 +343,7 @@ function TeamIncidentTable({
         .filter((id) => !selectedIncidents.includes(id));
       setSelectedIncidents((prev) => [...prev, ...toAdd]);
     }
-  };
+  }, [allFilteredSelected, paginatedIncidents, selectedIncidents]);
 
   const toggleIncidentSelection = (id: string) => {
     setSelectedIncidents((prev) =>
@@ -581,9 +583,7 @@ function TeamIncidentTable({
                     <>
                       <span className="team-section-pill-label available">Support Agents</span>
                       {firstLineAgentNames.map((agentName) => {
-                        const count = incidents.filter(
-                          (i) => i.team === "1st Line Support" && i.agent.toLowerCase() === agentName.toLowerCase()
-                        ).length;
+                        const count = agentIncidentCounts[`1st Line Support::${agentName.toLowerCase()}`] || 0;
                         const isMe = user?.fullName && user.fullName.toLowerCase() === agentName.toLowerCase();
                         const initials = agentName
                           .split(" ")
@@ -706,9 +706,7 @@ function TeamIncidentTable({
                     <>
                       <span className="team-section-pill-label available">Support Agents</span>
                       {secondLineAgentNames.map((agentName) => {
-                        const count = incidents.filter(
-                          (i) => i.team === "2nd Line Support" && i.agent.toLowerCase() === agentName.toLowerCase()
-                        ).length;
+                        const count = agentIncidentCounts[`2nd Line Support::${agentName.toLowerCase()}`] || 0;
                         const isMe = user?.fullName && user.fullName.toLowerCase() === agentName.toLowerCase();
                         const initials = agentName
                           .split(" ")

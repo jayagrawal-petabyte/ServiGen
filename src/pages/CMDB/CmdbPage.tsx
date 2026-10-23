@@ -73,19 +73,23 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     }
   }, [initialItems, loadData]);
 
-  const filteredCis = items.filter((ci: ConfigurationItem) => {
-    const matchesSearch =
-      ci.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ci.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ci.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ci.site.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ci.businessOwner.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredCis = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return items.filter((ci: ConfigurationItem) => {
+      const matchesSearch =
+        !q ||
+        ci.name.toLowerCase().includes(q) ||
+        ci.id.toLowerCase().includes(q) ||
+        ci.tag.toLowerCase().includes(q) ||
+        ci.site.toLowerCase().includes(q) ||
+        ci.businessOwner.toLowerCase().includes(q);
 
-    const matchesType = selectedType === 'ALL' || ci.type === selectedType;
-    const matchesStatus = selectedStatus === 'ALL' || ci.status === selectedStatus;
+      const matchesType = selectedType === 'ALL' || ci.type === selectedType;
+      const matchesStatus = selectedStatus === 'ALL' || ci.status === selectedStatus;
 
-    return matchesSearch && matchesType && matchesStatus;
-  });
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [items, searchQuery, selectedType, selectedStatus]);
 
   const getCiIcon = (type: CiType | string) => {
     switch (type) {

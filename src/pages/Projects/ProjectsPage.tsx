@@ -138,11 +138,11 @@ export default function ProjectsPage() {
     () => searched.flatMap((p) => p.tasks.map((t) => ({ ...t, project: p }))),
     [searched]
   );
-  const myTasks = allTasks.filter((t) => sameName(userName, t.assignee));
-  const overdueTasks = allTasks.filter(isOverdue);
+  const myTasks = useMemo(() => allTasks.filter((t) => sameName(userName, t.assignee)), [allTasks, userName]);
+  const overdueTasks = useMemo(() => allTasks.filter(isOverdue), [allTasks]);
 
   const pageCount = Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
-  const pageItems = listed.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const pageItems = useMemo(() => listed.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [listed, page]);
   const rangeStart = listed.length === 0 ? 0 : page * PAGE_SIZE + 1;
   const rangeEnd = Math.min(listed.length, (page + 1) * PAGE_SIZE);
 
