@@ -121,12 +121,13 @@ export default function Dashboard() {
     async function loadDashboardData() {
       setIsLoading(true);
       try {
-        const [kpiRes, sumRes, moodRes, tickRes, appRes] = await Promise.allSettled([
+        const [kpiRes, sumRes, moodRes, tickRes, appRes, myWorkRes] = await Promise.allSettled([
           dashboardService.getKpis(),
           dashboardService.getSummary(),
           dashboardService.getMood(),
           api.get('/api/tickets'),
           api.get('/api/approvals'),
+          myWorkService.getMyWorkTickets(),
         ]);
 
         if (!mounted) return;
@@ -222,31 +223,25 @@ export default function Dashboard() {
         const pendingList = appData.filter((a: any) => !a.status || a.status.toLowerCase() === 'pending');
         setPendingApprovalsCount(pendingList.length);
 
-        try {
-          const myWorkTickets = await myWorkService.getMyWorkTickets();
-          const taskData = Array.isArray(myWorkTickets) && myWorkTickets.length > 0 ? myWorkTickets : MOCK_MY_WORK_TICKETS;
-          if (mounted) {
-            setMyAssignmentsCount(taskData.length);
-            const mappedTasks: TaskRow[] = taskData.slice(0, 5).map((t: any, idx: number) => ({
-              id: String(t.id || idx),
-              task: t.summary || 'Assigned Ticket',
-              description: `${t.organisation || 'ServiGen Internal'} • ${t.status || 'Active'}`,
-              priority: (
-                t.priority?.toLowerCase().includes('high') || t.priority?.toLowerCase().includes('critical') || t.priority?.toLowerCase().includes('p1') || t.priority?.toLowerCase().includes('p2')
-                  ? 'High'
-                  : t.priority?.toLowerCase().includes('low') || t.priority?.toLowerCase().includes('p4')
-                  ? 'Low'
-                  : 'Medium'
-              ) as TaskRow['priority'],
-              dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
-            }));
-            setTasks(mappedTasks);
-          }
-        } catch {
-          if (mounted) {
-            setMyAssignmentsCount(MOCK_MY_WORK_TICKETS.length);
-          }
-        }
+        const taskData =
+          myWorkRes.status === 'fulfilled' && Array.isArray(myWorkRes.value) && myWorkRes.value.length > 0
+            ? myWorkRes.value
+            : MOCK_MY_WORK_TICKETS;
+        setMyAssignmentsCount(taskData.length);
+        const mappedTasks: TaskRow[] = taskData.slice(0, 5).map((t: any, idx: number) => ({
+          id: String(t.id || idx),
+          task: t.summary || 'Assigned Ticket',
+          description: `${t.organisation || 'ServiGen Internal'} • ${t.status || 'Active'}`,
+          priority: (
+            t.priority?.toLowerCase().includes('high') || t.priority?.toLowerCase().includes('critical') || t.priority?.toLowerCase().includes('p1') || t.priority?.toLowerCase().includes('p2')
+              ? 'High'
+              : t.priority?.toLowerCase().includes('low') || t.priority?.toLowerCase().includes('p4')
+              ? 'Low'
+              : 'Medium'
+          ) as TaskRow['priority'],
+          dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
+        }));
+        setTasks(mappedTasks);
       } catch (err) {
         console.warn('Dashboard live fetch error, using fallbacks:', err);
       } finally {
