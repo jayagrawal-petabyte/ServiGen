@@ -3,62 +3,62 @@ import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-r
 import AppLayout from './layouts/AppLayout'
 
 // Auth
-import { AuthPage, AuthProvider, OrganisationUsersScreen } from './pages/Auth'
+import { AuthProvider } from './pages/Auth'
+const AuthPage = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.AuthPage })))
+const OrganisationUsersScreen = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.OrganisationUsersScreen })))
 
 // Dashboard
-import Dashboard from './pages/Dashboard/Dashboard'
+const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'))
 
 // Incidents
-import Incidents from './pages/Incidents'
+const Incidents = React.lazy(() => import('./pages/Incidents'))
 
 // Major Incidents
-import {
-  MajorIncidentsDesign,
-  MajorIncidentsLive,
-  MajorIncidentsWithFeed,
-  MajorIncidentsListMockup,
-} from './pages/MajorIncidents'
+const MajorIncidentsDesign = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsDesign })))
+const MajorIncidentsLive = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsLive })))
+const MajorIncidentsWithFeed = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsWithFeed })))
+const MajorIncidentsListMockup = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsListMockup })))
 
 // Projects & Calendar
-import ProjectsPage from './pages/Projects/ProjectsPage'
-import CalendarPage from './pages/Calendar/CalendarPage'
+const ProjectsPage = React.lazy(() => import('./pages/Projects/ProjectsPage'))
+const CalendarPage = React.lazy(() => import('./pages/Calendar/CalendarPage'))
 
 // Requests & Services Catalogue
-import RequestsPage from './pages/Requests/RequestsPage'
-import ServiceCatalogue from './pages/ServicesCatalogue/ServiceCatalogue'
+const RequestsPage = React.lazy(() => import('./pages/Requests/RequestsPage'))
+const ServiceCatalogue = React.lazy(() => import('./pages/ServicesCatalogue/ServiceCatalogue'))
 
 // Approvals
-import ApprovalsPage from './pages/Approvals/ApprovalsPage'
+const ApprovalsPage = React.lazy(() => import('./pages/Approvals/ApprovalsPage'))
 
 // Article Drafts
-import ArticleDraftsPage from './pages/ArticleDrafts/ArticleDraftsPage'
+const ArticleDraftsPage = React.lazy(() => import('./pages/ArticleDrafts/ArticleDraftsPage'))
 
 // My Work
-import MyWork from './pages/MyWork/MyWork'
+const MyWork = React.lazy(() => import('./pages/MyWork/MyWork'))
 
 // On Hold Tickets
-import OnHoldTicketScreen from './pages/OnHoldTicket/TicketScreen/OnHoldTicketScreen'
+const OnHoldTicketScreen = React.lazy(() => import('./pages/OnHoldTicket/TicketScreen/OnHoldTicketScreen'))
 
 // Custom Lists
-import CustomLists from './pages/CustomLists/CustomLists'
+const CustomLists = React.lazy(() => import('./pages/CustomLists/CustomLists'))
 
 // Team Incidents
-import FirstLineLive from './pages/TeamIncidents/FirstLineLive'
-import FirstLineDesign from './pages/TeamIncidents/FirstLineDesign'
-import SecondLineLive from './pages/TeamIncidents/SecondLineLive'
-import SecondLineDesign from './pages/TeamIncidents/SecondLineDesign'
+const FirstLineLive = React.lazy(() => import('./pages/TeamIncidents/FirstLineLive'))
+const FirstLineDesign = React.lazy(() => import('./pages/TeamIncidents/FirstLineDesign'))
+const SecondLineLive = React.lazy(() => import('./pages/TeamIncidents/SecondLineLive'))
+const SecondLineDesign = React.lazy(() => import('./pages/TeamIncidents/SecondLineDesign'))
 
 // Reporting
-import IncidentsByCategoryReport from './pages/Reporting/IncidentsByCategoryReport'
+const IncidentsByCategoryReport = React.lazy(() => import('./pages/Reporting/IncidentsByCategoryReport'))
 
 // CMDB
-import { CmdbPage } from './pages/CMDB/CmdbPage'
-import { ServiceCisPage } from './pages/CMDB/ServiceCisPage'
+const CmdbPage = React.lazy(() => import('./pages/CMDB/CmdbPage').then((m) => ({ default: m.CmdbPage })))
+const ServiceCisPage = React.lazy(() => import('./pages/CMDB/ServiceCisPage').then((m) => ({ default: m.ServiceCisPage })))
 
 // Change Requests
-import { ChangeRequestsPage } from './pages/ChangeRequests/ChangeRequestsPage'
-import { ChangeRequestDetailModal } from './pages/ChangeRequests/ChangeRequestDetailModal'
-import { CreateChangeModal } from './pages/ChangeRequests/CreateChangeModal'
+const ChangeRequestsPage = React.lazy(() => import('./pages/ChangeRequests/ChangeRequestsPage').then((m) => ({ default: m.ChangeRequestsPage })))
+const ChangeRequestDetailModal = React.lazy(() => import('./pages/ChangeRequests/ChangeRequestDetailModal').then((m) => ({ default: m.ChangeRequestDetailModal })))
+const CreateChangeModal = React.lazy(() => import('./pages/ChangeRequests/CreateChangeModal').then((m) => ({ default: m.CreateChangeModal })))
 import type { ChangeRequest, ChangeStatus } from './types/cmdb'
 import {
   fetchChangeRequests,
@@ -198,45 +198,56 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          {/* Auth (Standalone screen - No sidebar) */}
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/login" element={<AuthPage />} />
+        <React.Suspense
+          fallback={
+            <div className="flex h-screen w-screen items-center justify-center bg-[#faf6f2]">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-semibold text-slate-500">Loading ServiGen...</span>
+              </div>
+            </div>
+          }
+        >
+          <Routes>
+            {/* Auth (Standalone screen - No sidebar) */}
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage />} />
 
-          {/* All App Screens (Inside Figma Left Sidebar Shell) */}
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/incidents" element={<Incidents />} />
-            <Route path="/my-work" element={<MyWork />} />
-            <Route path="/major-incidents" element={<Navigate to="/major-incidents/live" replace />} />
-            <Route path="/major-incidents/design" element={<MajorIncidentsDesign />} />
-            <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
-            <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
-            <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
-            <Route path="/problems" element={<Incidents />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/requests" element={<RequestsPage />} />
-            <Route path="/services-catalogue" element={<ServiceCatalogue />} />
-            <Route path="/approvals" element={<ApprovalsPage />} />
-            <Route path="/article-drafts" element={<ArticleDraftsPage />} />
-            <Route path="/on-hold" element={<OnHoldTicketScreen />} />
-            <Route path="/custom-lists" element={<CustomLists />} />
-            <Route path="/organisations" element={<OrganisationUsersScreen />} />
-            <Route path="/contacts" element={<OrganisationUsersScreen />} />
-            <Route path="/team/1st-line-live" element={<FirstLineLive />} />
-            <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
-            <Route path="/team/2nd-line-live" element={<SecondLineLive />} />
-            <Route path="/team/2nd-line-design" element={<SecondLineDesign />} />
-            <Route path="/cmdb" element={<CmdbPage />} />
-            <Route path="/cmdb/services" element={<ServiceCisPage />} />
-            <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
-            <Route path="/reports/incidents-by-category" element={<IncidentsByCategoryReport />} />
-            <Route path="/reporting" element={<IncidentsByCategoryReport />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Route>
-        </Routes>
+            {/* All App Screens (Inside Figma Left Sidebar Shell) */}
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/incidents" element={<Incidents />} />
+              <Route path="/my-work" element={<MyWork />} />
+              <Route path="/major-incidents" element={<Navigate to="/major-incidents/live" replace />} />
+              <Route path="/major-incidents/design" element={<MajorIncidentsDesign />} />
+              <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
+              <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
+              <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
+              <Route path="/problems" element={<Incidents />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/requests" element={<RequestsPage />} />
+              <Route path="/services-catalogue" element={<ServiceCatalogue />} />
+              <Route path="/approvals" element={<ApprovalsPage />} />
+              <Route path="/article-drafts" element={<ArticleDraftsPage />} />
+              <Route path="/on-hold" element={<OnHoldTicketScreen />} />
+              <Route path="/custom-lists" element={<CustomLists />} />
+              <Route path="/organisations" element={<OrganisationUsersScreen />} />
+              <Route path="/contacts" element={<OrganisationUsersScreen />} />
+              <Route path="/team/1st-line-live" element={<FirstLineLive />} />
+              <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
+              <Route path="/team/2nd-line-live" element={<SecondLineLive />} />
+              <Route path="/team/2nd-line-design" element={<SecondLineDesign />} />
+              <Route path="/cmdb" element={<CmdbPage />} />
+              <Route path="/cmdb/services" element={<ServiceCisPage />} />
+              <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
+              <Route path="/reports/incidents-by-category" element={<IncidentsByCategoryReport />} />
+              <Route path="/reporting" element={<IncidentsByCategoryReport />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+          </Routes>
+        </React.Suspense>
       </BrowserRouter>
     </AuthProvider>
   )

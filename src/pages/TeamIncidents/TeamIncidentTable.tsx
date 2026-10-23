@@ -208,6 +208,19 @@ function TeamIncidentTable({
     [incidents]
   );
 
+  // Precomputed agent incident counts for O(1) sidebar lookups
+  const agentIncidentCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (let idx = 0; idx < incidents.length; idx++) {
+      const inc = incidents[idx];
+      if (inc.agent && inc.team) {
+        const key = `${inc.team}::${inc.agent.toLowerCase()}`;
+        map[key] = (map[key] || 0) + 1;
+      }
+    }
+    return map;
+  }, [incidents]);
+
   // Reset page and selection when view, search, or status filter changes
   useEffect(() => {
     setCurrentPage(1);
