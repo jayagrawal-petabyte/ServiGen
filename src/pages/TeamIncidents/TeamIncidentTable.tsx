@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
 import PriorityIndicator from "./PriorityIndicator";

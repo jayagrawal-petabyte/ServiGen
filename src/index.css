@@ -48,6 +48,11 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -61,6 +66,14 @@ html, body {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+/* Hardware accelerated rendering for modals and popovers */
+[role="dialog"],
+.modal-overlay,
+.figma-left-sidebar {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Custom Scrollbars */

@@ -23,6 +23,9 @@ export default defineConfig(({ mode }) => {
     },
 
       build: {
+        target: 'es2020',
+        cssCodeSplit: true,
+        chunkSizeWarningLimit: 800,
         rollupOptions: {
           output: {
             manualChunks(id) {
