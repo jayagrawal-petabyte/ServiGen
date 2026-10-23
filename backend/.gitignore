@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Keep package-lock.json tracked for repeatable installs.
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime
+pids/
+*.pid
+*.seed
+
+# OS
+.DS_Store
+Thumbs.db
+
+temp/

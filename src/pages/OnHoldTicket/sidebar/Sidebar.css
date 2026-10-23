@@ -1,0 +1,79 @@
+/* --- Left Sidebar --- */
+.left-sidebar {
+  width: 72px;
+  background: #0b2239;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.left-sidebar::-webkit-scrollbar { width: 0; }
+
+.sidebar-logo {
+  height: 48px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #081929;
+  flex-shrink: 0;
+}
+
+.logo-circle {
+  width: 30px;
+  height: 30px;
+  background: #00b0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 6px 0;
+  gap: 6px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 2px;
+  cursor: pointer;
+  color: #94a3b8;
+  min-height: 46px;
+  gap: 2px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.07);
+}
+
+.nav-item.active {
+  color: #ffffff;
+  background: #00b0f0;
+}
+
+.nav-label {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 66px;
+}
+
+.nav-label-sm {
+  font-size: 9px;
+  text-align: center;
+  line-height: 1.1;
+}

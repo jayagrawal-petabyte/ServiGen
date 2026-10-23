@@ -4,12 +4,12 @@ const {
   createList,
 } = require('./list-builder.model');
 
-const getAllLists = async () => {
-  return await getLists();
+const getAllLists = async (options = {}) => {
+  return await getLists(options);
 };
 
-const getList = async (id) => {
-  return await getListById(id);
+const getList = async (id, organisationId = null) => {
+  return await getListById(id, organisationId);
 };
 
 const createNewList = async (listData) => {

@@ -1,0 +1,290 @@
+/**
+ * In-memory data store for the My Work module.
+ * Represents an agent's personal ticket queue covering Active, Pending, Actioned, and On-Hold states.
+ * Isolated repository pattern to enable future migration to Supabase/Prisma.
+ */
+
+const tickets = [
+  {
+    id: 'INC-1001',
+    summary: 'VPN connection dropping intermittently for remote users',
+    priority: 'High',
+    status: 'Active',
+    ticketType: 'Incident',
+    organisation: 'Acme Corp',
+    site: 'London HQ',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 180,
+    timeRecord: 45,
+    holdReason: null,
+    createdAt: '2026-09-25T08:30:00.000Z',
+    updatedAt: '2026-09-25T09:15:00.000Z',
+  },
+  {
+    id: 'REQ-1002',
+    summary: 'Request for administrator rights on developer workstation',
+    priority: 'Medium',
+    status: 'Pending',
+    ticketType: 'Service Request',
+    organisation: 'Globex Corp',
+    site: 'New York',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 360,
+    timeRecord: 20,
+    holdReason: 'Awaiting manager approval',
+    createdAt: '2026-09-25T07:45:00.000Z',
+    updatedAt: '2026-09-25T08:10:00.000Z',
+  },
+  {
+    id: 'INC-1003',
+    summary: 'Email delivery delayed on EMEA exchange server',
+    priority: 'Critical',
+    status: 'Actioned',
+    ticketType: 'Incident',
+    organisation: 'Initech',
+    site: 'Frankfurt',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 45,
+    timeRecord: 90,
+    holdReason: null,
+    createdAt: '2026-09-25T06:00:00.000Z',
+    updatedAt: '2026-09-25T09:30:00.000Z',
+  },
+  {
+    id: 'INC-1004',
+    summary: 'Office 365 licensing renewal for sales department',
+    priority: 'Medium',
+    status: 'On Hold',
+    ticketType: 'Incident',
+    organisation: 'Soylent Corp',
+    site: 'London HQ',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 420,
+    timeRecord: 15,
+    holdReason: 'Awaiting vendor quote',
+    holdStartedAt: '2026-09-24T14:30:00.000Z',
+    createdAt: '2026-09-24T14:00:00.000Z',
+    updatedAt: '2026-09-25T08:00:00.000Z',
+  },
+  {
+    id: 'REQ-1005',
+    summary: 'Hardware replacement: Docking station malfunctioning',
+    priority: 'Low',
+    status: 'On Hold',
+    ticketType: 'Service Request',
+    organisation: 'Umbrella Corp',
+    site: 'Tokyo',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 540,
+    timeRecord: 30,
+    holdReason: 'Awaiting hardware shipment',
+    holdStartedAt: '2026-09-24T11:45:00.000Z',
+    createdAt: '2026-09-24T11:20:00.000Z',
+    updatedAt: '2026-09-25T07:30:00.000Z',
+  },
+  {
+    id: 'INC-1006',
+    summary: 'Database connection timeout during batch reporting',
+    priority: 'Critical',
+    status: 'Active',
+    ticketType: 'Incident',
+    organisation: 'Massive Dynamic',
+    site: 'London HQ',
+    assignedAgentId: 'agent-001',
+    slaTimeLeft: 60,
+    timeRecord: 60,
+    holdReason: null,
+    createdAt: '2026-09-25T09:00:00.000Z',
+    updatedAt: '2026-09-25T10:00:00.000Z',
+  },
+  {
+    id: 'REQ-1007',
+    summary: 'New hire onboarding account provisioning',
+    priority: 'Medium',
+    status: 'Actioned',
+    ticketType: 'Service Request',
+    organisation: 'Hooli',
+    site: 'Singapore',
+    assignedAgentId: 'agent-002',
+    slaTimeLeft: 240,
+    timeRecord: 35,
+    holdReason: null,
+    createdAt: '2026-09-25T08:00:00.000Z',
+    updatedAt: '2026-09-25T09:45:00.000Z',
+  },
+];
+
+const db = require('../../config/db');
+const { handleDbError } = require('../../shared/utils/db-guard');
+
+const getTickets = async (filters = {}) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const where = {};
+      if (filters.assignedAgentId) where.assignedAgentId = filters.assignedAgentId;
+      if (filters.status) {
+        let statusVal = filters.status;
+        const lower = statusVal.toLowerCase();
+        if (lower === 'new') statusVal = 'Active';
+        else if (lower === 'on-hold' || lower === 'onhold') statusVal = 'On Hold';
+        where.status = { equals: statusVal, mode: 'insensitive' };
+      }
+      if (filters.priority) where.priority = { equals: filters.priority, mode: 'insensitive' };
+      if (filters.ticketType) where.ticketType = { equals: filters.ticketType, mode: 'insensitive' };
+      if (filters.organisation) {
+        where.organisation = { name: { contains: filters.organisation, mode: 'insensitive' } };
+      }
+
+      const dbTickets = await db.ticket.findMany({
+        where,
+        include: { organisation: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return dbTickets.map((t) => ({
+        id: t.id,
+        summary: t.summary,
+        priority: t.priority,
+        status: t.status,
+        ticketType: t.ticketType,
+        organisation: t.organisation?.name || 'Acme Corp',
+        site: t.siteName || 'London HQ',
+        assignedAgentId: t.assignedAgentId || 'agent-001',
+        slaTimeLeft: t.slaTimeLeft,
+        timeRecord: t.timeRecord || 0,
+        holdReason: t.holdReason,
+        holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
+        createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt.toISOString(),
+      }));
+    } catch (_err) {
+      handleDbError('my-work.getTickets', _err);
+      // Database connection fallback
+    }
+  }
+
+  let normalizedMockStatus = filters.status ? filters.status.toLowerCase() : null;
+  if (normalizedMockStatus === 'new') normalizedMockStatus = 'active';
+  else if (normalizedMockStatus === 'on-hold' || normalizedMockStatus === 'onhold') normalizedMockStatus = 'on hold';
+
+  return tickets.filter((ticket) => {
+    const matchesAgent =
+      !filters.assignedAgentId || ticket.assignedAgentId === filters.assignedAgentId;
+    const matchesStatus =
+      !normalizedMockStatus || ticket.status.toLowerCase() === normalizedMockStatus;
+    const matchesPriority =
+      !filters.priority || ticket.priority.toLowerCase() === filters.priority.toLowerCase();
+    const matchesType =
+      !filters.ticketType || ticket.ticketType.toLowerCase() === filters.ticketType.toLowerCase();
+    const matchesOrganisation =
+      !filters.organisation || ticket.organisation.toLowerCase().includes(filters.organisation.toLowerCase());
+
+    return matchesAgent && matchesStatus && matchesPriority && matchesType && matchesOrganisation;
+  });
+};
+
+const getTicketById = async (id) => {
+  if (!id) return null;
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const t = await db.ticket.findFirst({
+        where: { id: { equals: id, mode: 'insensitive' } },
+        include: { organisation: true },
+      });
+
+      if (t) {
+        return {
+          id: t.id,
+          summary: t.summary,
+          priority: t.priority,
+          status: t.status,
+          ticketType: t.ticketType,
+          organisation: t.organisation?.name || 'Acme Corp',
+          site: t.siteName || 'London HQ',
+          assignedAgentId: t.assignedAgentId || 'agent-001',
+          slaTimeLeft: t.slaTimeLeft,
+          timeRecord: t.timeRecord || 0,
+          holdReason: t.holdReason,
+          holdStartedAt: t.holdStartedAt ? t.holdStartedAt.toISOString() : null,
+          createdAt: t.createdAt.toISOString(),
+          updatedAt: t.updatedAt.toISOString(),
+        };
+      }
+    } catch (_err) {
+      handleDbError('my-work.getTicketById', _err);
+      // Database connection fallback
+    }
+  }
+
+  return tickets.find((ticket) => ticket.id.toLowerCase() === id.toLowerCase()) || null;
+};
+
+const saveTicket = async (ticket) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      await db.ticket.create({
+        data: {
+          id: ticket.id,
+          summary: ticket.summary,
+          priority: ticket.priority,
+          status: ticket.status || 'Active',
+          ticketType: ticket.ticketType || 'Incident',
+          siteName: ticket.site || 'London HQ',
+          assignedAgentId: ticket.assignedAgentId || 'agent-001',
+          slaTimeLeft: ticket.slaTimeLeft,
+          timeRecord: ticket.timeRecord || 0,
+        },
+      });
+    } catch (_err) {
+      handleDbError('my-work.saveTicket', _err);
+      // Database connection fallback
+    }
+  }
+
+  tickets.push(ticket);
+  return ticket;
+};
+
+const updateTicket = async (id, changes) => {
+  const ticket = await getTicketById(id);
+
+  if (!ticket) {
+    return null;
+  }
+
+  // Auto-manage holdStartedAt when status transitions to/from On Hold
+  if (changes.status === 'On Hold' && ticket.status !== 'On Hold') {
+    changes.holdStartedAt = new Date().toISOString();
+  } else if (changes.status && changes.status !== 'On Hold' && ticket.status === 'On Hold') {
+    changes.holdStartedAt = null;
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const dataToUpdate = {};
+      if (changes.status) dataToUpdate.status = changes.status;
+      if (changes.holdReason !== undefined) dataToUpdate.holdReason = changes.holdReason;
+      if (changes.timeRecord !== undefined) dataToUpdate.timeRecord = changes.timeRecord;
+      if (Object.keys(dataToUpdate).length > 0) {
+        await db.ticket.update({
+          where: { id: ticket.id },
+          data: dataToUpdate,
+        });
+      }
+    } catch (_err) {
+      handleDbError('my-work.updateTicket', _err);
+      // Database connection fallback
+    }
+  }
+
+  Object.assign(ticket, changes, { updatedAt: new Date().toISOString() });
+  return ticket;
+};
+
+module.exports = {
+  getTickets,
+  getTicketById,
+  saveTicket,
+  updateTicket,
+};

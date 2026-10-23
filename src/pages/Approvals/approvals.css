@@ -1,0 +1,657 @@
+/* ==========================================================================
+   My Approvals Module Styling - UI/UX Exact Replication
+   ========================================================================== */
+
+/* Overall Page Layout Wrapper */
+.approvals-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-canvas);
+}
+
+/* --- Top Application Navbar --- */
+.approvals-top-navbar {
+  height: 64px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0ede8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  width: 100%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.approvals-top-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-top-coral {
+  background-color: var(--accent-coral);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-top-coral:hover {
+  background-color: var(--accent-coral-hover);
+  transform: translateY(-1px);
+}
+
+.top-navbar-bells {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 4px;
+}
+
+.top-navbar-bell-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.top-navbar-bell-btn:hover {
+  border-color: #9ca3af;
+  color: #111827;
+  background-color: #f9fafb;
+}
+
+.top-navbar-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--accent-coral-light);
+  margin-left: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Main Content Area --- */
+.approvals-main-content {
+  flex: 1;
+  padding: 28px 36px 64px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Page Header */
+.approvals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.approvals-title-group h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px 0;
+}
+
+.approvals-title-group p {
+  font-size: 13.5px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 400;
+}
+
+.approvals-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-approval-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-approval-action:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.btn-approval-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-approval-action svg {
+  flex-shrink: 0;
+}
+
+.btn-approval-action svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Cards List --- */
+.approvals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.approval-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #f0ede8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  padding: 24px 28px;
+  position: relative;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.approval-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  border-color: #e5ded4;
+}
+
+.approval-card-main-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.approval-card-avatar-wrapper {
+  flex-shrink: 0;
+}
+
+.approval-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.approval-avatar.ai {
+  background-color: #f95a00;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.approval-avatar.user {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.approval-card-content-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.approval-card-author-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.approval-card-author-left {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.card-blue-link {
+  color: #0070f3;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.card-blue-link:hover {
+  text-decoration: underline;
+  color: #0051b3;
+}
+
+.behalf-separator {
+  color: #4b5563;
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+.approval-card-time {
+  font-size: 13px;
+  color: #9ca3af;
+  white-space: nowrap;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+.approval-card-title-row {
+  font-size: 14px;
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.approval-card-title-text {
+  color: #1f2937;
+  font-weight: 400;
+}
+
+.approval-card-body {
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.55;
+  margin-top: 6px;
+}
+
+/* --- Ticket Details Box --- */
+.approval-ticket-details {
+  margin-top: 14px;
+  border: 1px solid #bfe2f7;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.approval-details-header {
+  background-color: #dff0fa;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 1px solid #bfe2f7;
+}
+
+.approval-details-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-table-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+
+.detail-table-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row-key {
+  width: 160px;
+  padding: 8px 16px;
+  color: #1f2937;
+  font-weight: 600;
+  flex-shrink: 0;
+  background-color: #ffffff;
+}
+
+.detail-row-val {
+  flex: 1;
+  padding: 8px 16px;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+}
+
+.detail-row-val .ticket-id-blue-link {
+  color: #0284c7;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.detail-row-val .ticket-id-blue-link:hover {
+  text-decoration: underline;
+}
+
+.ticket-type-badge {
+  background-color: #0284c7;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 12px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+/* --- Thumbs Action Buttons Footer --- */
+.approval-card-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.btn-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.btn-thumb.approve {
+  background-color: #e8faf0;
+  color: #10b981;
+}
+
+.btn-thumb.approve:hover:not(:disabled) {
+  background-color: #d4f7e2;
+  transform: scale(1.06);
+}
+
+.btn-thumb.reject {
+  background-color: #ffeceb;
+  color: #f43f5e;
+}
+
+.btn-thumb.reject:hover:not(:disabled) {
+  background-color: #fed7d4;
+  transform: scale(1.06);
+}
+
+.btn-thumb:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.approval-card-completed {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.reject-reason-note {
+  display: block;
+  font-size: 12px;
+  color: #991b1b;
+  margin-top: 4px;
+}
+
+/* Mini Spinner */
+.spinner-mini {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* Skeletons */
+.approval-skeleton {
+  background: linear-gradient(90deg, #f3ede6 25%, #e9e1d8 50%, #f3ede6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Empty State */
+.approvals-empty {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 56px 24px;
+  text-align: center;
+  border: 1px dashed #e2e8f0;
+  margin-top: 12px;
+}
+
+.approvals-empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #ecfdf5;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.approvals-empty h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.approvals-empty p {
+  font-size: 13.5px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.btn-reset-approvals {
+  background-color: var(--accent-coral);
+  color: white;
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13.5px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-reset-approvals:hover {
+  background-color: var(--accent-coral-hover);
+}
+
+/* Toast Notification */
+.approvals-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background-color: #1f2937;
+  color: #ffffff;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  z-index: 1000;
+  animation: slide-up 0.25s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.approvals-toast.success {
+  background-color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+.approvals-toast.error {
+  background-color: #991b1b;
+  border-left: 4px solid #f87171;
+}
+
+.approvals-toast.info {
+  background-color: #1e293b;
+  border-left: 4px solid #38bdf8;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Modal Overlay & Content Dialog Styling
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.modal-content {
+  background-color: #ffffff !important;
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #f0ede8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
+
+.modal-header h2 {
+  font-size: 19px;
+  font-weight: 700;
+  color: #111827;
+  margin: 2px 0 0;
+  letter-spacing: -0.01em;
+}
+
+.btn-close-modal {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.btn-close-modal:hover {
+  background-color: var(--bg-canvas);
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 24px 28px;
+  background-color: #ffffff;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 16px 28px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  background-color: #fbf9f6;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+

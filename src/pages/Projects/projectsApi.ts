@@ -1,0 +1,290 @@
+/**
+ * Servigen Projects Service Layer
+ * Corresponds to Servigen API Specification Section 5.7 (Projects Module)
+ *
+ * Backend Routes:
+ * - GET /projects                       : Retrieve all projects
+ * - GET /projects/active                : Retrieve active projects
+ * - GET /projects/:projectId/subtasks   : Retrieve subtasks for a specific project
+ *
+ * The API doc does not define create / update / delete endpoints for projects
+ * or subtasks yet, so this service is read-only until those are provided.
+ */
+
+import { ApiError, api, getStoredUser } from "../../services/apiClient";
+import {
+  type Project,
+  type ProjectPriority,
+  type ProjectStatus,
+  type ProjectTask,
+  toDateKey,
+} from "./types";
+
+const PROJECTS_PATH = "/api/projects";
+
+/* ---------- normalisers ---------- */
+
+function text(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (value && typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    return text(v.name ?? v.fullName ?? v.displayName ?? v.email ?? "");
+  }
+  return "";
+}
+
+function num(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const parsed = parseFloat(String(value ?? ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function dateKey(value: unknown): string {
+  if (!value) return "";
+  const d = new Date(String(value));
+  return Number.isNaN(d.getTime()) ? "" : toDateKey(d);
+}
+
+function mapStatus(raw: string): ProjectStatus {
+  const s = raw.toLowerCase().replace(/[_-]/g, " ").trim();
+  if (["completed", "complete", "done", "closed", "resolved"].includes(s)) return "Completed";
+  if (["on hold", "onhold", "hold", "paused", "blocked"].includes(s)) return "On Hold";
+  if (["new", "open", "not started", "planned", "draft"].includes(s)) return "New";
+  return "Active";
+}
+
+function mapPriority(raw: string): ProjectPriority {
+  const p = raw.toLowerCase();
+  if (p.startsWith("h") || p === "p1" || p === "critical") return "High";
+  if (p.startsWith("l") || p === "p3" || p === "p4") return "Low";
+  return "Medium";
+}
+
+function list(res: unknown): any[] {
+  if (Array.isArray(res)) return res;
+  if (res && typeof res === "object") {
+    const r = res as Record<string, unknown>;
+    for (const key of ["data", "projects", "subtasks", "items", "results"]) {
+      if (Array.isArray(r[key])) return r[key] as any[];
+    }
+  }
+  if (typeof res === "string") {
+    throw new ApiError(
+      `Unexpected non-JSON response from ${PROJECTS_PATH}. Check the backend path / VITE_API_BASE_URL.`,
+      0
+    );
+  }
+  return [];
+}
+
+export function normalizeSubtask(raw: any): ProjectTask {
+  const status = text(raw?.status).toLowerCase();
+  return {
+    id: text(raw?.id ?? raw?._id ?? raw?.subtaskId),
+    title: text(raw?.title ?? raw?.name ?? raw?.summary) || "Untitled task",
+    assignee: text(raw?.assignee ?? raw?.assignedTo ?? raw?.owner ?? raw?.agent) || "Unassigned",
+    dueDate: dateKey(raw?.dueDate ?? raw?.due_date ?? raw?.deadline ?? raw?.endDate),
+    done: Boolean(
+      raw?.completed ?? raw?.done ?? raw?.isCompleted ?? ["completed", "done", "closed"].includes(status)
+    ),
+  };
+}
+
+export function normalizeProject(raw: any): Project {
+  const statusLabel = text(raw?.status) || "Active";
+  const embedded = raw?.subtasks ?? raw?.tasks;
+  const percent = raw?.completionPercent ?? raw?.progress ?? raw?.percentComplete;
+  return {
+    id: text(raw?.id ?? raw?._id ?? raw?.projectId),
+    name: text(raw?.name ?? raw?.title ?? raw?.projectName) || "Untitled project",
+    description: text(raw?.description ?? raw?.summary),
+    owner: text(raw?.owner ?? raw?.ownerName ?? raw?.manager ?? raw?.projectManager ?? raw?.agent) || "Unassigned",
+    status: mapStatus(statusLabel),
+    statusLabel,
+    priority: mapPriority(text(raw?.priority)),
+    startDate: dateKey(raw?.startDate ?? raw?.start_date ?? raw?.start),
+    targetDate: dateKey(raw?.targetDate ?? raw?.target_date ?? raw?.endDate ?? raw?.dueDate),
+    hoursSpent: num(raw?.hoursSpent ?? raw?.timeSpentHours ?? raw?.timeSpent ?? raw?.actualHours),
+    hoursBudget: num(raw?.hoursBudget ?? raw?.targetHours ?? raw?.estimatedHours ?? raw?.budgetHours),
+    completionPercent: percent === undefined || percent === null ? undefined : num(percent),
+    tasks: Array.isArray(embedded) ? embedded.map(normalizeSubtask) : [],
+    ...(Array.isArray(embedded) ? { _tasksLoaded: true } : {}),
+  } as Project & { _tasksLoaded?: boolean };
+}
+
+/* ---------- mock fallback ---------- */
+
+function _dk(offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return toDateKey(d);
+}
+
+const MOCK_PROJECTS: Project[] = [
+  {
+    id: "1",
+    name: "Customer Portal Redesign",
+    description: "Redesign the customer-facing portal for better UX.",
+    owner: "Alex Agent",
+    status: "Active",
+    statusLabel: "Active",
+    priority: "High",
+    startDate: _dk(-30),
+    targetDate: _dk(30),
+    hoursSpent: 40,
+    hoursBudget: 120,
+    completionPercent: 35,
+    tasks: [
+      { id: "t1", title: "Wireframes", assignee: "Alice Approver", dueDate: _dk(-10), done: true },
+      { id: "t2", title: "UI Components", assignee: "Alex Agent", dueDate: _dk(10), done: false },
+      { id: "t3", title: "API Integration", assignee: "Sam User", dueDate: _dk(25), done: false },
+    ],
+  },
+  {
+    id: "2",
+    name: "Incident Reporting System",
+    description: "Build an automated incident reporting and tracking system.",
+    owner: "Adam Admin",
+    status: "Active",
+    statusLabel: "Active",
+    priority: "Medium",
+    startDate: _dk(-15),
+    targetDate: _dk(45),
+    hoursSpent: 20,
+    hoursBudget: 80,
+    completionPercent: 20,
+    tasks: [
+      { id: "t4", title: "Requirements Gathering", assignee: "Adam Admin", dueDate: _dk(-5), done: true },
+      { id: "t5", title: "Database Schema", assignee: "Sam User", dueDate: _dk(15), done: false },
+    ],
+  },
+  {
+    id: "3",
+    name: "Mobile App Launch",
+    description: "Launch the ServiGen mobile app on iOS and Android.",
+    owner: "Sarah Support",
+    status: "New",
+    statusLabel: "New",
+    priority: "High",
+    startDate: _dk(0),
+    targetDate: _dk(60),
+    hoursSpent: 0,
+    hoursBudget: 200,
+    completionPercent: 0,
+    tasks: [],
+  },
+  {
+    id: "4",
+    name: "Legacy System Migration",
+    description: "Migrate data from the old ticketing system.",
+    owner: "Alice Approver",
+    status: "On Hold",
+    statusLabel: "On Hold",
+    priority: "Low",
+    startDate: _dk(-60),
+    targetDate: _dk(90),
+    hoursSpent: 60,
+    hoursBudget: 150,
+    completionPercent: 40,
+    tasks: [
+      { id: "t6", title: "Data Audit", assignee: "Alice Approver", dueDate: _dk(-20), done: true },
+      { id: "t7", title: "Migration Scripts", assignee: "Sam User", dueDate: _dk(-5), done: false },
+    ],
+  },
+  {
+    id: "5",
+    name: "Analytics Dashboard",
+    description: "Build a real-time analytics dashboard for managers.",
+    owner: "Alex Agent",
+    status: "Completed",
+    statusLabel: "Completed",
+    priority: "Medium",
+    startDate: _dk(-90),
+    targetDate: _dk(-10),
+    hoursSpent: 100,
+    hoursBudget: 100,
+    completionPercent: 100,
+    tasks: [
+      { id: "t8", title: "Design Mockups", assignee: "Alex Agent", dueDate: _dk(-60), done: true },
+      { id: "t9", title: "Build Charts", assignee: "Sarah Support", dueDate: _dk(-30), done: true },
+      { id: "t10", title: "Deploy", assignee: "Adam Admin", dueDate: _dk(-10), done: true },
+    ],
+  },
+];
+
+/* ---------- endpoints ---------- */
+
+export async function getAllProjects(): Promise<Project[]> {
+  const res = await api.get(PROJECTS_PATH);
+  return list(res).map(normalizeProject);
+}
+
+export async function getActiveProjects(): Promise<Project[]> {
+  const res = await api.get(`${PROJECTS_PATH}/active`);
+  return list(res).map(normalizeProject);
+}
+
+export async function getProjectSubtasks(projectId: string): Promise<ProjectTask[]> {
+  if (!projectId) throw new Error("Validation Error: Project ID is required.");
+  const res = await api.get(`${PROJECTS_PATH}/${encodeURIComponent(projectId)}/subtasks`);
+  return list(res).map(normalizeSubtask);
+}
+
+export async function loadProjectsScreen(): Promise<{ projects: Project[]; activeIds: string[] }> {
+  try {
+    const [all, active] = await Promise.all([getAllProjects(), getActiveProjects()]);
+
+    const projects = await Promise.all(
+      all.map(async (p) => {
+        if ((p as any)._tasksLoaded || p.tasks.length > 0 || !p.id) return p;
+        try {
+          return { ...p, tasks: await getProjectSubtasks(p.id) };
+        } catch (err) {
+          return { ...p, tasksError: err instanceof Error ? err.message : "Failed to load subtasks" };
+        }
+      })
+    );
+
+    if (projects.length === 0) {
+      console.warn("[ProjectsApi] API returned no projects, using mock fallback.");
+      return {
+        projects: MOCK_PROJECTS,
+        activeIds: MOCK_PROJECTS.filter((p) => p.status === "Active").map((p) => p.id),
+      };
+    }
+
+    return { projects, activeIds: active.map((p) => p.id) };
+  } catch (err) {
+    console.warn("[ProjectsApi] Backend fetch error, using mock fallback:", err);
+    return {
+      projects: MOCK_PROJECTS,
+      activeIds: MOCK_PROJECTS.filter((p) => p.status === "Active").map((p) => p.id),
+    };
+  }
+}
+
+export async function getSessionUserName(): Promise<string> {
+  try {
+    const res: any = await api.get("/api/auth/session");
+    const user = res?.data ?? res?.user ?? res;
+    const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
+    const name = text(
+      user?.name ??
+      user?.fullName ??
+      user?.displayName ??
+      fullName ??
+      user?.username ??
+      user?.email
+    );
+    if (name) return name;
+  } catch {
+    // Fall through to stored user
+  }
+  const stored = getStoredUser();
+  const storedFull = [stored?.firstName, stored?.lastName].filter(Boolean).join(" ").trim();
+  return (
+    text(stored?.fullName ?? stored?.name ?? stored?.displayName ?? storedFull ?? stored?.username ?? stored?.email) ||
+    ""
+  );
+}
