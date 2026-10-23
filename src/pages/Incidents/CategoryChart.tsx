@@ -1,5 +1,5 @@
 
-import { useMemo, useState, type MouseEvent } from "react";
+import React, { useMemo, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CategoryItem } from "./incidents.data";
 
@@ -83,7 +83,7 @@ function formatPercentage(value: number, total: number): string {
   return ((value / total) * 100).toFixed(1);
 }
 
-export default function CategoryChart({
+const CategoryChart = React.memo(function CategoryChart({
   data,
 }: CategoryChartProps) {
   const navigate = useNavigate();
@@ -676,4 +676,6 @@ export default function CategoryChart({
       )}
     </section>
   );
-}
+});
+
+export default CategoryChart;

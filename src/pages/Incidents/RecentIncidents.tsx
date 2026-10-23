@@ -1,5 +1,5 @@
 
-import type { KeyboardEvent } from "react";
+import React, { type KeyboardEvent } from "react";
 import type { RecentIncident } from "./incidents.data";
 import { PriorityPill, StatusPill } from "./Badges";
 import { SlaBadge } from "../../components/shared/SlaBadge";
@@ -36,7 +36,7 @@ function formatDate(dateValue?: string | null): string {
   });
 }
 
-export default function RecentIncidents({
+const RecentIncidents = React.memo(function RecentIncidents({
   incidents,
   onSelectIncident,
   onViewAll,
@@ -135,4 +135,6 @@ export default function RecentIncidents({
       </div>
     </section>
   );
-}
+});
+
+export default RecentIncidents;

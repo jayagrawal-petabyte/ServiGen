@@ -1,3 +1,4 @@
+import React from "react";
 import type { ChartItem } from "./incidents.data";
 
 type PriorityChartProps = {
@@ -40,7 +41,7 @@ function getSafeClassName(label: string): string {
   return safeLabel || "unknown";
 }
 
-export default function PriorityChart({
+const PriorityChart = React.memo(function PriorityChart({
   data,
 }: PriorityChartProps) {
   const validData = Array.isArray(data)
@@ -154,4 +155,6 @@ export default function PriorityChart({
       )}
     </section>
   );
-}
+});
+
+export default PriorityChart;

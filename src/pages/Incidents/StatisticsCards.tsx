@@ -1,4 +1,6 @@
 
+import React from "react";
+
 export type Statistic = {
   label: string;
   value: string | number;
@@ -11,7 +13,7 @@ type StatisticsCardsProps = {
   isLoading?: boolean;
 };
 
-export default function StatisticsCards({
+const StatisticsCards = React.memo(function StatisticsCards({
   stats,
   isLoading = false,
 }: StatisticsCardsProps) {
@@ -41,4 +43,6 @@ export default function StatisticsCards({
       ))}
     </section>
   );
-}
+});
+
+export default StatisticsCards;
