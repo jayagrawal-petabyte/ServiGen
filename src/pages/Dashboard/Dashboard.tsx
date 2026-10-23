@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Auth';
 import dashboardService, {
@@ -103,6 +103,7 @@ export default function Dashboard() {
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // Ticket creation modal
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
@@ -366,8 +367,8 @@ export default function Dashboard() {
 
   // Filtered recent tickets by search
   const filteredRecentTickets = useMemo(() => {
-    if (!searchQuery.trim()) return recentTickets;
-    const q = searchQuery.toLowerCase();
+    if (!deferredSearchQuery.trim()) return recentTickets;
+    const q = deferredSearchQuery.toLowerCase();
     return recentTickets.filter(
       (t) =>
         t.ticketNumber.toLowerCase().includes(q) ||
@@ -375,7 +376,7 @@ export default function Dashboard() {
         t.status.toLowerCase().includes(q) ||
         t.priority.toLowerCase().includes(q)
     );
-  }, [recentTickets, searchQuery]);
+  }, [recentTickets, deferredSearchQuery]);
 
   return (
     <div className="w-full min-h-screen bg-[#FAF7F5] text-gray-800 pb-16 font-sans">

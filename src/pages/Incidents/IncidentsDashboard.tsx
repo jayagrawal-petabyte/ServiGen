@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useDeferredValue,
   type ChangeEvent,
 } from "react";
 
@@ -348,6 +349,7 @@ function getStatusClass(status: RecentIncident["status"]): string {
 
 export default function IncidentsDashboard() {
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [selectedIncident, setSelectedIncident] =
     useState<RecentIncident | null>(null);
 
@@ -491,7 +493,7 @@ export default function IncidentsDashboard() {
   );
 
   const filteredIncidents = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = deferredSearch.trim().toLowerCase();
 
     if (!query) return data.recent;
 
@@ -508,10 +510,10 @@ export default function IncidentsDashboard() {
         .toLowerCase()
         .includes(query)
     );
-  }, [data.recent, search]);
+  }, [data.recent, deferredSearch]);
 
   const filteredTickets = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = deferredSearch.trim().toLowerCase();
 
     if (!query) return data.tickets;
 
@@ -527,7 +529,7 @@ export default function IncidentsDashboard() {
         .toLowerCase()
         .includes(query)
     );
-  }, [data.tickets, search]);
+  }, [data.tickets, deferredSearch]);
 
   const handleSearchChange = (
     event: ChangeEvent<HTMLInputElement>
