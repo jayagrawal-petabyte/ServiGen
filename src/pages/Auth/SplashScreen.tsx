@@ -13,8 +13,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   userName = 'Demo',
   loadingMessage = 'We are signing you in',
   onComplete,
-  durationMs = 2500,
+  durationMs = 750,
 }) => {
+  const handleProceed = () => {
+    if (onComplete) onComplete();
+  };
+
   useEffect(() => {
     if (onComplete) {
       const timer = setTimeout(() => {
@@ -24,8 +28,27 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     }
   }, [onComplete, durationMs]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+        handleProceed();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onComplete]);
+
   return (
-    <div className="figma-splash-page">
+    <div
+      className="figma-splash-page cursor-pointer"
+      onClick={handleProceed}
+      title="Click or press any key to enter immediately"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') handleProceed();
+      }}
+    >
       {/* Right-side Teal Curved Graphic - Exact Match for Figma design */}
       <svg
         className="splash-teal-curve"

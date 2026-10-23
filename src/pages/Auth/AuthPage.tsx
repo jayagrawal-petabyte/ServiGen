@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LoginScreen from './LoginScreen';
 import SplashScreen from './SplashScreen';
@@ -11,11 +11,19 @@ import './auth.css';
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   
+  const redirectTarget = searchParams.get('redirect') || searchParams.get('from') || '/dashboard';
   const initialTab: AuthTab = searchParams.get('tab') === 'users' ? 'users' : 'login';
   const [currentTab, setCurrentTab] = useState<AuthTab>(initialTab);
   const [loggedInUser, setLoggedInUser] = useState<string>('Demo');
+
+  // If already authenticated and not verifying, redirect directly to intended page
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      navigate(redirectTarget, { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate, redirectTarget]);
 
   // Forgot Password modal state
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
@@ -29,6 +37,14 @@ export const AuthPage: React.FC = () => {
     if (success) {
       setLoggedInUser(credentials.username || 'Demo');
       setCurrentTab('splash');
+
+      // Pre-warm the dashboard chunk & initial API responses in parallel
+      import('../Dashboard/Dashboard');
+      api.get('/api/dashboard/kpis').catch(() => {});
+      api.get('/api/dashboard/summary').catch(() => {});
+      api.get('/api/tickets').catch(() => {});
+      api.get('/api/approvals').catch(() => {});
+
       return true;
     }
     return false;
@@ -71,7 +87,8 @@ export const AuthPage: React.FC = () => {
       {currentTab === 'splash' && (
         <SplashScreen
           userName={loggedInUser}
-          onComplete={() => navigate('/dashboard')}
+          durationMs={750}
+          onComplete={() => navigate(redirectTarget, { replace: true })}
         />
       )}
       {currentTab === 'users' && <OrganisationUsersScreen />}

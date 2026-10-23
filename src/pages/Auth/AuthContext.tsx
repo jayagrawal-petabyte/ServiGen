@@ -371,7 +371,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return {
       isAuthenticated: Boolean(savedUser && savedToken),
       user: savedUser || null,
-      loading: Boolean(savedToken),
+      loading: Boolean(savedToken && !savedUser),
       error: null,
     };
   });
@@ -412,8 +412,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
-    checkBackendHealth();
-    
     // Sync and validate active session with backend API if a token exists (GET /api/auth/session)
     const activeToken = getStoredToken();
     if (activeToken) {
@@ -481,7 +479,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setBackendConnected(false);
         });
     } else {
-      // No stored token — user is not logged in; redirect to /auth handled by AppLayout
+      // No stored token — user is on login screen; check backend connectivity
+      checkBackendHealth();
       setAuthState({
         isAuthenticated: false,
         user: null,

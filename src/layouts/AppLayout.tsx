@@ -59,7 +59,12 @@ export const AppLayout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    const fromPath =
+      location.pathname !== '/' && location.pathname !== '/dashboard'
+        ? `${location.pathname}${location.search}`
+        : '';
+    const toUrl = fromPath ? `/auth?redirect=${encodeURIComponent(fromPath)}` : '/auth';
+    return <Navigate to={toUrl} replace />;
   }
 
   // QA-RBAC-01: End Users cannot directly access restricted administrative routes
