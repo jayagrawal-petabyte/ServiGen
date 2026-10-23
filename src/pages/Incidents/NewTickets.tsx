@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { NewTicket, Priority } from "./incidents.data";
 import {
   TicketDetailModal,
@@ -90,7 +90,7 @@ function TicketAvatar({ agent }: { agent: string }) {
   );
 }
 
-export default function NewTickets({
+const NewTickets = React.memo(function NewTickets({
   tickets,
 }: NewTicketsProps) {
   const [selectedTicket, setSelectedTicket] =
@@ -425,4 +425,6 @@ export default function NewTickets({
       )}
     </section>
   );
-}
+});
+
+export default NewTickets;
