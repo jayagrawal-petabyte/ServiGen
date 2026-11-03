@@ -205,6 +205,40 @@ export default function ArticleDraftDetailModal({
         </div>
 
         <div className="modal-body">
+          {/* Rejection Alert if rejected */}
+          {(article.status === 'Rejected' || article.rejectReason) && (
+            <div
+              style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                color: '#991b1b',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" style={{ flexShrink: 0, marginTop: '1px' }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              <div>
+                <div style={{ fontWeight: 700, marginBottom: '2px' }}>
+                  Article Draft Rejected by Approver
+                </div>
+                <div>
+                  {article.rejectReason
+                    ? `Reason provided: "${article.rejectReason}". You can revise your draft and re-submit it for approval.`
+                    : 'This draft was rejected. You can edit the content and submit it again for approval.'}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Metadata Grid */}
           <div
             style={{
@@ -619,7 +653,7 @@ export default function ArticleDraftDetailModal({
                   {isSubmitting ? 'Saving...' : 'Save Draft'}
                 </button>
 
-                {article.status === 'Draft' && (
+                {(article.status === 'Draft' || article.status === 'Rejected') && (
                   <button
                     type="button"
                     onClick={() => handleSave(true)}
@@ -649,7 +683,7 @@ export default function ArticleDraftDetailModal({
               gap: '8px',
             }}
           >
-            {article.status === 'Draft' && (
+            {(article.status === 'Draft' || article.status === 'Rejected') && (
               <button
                 type="button"
                 disabled={isSubmitting}
@@ -664,7 +698,25 @@ export default function ArticleDraftDetailModal({
                   opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
+                {isSubmitting ? 'Submitting...' : article.status === 'Rejected' ? 'Re-submit for Approval' : 'Submit for Approval'}
+              </button>
+            )}
+
+            {article.status === 'Rejected' && (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleStatusTransition('Draft')}
+                style={{
+                  backgroundColor: '#f1f5f9',
+                  color: '#475569',
+                  padding: '7px 14px',
+                  borderRadius: '999px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                Reset to Draft
               </button>
             )}
 

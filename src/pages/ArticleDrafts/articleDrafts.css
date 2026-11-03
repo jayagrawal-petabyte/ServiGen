@@ -613,3 +613,20 @@
   border-bottom-right-radius: 18px;
 }
 
+
+/* Skeletons */
+.draft-skeleton {
+  background: linear-gradient(90deg, #f3ede6 25%, #e9e1d8 50%, #f3ede6 75%);
+  background-size: 200% 100%;
+  animation: draft-skeleton-loading 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes draft-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

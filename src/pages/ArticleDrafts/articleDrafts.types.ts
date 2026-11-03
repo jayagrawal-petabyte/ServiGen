@@ -25,6 +25,7 @@ export interface ArticleDraft {
   team: string;
   agent: string;
   body: string;
+  rejectReason?: string;
 }
 
 export type CreateArticleDraftDto = Omit<ArticleDraft, 'id'>;
@@ -41,6 +42,7 @@ export interface BackendKnowledgeArticle {
   slaDueAt?: string | null;
   author?: string;
   authorId?: string;
+  rejectReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }

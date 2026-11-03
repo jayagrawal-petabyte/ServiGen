@@ -26,7 +26,7 @@ import { MOCK_ARTICLES } from '../../../services/fallback/mockData';
 export type { CreateArticleDraftDto, UpdateArticleDraftDto, BackendKnowledgeArticle };
 
 const STORAGE_KEY = 'servigen_article_drafts_v3';
-const SIMULATED_LATENCY_MS = 150;
+const SIMULATED_LATENCY_MS = 100;
 
 /**
  * Check if custom or default backend articles endpoint is available
@@ -42,9 +42,10 @@ function getArticlesBackendEndpoint(): string {
 /**
  * Helper to adapt a Backend Knowledge Article to the UI ArticleDraft model
  */
-function adaptBackendArticle(item: BackendKnowledgeArticle): ArticleDraft {
-  const idStr = String(item.id).padStart(7, '0');
-  
+export function adaptBackendArticle(item: BackendKnowledgeArticle | any): ArticleDraft {
+  const rawId = item.id !== undefined && item.id !== null ? String(item.id) : '';
+  const idStr = /^\d+$/.test(rawId) ? rawId.padStart(7, '0') : rawId || `ART-${Date.now().toString().slice(-4)}`;
+
   // Calculate relative SLA status if slaDueAt exists
   let slaTimeLeft = '3d 6h left';
   let slaStatus: ArticleDraftSlaStatus = 'safe';
@@ -68,24 +69,36 @@ function adaptBackendArticle(item: BackendKnowledgeArticle): ArticleDraft {
   }
 
   const priorityColor =
-    item.priority === 'High' ? '#c2593f' : item.priority === 'Medium' ? '#e07a5f' : '#ca8a04';
+    item.priority === 'Critical'
+      ? '#dc2626'
+      : item.priority === 'High'
+      ? '#c2593f'
+      : item.priority === 'Medium'
+      ? '#e07a5f'
+      : '#ca8a04';
+
+  const title = item.title || item.summaryTitle || 'Untitled Knowledge Article';
+  const content = item.content || item.body || '';
 
   return {
     id: idStr,
     slaTimeLeft,
     slaStatus,
-    summaryTitle: item.title,
-    summarySubtitle: item.content ? item.content.slice(0, 70).replace(/^[#\s]+/, '') : '',
+    summaryTitle: title,
+    summarySubtitle: item.summarySubtitle || (content ? content.slice(0, 70).replace(/^[#\s]+/, '') : ''),
     category: item.category || 'General',
     priority: item.priority || 'High',
     priorityColor,
-    status: item.status || 'Draft',
-    type: 'Article Draft',
-    date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : '17-07-2026',
-    author: item.author || '',
-    team: 'Tier 2 Messaging Ops',
-    agent: item.author || '',
-    body: item.content || '',
+    status: (item.status as ArticleDraftStatus) || 'Draft',
+    type: item.type || 'Article Draft',
+    date: item.createdAt
+      ? new Date(item.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-')
+      : item.date || '17-07-2026',
+    author: item.author || 'Demo User',
+    team: item.team || 'Tier 2 Messaging Ops',
+    agent: item.agent || item.author || 'Demo User',
+    body: content,
+    rejectReason: item.rejectReason,
   };
 }
 
@@ -120,28 +133,53 @@ function setStoredDrafts(data: ArticleDraft[]): void {
 
 export const articleDraftsApi = {
   /**
-   * Fetch all article drafts from backend /api/articles with fallback to local store
+   * Fetch all article drafts from backend /api/articles with fallback and local override preservation
    */
   async getDrafts(): Promise<ArticleDraft[]> {
     const endpoint = getArticlesBackendEndpoint();
+    const stored = getStoredDrafts();
+
     try {
-      const response: any = await apiClient.get<BackendKnowledgeArticle[]>(endpoint);
+      const response: any = await apiClient.get<any>(endpoint);
       const rawList = Array.isArray(response?.data)
         ? response.data
         : Array.isArray(response)
         ? response
         : [];
+
       if (rawList.length > 0) {
-        const adapted = rawList.map(adaptBackendArticle);
-        setStoredDrafts(adapted);
-        return adapted;
+        const backendDrafts = rawList.map(adaptBackendArticle);
+
+        // Merge: keep locally created or modified drafts that may not yet be in backend
+        const mergedMap = new Map<string, ArticleDraft>();
+        backendDrafts.forEach((d: ArticleDraft) => mergedMap.set(d.id, d));
+        stored.forEach((localDraft) => {
+          // If local draft has changes (e.g. status changed to Awaiting Approval or newly created)
+          if (!mergedMap.has(localDraft.id)) {
+            mergedMap.set(localDraft.id, localDraft);
+          } else {
+            // Keep local status if newer or awaiting approval
+            const existing = mergedMap.get(localDraft.id)!;
+            if (localDraft.status !== existing.status) {
+              mergedMap.set(localDraft.id, {
+                ...existing,
+                status: localDraft.status,
+                rejectReason: localDraft.rejectReason || existing.rejectReason,
+              });
+            }
+          }
+        });
+
+        const merged = Array.from(mergedMap.values());
+        setStoredDrafts(merged);
+        return merged;
       }
     } catch {
       // Backend offline or route unpopulated, fall through to local storage
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-    return getStoredDrafts();
+    return stored;
   },
 
   /**
@@ -154,15 +192,16 @@ export const articleDraftsApi = {
 
     const endpoint = getArticlesBackendEndpoint();
     try {
-      const response = await apiClient.get<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`);
-      if (response && response.id) {
-        return adaptBackendArticle(response);
+      const response: any = await apiClient.get<any>(`${endpoint}/${encodeURIComponent(id)}`);
+      const item = response?.data || response;
+      if (item && (item.id || item.title)) {
+        return adaptBackendArticle(item);
       }
     } catch {
       // Fallback
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const list = getStoredDrafts();
     const found = list.find((d) => d.id === id);
     if (!found) {
@@ -187,15 +226,21 @@ export const articleDraftsApi = {
 
     const endpoint = getArticlesBackendEndpoint();
     try {
-      const response = await apiClient.post<BackendKnowledgeArticle>(endpoint, {
-        title: newDraft.summaryTitle,
-        content: newDraft.body,
+      const response: any = await apiClient.post<any>(endpoint, {
+        title: newDraft.summaryTitle.trim(),
+        content: newDraft.body.trim(),
         category: newDraft.category,
         priority: newDraft.priority,
         status: newDraft.status || 'Draft',
       });
-      if (response && response.id) {
-        const created = adaptBackendArticle(response);
+      const data = response?.data || response;
+      if (data && (data.id || data.title)) {
+        const created = adaptBackendArticle({
+          ...data,
+          summarySubtitle: newDraft.summarySubtitle,
+          author: newDraft.author,
+          team: newDraft.team,
+        });
         const list = getStoredDrafts();
         setStoredDrafts([created, ...list]);
         return created;
@@ -252,7 +297,7 @@ export const articleDraftsApi = {
 
     const endpoint = getArticlesBackendEndpoint();
     try {
-      await apiClient.patch<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`, {
+      await apiClient.patch<any>(`${endpoint}/${encodeURIComponent(id)}`, {
         title: updates.summaryTitle,
         content: updates.body,
         category: updates.category,
@@ -274,8 +319,9 @@ export const articleDraftsApi = {
     const updated: ArticleDraft = {
       ...item,
       ...updates,
-      summaryTitle: updates.summaryTitle ? updates.summaryTitle.trim() : item.summaryTitle,
-      body: updates.body ? updates.body.trim() : item.body,
+      summaryTitle: updates.summaryTitle !== undefined ? updates.summaryTitle.trim() : item.summaryTitle,
+      summarySubtitle: updates.summarySubtitle !== undefined ? updates.summarySubtitle.trim() : item.summarySubtitle,
+      body: updates.body !== undefined ? updates.body.trim() : item.body,
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
@@ -285,15 +331,20 @@ export const articleDraftsApi = {
   /**
    * Transition article draft lifecycle status with workflow validation
    */
-  async updateDraftStatus(id: string, newStatus: ArticleDraftStatus): Promise<ArticleDraft> {
+  async updateDraftStatus(
+    id: string,
+    newStatus: ArticleDraftStatus,
+    reason?: string
+  ): Promise<ArticleDraft> {
     if (!id) {
       throw new Error('Validation Error: Article ID is required.');
     }
 
     const endpoint = getArticlesBackendEndpoint();
     try {
-      await apiClient.patch<BackendKnowledgeArticle>(`${endpoint}/${encodeURIComponent(id)}`, {
+      await apiClient.patch<any>(`${endpoint}/${encodeURIComponent(id)}`, {
         status: newStatus,
+        approvalStatus: newStatus === 'Awaiting Approval' ? 'Pending' : newStatus === 'Published' ? 'Approved' : 'Rejected',
       });
     } catch {
       // Fallback
@@ -320,6 +371,7 @@ export const articleDraftsApi = {
     const updated: ArticleDraft = {
       ...item,
       status: newStatus,
+      rejectReason: newStatus === 'Rejected' ? reason || item.rejectReason : newStatus === 'Awaiting Approval' ? undefined : item.rejectReason,
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
@@ -360,7 +412,8 @@ export const articleDraftsApi = {
    */
   async resetData(): Promise<ArticleDraft[]> {
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-    setStoredDrafts([]);
-    return [];
+    const seeded = MOCK_ARTICLES.map(adaptBackendArticle);
+    setStoredDrafts(seeded);
+    return seeded;
   },
 };

@@ -17,6 +17,7 @@ interface ArticleDraftsDesignViewProps {
   onOpenArticle: (draft: ArticleDraft) => void;
   sortDirection: 'asc' | 'desc';
   onToggleSort: () => void;
+  isLoading?: boolean;
 }
 
 export default function ArticleDraftsDesignView({
@@ -33,12 +34,63 @@ export default function ArticleDraftsDesignView({
   onOpenArticle,
   sortDirection,
   onToggleSort,
+  isLoading = false,
 }: ArticleDraftsDesignViewProps) {
   const allSelected =
     drafts.length > 0 && drafts.every((d) => selectedIds.includes(d.id));
 
   const startIndex = totalDrafts === 0 ? 0 : (currentPage - 1) * perPage + 1;
   const endIndex = Math.min(currentPage * perPage, totalDrafts);
+
+  // Generate dynamic pagination buttons
+  const renderPaginationButtons = () => {
+    if (totalPages <= 1) {
+      return (
+        <button
+          type="button"
+          className="pagination-btn active"
+          onClick={() => onPageChange(1)}
+        >
+          1
+        </button>
+      );
+    }
+
+    const items: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        items.push(1, 2, 3, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        items.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        items.push(1, '...', currentPage, '...', totalPages);
+      }
+    }
+
+    return items.map((item, index) => {
+      if (typeof item === 'string') {
+        return (
+          <span key={`ellipsis-${index}`} className="pagination-ellipsis">
+            {item}
+          </span>
+        );
+      }
+      return (
+        <button
+          key={item}
+          type="button"
+          className={`pagination-btn ${currentPage === item ? 'active' : ''}`}
+          onClick={() => onPageChange(item)}
+        >
+          {item}
+        </button>
+      );
+    });
+  };
 
   return (
     <div className="article-drafts-table-container">
@@ -75,39 +127,7 @@ export default function ArticleDraftsDesignView({
             Previous
           </button>
 
-          <button
-            type="button"
-            className={`pagination-btn ${currentPage === 1 ? 'active' : ''}`}
-            onClick={() => onPageChange(1)}
-          >
-            1
-          </button>
-
-          <button
-            type="button"
-            className={`pagination-btn ${currentPage === 2 ? 'active' : ''}`}
-            onClick={() => onPageChange(2)}
-          >
-            2
-          </button>
-
-          <button
-            type="button"
-            className={`pagination-btn ${currentPage === 3 ? 'active' : ''}`}
-            onClick={() => onPageChange(3)}
-          >
-            3
-          </button>
-
-          <span className="pagination-ellipsis">...</span>
-
-          <button
-            type="button"
-            className={`pagination-btn ${currentPage === 5 ? 'active' : ''}`}
-            onClick={() => onPageChange(5)}
-          >
-            5
-          </button>
+          {renderPaginationButtons()}
 
           <button
             type="button"
@@ -168,89 +188,135 @@ export default function ArticleDraftsDesignView({
           </thead>
 
           <tbody>
-            {drafts.map((draft) => {
-              const isSelected = selectedIds.includes(draft.id);
-
-              return (
-                <tr
-                  key={draft.id}
-                  className={isSelected ? 'selected-row' : ''}
-                >
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, idx) => (
+                <tr key={`skeleton-${idx}`}>
                   <td className="checkbox-col">
-                    <input
-                      type="checkbox"
-                      className="custom-checkbox"
-                      checked={isSelected}
-                      onChange={() => onToggleSelect(draft.id)}
-                      aria-label={`Select draft ${draft.id}`}
-                    />
+                    <div className="draft-skeleton" style={{ width: '16px', height: '16px', borderRadius: '4px' }} />
                   </td>
-
-                  {/* ID Cell */}
-                  <td
-                    className="id-cell"
-                    onClick={() => onOpenArticle(draft)}
-                    title="Click to view and edit draft details"
-                  >
-                    {draft.id}
-                  </td>
-
-                  {/* SLA TIME LEFT Cell */}
-                  <td className="sla-cell">
-                    <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
-                  </td>
-
-                  {/* SUMMARY Cell */}
-                  <td className="summary-cell">
-                    <div
-                      className="summary-title"
-                      onClick={() => onOpenArticle(draft)}
-                      title="Click to view/edit"
-                    >
-                      {draft.summaryTitle}
-                    </div>
-                    {draft.summarySubtitle && (
-                      <div className="summary-subtitle">
-                        {draft.summarySubtitle}
-                      </div>
-                    )}
-                  </td>
-
-                  {/* CATEGORY Cell */}
-                  <td className="category-cell">{draft.category}</td>
-
-                  {/* PRIORITY Cell */}
                   <td>
-                    <div className="priority-cell">
-                      <span
-                        className="priority-box"
-                        style={{
-                          backgroundColor:
-                            draft.priorityColor ||
-                            (draft.priority === 'High'
-                              ? '#c2593f'
-                              : draft.priority === 'Medium'
-                              ? '#e07a5f'
-                              : '#ca8a04'),
-                        }}
-                      />
-                      <span>{draft.priority}</span>
-                    </div>
+                    <div className="draft-skeleton" style={{ width: '60px', height: '14px' }} />
                   </td>
-
-                  {/* STATUS Cell */}
                   <td>
-                    <StatusBadge status={draft.status} />
+                    <div className="draft-skeleton" style={{ width: '80px', height: '22px', borderRadius: '12px' }} />
                   </td>
-
-                  {/* TYPE Cell */}
-                  <td className="type-cell">{draft.type}</td>
-
-                  {/* DATE Cell */}
-                  <td className="date-cell">{draft.date}</td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '180px', height: '14px', marginBottom: '4px' }} />
+                    <div className="draft-skeleton" style={{ width: '120px', height: '12px' }} />
+                  </td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '90px', height: '14px' }} />
+                  </td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '70px', height: '14px' }} />
+                  </td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '60px', height: '20px', borderRadius: '10px' }} />
+                  </td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '50px', height: '14px' }} />
+                  </td>
+                  <td>
+                    <div className="draft-skeleton" style={{ width: '70px', height: '14px' }} />
+                  </td>
                 </tr>
-              );
-            })}
+              ))
+            ) : drafts.length === 0 ? (
+              <tr>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '48px 24px', color: '#6b7280' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                    No article drafts found
+                  </div>
+                  <div style={{ fontSize: '13px' }}>
+                    No draft articles match the current filter or search criteria.
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              drafts.map((draft) => {
+                const isSelected = selectedIds.includes(draft.id);
+
+                return (
+                  <tr
+                    key={draft.id}
+                    className={isSelected ? 'selected-row' : ''}
+                  >
+                    <td className="checkbox-col">
+                      <input
+                        type="checkbox"
+                        className="custom-checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect(draft.id)}
+                        aria-label={`Select draft ${draft.id}`}
+                      />
+                    </td>
+
+                    {/* ID Cell */}
+                    <td
+                      className="id-cell"
+                      onClick={() => onOpenArticle(draft)}
+                      title="Click to view and edit draft details"
+                    >
+                      {draft.id}
+                    </td>
+
+                    {/* SLA TIME LEFT Cell */}
+                    <td className="sla-cell">
+                      <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
+                    </td>
+
+                    {/* SUMMARY Cell */}
+                    <td className="summary-cell">
+                      <div
+                        className="summary-title"
+                        onClick={() => onOpenArticle(draft)}
+                        title="Click to view/edit"
+                      >
+                        {draft.summaryTitle}
+                      </div>
+                      {draft.summarySubtitle && (
+                        <div className="summary-subtitle">
+                          {draft.summarySubtitle}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* CATEGORY Cell */}
+                    <td className="category-cell">{draft.category}</td>
+
+                    {/* PRIORITY Cell */}
+                    <td>
+                      <div className="priority-cell">
+                        <span
+                          className="priority-box"
+                          style={{
+                            backgroundColor:
+                              draft.priorityColor ||
+                              (draft.priority === 'High'
+                                ? '#c2593f'
+                                : draft.priority === 'Medium'
+                                ? '#e07a5f'
+                                : '#ca8a04'),
+                          }}
+                        />
+                        <span>{draft.priority}</span>
+                      </div>
+                    </td>
+
+                    {/* STATUS Cell */}
+                    <td>
+                      <StatusBadge status={draft.status} />
+                    </td>
+
+                    {/* TYPE Cell */}
+                    <td className="type-cell">{draft.type}</td>
+
+                    {/* DATE Cell */}
+                    <td className="date-cell">{draft.date}</td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

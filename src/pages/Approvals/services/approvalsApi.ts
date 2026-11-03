@@ -50,23 +50,44 @@ function formatTimeAgo(dateString?: string): string {
  * Preserves all UI design elements, ticket details, and metadata.
  */
 export function adaptBackendApproval(
-  backendItem: BackendApproval | Approval,
+  backendItem: BackendApproval | Approval | any,
   overrideRejectReason?: string
 ): Approval {
-  if ('ticketNumber' in backendItem && 'authorName' in backendItem) {
-    const app = backendItem as Approval;
+  if (!backendItem) {
+    return {
+      id: `app-${Date.now()}`,
+      ticketNumber: `#0000000`,
+      authorName: 'Unknown Requester',
+      authorInitials: 'UR',
+      authorType: 'user',
+      title: 'Approval Request',
+      timeAgo: 'recently',
+      createdAt: new Date().toISOString(),
+      description: '',
+      status: 'pending',
+      priority: 'Normal',
+      category: 'General',
+      urgency: 'Normal',
+      ticketDetails: null,
+    };
+  }
+
+  // If wrapped in an API envelope: { success: true, data: { ... } }
+  const raw: any = backendItem.data || backendItem;
+
+  if ('ticketNumber' in raw && 'authorName' in raw) {
+    const app = raw as Approval;
     return {
       ...app,
       rejectReason: overrideRejectReason || app.rejectReason,
     };
   }
 
-  const raw = backendItem as BackendApproval;
   const idStr = String(raw.id || '');
   const initials = raw.requester
     ? raw.requester
         .split(' ')
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join('')
         .slice(0, 2)
         .toUpperCase()
@@ -77,13 +98,13 @@ export function adaptBackendApproval(
       ? idStr
       : `#${idStr}`;
 
-  const normalizedStatus = (raw.status ? raw.status.toLowerCase() : 'pending') as
+  const normalizedStatus = (raw.status ? String(raw.status).toLowerCase() : 'pending') as
     | 'pending'
     | 'approved'
     | 'rejected';
 
   const ticketDetails: TicketDetails = {
-    ticketId: idStr.padStart(7, '0'),
+    ticketId: /^\d+$/.test(idStr) ? idStr.padStart(7, '0') : idStr,
     ticketType: raw.service || 'Service Request',
     fullName: raw.requester || 'Requester',
     department: 'Corporate Services',
@@ -96,10 +117,10 @@ export function adaptBackendApproval(
     authorInitials: initials,
     authorType: 'user',
     onBehalfOf: 'General User',
-    title: raw.title || 'Approval Request',
-    timeAgo: formatTimeAgo(raw.submittedAt),
-    createdAt: raw.submittedAt || new Date().toISOString(),
-    description: raw.description || '',
+    title: raw.title || raw.summary || 'Approval Request',
+    timeAgo: formatTimeAgo(raw.submittedAt || raw.createdAt),
+    createdAt: raw.submittedAt || raw.createdAt || new Date().toISOString(),
+    description: raw.description || raw.comments || '',
     status: normalizedStatus,
     priority: 'Normal',
     category: raw.service || 'General',
@@ -128,7 +149,7 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
   return {
     id: `draft-${draft.id}`,
     ticketNumber,
-    authorName: draft.author || '',
+    authorName: draft.author || 'Author',
     authorInitials: initials,
     authorType: 'user',
     onBehalfOf: draft.team || 'General User',
@@ -138,12 +159,17 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
     description: draft.summarySubtitle
       ? `${draft.summarySubtitle}\n\n${draft.body}`
       : draft.body,
-    status: 'pending',
+    status: (draft.status === 'Published'
+      ? 'approved'
+      : draft.status === 'Rejected'
+      ? 'rejected'
+      : 'pending') as 'pending' | 'approved' | 'rejected',
     priority: draft.priority || 'High',
     category: draft.category || 'Knowledge Base',
     urgency: draft.priority || 'High',
+    rejectReason: draft.rejectReason,
     ticketDetails: {
-      ticketId: draft.id.padStart(7, '0'),
+      ticketId: /^\d+$/.test(draft.id) ? draft.id.padStart(7, '0') : draft.id,
       ticketType: 'Knowledge Article Draft',
       username: 'general.user',
       fullName: draft.author,
@@ -201,7 +227,7 @@ export const approvalsApi = {
     let baseApprovals: Approval[] = [];
 
     try {
-      const response: any = await apiClient.get<BackendApproval[]>('/api/approvals');
+      const response: any = await apiClient.get<any>('/api/approvals/pending');
       const backendItems = Array.isArray(response?.data)
         ? response.data
         : Array.isArray(response)
@@ -209,11 +235,9 @@ export const approvalsApi = {
         : [];
       if (backendItems.length > 0) {
         baseApprovals = backendItems.map((item: any) => adaptBackendApproval(item));
-      } else {
-        baseApprovals = [];
       }
     } catch (err) {
-      console.warn('Backend /api/approvals offline or unreachable:', err);
+      console.warn('Backend /api/approvals/pending offline or unreachable:', err);
       baseApprovals = [];
     }
 
@@ -244,6 +268,20 @@ export const approvalsApi = {
   },
 
   /**
+   * Fetch all approvals (pending + historical approved and rejected)
+   */
+  async getAllApprovals(): Promise<Approval[]> {
+    const pending = await this.getPendingApprovals();
+    const history = this.getCachedHistory();
+
+    const mergedMap = new Map<string, Approval>();
+    history.forEach((h) => mergedMap.set(h.id, h));
+    pending.forEach((p) => mergedMap.set(p.id, p));
+
+    return Array.from(mergedMap.values());
+  },
+
+  /**
    * Fetch approval details by ID from GET /api/approvals/:approvalId
    */
   async getApprovalById(approvalId: string): Promise<Approval> {
@@ -264,7 +302,7 @@ export const approvalsApi = {
       return adapted;
     }
 
-    const response = await apiClient.get<BackendApproval>(
+    const response = await apiClient.get<any>(
       `/api/approvals/${encodeURIComponent(approvalId)}`
     );
     const raw = (response as any)?.data || response;
@@ -292,10 +330,11 @@ export const approvalsApi = {
       return approved;
     }
 
-    const response = await apiClient.patch<BackendApproval>(
+    const response: any = await apiClient.patch<any>(
       `/api/approvals/${encodeURIComponent(approvalId)}/approve`
     );
-    const adapted = adaptBackendApproval(response);
+    const raw = response?.data || response;
+    const adapted = adaptBackendApproval(raw);
     adapted.status = 'approved';
     cacheApproval(adapted);
     return adapted;
@@ -321,7 +360,7 @@ export const approvalsApi = {
     // Handle Article Draft rejection
     if (approvalId.startsWith('draft-')) {
       const draftId = approvalId.replace('draft-', '');
-      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Draft');
+      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Draft', trimmedReason);
       const rejected = adaptArticleDraftToApproval(updatedDraft);
       rejected.status = 'rejected';
       rejected.rejectReason = trimmedReason;
@@ -329,11 +368,12 @@ export const approvalsApi = {
       return rejected;
     }
 
-    const response = await apiClient.patch<BackendApproval>(
+    const response: any = await apiClient.patch<any>(
       `/api/approvals/${encodeURIComponent(approvalId)}/reject`,
       { reason: trimmedReason }
     );
-    const adapted = adaptBackendApproval(response, trimmedReason);
+    const raw = response?.data || response;
+    const adapted = adaptBackendApproval(raw, trimmedReason);
     adapted.status = 'rejected';
     adapted.rejectReason = trimmedReason;
     cacheApproval(adapted);
@@ -403,5 +443,14 @@ export const approvalsApi = {
     }
 
     return succeeded;
+  },
+
+  /**
+   * Reset local approvals cache
+   */
+  resetCache(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
   },
 };

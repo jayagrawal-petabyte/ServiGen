@@ -24,7 +24,7 @@ export default function ArticleDraftsPage() {
   const [selectedArticle, setSelectedArticle] = useState<ArticleDraft | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
+  const [, setIsActionLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -78,7 +78,8 @@ export default function ArticleDraftsPage() {
     } else if (activeSubnavView === 'by-team') {
       result = result.filter((draft) => draft.team.trim().length > 0);
     } else if (activeSubnavView === 'by-status') {
-      result = result.filter((draft) => draft.status.trim().length > 0);
+      // Filter open/pending statuses
+      result = result.filter((draft) => draft.status === 'Draft' || draft.status === 'Awaiting Approval');
     }
 
     const query = searchQuery.trim().toLowerCase();
@@ -290,6 +291,7 @@ export default function ArticleDraftsPage() {
             onToggleSort={() =>
               setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
             }
+            isLoading={isLoading}
           />
         </main>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
@@ -10,14 +10,19 @@ interface Toast {
   type?: 'success' | 'error' | 'info';
 }
 
+type TabType = 'pending' | 'approved' | 'rejected' | 'all';
+
 export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [isBatchLoading, setIsBatchLoading] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [modalRejectMode, setModalRejectMode] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [currentTab, setCurrentTab] = useState<TabType>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const showToast = useCallback(
     (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -29,14 +34,21 @@ export default function ApprovalsPage() {
     []
   );
 
-  // Load pending approvals from API (GET /api/approvals/pending)
+  // Load pending approvals from API (GET /api/approvals/pending) and merge with history
   const loadData = useCallback(async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const pendingData = await approvalsApi.getPendingApprovals();
-      setApprovals(pendingData);
-    } catch {
-      // Fallback handled in approvalsApi
+      const allData = await approvalsApi.getAllApprovals();
+      setApprovals(allData);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load approvals from server.';
+      setErrorMessage(msg);
+      // Fallback to cached items
+      const cached = approvalsApi.getCachedHistory();
+      if (cached.length > 0) {
+        setApprovals(cached);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +58,44 @@ export default function ApprovalsPage() {
     loadData();
   }, [loadData]);
 
-  const pendingApprovals = approvals.filter((a) => a.status === 'pending');
+  const counts = useMemo(() => {
+    return {
+      pending: approvals.filter((a) => a.status === 'pending').length,
+      approved: approvals.filter((a) => a.status === 'approved').length,
+      rejected: approvals.filter((a) => a.status === 'rejected').length,
+      all: approvals.length,
+    };
+  }, [approvals]);
+
+  const filteredApprovals = useMemo(() => {
+    let result = approvals;
+
+    // Filter by tab
+    if (currentTab !== 'all') {
+      result = result.filter((a) => a.status === currentTab);
+    }
+
+    // Filter by search query
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter((a) => {
+        return (
+          a.ticketNumber.toLowerCase().includes(q) ||
+          a.authorName.toLowerCase().includes(q) ||
+          (a.onBehalfOf && a.onBehalfOf.toLowerCase().includes(q)) ||
+          a.title.toLowerCase().includes(q) ||
+          (a.description && a.description.toLowerCase().includes(q)) ||
+          (a.rejectReason && a.rejectReason.toLowerCase().includes(q)) ||
+          (a.ticketDetails?.username && a.ticketDetails.username.toLowerCase().includes(q)) ||
+          (a.ticketDetails?.fullName && a.ticketDetails.fullName.toLowerCase().includes(q))
+        );
+      });
+    }
+
+    return result;
+  }, [approvals, currentTab, searchQuery]);
+
+  const pendingApprovalsCount = counts.pending;
 
   /**
    * Approve a single approval request via PATCH /api/approvals/:approvalId/approve
@@ -134,12 +183,16 @@ export default function ApprovalsPage() {
       return;
     }
 
+    const reason = window.prompt('Please enter a rejection reason for all pending requests:');
+    if (reason === null) return; // User cancelled
+    const trimmedReason = reason.trim() || 'Bulk rejection by user';
+
     setIsBatchLoading(true);
     try {
       const pendingIds = pendingItems.map((a) => a.id);
-      await approvalsApi.batchReject(pendingIds, 'Bulk rejection by user');
+      await approvalsApi.batchReject(pendingIds, trimmedReason);
       setApprovals((prev) =>
-        prev.map((app) => (app.status === 'pending' ? { ...app, status: 'rejected' } : app))
+        prev.map((app) => (app.status === 'pending' ? { ...app, status: 'rejected', rejectReason: trimmedReason } : app))
       );
       showToast(`Rejected all ${pendingItems.length} pending request(s).`, 'info');
       setTimeout(() => {
@@ -205,7 +258,7 @@ export default function ApprovalsPage() {
             <button
               className="btn-approval-action accept-all"
               type="button"
-              disabled={isBatchLoading || isLoading || pendingApprovals.length === 0}
+              disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
               onClick={handleAcceptAll}
               title="Accept all pending approval requests"
             >
@@ -227,7 +280,7 @@ export default function ApprovalsPage() {
             <button
               className="btn-approval-action reject-all"
               type="button"
-              disabled={isBatchLoading || isLoading || pendingApprovals.length === 0}
+              disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
               onClick={handleRejectAll}
               title="Reject all pending approval requests"
             >
@@ -274,6 +327,107 @@ export default function ApprovalsPage() {
           </div>
         </div>
 
+        {/* Error Banner if any */}
+        {errorMessage && (
+          <div className="approvals-error-banner" role="alert">
+            <div className="approvals-error-banner-content">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{errorMessage}</span>
+            </div>
+            <button className="approvals-error-retry" type="button" onClick={handleRefresh}>
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Filter Subbar (Tabs & Search) */}
+        <div className="approvals-subbar">
+          <div className="approval-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === 'pending'}
+              className={`approval-tab ${currentTab === 'pending' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('pending')}
+            >
+              <span>Pending</span>
+              <span className="approval-tab-badge">{counts.pending}</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === 'approved'}
+              className={`approval-tab ${currentTab === 'approved' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('approved')}
+            >
+              <span>Approved</span>
+              <span className="approval-tab-badge">{counts.approved}</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === 'rejected'}
+              className={`approval-tab ${currentTab === 'rejected' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('rejected')}
+            >
+              <span>Rejected</span>
+              <span className="approval-tab-badge">{counts.rejected}</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={currentTab === 'all'}
+              className={`approval-tab ${currentTab === 'all' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('all')}
+            >
+              <span>All History</span>
+              <span className="approval-tab-badge">{counts.all}</span>
+            </button>
+          </div>
+
+          <div className="approvals-search-box">
+            <svg
+              className="approvals-search-icon"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="approvals-search-input"
+              placeholder="Search by ticket #, requester, title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="approvals-search-clear"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Loading Skeletons */}
         {isLoading ? (
           <div className="approvals-list">
@@ -306,7 +460,7 @@ export default function ApprovalsPage() {
               </div>
             ))}
           </div>
-        ) : pendingApprovals.length === 0 ? (
+        ) : filteredApprovals.length === 0 ? (
           /* Empty State */
           <div className="approvals-empty">
             <div className="approvals-empty-icon">
@@ -323,17 +477,36 @@ export default function ApprovalsPage() {
               </svg>
             </div>
 
-            <h3>You're all caught up!</h3>
-            <p>There are no pending requests awaiting your review at the moment.</p>
-
-            <button className="btn-reset-approvals" type="button" onClick={handleRefresh}>
-              Refresh Approvals
-            </button>
+            {searchQuery ? (
+              <>
+                <h3>No matching approvals found</h3>
+                <p>No requests match "{searchQuery}". Try a different search term or clear the filter.</p>
+                <button className="btn-reset-approvals" type="button" onClick={() => setSearchQuery('')}>
+                  Clear Search
+                </button>
+              </>
+            ) : currentTab === 'pending' ? (
+              <>
+                <h3>You're all caught up!</h3>
+                <p>There are no pending requests awaiting your review at the moment.</p>
+                <button className="btn-reset-approvals" type="button" onClick={handleRefresh}>
+                  Refresh Approvals
+                </button>
+              </>
+            ) : (
+              <>
+                <h3>No requests in this tab</h3>
+                <p>There are currently no {currentTab} approval requests.</p>
+                <button className="btn-reset-approvals" type="button" onClick={() => setCurrentTab('pending')}>
+                  View Pending Approvals
+                </button>
+              </>
+            )}
           </div>
         ) : (
           /* Approval Cards List */
           <div className="approvals-list">
-            {pendingApprovals.map((approval) => (
+            {filteredApprovals.map((approval) => (
               <ApprovalCard
                 key={approval.id}
                 approval={approval}
