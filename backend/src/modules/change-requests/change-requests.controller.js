@@ -136,13 +136,42 @@ const updateChangeRequest = async (req, res, next) => {
     }
 
     const organisationId = getEffectiveOrgId(req);
-    const updated = await updateChangeRequestData(id.trim(), req.body, organisationId);
 
-    if (!updated) {
+    // Fetch existing record to validate state transition and prevent workflow bypass (New Bug 2)
+    const existing = await getChangeRequestDetails(id.trim(), organisationId);
+    if (!existing) {
       return next(
         new AppError('Change request not found', HTTP_STATUS.NOT_FOUND)
       );
     }
+
+    const { status } = req.body;
+    if (status) {
+      // SECURITY FIX (New Bug 2): Prevent skipping CAB approval workflow from On Hold directly to Approved
+      if (status === 'Approved' && existing.status === 'On Hold') {
+        return next(
+          new AppError(
+            'Workflow Error: Change Request cannot transition directly from On Hold to Approved. It must first be resubmitted for Pending Approval.',
+            HTTP_STATUS.UNPROCESSABLE_ENTITY
+          )
+        );
+      }
+
+      // Role check: Only Approver, Admin, or System Manager can approve or reject
+      if ((status === 'Approved' || status === 'Rejected') && req.user) {
+        const allowedRoles = ['Admin', 'Approver', 'System Manager'];
+        if (!allowedRoles.includes(req.user.role)) {
+          return next(
+            new AppError(
+              'Permission Denied: Only Approver or Administrator roles may approve or reject change requests.',
+              HTTP_STATUS.FORBIDDEN
+            )
+          );
+        }
+      }
+    }
+
+    const updated = await updateChangeRequestData(id.trim(), req.body, organisationId);
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
