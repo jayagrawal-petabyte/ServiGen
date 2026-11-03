@@ -279,6 +279,8 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     const entries: ActivityFeedEntry[] = [];
     allIncidents.forEach((inc) => {
       if (inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) return;
+
+      // 1. Explicit updates & broadcasts posted to this incident
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
@@ -286,23 +288,93 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           actorName: u.author || 'Commander',
           actorOrg: inc.product,
           ticketRef: `#${inc.id}`,
-          actionLabel: u.type === 'stage_change' ? 'Stage Advanced' : 'Incident Update',
+          actionLabel: u.type === 'stage_change' ? 'Stage Advanced' : 'Stakeholder Broadcast',
           message: u.content,
           timeAgo: u.timestamp || 'just now',
           type: u.type === 'stage_change' ? 'status_change' : 'comment_added',
         });
       });
-      entries.push({
-        id: `feed-${inc.id}-decl`,
-        avatarLabel: (inc.assignee || 'MI').slice(0, 2).toUpperCase(),
-        actorName: inc.assignee !== 'Unassigned' ? inc.assignee : 'Commander',
-        actorOrg: inc.product,
-        ticketRef: `#${inc.id}`,
-        actionLabel: 'Major Incident Declared',
-        message: inc.title,
-        timeAgo: 'Live',
-        type: 'new_ticket',
-      });
+
+      // 2. Auto-generate milestone audit entries from lifecycle stages (Started, Escalated, Diagnosed, Mitigated, Resolved, Closed)
+      const stages = inc.lifecycleStages || [];
+      if (stages[0]?.isActive || stages[0]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-started`,
+          avatarLabel: (inc.assignee || 'MI').slice(0, 2).toUpperCase(),
+          actorName: inc.assignee !== 'Unassigned' ? inc.assignee : 'Incident Commander',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Major Incident Declared & Triaged',
+          message: `P1 Emergency declared for ${inc.product}: ${inc.title}`,
+          timeAgo: stages[0]?.timestamp || inc.startedAt || 'Active',
+          type: 'new_ticket',
+        });
+      }
+      if (stages[1]?.isActive || stages[1]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-escalated`,
+          avatarLabel: 'ES',
+          actorName: 'Escalation Team',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Specialist Teams Mobilised',
+          message: `Response bridge active. Incident Commander ${inc.assignee} coordinating resolution.`,
+          timeAgo: stages[1]?.timestamp || 'Escalated',
+          type: 'user_update',
+        });
+      }
+      if (stages[2]?.isActive || stages[2]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-diagnosed`,
+          avatarLabel: 'DG',
+          actorName: 'Technical Lead',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Root Cause Diagnosed',
+          message: `Technical investigation complete. Failure scope isolated for ${inc.product}.`,
+          timeAgo: stages[2]?.timestamp || 'Diagnosed',
+          type: 'status_change',
+        });
+      }
+      if (stages[3]?.isActive || stages[3]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-mitigated`,
+          avatarLabel: 'MT',
+          actorName: 'DevOps & SRE',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Mitigation Applied',
+          message: 'Workaround and failover deployed. Service metrics recovering.',
+          timeAgo: stages[3]?.timestamp || 'Mitigated',
+          type: 'status_change',
+        });
+      }
+      if (stages[4]?.isActive || stages[4]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-resolved`,
+          avatarLabel: 'RS',
+          actorName: inc.assignee !== 'Unassigned' ? inc.assignee : 'Incident Commander',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Incident Resolved',
+          message: 'Core service operational. SLA resolution target achieved.',
+          timeAgo: stages[4]?.timestamp || 'Resolved',
+          type: 'status_change',
+        });
+      }
+      if (stages[5]?.isActive || stages[5]?.isCompleted) {
+        entries.push({
+          id: `feed-${inc.id}-stage-closed`,
+          avatarLabel: 'CL',
+          actorName: 'Incident Commander',
+          actorOrg: inc.product,
+          ticketRef: `#${inc.id}`,
+          actionLabel: 'Incident Closed & Post-Mortem',
+          message: 'Incident lifecycle closed. Post-Incident Review (PIR) scheduled.',
+          timeAgo: stages[5]?.timestamp || 'Closed',
+          type: 'status_change',
+        });
+      }
     });
     return entries;
   }, [allIncidents]);
@@ -362,6 +434,38 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       }
     }).catch(() => {});
   }, [selectedIncidentId]);
+
+  const handlePostFeedUpdate = async (message: string, targetIncidentId?: string) => {
+    const incId = targetIncidentId || selectedIncidentId || allIncidents[0]?.id;
+    if (!incId || !message.trim()) return;
+
+    const authorName = user?.fullName || 'Incident Commander';
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newUpdate: IncidentUpdate = {
+      id: `upd-${Date.now()}`,
+      timestamp: nowTime,
+      author: authorName,
+      authorRole: 'Admin',
+      type: 'comment',
+      content: message.trim(),
+    };
+
+    setServerIncidents((prev) =>
+      prev.map((inc) => (inc.id === incId ? { ...inc, updates: [newUpdate, ...(inc.updates || [])] } : inc))
+    );
+    setLocalIncidents((prev) =>
+      prev.map((inc) => (inc.id === incId ? { ...inc, updates: [newUpdate, ...(inc.updates || [])] } : inc))
+    );
+
+    try {
+      await majorIncidentsService.appendIncidentUpdate(incId, {
+        message: message.trim(),
+        author: authorName,
+      });
+    } catch (err) {
+      console.warn('[ActivityFeed] Broadcast update saved locally:', err);
+    }
+  };
 
   const handleAddIncident = (incident: MajorIncident) => {
     setLocalIncidents((prev) => [incident, ...prev]);
@@ -1178,7 +1282,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
           {/* ── Activity Feed (··· button only) ── */}
           {!selectedIncident && !openPanel && isFeedOpen && (
-            <ActivityFeed entries={liveFeedEntries} onClose={() => setIsFeedOpen(false)} />
+            <ActivityFeed
+              entries={liveFeedEntries}
+              onClose={() => setIsFeedOpen(false)}
+              onPostUpdate={handlePostFeedUpdate}
+              incidents={allIncidents.map((i) => ({ id: i.id, title: i.title }))}
+              defaultIncidentId={selectedIncidentId || allIncidents[0]?.id}
+            />
           )}
         </div>
       </main>

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority, LifecycleStage } from '../types/majorIncident.types';
 import './MajorIncidentConsole.css';
+import ServiceHealthCard from './ServiceHealthCard';
 
 interface MajorIncidentConsoleProps {
   incident: MajorIncident;
@@ -1244,6 +1245,14 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </p>
                 )}
               </div>
+
+                            {/* Live Service Health Visibility (Halo Parity) */}
+              <ServiceHealthCard
+                product={editProduct}
+                priority={currentPriority}
+                isClosedOrResolved={currentStages[5]?.isCompleted}
+                onNavigateCmdb={() => navigate('/cmdb/services')}
+              />
 
               {/* Work Activity Section */}
               <div className="bg-white border border-gray-200/80 rounded-xl p-5 shadow-2xs space-y-4 relative">

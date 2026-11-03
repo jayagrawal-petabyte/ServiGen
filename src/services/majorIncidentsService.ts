@@ -310,6 +310,16 @@ export const majorIncidentsService = {
     }
     return null;
   },
+
+  /**
+   * Alias for addMajorIncidentUpdate to support appendIncidentUpdate naming
+   */
+  async appendIncidentUpdate(
+    incidentId: string,
+    payload: { message: string; author?: string }
+  ): Promise<MajorIncident | null> {
+    return this.addMajorIncidentUpdate(incidentId, payload);
+  },
 };
 
 export default majorIncidentsService;

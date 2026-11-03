@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { MajorIncident, UserRole, IncidentUpdate, Priority } from '../types/majorIncident.types';
 import PriorityBadge from './PriorityBadge';
+import ServiceHealthCard from './ServiceHealthCard';
 import { useAuth } from '../../Auth/AuthContext';
 import { api } from '../../../services/apiClient';
 import { STAGE_LABELS } from '../../../services/majorIncidentsService';
@@ -302,7 +303,15 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           </div>
         </div>
 
-        {/* ── Lifecycle Stage Progression & Controls ── */}
+                {/* ── Live Service Health Visibility (Halo Parity) ── */}
+        <ServiceHealthCard
+          product={incident.product}
+          priority={incident.priority}
+          isClosedOrResolved={isClosed}
+          onNavigateCmdb={() => navigate('/cmdb')}
+        />
+
+{/* ── Lifecycle Stage Progression & Controls ── */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
