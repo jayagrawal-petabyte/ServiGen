@@ -360,7 +360,7 @@ export const approvalsApi = {
     // Handle Article Draft rejection
     if (approvalId.startsWith('draft-')) {
       const draftId = approvalId.replace('draft-', '');
-      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Draft', trimmedReason);
+      const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Rejected', trimmedReason);
       const rejected = adaptArticleDraftToApproval(updatedDraft);
       rejected.status = 'rejected';
       rejected.rejectReason = trimmedReason;

@@ -371,7 +371,12 @@ export const articleDraftsApi = {
     const updated: ArticleDraft = {
       ...item,
       status: newStatus,
-      rejectReason: newStatus === 'Rejected' ? reason || item.rejectReason : newStatus === 'Awaiting Approval' ? undefined : item.rejectReason,
+      rejectReason:
+        newStatus === 'Rejected'
+          ? reason || item.rejectReason
+          : newStatus === 'Awaiting Approval'
+          ? undefined
+          : reason || item.rejectReason,
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
