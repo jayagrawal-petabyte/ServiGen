@@ -7,6 +7,8 @@ import {
   toDateKey,
 } from "./calendar.types";
 import { apiClient, api } from "../../services/apiClient";
+import { fetchChangeRequests } from "../../services/changeRequestsService";
+import type { ChangeRequest } from "../../types/cmdb";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./calendar.css";
 
@@ -152,6 +154,8 @@ export default function CalendarPage() {
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [draftError, setDraftError] = useState("");
+  const [changeEvents, setChangeEvents] = useState<CalendarEvent[]>([]);
+  const [showChangeOverlay, setShowChangeOverlay] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Fetch calendar events on mount
@@ -217,6 +221,53 @@ export default function CalendarPage() {
     };
   }, []);
 
+  // Fetch change requests and map them to calendar events for overlay
+  useEffect(() => {
+    let active = true;
+    async function loadChangeRequests() {
+      try {
+        const res = await fetchChangeRequests();
+        if (!active) return;
+        const crs = res?.data ?? [];
+        const mapped: CalendarEvent[] = crs
+          .filter((cr: ChangeRequest) => cr.scheduledStart && cr.scheduledStart !== "Pending Schedule")
+          .map((cr: ChangeRequest) => {
+            const startDt = new Date(cr.scheduledStart);
+            const endDt = cr.scheduledEnd && cr.scheduledEnd !== "Pending Schedule"
+              ? new Date(cr.scheduledEnd)
+              : new Date(startDt.getTime() + 2 * 60 * 60 * 1000); // default 2h
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const isAllDay =
+              startDt.getHours() === 0 && startDt.getMinutes() === 0 &&
+              endDt.getHours() === 0 && endDt.getMinutes() === 0 &&
+              endDt.getTime() - startDt.getTime() >= 86_400_000;
+            return {
+              id: `cr-${cr.id}`,
+              title: `CR: ${cr.title}`,
+              date: toDateKey(startDt),
+              start: `${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`,
+              end: `${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`,
+              type: "change-request" as EventType,
+              agent: cr.agentName || "",
+              allDay: isAllDay,
+              description: `[${cr.type}] ${cr.status} · Risk: ${cr.risk} · ${cr.description || ""}`.trim(),
+            };
+          });
+        setChangeEvents(mapped);
+      } catch (err) {
+        console.warn("[CalendarPage] Failed to load change requests for overlay:", err);
+      }
+    }
+    void loadChangeRequests();
+    return () => { active = false; };
+  }, []);
+
+  // Merge calendar events + change request overlay events
+  const allEvents = useMemo(() => {
+    if (!showChangeOverlay) return events;
+    return [...events, ...changeEvents];
+  }, [events, changeEvents, showChangeOverlay]);
+
   // Load agent list from API
   useEffect(() => {
     async function loadAgents() {
@@ -244,10 +295,10 @@ export default function CalendarPage() {
 
   // Fallback: derive from loaded events
   useEffect(() => {
-    if (agentList.length === 0 && events.length > 0) {
-      setAgentList([...new Set(events.map((e) => e.agent).filter(Boolean))]);
+    if (agentList.length === 0 && allEvents.length > 0) {
+      setAgentList([...new Set(allEvents.map((e) => e.agent).filter(Boolean))]);
     }
-  }, [events, agentList.length]);
+  }, [allEvents, agentList.length]);
 
   // Keep the red "now" line moving.
   useEffect(() => {
@@ -267,7 +318,7 @@ export default function CalendarPage() {
 
   const visibleEvents = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return events.filter(
+    return allEvents.filter(
       (e) =>
         !hiddenTypes.includes(e.type) &&
         !hiddenAgents.includes(e.agent) &&
@@ -276,7 +327,7 @@ export default function CalendarPage() {
           e.agent.toLowerCase().includes(q) ||
           (e.description ?? "").toLowerCase().includes(q))
     );
-  }, [events, search, hiddenTypes, hiddenAgents]);
+  }, [allEvents, search, hiddenTypes, hiddenAgents]);
 
   function eventsOn(date: Date) {
     const key = toDateKey(date);
@@ -775,6 +826,37 @@ export default function CalendarPage() {
                 </button>
               );
             })}
+        </section>
+
+        <section className="cal-side-section">
+          <div className="cal-side-title">
+            <h3>Overlays</h3>
+          </div>
+          <button
+            className={`cal-side-item ${showChangeOverlay ? "is-active" : "is-off"}`}
+            onClick={() => setShowChangeOverlay((prev) => !prev)}
+            title={showChangeOverlay ? "Hide change requests" : "Show change requests"}
+          >
+            <span
+              className={`cal-dot big ${!showChangeOverlay ? "is-off" : ""}`}
+              style={{
+                backgroundColor: showChangeOverlay ? "#d97706" : "transparent",
+                borderColor: "#d97706",
+              }}
+            >
+              {showChangeOverlay && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </span>
+            <span className="cal-side-item-label">
+              Change Requests
+              {changeEvents.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.7 }}>({changeEvents.length})</span>
+              )}
+            </span>
+          </button>
         </section>
       </aside>
 
