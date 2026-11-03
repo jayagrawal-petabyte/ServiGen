@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import type { ChangeRequest, SubTask, ChangeStatus, ChangeType, RiskLevel } from '../../types/cmdb';
+import type { ChangeRequest, SubTask, ChangeStatus } from '../../types/cmdb';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
 import { useAuth } from '../Auth/AuthContext';
@@ -11,17 +11,12 @@ import {
   Tag,
   User,
   CheckSquare,
-  ClipboardList,
   ExternalLink,
-  ShieldAlert,
   ShieldCheck,
   RotateCcw,
   AlertTriangle,
   FileCheck,
-  Calendar,
-  Layers,
   ChevronRight,
-  Plus,
 } from 'lucide-react';
 
 interface ChangeRequestDetailModalProps {
@@ -42,14 +37,12 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
   const isApproverOrAdmin = user?.role === 'Administrator' || user?.role === 'System Manager' || user?.role === 'Team Lead';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'cab' | 'implementation' | 'rollback' | 'pir'>('overview');
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [cabNote, setCabNote] = useState(changeRequest?.cabReview?.cabNotes || '');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   if (!changeRequest) return null;
 
-  // ITIL Lifecycle Stages
-  const stages: { label: string; active: boolean; completed: boolean }[] = [
+  const stages = [
     {
       label: 'Draft',
       active: changeRequest.status === 'Draft',
@@ -58,12 +51,12 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
     {
       label: 'CAB Approval',
       active: changeRequest.status === 'Pending Approval',
-      completed: ['Approved', 'Scheduled', 'Active', 'In Progress', 'Completed'].includes(changeRequest.status),
+      completed: ['Approved', 'Scheduled', 'In Progress', 'Active', 'Completed'].includes(changeRequest.status),
     },
     {
       label: 'Scheduled',
       active: changeRequest.status === 'Scheduled',
-      completed: ['Active', 'In Progress', 'Completed'].includes(changeRequest.status),
+      completed: ['In Progress', 'Active', 'Completed'].includes(changeRequest.status),
     },
     {
       label: 'Implementation',
@@ -71,7 +64,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
       completed: changeRequest.status === 'Completed',
     },
     {
-      label: 'PIR & Closed',
+      label: 'Review & Closed',
       active: changeRequest.status === 'Completed',
       completed: changeRequest.status === 'Completed',
     },
@@ -80,19 +73,19 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
   const handleApprove = () => {
     if (!onChangeStatus) return;
     if (changeRequest.status === 'On Hold') {
-      setActionMessage('⚠️ Cannot approve directly from On Hold. Move to Pending Approval first.');
+      setActionMessage('Changes cannot be approved while on hold. Resubmit for approval first.');
       setTimeout(() => setActionMessage(null), 3000);
       return;
     }
     onChangeStatus('Approved');
-    setActionMessage('✓ Change Request approved by CAB.');
+    setActionMessage('Change request approved.');
     setTimeout(() => setActionMessage(null), 2500);
   };
 
   const handleReject = () => {
     if (!onChangeStatus) return;
     onChangeStatus('Rejected');
-    setActionMessage('⚠️ Change Request marked as Rejected.');
+    setActionMessage('Change request rejected.');
     setTimeout(() => setActionMessage(null), 2500);
   };
 
@@ -110,7 +103,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
         transition={{ duration: 0.2 }}
         className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col"
       >
-        {/* Header Bar */}
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-3xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -143,14 +135,12 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
           </button>
         </div>
 
-        {/* Action / Security Alert Banner */}
         {actionMessage && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-slate-900 text-white text-xs font-semibold flex items-center justify-between animate-fadeIn">
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-slate-900 text-white text-xs font-semibold flex items-center justify-between">
             <span>{actionMessage}</span>
           </div>
         )}
 
-        {/* ITIL Lifecycle Stepper */}
         <div className="px-6 py-3 bg-slate-100/60 border-b border-slate-200 flex items-center justify-between gap-1 overflow-x-auto text-[11px]">
           {stages.map((stage, idx) => (
             <div key={stage.label} className="flex items-center gap-1.5 shrink-0">
@@ -177,10 +167,9 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
           ))}
         </div>
 
-        {/* Quick Metrics Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 mx-6 mt-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
           <div>
-            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Risk Assessment</span>
+            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Risk Level</span>
             <div className="flex items-center gap-1.5">
               <span className={`w-2.5 h-2.5 rounded-full ${
                 changeRequest.risk === 'Critical'
@@ -191,12 +180,12 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   ? 'bg-yellow-400'
                   : 'bg-emerald-500'
               }`} />
-              <span className="font-bold text-slate-800">{changeRequest.risk} Risk</span>
-              <span className="text-[10px] text-slate-400">(Score: {changeRequest.riskScore || 5}/9)</span>
+              <span className="font-bold text-slate-800">{changeRequest.risk}</span>
+              <span className="text-[10px] text-slate-400">({changeRequest.riskScore || 4}/9)</span>
             </div>
           </div>
           <div>
-            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Implementation Progress</span>
+            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Progress</span>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
                 <div
@@ -208,16 +197,15 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             </div>
           </div>
           <div>
-            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Scheduled Window</span>
+            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Start Date</span>
             <span className="font-semibold text-slate-800 truncate block">{changeRequest.scheduledStart}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Effort Budget</span>
+            <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Hours</span>
             <span className="font-bold text-slate-800">{changeRequest.timeSpentHours}h spent / {changeRequest.targetHours}h plan</span>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex items-center gap-2 px-6 pt-4 border-b border-slate-200 text-xs font-bold">
           <button
             type="button"
@@ -228,7 +216,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Overview & Context
+            Overview
           </button>
           <button
             type="button"
@@ -240,7 +228,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            CAB & Approvals
+            CAB Review
           </button>
           <button
             type="button"
@@ -252,7 +240,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             }`}
           >
             <CheckSquare className="w-3.5 h-3.5" />
-            Implementation Plan ({changeRequest.subtasks.length})
+            Tasks ({changeRequest.subtasks.length})
           </button>
           <button
             type="button"
@@ -264,7 +252,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Rollback & Contingency
+            Rollback Plan
           </button>
           <button
             type="button"
@@ -280,7 +268,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
           </button>
         </div>
 
-        {/* Tab Body */}
         <div className="p-6 space-y-5 text-xs text-slate-700 flex-1">
           {activeTab === 'overview' && (
             <div className="space-y-4">
@@ -326,7 +313,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70">
                   <span className="text-slate-400 font-bold uppercase block mb-1 flex items-center gap-1 text-[10px]">
-                    <Tag className="w-3.5 h-3.5 text-slate-400" /> Linked Configuration Item (CI)
+                    <Tag className="w-3.5 h-3.5 text-slate-400" /> Linked CI
                   </span>
                   <div className="flex items-center justify-between">
                     <div>
@@ -348,18 +335,17 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70">
                   <span className="text-slate-400 font-bold uppercase block mb-1 flex items-center gap-1 text-[10px]">
-                    <User className="w-3.5 h-3.5 text-slate-400" /> Assigned Change Owner
+                    <User className="w-3.5 h-3.5 text-slate-400" /> Assigned Owner
                   </span>
                   <span className="font-bold text-slate-900 text-sm block">{changeRequest.agentName}</span>
-                  <span className="text-slate-500 text-[10px]">Platform Operations & Infrastructure</span>
+                  <span className="text-slate-500 text-[10px]">Platform Operations</span>
                 </div>
               </div>
 
-              {/* Status State Transition Workflow */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-bold text-slate-800 text-xs uppercase">Workflow State Transition</h4>
-                  <span className="text-[10px] text-slate-500 font-medium">Enforced ITIL State Machine</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Lifecycle Actions</span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {onChangeStatus && (
@@ -370,7 +356,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                           onClick={() => onChangeStatus('Pending Approval')}
                           className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
                         >
-                          Submit for CAB Approval →
+                          Submit for Approval →
                         </button>
                       )}
                       {changeRequest.status === 'Approved' && (
@@ -398,7 +384,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                             onClick={() => onChangeStatus('Completed')}
                             className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
                           >
-                            Mark Completed & Close ✓
+                            Mark Completed ✓
                           </button>
                           <button
                             type="button"
@@ -415,7 +401,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                           onClick={() => onChangeStatus('Pending Approval')}
                           className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
                         >
-                          Resubmit for CAB Approval
+                          Resubmit for Approval
                         </button>
                       )}
                     </>
@@ -431,7 +417,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-bold text-sm text-slate-900">Change Advisory Board (CAB) Assessment</h3>
+                    <h3 className="font-bold text-sm text-slate-900">Change Advisory Board Review</h3>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                     changeRequest.status === 'Approved'
@@ -440,27 +426,26 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                       ? 'bg-rose-100 text-rose-800'
                       : 'bg-amber-100 text-amber-800'
                   }`}>
-                    CAB Decision: {changeRequest.status === 'Approved' ? 'Approved' : changeRequest.status === 'Rejected' ? 'Rejected' : 'Under Review'}
+                    Decision: {changeRequest.status === 'Approved' ? 'Approved' : changeRequest.status === 'Rejected' ? 'Rejected' : 'Pending'}
                   </span>
                 </div>
                 <p className="text-slate-600 text-xs">
-                  Normal and Emergency changes require CAB authorization before scheduled deployment. Approvers evaluate business impact, outage risks, and rollback readiness.
+                  Normal and emergency changes require authorization from the CAB before deployment.
                 </p>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                    CAB Review Notes & Deliberation:
+                    Review Notes:
                   </label>
                   <textarea
                     rows={3}
                     value={cabNote}
                     onChange={(e) => setCabNote(e.target.value)}
-                    placeholder="Enter CAB committee meeting decisions, risk sign-off conditions, or rollback prerequisites..."
+                    placeholder="Enter review notes or conditions..."
                     className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#eb6a47] bg-white"
                   />
                 </div>
               </div>
 
-              {/* Role-Gated Approver Controls */}
               <div className="p-4 bg-white border border-slate-200 rounded-2xl">
                 <h4 className="font-bold text-xs text-slate-800 uppercase mb-2">Authorizer Actions</h4>
                 {isApproverOrAdmin ? (
@@ -472,7 +457,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                       className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Authorize & Approve Change</span>
+                      <span>Approve Change</span>
                     </button>
                     <button
                       type="button"
@@ -487,7 +472,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 ) : (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>You are viewing this change as an Agent. Only users with <strong>Approver</strong> or <strong>Administrator</strong> roles can record CAB decisions.</span>
+                    <span>Only Approver or Administrator accounts can approve or reject changes.</span>
                   </div>
                 )}
               </div>
@@ -498,11 +483,11 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900">Implementation Plan & Work Breakdown</h3>
-                  <p className="text-slate-500 text-xs">Execute change tasks in order with verification checks.</p>
+                  <h3 className="font-bold text-sm text-slate-900">Implementation Plan</h3>
+                  <p className="text-slate-500 text-xs">Tasks to be completed during the maintenance window.</p>
                 </div>
                 <span className="text-xs font-bold text-[#eb6a47]">
-                  {changeRequest.subtasks.filter((s) => s.completed).length} / {changeRequest.subtasks.length} Done
+                  {changeRequest.subtasks.filter((s) => s.completed).length} / {changeRequest.subtasks.length} Completed
                 </span>
               </div>
 
@@ -534,7 +519,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
                 {changeRequest.subtasks.length === 0 && (
                   <p className="text-xs text-slate-400 italic text-center py-6">
-                    No subtasks defined yet. Standard change plan applies.
+                    No subtasks defined.
                   </p>
                 )}
               </div>
@@ -546,29 +531,29 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
                   <RotateCcw className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-bold text-sm text-slate-900">Rollback Procedure & Backout Plan</h3>
+                  <h3 className="font-bold text-sm text-slate-900">Rollback Procedure</h3>
                 </div>
                 <p className="text-slate-600 text-xs">
-                  Mandatory ITIL contingency plan in case implementation fails or breaches verification tolerances.
+                  Contingency steps to execute if the change fails or causes unintended degradation.
                 </p>
                 <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">Contingency Trigger Threshold:</span>
-                    <span className="text-rose-600 font-bold">&gt; 5% Error Rate or Database Latency &gt; 250ms</span>
+                    <span className="font-bold text-slate-700">Trigger:</span>
+                    <span className="text-rose-600 font-bold">&gt; 5% Error rate or elevated service latency</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">Estimated Backout Duration:</span>
+                    <span className="font-bold text-slate-700">Estimated Duration:</span>
                     <span className="font-mono font-bold text-slate-800">45 Minutes</span>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-xs uppercase text-slate-700 mb-2">Backout Steps:</h4>
+                  <h4 className="font-bold text-xs uppercase text-slate-700 mb-2">Steps:</h4>
                   <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-600">
                     <li>Revert DNS / load balancer target weight to previous stable replica.</li>
-                    <li>Execute database point-in-time snapshot restore if schema changes were applied.</li>
-                    <li>Verify application health probe returns 200 OK across all instances.</li>
-                    <li>Notify incident commander and escalate to On-Call engineering.</li>
+                    <li>Restore database snapshot if schema migrations were applied.</li>
+                    <li>Verify application health check returns 200 OK across all instances.</li>
+                    <li>Notify incident commander and escalate to on-call engineering.</li>
                   </ol>
                 </div>
               </div>
@@ -580,17 +565,17 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-bold text-sm text-slate-900">Post-Implementation Review (PIR)</h3>
+                  <h3 className="font-bold text-sm text-slate-900">Post-Implementation Review</h3>
                 </div>
                 <p className="text-slate-600 text-xs">
-                  Completed changes are formally reviewed to capture lessons learned, verify business objectives, and identify automation opportunities.
+                  Review conducted after execution to capture findings and verify outcomes.
                 </p>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-white border border-slate-200 rounded-xl">
-                    <span className="text-slate-400 font-bold block text-[10px] uppercase mb-1">Outcome Status</span>
+                    <span className="text-slate-400 font-bold block text-[10px] uppercase mb-1">Status</span>
                     <span className="font-bold text-emerald-700">
-                      {changeRequest.status === 'Completed' ? 'Successful — Objectives Achieved' : 'Pending Change Completion'}
+                      {changeRequest.status === 'Completed' ? 'Completed successfully' : 'Pending change completion'}
                     </span>
                   </div>
                   <div className="p-3 bg-white border border-slate-200 rounded-xl">
@@ -601,11 +586,11 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                    Lessons Learned & Continuous Improvement:
+                    Lessons Learned:
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Document implementation findings, unforeseen dependencies, or automation improvements for future iterations..."
+                    placeholder="Document implementation findings or follow-up action items..."
                     className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#eb6a47] bg-white"
                   />
                 </div>
@@ -613,7 +598,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             </div>
           )}
 
-          {/* Footer Window & Tags */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-slate-500 text-xs">
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-slate-400" />

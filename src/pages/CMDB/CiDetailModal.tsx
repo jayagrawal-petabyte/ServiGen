@@ -14,17 +14,12 @@ import {
   HardDrive,
   MapPin,
   User,
-  Clock,
   Layers,
-  ArrowRight,
-  ArrowDown,
   AlertCircle,
   ExternalLink,
   Plus,
   Cpu,
   Key,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react';
 
 interface CiDetailModalProps {
@@ -36,7 +31,6 @@ interface CiDetailModalProps {
 export const CiDetailModal: React.FC<CiDetailModalProps> = ({
   ci,
   onClose,
-  onOpenCreateChange,
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'specs' | 'relationships' | 'impact' | 'licenses'>('specs');
@@ -60,6 +54,8 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
     }
   };
 
+  const lifecycleStages = ['Ordered', 'In Stock', 'Deployed', 'Maintenance', 'Retired'];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -74,7 +70,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
         transition={{ duration: 0.2 }}
         className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col"
       >
-        {/* Header Bar */}
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-3xl">
           <div className="flex items-center gap-3.5">
             <div className="p-3 bg-white border border-slate-200 rounded-2xl shadow-xs">
@@ -107,7 +102,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           </button>
         </div>
 
-        {/* Quick Context Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 mx-6 mt-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
           <div>
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Site Location</span>
@@ -133,7 +127,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex items-center gap-2 px-6 pt-4 border-b border-slate-200 text-xs font-bold">
           <button
             type="button"
@@ -145,7 +138,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
-            Specifications & Asset Info
+            Specifications
           </button>
           <button
             type="button"
@@ -157,7 +150,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Topology & Dependencies ({ci.relationships?.length || 0})
+            Dependencies ({ci.relationships?.length || 0})
           </button>
           <button
             type="button"
@@ -169,7 +162,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             }`}
           >
             <AlertCircle className="w-3.5 h-3.5" />
-            Impact Analysis & Tickets
+            Impact & Tickets
           </button>
           <button
             type="button"
@@ -181,11 +174,10 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             }`}
           >
             <Key className="w-3.5 h-3.5" />
-            Software Licences ({ci.softwareLicenses?.length || 0})
+            Licences ({ci.softwareLicenses?.length || 0})
           </button>
         </div>
 
-        {/* Tab Body */}
         <div className="p-6 space-y-5 text-xs text-slate-700 flex-1">
           {activeTab === 'specs' && (
             <div className="space-y-4">
@@ -196,19 +188,19 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   </span>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">OS Platform:</span>
+                      <span className="text-slate-500">OS:</span>
                       <span className="font-semibold text-slate-800">{ci.specifications?.os || 'Linux Enterprise'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">CPU Allocation:</span>
+                      <span className="text-slate-500">CPU:</span>
                       <span className="font-semibold text-slate-800">{ci.specifications?.cpu || '16 vCPU'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Memory (RAM):</span>
+                      <span className="text-slate-500">Memory:</span>
                       <span className="font-semibold text-slate-800">{ci.specifications?.ram || '64 GB'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Storage Volume:</span>
+                      <span className="text-slate-500">Storage:</span>
                       <span className="font-semibold text-slate-800">{ci.specifications?.storage || '1 TB SSD'}</span>
                     </div>
                   </div>
@@ -216,11 +208,11 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
 
                 <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Hardware & Data Center Specs
+                    Hardware & Location
                   </span>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Hardware Model:</span>
+                      <span className="text-slate-500">Model:</span>
                       <span className="font-semibold text-slate-800">{ci.specifications?.model || 'Enterprise Rackmount'}</span>
                     </div>
                     <div className="flex justify-between">
@@ -231,21 +223,16 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       <span className="text-slate-500">MAC Address:</span>
                       <span className="font-mono text-slate-700">{ci.specifications?.macAddress || '00:1A:2B:3C:4D:5E'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Discovery Method:</span>
-                      <span className="font-semibold text-slate-800">Automated Agent &amp; SNMP</span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Asset Lifecycle Pipeline */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  ITIL Asset Lifecycle State Machine
+                  Lifecycle Stage
                 </span>
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  {['Ordered', 'In Stock', 'Deployed', 'Maintenance', 'Retired'].map((step, idx) => {
+                  {lifecycleStages.map((step, idx) => {
                     const isCurrent = (ci.lifecycleState || 'Deployed') === step;
                     return (
                       <div key={step} className="flex items-center gap-1">
@@ -258,7 +245,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                         >
                           {step}
                         </span>
-                        {idx < 4 && <span className="text-slate-300 font-bold">→</span>}
+                        {idx < lifecycleStages.length - 1 && <span className="text-slate-300 font-bold">→</span>}
                       </div>
                     );
                   })}
@@ -270,9 +257,9 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           {activeTab === 'relationships' && (
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <h4 className="font-bold text-sm text-slate-900 mb-1">CI Dependency & Topology Map</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-1">Dependencies & Topology</h4>
                 <p className="text-slate-500 text-xs mb-4">
-                  Visual topology mapping relationships and operational dependencies across the infrastructure stack.
+                  Upstream and downstream connections for this configuration item.
                 </p>
 
                 {ci.relationships && ci.relationships.length > 0 ? (
@@ -300,8 +287,8 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                 ) : (
                   <div className="p-6 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
                     <Layers className="w-8 h-8 mx-auto mb-2 text-slate-300 stroke-1" />
-                    <p className="font-semibold text-slate-600">Standard standalone component</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Direct connections route via default network subnet.</p>
+                    <p className="font-semibold text-slate-600">Standalone component</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">No direct upstream or downstream dependencies configured.</p>
                   </div>
                 )}
               </div>
@@ -329,7 +316,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                     }}
                     className="w-full py-1.5 bg-white hover:bg-amber-100 text-amber-800 font-bold rounded-xl border border-amber-300 text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                   >
-                    <span>View Incidents Queue</span>
+                    <span>View Incidents</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -358,9 +345,8 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons to raise incident or change for this CI */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
-                <span className="font-semibold text-slate-700 text-xs">Need to schedule maintenance or report an outage?</span>
+                <span className="font-semibold text-slate-700 text-xs">Need to schedule maintenance for this CI?</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -370,7 +356,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   className="px-3.5 py-1.5 rounded-xl bg-[#eb6a47] hover:bg-[#db5936] text-white font-bold text-xs cursor-pointer shadow-2xs transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Raise Change for this CI</span>
+                  <span>Create Change Request</span>
                 </button>
               </div>
             </div>
@@ -381,10 +367,10 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
                   <Key className="w-5 h-5 text-indigo-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Software Licences & Contract Entitlements</h4>
+                  <h4 className="font-bold text-sm text-slate-900">Software Licences</h4>
                 </div>
                 <p className="text-slate-500 text-xs">
-                  Software licences, vendor maintenance entitlements, and enterprise seats allocated to this asset.
+                  Active software licences and allocations for this asset.
                 </p>
 
                 {ci.softwareLicenses && ci.softwareLicenses.length > 0 ? (
@@ -406,7 +392,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   </div>
                 ) : (
                   <div className="p-6 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
-                    <p className="font-semibold text-slate-600">Standard Open-Source / Bundled Licence</p>
+                    <p className="font-semibold text-slate-600">Standard / Open-Source Licence</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">No proprietary third-party commercial licence required.</p>
                   </div>
                 )}
@@ -415,7 +401,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-3xl text-xs text-slate-500">
           <span>Asset Tag: <strong className="font-mono text-slate-800">{ci.tag}</strong></span>
           <button

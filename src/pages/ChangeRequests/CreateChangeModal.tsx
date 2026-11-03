@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { ChangeRequest, ChangeType, RiskLevel, ImpactLevel } from '../../types/cmdb';
-import { X, Plus, AlertCircle, Loader2, ShieldCheck, RotateCcw, Calendar, CheckSquare } from 'lucide-react';
+import { X, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../Auth/AuthContext';
 
 interface CreateChangeModalProps {
@@ -42,18 +42,9 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Calculate Risk Score & Level based on Impact and Urgency matrix
-  const getRiskCalculation = (imp: ImpactLevel, urg: 'Low' | 'Medium' | 'High') => {
-    const weights = { Low: 1, Medium: 2, High: 3 };
-    const score = weights[imp] * weights[urg]; // 1 to 9
-    let level: RiskLevel = 'Low';
-    if (score >= 6) level = 'Critical';
-    else if (score >= 4) level = 'High';
-    else if (score >= 2) level = 'Medium';
-    return { score, level };
-  };
-
-  const { score: riskScore, level: computedRisk } = getRiskCalculation(impact, urgency);
+  const weights = { Low: 1, Medium: 2, High: 3 };
+  const riskScore = weights[impact] * weights[urgency];
+  const computedRisk: RiskLevel = riskScore >= 6 ? 'Critical' : riskScore >= 4 ? 'High' : riskScore >= 2 ? 'Medium' : 'Low';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,24 +89,21 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
         rollbackPlan: {
           steps: [
             { id: 'RB-01', title: 'Verify error trigger threshold and initiate failover', completed: false },
-            { id: 'RB-02', title: 'Restore snapshot or fallback configuration', completed: false },
+            { id: 'RB-02', title: 'Restore prior configuration and database snapshot', completed: false },
           ],
-          contingencyOwner: agentName,
           estimatedDurationMinutes: 45,
+          contingencyOwner: agentName,
+          verificationProcedure: rollbackPlan,
         },
         cabReview: {
           decision: type === 'Standard' ? 'Approved' : 'Pending',
-          decisionBy: type === 'Standard' ? 'Pre-Approved Standard Process' : undefined,
-          cabNotes: cabRequired ? 'Awaiting CAB scheduled agenda review.' : 'Standard expedited workflow.',
+          cabNotes: cabRequired ? 'Requires review by CAB before execution.' : 'Standard pre-approved template.',
         },
       });
 
-      // Reset form
-      setTitle('');
-      setDescription('');
       onClose();
-    } catch (err: any) {
-      setValidationError(err?.message || 'Failed to submit Change Request.');
+    } catch {
+      setValidationError('Failed to create change request. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -136,15 +124,17 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
         className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col"
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-3xl">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Create New Change Request</h2>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">
-              Submit an ITIL-compliant change request with risk scoring and rollback verification
-            </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#eb6a47]/10 flex items-center justify-center text-[#eb6a47]">
+              <Plus className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Create Change Request</h2>
+              <p className="text-xs text-slate-500">Plan and submit a change request for review and scheduling.</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            disabled={isSubmitting}
             className="p-2 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -168,19 +158,8 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Upgrade Database Server cluster to PostgreSQL 16"
+              placeholder="e.g. Upgrade PostgreSQL production cluster to v16.2"
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47] focus:bg-white transition-all text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-700 font-bold mb-1">Description & Justification</label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe business reason, components affected, and maintenance window requirements..."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eb6a47] focus:bg-white transition-all text-xs"
             />
           </div>
 
@@ -189,17 +168,12 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               <label className="block text-slate-700 font-bold mb-1">Change Type</label>
               <select
                 value={type}
-                onChange={(e) => {
-                  const newType = e.target.value as ChangeType;
-                  setType(newType);
-                  if (newType === 'Standard') setCabRequired(false);
-                  else setCabRequired(true);
-                }}
+                onChange={(e) => setType(e.target.value as ChangeType)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               >
-                <option value="Normal">Normal (CAB Sign-off)</option>
-                <option value="Standard">Standard (Pre-Approved)</option>
-                <option value="Emergency">Emergency (Expedited)</option>
+                <option value="Standard">Standard</option>
+                <option value="Normal">Normal</option>
+                <option value="Emergency">Emergency</option>
               </select>
             </div>
 
@@ -210,9 +184,9 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 onChange={(e) => setImpact(e.target.value as ImpactLevel)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               >
-                <option value="Low">Low (Isolated component)</option>
-                <option value="Medium">Medium (Departmental)</option>
-                <option value="High">High (Enterprise / Customer-facing)</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
               </select>
             </div>
 
@@ -220,122 +194,123 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               <label className="block text-slate-700 font-bold mb-1">Urgency</label>
               <select
                 value={urgency}
-                onChange={(e) => setUrgency(e.target.value as any)}
+                onChange={(e) => setUrgency(e.target.value as 'Low' | 'Medium' | 'High')}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               >
-                <option value="Low">Low (Routine)</option>
-                <option value="Medium">Medium (Upcoming milestone)</option>
-                <option value="High">High (Immediate necessity)</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
               </select>
             </div>
           </div>
 
-          {/* Dynamic Risk Rating Banner */}
-          <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between">
-            <span className="font-bold text-slate-700">Calculated Risk Score:</span>
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+            <span className="text-slate-600 font-semibold">Calculated Risk Profile:</span>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-800">{riskScore} / 9</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white ${
+              <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${
                 computedRisk === 'Critical'
-                  ? 'bg-rose-600'
+                  ? 'bg-rose-100 text-rose-800'
                   : computedRisk === 'High'
-                  ? 'bg-amber-600'
+                  ? 'bg-amber-100 text-amber-800'
                   : computedRisk === 'Medium'
-                  ? 'bg-yellow-500'
-                  : 'bg-emerald-600'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-emerald-100 text-emerald-800'
               }`}>
-                {computedRisk} Risk
+                {computedRisk} Risk ({riskScore}/9)
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-slate-700 font-bold mb-1">Scope & Description</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Outline change scope, technical justification, and testing validation..."
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47] focus:bg-white text-xs resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Target CI (Configuration Item)</label>
-              <select
+              <label className="block text-slate-700 font-bold mb-1">Target CI ID</label>
+              <input
+                type="text"
                 value={linkedCiId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setLinkedCiId(id);
-                  if (id === 'PAY-001') setLinkedCiName('Payment Gateway Cluster');
-                  else if (id === 'DB-001') setLinkedCiName('Primary PostgreSQL Database');
-                  else if (id === 'NET-001') setLinkedCiName('Core Cisco Switch Rack 4');
-                  else setLinkedCiName('Cloudflare Edge CDN');
-                }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
-              >
-                <option value="PAY-001">PAY-001 — Payment Gateway Cluster</option>
-                <option value="DB-001">DB-001 — Customer Database Cluster</option>
-                <option value="NET-001">NET-001 — Core Switch Rack 4</option>
-                <option value="CDN-001">CDN-001 — Cloudflare Edge CDN</option>
-              </select>
+                onChange={(e) => setLinkedCiId(e.target.value)}
+                placeholder="PAY-001"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+              />
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Assigned Change Owner</label>
+              <label className="block text-slate-700 font-bold mb-1">Target CI Name</label>
               <input
                 type="text"
-                value={agentName}
-                onChange={(e) => setAgentName(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                value={linkedCiName}
+                onChange={(e) => setLinkedCiName(e.target.value)}
+                placeholder="Payment Gateway Cluster"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Window Start</label>
+              <label className="block text-slate-700 font-bold mb-1">Scheduled Start</label>
               <input
                 type="date"
                 value={scheduledStart}
                 onChange={(e) => setScheduledStart(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               />
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Window End</label>
+              <label className="block text-slate-700 font-bold mb-1">Scheduled End</label>
               <input
                 type="date"
                 value={scheduledEnd}
                 onChange={(e) => setScheduledEnd(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               />
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Target Hours</label>
+              <label className="block text-slate-700 font-bold mb-1">Effort Plan (Hours)</label>
               <input
                 type="number"
-                min="1"
-                max="200"
+                min={1}
+                max={200}
                 value={targetHours}
                 onChange={(e) => setTargetHours(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-700 font-bold mb-1">Rollback Contingency Plan</label>
-            <input
-              type="text"
+            <label className="block text-slate-700 font-bold mb-1">Rollback & Backout Strategy</label>
+            <textarea
+              rows={2}
               value={rollbackPlan}
               onChange={(e) => setRollbackPlan(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+              placeholder="Describe backout triggers, recovery snapshot, and failover steps..."
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47] focus:bg-white text-xs resize-none"
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
             <input
               type="checkbox"
-              id="cabReq"
+              id="cabToggle"
               checked={cabRequired}
               onChange={(e) => setCabRequired(e.target.checked)}
-              className="w-4 h-4 text-[#eb6a47] rounded cursor-pointer"
+              className="w-4 h-4 text-[#eb6a47] rounded focus:ring-[#eb6a47] cursor-pointer"
             />
-            <label htmlFor="cabReq" className="text-xs font-semibold text-slate-700 cursor-pointer">
-              Require formal CAB (Change Advisory Board) approval before deployment
+            <label htmlFor="cabToggle" className="text-slate-700 font-bold cursor-pointer select-none">
+              Require CAB Approval before implementation
             </label>
           </div>
 
@@ -353,8 +328,8 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2 bg-[#eb6a47] hover:bg-[#db5936] text-white rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              <span>Submit Change Request</span>
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Submit Change</span>
             </button>
           </div>
         </form>
