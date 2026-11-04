@@ -1,6 +1,10 @@
 'use strict';
 
 const db = require('../../config/db');
+const {
+  handleDbError,
+  recordDbSuccess,
+} = require('../../shared/utils/db-guard');
 
 const mockMajorIncidents = [
   {
@@ -170,18 +174,24 @@ const addIncidentUpdate = async (id, update) => {
           author: update.author || 'System',
         },
       });
-    } catch (_err) {
-      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
-        throw _err;
-      }
+
+      recordDbSuccess();
+    } catch (err) {
+      handleDbError(
+        'major-incidents.addIncidentUpdate',
+        err,
+        { allowFallback: false },
+      );
     }
   }
 
   const incident = await getMajorIncidentById(id);
   if (!incident) return null;
+
   if (!incident.updates.some((u) => u.id === update.id)) {
     incident.updates.push(update);
   }
+
   return incident;
 };
 

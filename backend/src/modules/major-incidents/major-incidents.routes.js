@@ -6,6 +6,7 @@ const {
   addMajorIncident,
   editMajorIncident,
   addMajorIncidentUpdate,
+  streamMajorIncidentUpdates,
 } = require('./major-incidents.controller');
 
 const router = express.Router();
@@ -13,6 +14,7 @@ const router = express.Router();
 router.get('/', listMajorIncidents);
 router.post('/', addMajorIncident);
 router.get('/:incidentId', getMajorIncident);
+router.get('/:incidentId/stream', streamMajorIncidentUpdates);
 router.patch('/:incidentId', editMajorIncident);
 router.post('/:incidentId/updates', addMajorIncidentUpdate);
 

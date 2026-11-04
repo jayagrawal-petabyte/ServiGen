@@ -121,17 +121,17 @@ const changeMajorIncident = async (id, payload) => {
   return updateMajorIncident(id, changes);
 };
 
-const createIncidentUpdate = async (id, payload) => {
-  if (!payload.message) {
-    const error = new Error('message is required');
+const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassigned') => {
+  if (!payload || typeof payload.message !== 'string' || !payload.message.trim()) {
+    const error = new Error('message must be a non-empty string');
     error.statusCode = 400;
     throw error;
   }
 
   const update = {
     id: nextIncidentUpdateId(id),
-    message: payload.message,
-    author: payload.author || 'Unassigned',
+    message: payload.message.trim(),
+    author: authenticatedAuthor,
     createdAt: new Date().toISOString(),
   };
 
