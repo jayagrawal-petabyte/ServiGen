@@ -387,7 +387,7 @@ export default function CalendarPage() {
     const endsAt = new Date(`${draft.date}T${draft.end}:00`).toISOString();
     apiClient.post('/api/calendar', {
       title: draft.title.trim(),
-      appointmentType: draft.type,
+      appointmentType: typeMeta(draft.type).label,
       startsAt,
       endsAt,
     }).then((res: any) => {
