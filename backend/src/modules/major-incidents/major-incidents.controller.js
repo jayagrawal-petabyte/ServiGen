@@ -4,9 +4,12 @@ const {
   createMajorIncident,
   changeMajorIncident,
   createIncidentUpdate,
+} = require('./major-incidents.service');
+
+const {
   subscribeToIncident,
   publishIncidentUpdate,
-} = require('./major-incidents.service');
+} = require('./major-incidents.events');
 
 const respondWithError = (res, error, fallbackMessage) => {
   return res.status(error.statusCode || 500).json({
