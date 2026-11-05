@@ -115,4 +115,111 @@ describe('Approvals Controller', () => {
       assert.equal(res._body.data.status, 'Rejected');
     });
   });
+
+  // ── Security, Multi-Stage & Validation ───────────────────────────────────
+
+  describe('Security, Multi-Stage Workflow & Input Validation', () => {
+    it('should sanitize HTML comments and record decision trail', async () => {
+      const model = require('./approvals.model');
+      model.createApprovalRecord({
+        id: 'sec-app-1',
+        title: 'Security Probe',
+        status: 'Pending',
+        stage: 1,
+        totalStages: 2,
+        organisationId: 'org-test',
+        approverId: 'approver-sec'
+      });
+
+      const req = {
+        params: { approvalId: 'sec-app-1' },
+        body: { comments: '<script>alert(1)</script>Approved with condition' },
+        user: { id: 'approver-sec', role: 'Approver', organisationId: 'org-test', email: 'approver@sec.com' }
+      };
+      const res = mockRes();
+
+      await controller.approveRequest(req, res);
+
+      assert.equal(res._status, 200);
+      assert.equal(res._body.data.status, 'Approved');
+      assert.equal(res._body.data.comments, 'scriptalert(1)/scriptApproved with condition');
+      assert.equal(res._body.data.actedBy, 'approver@sec.com');
+
+      // Verify that stage 2 was spawned
+      const nextStage = await model.getApprovalById('sec-app-1-S2');
+      assert.ok(nextStage, 'Stage 2 approval should have been created');
+      assert.equal(nextStage.stage, 2);
+      assert.equal(nextStage.status, 'Pending');
+    });
+
+    it('should reject comments exceeding 2000 characters', async () => {
+      const model = require('./approvals.model');
+      model.createApprovalRecord({
+        id: 'sec-app-len',
+        title: 'Length Probe',
+        status: 'Pending',
+        stage: 1,
+        totalStages: 1,
+        organisationId: 'org-test',
+        approverId: 'approver-sec'
+      });
+
+      const req = {
+        params: { approvalId: 'sec-app-len' },
+        body: { comments: 'C'.repeat(2001) },
+        user: { id: 'approver-sec', role: 'Approver', organisationId: 'org-test' }
+      };
+      const res = mockRes();
+
+      await controller.approveRequest(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.match(res._body.message, /must not exceed 2000 characters/);
+    });
+
+    it('should return 404 for cross-tenant approval access (IDOR defense)', async () => {
+      const model = require('./approvals.model');
+      model.createApprovalRecord({
+        id: 'sec-app-tenant',
+        title: 'Tenant Probe',
+        status: 'Pending',
+        organisationId: 'org-A',
+        approverId: 'approver-A'
+      });
+
+      const req = {
+        params: { approvalId: 'sec-app-tenant' },
+        user: { id: 'approver-B', role: 'Approver', organisationId: 'org-B' }
+      };
+      const res = mockRes();
+
+      await controller.getApprovalById(req, res);
+
+      assert.equal(res._status, 404);
+      assert.equal(res._body.success, false);
+    });
+
+    it('should return 404 when an unauthorized approver tries to act on another approver item', async () => {
+      const model = require('./approvals.model');
+      model.createApprovalRecord({
+        id: 'sec-app-unauth',
+        title: 'Unauth Probe',
+        status: 'Pending',
+        organisationId: 'org-test',
+        approverId: 'assigned-approver'
+      });
+
+      const req = {
+        params: { approvalId: 'sec-app-unauth' },
+        user: { id: 'other-approver', role: 'Approver', organisationId: 'org-test' }
+      };
+      const res = mockRes();
+
+      await controller.approveRequest(req, res);
+
+      assert.equal(res._status, 404);
+      assert.equal(res._body.success, false);
+    });
+  });
 });

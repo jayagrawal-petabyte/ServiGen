@@ -139,7 +139,7 @@ app.use('/api/dashboard', (req, res, next) => {
 }, dashboardRouter);
 app.use('/api/approvals', restrictTo(...PERMISSIONS.APPROVALS),
   approvalScope(require('./modules/approvals/approvals.model').getApprovalById), approvalsRouter);
-app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
+app.use(['/api/services-catalogue', '/api/services'], restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
 app.use('/api/major-incidents', restrictTo(...PERMISSIONS.STAFF), majorIncidentsRouter);
 app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {

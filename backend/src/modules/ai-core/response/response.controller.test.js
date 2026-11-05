@@ -190,4 +190,94 @@ describe('AI Response Controller', () => {
       assert.equal(res._body.data.recommendations.length, 0);
     });
   });
+
+  // ── summarizeTicket ──────────────────────────────────────────────────────
+
+  describe('summarizeTicket', () => {
+    it('should return 400 when body or text is missing', () => {
+      const req = mockReq({ body: {} });
+      const res = mockRes();
+
+      controller.summarizeTicket(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.match(res._body.message, /required for summarisation/);
+    });
+
+    it('should return 400 when text exceeds 20000 characters', () => {
+      const req = mockReq({ body: { text: 'A'.repeat(20001) } });
+      const res = mockRes();
+
+      controller.summarizeTicket(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.match(res._body.message, /must not exceed 20000 characters/);
+    });
+
+    it('should return 200 with structured summary and sanitized text', () => {
+      const req = mockReq({
+        body: {
+          ticketId: 'TICK-101',
+          text: '<script>alert(1)</script>Major database outage occurred during payroll processing. Failover initiated and services restored.'
+        }
+      });
+      const res = mockRes();
+
+      controller.summarizeTicket(req, res);
+
+      assert.equal(res._status, 200);
+      assert.equal(res._body.success, true);
+      assert.equal(res._body.data.ticketId, 'TICK-101');
+      assert.ok(Array.isArray(res._body.data.keyPoints));
+      assert.ok(res._body.data.summary.includes('scriptalert(1)/scriptMajor database outage'));
+      assert.ok(['In Progress', 'Pending Verification', 'On Hold'].includes(res._body.data.currentStatus));
+    });
+  });
+
+  // ── suggestResolution ────────────────────────────────────────────────────
+
+  describe('suggestResolution', () => {
+    it('should return 400 when body or symptoms are missing', () => {
+      const req = mockReq({ body: {} });
+      const res = mockRes();
+
+      controller.suggestResolution(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+    });
+
+    it('should return 400 when context exceeds 5000 characters', () => {
+      const req = mockReq({ body: { symptoms: 'X'.repeat(5001) } });
+      const res = mockRes();
+
+      controller.suggestResolution(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.match(res._body.message, /must not exceed 5000 characters/);
+    });
+
+    it('should return 200 with actionable resolution steps and KB recommendations', () => {
+      const req = mockReq({
+        body: {
+          ticketId: 'TICK-202',
+          summary: 'User cannot connect to corporate VPN',
+          symptoms: 'Error 800 remote server not responding'
+        }
+      });
+      const res = mockRes();
+
+      controller.suggestResolution(req, res);
+
+      assert.equal(res._status, 200);
+      assert.equal(res._body.success, true);
+      assert.ok(Array.isArray(res._body.data.suggestions));
+      assert.ok(res._body.data.suggestions.length > 0);
+      assert.ok(Array.isArray(res._body.data.relevantArticles));
+      assert.equal(res._body.data.confidence, 0.88);
+    });
+  });
 });

@@ -173,5 +173,75 @@ describe('Services Catalogue Controller', () => {
       assert.notEqual(data.id, 'req_FAKE', 'id must be server-generated, not caller-supplied');
       assert.notEqual(data.submittedAt, '1970-01-01T00:00:00Z', 'submittedAt must be server-generated');
     });
+
+    it('should sanitize HTML payloads and bound input lengths', async () => {
+      const req = mockReq({
+        params: { serviceId: '1' },
+        body: {
+          requester: '<script>alert(1)</script>Bob',
+          reason: '<img onerror=alert(2) src=x>Need laptop',
+        }
+      });
+      const res = mockRes();
+
+      await controller.submitServiceRequest(req, res);
+
+      assert.equal(res._status, 201);
+      assert.equal(res._body.data.requester, 'scriptalert(1)/scriptBob');
+      assert.equal(res._body.data.reason, 'img onerror=alert(2) src=xNeed laptop');
+    });
+
+    it('should reject text values exceeding 2000 characters', async () => {
+      const req = mockReq({
+        params: { serviceId: '1' },
+        body: {
+          requester: 'Bob',
+          reason: 'A'.repeat(2001),
+        }
+      });
+      const res = mockRes();
+
+      await controller.submitServiceRequest(req, res);
+
+      assert.equal(res._status, 400);
+      assert.equal(res._body.success, false);
+      assert.match(res._body.message, /must not exceed 2000 characters/);
+    });
+  });
+
+  // ── getServiceRequests & getServiceRequestDetail ─────────────────────────
+
+  describe('getServiceRequests and getServiceRequestDetail', () => {
+    it('should return 200 and list of requests', async () => {
+      const req = mockReq();
+      const res = mockRes();
+
+      await controller.getServiceRequests(req, res);
+
+      assert.equal(res._status, 200);
+      assert.equal(res._body.success, true);
+      assert.ok(Array.isArray(res._body.data));
+    });
+
+    it('should return 404 for cross-tenant request access (IDOR defense)', async () => {
+      const createRes = mockRes();
+      await controller.submitServiceRequest(
+        { params: { serviceId: '1' }, body: { requester: 'TenantUser' }, user: { id: 'u1', role: 'Engineer', organisationId: 'org-tenant-A' } },
+        createRes
+      );
+      const createdId = createRes._body.data.id;
+
+      // Access from another tenant
+      const req = {
+        params: { requestId: createdId },
+        user: { id: 'attacker', role: 'Engineer', organisationId: 'org-tenant-B' }
+      };
+      const res = mockRes();
+
+      await controller.getServiceRequestDetail(req, res);
+
+      assert.equal(res._status, 404);
+      assert.equal(res._body.success, false);
+    });
   });
 });

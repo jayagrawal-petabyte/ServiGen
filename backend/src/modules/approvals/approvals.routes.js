@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const approvalsController = require('./approvals.controller');
@@ -9,10 +11,12 @@ router.get('/pending', approvalsController.getPendingApprovals);
 // GET /approvals/:approvalId - Approval-request detail endpoint
 router.get('/:approvalId', approvalsController.getApprovalById);
 
-// PATCH /approvals/:approvalId/approve - Approve action endpoint
+// POST & PATCH /approvals/:approvalId/approve - Approve action endpoint
+router.post('/:approvalId/approve', approvalsController.approveRequest);
 router.patch('/:approvalId/approve', approvalsController.approveRequest);
 
-// PATCH /approvals/:approvalId/reject - Reject action endpoint
+// POST & PATCH /approvals/:approvalId/reject - Reject action endpoint
+router.post('/:approvalId/reject', approvalsController.rejectRequest);
 router.patch('/:approvalId/reject', approvalsController.rejectRequest);
 
 module.exports = router;

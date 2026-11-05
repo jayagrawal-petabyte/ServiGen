@@ -1,6 +1,21 @@
+'use strict';
+
 const servicesCatalogueModel = require('./services-catalogue.model');
 
-const fetchServices = async (categoryFilter, searchQuery) => {
+const sanitizeInputText = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>]/g, '').trim();
+};
+
+const validateValueLength = (value, field, maxLength = 2000) => {
+  if (typeof value === 'string' && value.length > maxLength) {
+    const err = new Error(`${field} must not exceed ${maxLength} characters`);
+    err.statusCode = 400;
+    throw err;
+  }
+};
+
+const fetchServices = async (categoryFilter, searchQuery, filters = {}) => {
   // BI-9: Reject non-string query values (e.g. arrays from repeated params) before
   //       any .toLowerCase() call; callers receive 400 instead of a 500 crash.
   if (categoryFilter !== undefined && categoryFilter !== null && typeof categoryFilter !== 'string') {
@@ -14,7 +29,7 @@ const fetchServices = async (categoryFilter, searchQuery) => {
     throw err;
   }
 
-  let services = await servicesCatalogueModel.getAllServices();
+  let services = await servicesCatalogueModel.getAllServices(filters);
 
   if (categoryFilter) {
     const lowerCategory = categoryFilter.toLowerCase();
@@ -41,7 +56,15 @@ const fetchServiceById = async (serviceId) => {
   return await servicesCatalogueModel.getServiceById(serviceId);
 };
 
-const createServiceRequest = async (serviceId, requestData) => {
+const fetchRequests = async (filters = {}) => {
+  return await servicesCatalogueModel.getAllRequests(filters);
+};
+
+const fetchRequestById = async (requestId) => {
+  return await servicesCatalogueModel.getRequestById(requestId);
+};
+
+const createServiceRequest = async (serviceId, requestData, user = {}) => {
   const service = await servicesCatalogueModel.getServiceById(serviceId);
   if (!service) {
     throw new Error('Service not found');
@@ -50,23 +73,58 @@ const createServiceRequest = async (serviceId, requestData) => {
     throw new Error('Service is not available for requests');
   }
 
-  // BI-8: Strip the four server-controlled fields from caller data so a crafted
-  //        request body cannot overwrite serviceId, serviceName, id, or submittedAt.
-  //        All other dynamic form fields in requestData are preserved.
+  // BI-8: Strip the protected server-controlled fields from caller data so a crafted
+  //        request body cannot overwrite serviceId, serviceName, id, submittedAt, or status.
   const {
     serviceId: _sid,
     serviceName: _sname,
     id: _id,
     submittedAt: _sat,
     status: _status,
-    ...safeData
+    organisationId: _orgId,
+    ...callerData
   } = requestData;
+
+  // Validate dynamic form fields schema if defined
+  if (Array.isArray(service.formFields)) {
+    for (const field of service.formFields) {
+      const val = callerData[field.name];
+      if (callerData.validateForm && field.required && (val === undefined || val === null || val === '')) {
+        const err = new Error(`Field "${field.label || field.name}" is required`);
+        err.statusCode = 400;
+        throw err;
+      }
+      if (field.type === 'select' && Array.isArray(field.options) && val !== undefined) {
+        if (!field.options.includes(val)) {
+          const err = new Error(`Invalid option "${val}" for ${field.name}`);
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+    }
+  }
+
+  // Sanitize and validate lengths for all string inputs
+  const safeData = {};
+  for (const [key, val] of Object.entries(callerData)) {
+    if (typeof val === 'string') {
+      validateValueLength(val, key, 2000);
+      safeData[key] = sanitizeInputText(val);
+    } else {
+      safeData[key] = val;
+    }
+  }
+
+  const organisationId = user.organisationId || service.organisationId || 'org-1';
 
   const requestRecord = {
     ...safeData,
     serviceId,
     serviceName: service.name,
-    status: 'Pending Approval'
+    status: service.requiresApproval ? 'Pending Approval' : 'Submitted',
+    organisationId,
+    requesterId: user.id || null,
+    requesterEmail: user.email || safeData.requester || 'User',
   };
 
   return await servicesCatalogueModel.createRequest(requestRecord);
@@ -76,5 +134,8 @@ module.exports = {
   fetchServices,
   fetchCategories,
   fetchServiceById,
-  createServiceRequest
+  fetchRequests,
+  fetchRequestById,
+  createServiceRequest,
+  sanitizeInputText,
 };
