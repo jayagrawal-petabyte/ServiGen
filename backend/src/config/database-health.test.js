@@ -16,7 +16,7 @@ const invoke = async handler => {
   return res;
 };
 
-test('public database readiness excludes datasource details, table counts and raw failures', async () => {
+test('public database readiness excludes datasource details, table counts, env, and mock fallback flags', async () => {
   const handler = createDatabaseHealthHandler({
     environment: 'production',
     probeDatabase: async () => ({ connected: true, latencyMs: 12 }),
@@ -30,9 +30,10 @@ test('public database readiness excludes datasource details, table counts and ra
   assert.equal(res.headers['Cache-Control'], 'no-store');
   assert.equal(res.body.connected, true);
   assert.equal(res.body.success, true);
-  assert.equal(res.body.mockFallbackEnabled, false);
-  assert.deepEqual(Object.keys(res.body).sort(), ['connected', 'env', 'latencyMs', 'mockFallbackEnabled', 'success', 'timestamp']);
-  assert.doesNotMatch(JSON.stringify(res.body), /private|secret|recentFailures|datasource|counts/);
+  assert.equal(res.body.env, undefined);
+  assert.equal(res.body.mockFallbackEnabled, undefined);
+  assert.deepEqual(Object.keys(res.body).sort(), ['connected', 'latencyMs', 'success', 'timestamp']);
+  assert.doesNotMatch(JSON.stringify(res.body), /private|secret|recentFailures|datasource|counts|production/);
 });
 
 test('a genuine database failure returns 503 without exposing its underlying error', async () => {
@@ -78,7 +79,7 @@ test('concurrent requests share a database probe and the next probe detects reco
   assert.equal(res.body.error, undefined);
 });
 
-test('unexpected probe rejection is reported as unavailable and mock fallback stays explicit', async () => {
+test('unexpected probe rejection is reported as unavailable without disclosing details', async () => {
   const handler = createDatabaseHealthHandler({
     environment: 'production',
     probeDatabase: async () => { throw new Error('private connection details'); },
@@ -86,6 +87,7 @@ test('unexpected probe rejection is reported as unavailable and mock fallback st
   });
   const res = await invoke(handler);
   assert.equal(res.statusCode, 503);
-  assert.equal(res.body.mockFallbackEnabled, true);
+  assert.equal(res.body.mockFallbackEnabled, undefined);
+  assert.equal(res.body.env, undefined);
   assert.doesNotMatch(JSON.stringify(res.body), /private connection details/);
 });

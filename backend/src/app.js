@@ -7,7 +7,17 @@ const helmet = require('helmet');
 const env = require('./config/env');
 const createDatabaseHealthHandler = require('./config/database-health');
 const { createRateLimiter } = require('./shared/middleware/rate-limit.middleware');
-const { requestLogger, errorHandler, requireAuth, restrictTo, PERMISSIONS, approvalScope } = require('./shared');
+const {
+  requestLogger,
+  errorHandler,
+  requireAuth,
+  restrictTo,
+  PERMISSIONS,
+  approvalScope,
+  querySanitizer,
+  createOriginValidator,
+  loginLockout,
+} = require('./shared');
 const {
   probeDatabase,
   getDbDiagnostics,
@@ -53,21 +63,23 @@ app.use(
     credentials: true,
   })
 );
+// Reject state-changing requests from disallowed cross-origin callers
+app.use(createOriginValidator(env.CORS_ORIGIN));
 app.use(requestLogger);
 
 // ─── Health Check ───────────────────────────────────────────────────────────
+// Minimal public health check: does not disclose internal environment flags
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     success: true,
     status: 'ok',
     service: 'servigen-backend',
-    env: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
 });
 
 // Public because the existing frontend sends no token for this check. The
-// handler returns readiness only; datasource details and raw errors stay private.
+// handler returns readiness only; datasource details, internal env and raw errors stay private.
 app.get('/api/health/db', createDatabaseHealthHandler({
   probeDatabase,
   getDbDiagnostics,
@@ -79,9 +91,13 @@ app.get('/api/health/db', createDatabaseHealthHandler({
 app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
 app.use('/api/ai-core', createRateLimiter(env.RATE_LIMIT.AI_MAX));
 app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+// Query parameter sanitizer: prevents HTTP Parameter Pollution (HPP) and 500 errors from duplicate keys
+app.use(querySanitizer);
 
-// Authentication module: login and forgot-password are public with strict rate limiting; session requires verified token.
+// Authentication module: login and forgot-password are public with strict rate limiting & lockout; session requires verified token.
 app.use(['/api/auth/login', '/api/auth/forgot-password'], createRateLimiter(20));
+app.use('/api/auth/login', loginLockout);
 app.use('/api/auth', (req, res, next) => {
   if (req.path === '/login' || req.path === '/forgot-password') return next();
   return requireAuth(req, res, (err) => {
@@ -129,7 +145,7 @@ app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
   if (req.user.role !== 'Admin') {
     const match = req.path.match(/^\/([^/]+)/);
-    if (match && match[1] && (!req.user.organisationId || match[1] !== req.user.organisationId)) {
+    if (!match || !match[1] || !req.user.organisationId || match[1] !== req.user.organisationId) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
   }
@@ -152,7 +168,8 @@ app.use(['/api/list-builder', '/api/lists'], restrictTo(...PERMISSIONS.STAFF), l
 app.use('/api/calendar', restrictTo(...PERMISSIONS.STAFF), calendarRouter);
 app.use('/api/articles', restrictTo(...PERMISSIONS.STAFF), knowledgeRouter);
 app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);
-app.use('/api/users', restrictTo(...PERMISSIONS.STAFF), usersRouter);
+// Only Admin can list users or view personal directory details
+app.use('/api/users', restrictTo(...PERMISSIONS.USERS), usersRouter);
 app.use('/api/ai-core/intent', intentRouter);
 app.use('/api/ai-core', escalationRouter);
 

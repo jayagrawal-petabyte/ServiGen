@@ -18,12 +18,11 @@ const createDatabaseHealthHandler = ({ probeDatabase, getDbDiagnostics, environm
           probe = { connected: false, latencyMs: Math.max(0, now() - startedAt) };
         }
         const connected = probe.connected === true;
+        // Do not leak internal environment flags or mockFallback status in unauthenticated health responses
         const payload = {
           success: connected,
           connected,
           latencyMs: probe.latencyMs,
-          env: environment,
-          mockFallbackEnabled: getDbDiagnostics().mockFallbackEnabled === true,
           timestamp: new Date(now()).toISOString(),
           ...(!connected ? { error: { message: 'Database connection is temporarily unavailable.' } } : {}),
         };

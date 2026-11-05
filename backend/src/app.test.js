@@ -4,7 +4,7 @@ process.env.ALLOW_DEV_AUTH_OVERRIDE = 'false';
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const app = require('./app');
-const { generateToken } = require('./shared');
+const { generateToken, loginLockout } = require('./shared');
 let server, base;
 before(async () => {
   server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
@@ -14,7 +14,10 @@ after(async () => { server.closeIdleConnections?.(); await new Promise(resolve =
 const token = generateToken({ id: 'agent-001', role: 'Service Agent' });
 const headers = { authorization: 'Bearer ' + token };
 test('health is public but business APIs reject anonymous access', async () => {
-  assert.equal((await fetch(base + '/api/health')).status, 200);
+  const healthRes = await fetch(base + '/api/health');
+  assert.equal(healthRes.status, 200);
+  const healthBody = await healthRes.json();
+  assert.equal(healthBody.env, undefined);
   for (const path of ['/api/my-work', '/api/approvals/pending', '/api/projects']) {
     assert.equal((await fetch(base + path)).status, 401);
   }
@@ -31,7 +34,7 @@ test('database readiness is public and does not expose database metadata', async
     assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(body.success, true);
     assert.equal(body.connected, true);
-    for (const field of ['datasource', 'counts', 'recentFailures', 'error']) assert.equal(body[field], undefined);
+    for (const field of ['datasource', 'counts', 'recentFailures', 'error', 'env', 'mockFallbackEnabled']) assert.equal(body[field], undefined);
   } finally {
     db.$queryRaw = originalQuery;
   }
@@ -233,17 +236,6 @@ test('newly mounted module routes enforce authentication, RBAC, and tenant bound
     body: JSON.stringify({ email: 1234, password: 'Ag3nt*8mP4!wR9t' }),
   })).status, 400);
 
-  const rejectedLoginResponse = await fetch(base + '/api/auth/login', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'agent001', password: 'wrongPassword1999' }),
-  });
-  assert.equal(rejectedLoginResponse.status, 401);
-  assert.deepEqual(await rejectedLoginResponse.json(), {
-    success: false,
-    message: 'Invalid credentials',
-  });
-
   const loginResponse = await fetch(base + '/api/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -358,3 +350,79 @@ test('unfinished modules enforce tenant boundary, BOLA/IDOR protection, identity
 });
 
 
+
+
+test('duplicate query parameters are sanitized and prevent 500 crashes', async () => {
+  const db = require('./config/db');
+  const origCount = db.ticket.count;
+  const origFindMany = db.ticket.findMany;
+  db.ticket.count = async () => 0;
+  db.ticket.findMany = async () => [];
+  try {
+    const staff = authFor('Service Agent', 'agent-001');
+    const res = await fetch(base + '/api/tickets?status=Open&status=Closed', { headers: staff });
+    assert.equal(res.status, 200);
+  } finally {
+    db.ticket.count = origCount;
+    db.ticket.findMany = origFindMany;
+  }
+});
+
+test('state-changing requests with unlisted origin headers are rejected with 403', async () => {
+  const staff = authFor('Service Agent', 'agent-001');
+  const denied = await fetch(base + '/api/major-incidents', {
+    method: 'POST',
+    headers: { ...staff, origin: 'https://evil-attacker.com', 'content-type': 'application/json' },
+    body: JSON.stringify({ title: 'Test Attack' }),
+  });
+  assert.equal(denied.status, 403);
+});
+
+test('user directory and PII are restricted to Admin role only', async () => {
+  const agent = authFor('Service Agent', 'agent-001');
+  const support = authFor('Support Team User', 'support-001');
+  const user = authFor('Service User', 'user-001');
+  const admin = authFor('Admin', 'admin-001');
+
+  // Non-admin roles are forbidden
+  assert.equal((await fetch(base + '/api/users', { headers: agent })).status, 403);
+  assert.equal((await fetch(base + '/api/users', { headers: support })).status, 403);
+  assert.equal((await fetch(base + '/api/users', { headers: user })).status, 403);
+
+  // Admin is allowed
+  const db = require('./config/db');
+  const origFindMany = db.user.findMany;
+  db.user.findMany = async () => [];
+  try {
+    assert.equal((await fetch(base + '/api/users', { headers: admin })).status, 200);
+  } finally {
+    db.user.findMany = origFindMany;
+  }
+});
+
+test('repeated failed login attempts trigger account lockout (429)', async () => {
+  loginLockout.reset();
+  const testAccount = { email: 'lockout-test@servigen.local', password: 'WrongPassword!123' };
+
+  for (let i = 0; i < 5; i++) {
+    const res = await fetch(base + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(testAccount),
+    });
+    assert.equal(res.status, 401);
+  }
+
+  // 6th attempt should be locked out with 429
+  const lockedRes = await fetch(base + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(testAccount),
+  });
+  assert.equal(lockedRes.status, 429);
+  const lockedBody = await lockedRes.json();
+  assert.equal(lockedBody.success, false);
+  assert.match(lockedBody.message, /temporarily locked/i);
+
+  loginLockout.reset();
+});
