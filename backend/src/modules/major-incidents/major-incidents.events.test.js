@@ -47,7 +47,7 @@ describe('Major Incident SSE Events', () => {
     unsubscribe2();
   });
 
-  it('does not send updates to disconnected responders', () => {
+  it('does not send updates to disconnected responders and evicts them', () => {
     const responder = createMockResponse();
 
     subscribeToIncident('MI-TEST-2', responder);
@@ -59,6 +59,28 @@ describe('Major Incident SSE Events', () => {
     });
 
     assert.equal(responder.received.length, 0);
+
+    // Further publish should not throw or attempt writing to evicted responder
+    publishIncidentUpdate('MI-TEST-2', {
+      message: 'Another update',
+    });
+    assert.equal(responder.received.length, 0);
+  });
+
+  it('evicts responders when write throws an error', () => {
+    const faultyResponder = {
+      destroyed: false,
+      writableEnded: false,
+      write() {
+        throw new Error('Socket write failed EPIPE');
+      },
+    };
+
+    subscribeToIncident('MI-TEST-ERR', faultyResponder);
+
+    assert.doesNotThrow(() => {
+      publishIncidentUpdate('MI-TEST-ERR', { message: 'Write should fail gracefully' });
+    });
   });
 
   it('does not send updates across different incidents', () => {

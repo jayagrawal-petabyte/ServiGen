@@ -9,6 +9,7 @@ const {
 const mockMajorIncidents = [
   {
     id: 'MI-001',
+    organisationId: 'org-001',
     title: 'Customer portal unavailable',
     description: 'Customers cannot access the self-service portal.',
     status: 'Started',
@@ -35,6 +36,7 @@ const getMajorIncidents = async (filters = {}) => {
       const where = {};
       if (filters.status) where.status = filters.status;
       if (filters.priority) where.priority = filters.priority;
+      if (filters.organisationId) where.organisationId = filters.organisationId;
 
       const records = await db.majorIncident.findMany({
         where,
@@ -44,6 +46,7 @@ const getMajorIncidents = async (filters = {}) => {
 
       return records.map((mi) => ({
         id: mi.id,
+        organisationId: mi.organisationId || null,
         title: mi.title,
         description: mi.description,
         status: mi.status,
@@ -70,8 +73,9 @@ const getMajorIncidents = async (filters = {}) => {
   return mockMajorIncidents.filter((incident) => {
     const matchesStatus = !filters.status || incident.status === filters.status;
     const matchesPriority = !filters.priority || incident.priority === filters.priority;
+    const matchesOrg = !filters.organisationId || incident.organisationId === filters.organisationId;
 
-    return matchesStatus && matchesPriority;
+    return matchesStatus && matchesPriority && matchesOrg;
   });
 };
 
@@ -86,6 +90,7 @@ const getMajorIncidentById = async (id) => {
       if (mi) {
         return {
           id: mi.id,
+          organisationId: mi.organisationId || null,
           title: mi.title,
           description: mi.description,
           status: mi.status,
@@ -119,6 +124,7 @@ const saveMajorIncident = async (incident) => {
       await db.majorIncident.create({
         data: {
           id: incident.id,
+          organisationId: incident.organisationId || null,
           title: incident.title,
           description: incident.description,
           status: incident.status || 'Started',

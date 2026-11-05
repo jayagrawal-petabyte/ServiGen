@@ -109,4 +109,50 @@ describe('Major Incidents Service', () => {
 
     assert.equal(latestUpdate.author, 'verified@example.com');
   });
+
+  it('prevents mass-assignment on creation by forcing Started status and Unassigned commander', async () => {
+    const incident = await majorIncidentsService.createMajorIncident({
+      title: 'Mass assignment probe',
+      description: 'Attempt to force status and commander',
+      priority: 'P1',
+      impact: 'Critical',
+      affectedServices: ['Payment'],
+      status: 'Closed',
+      commander: 'Hacker',
+    });
+
+    assert.equal(incident.status, 'Started');
+    assert.equal(incident.commander, 'Unassigned');
+  });
+
+  it('sanitizes HTML tags and enforces length bounds', async () => {
+    const sanitizedIncident = await majorIncidentsService.createMajorIncident({
+      title: '<script>alert(1)</script>Test Incident',
+      description: '<img src=x onerror=alert(2)>Database outage',
+      priority: 'P2',
+      impact: '<b>High</b>',
+      affectedServices: [],
+    });
+
+    assert.equal(sanitizedIncident.title, 'scriptalert(1)/scriptTest Incident');
+    assert.equal(sanitizedIncident.description, 'img src=x onerror=alert(2)Database outage');
+
+    // Title length limit
+    await assert.rejects(
+      majorIncidentsService.createMajorIncident({
+        title: 'A'.repeat(501),
+        description: 'Valid',
+        priority: 'P1',
+        impact: 'High',
+        affectedServices: [],
+      }),
+      (err) => err.statusCode === 400 && /title must not exceed 500 characters/.test(err.message),
+    );
+
+    // Message length limit
+    await assert.rejects(
+      majorIncidentsService.createIncidentUpdate('MI-001', { message: 'M'.repeat(2001) }),
+      (err) => err.statusCode === 400 && /message must not exceed 2000 characters/.test(err.message),
+    );
+  });
 });

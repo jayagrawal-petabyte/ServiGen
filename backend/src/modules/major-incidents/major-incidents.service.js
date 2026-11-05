@@ -35,9 +35,17 @@ const createValidationError = (message) => {
   return error;
 };
 
-const requireNonBlankString = (value, field) => {
+const sanitizeInputText = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>]/g, '').trim();
+};
+
+const requireNonBlankString = (value, field, maxLength = 10000) => {
   if (typeof value !== 'string' || !value.trim()) {
     throw createValidationError(`${field} must be a non-empty string`);
+  }
+  if (value.trim().length > maxLength) {
+    throw createValidationError(`${field} must not exceed ${maxLength} characters`);
   }
 };
 
@@ -53,6 +61,9 @@ const createMajorIncident = async (payload) => {
     throw error;
   }
 
+  requireNonBlankString(title, 'title', 500);
+  requireNonBlankString(description, 'description', 10000);
+
   if (!VALID_PRIORITIES.includes(priority)) {
     const error = new Error('priority must be P1 or P2');
     error.statusCode = 400;
@@ -62,13 +73,15 @@ const createMajorIncident = async (payload) => {
   const now = new Date().toISOString();
   const incident = {
     id: nextIncidentId(),
-    title,
-    description,
-    status: payload.status || 'Started',
+    organisationId: payload.organisationId || null,
+    title: sanitizeInputText(title),
+    description: sanitizeInputText(description),
+    // Status and commander are system-controlled on create to prevent mass-assignment flaws
+    status: 'Started',
     priority,
     impact,
     affectedServices,
-    commander: payload.commander || 'Unassigned',
+    commander: 'Unassigned',
     startedAt: now,
     resolvedAt: null,
     updates: [],
@@ -89,8 +102,19 @@ const changeMajorIncident = async (id, payload) => {
 
   const changes = {};
   for (const [field, value] of Object.entries(payload)) {
-    if (['title', 'description', 'impact', 'commander'].includes(field)) {
-      requireNonBlankString(value, field);
+    if (['impact', 'commander'].includes(field)) {
+      requireNonBlankString(value, field, 500);
+      changes[field] = sanitizeInputText(value);
+    }
+
+    if (field === 'title') {
+      requireNonBlankString(value, 'title', 500);
+      changes.title = sanitizeInputText(value);
+    }
+
+    if (field === 'description') {
+      requireNonBlankString(value, 'description', 10000);
+      changes.description = sanitizeInputText(value);
     }
 
     if (field === 'status' && (typeof value !== 'string' || !VALID_STATUSES.includes(value))) {
@@ -111,7 +135,9 @@ const changeMajorIncident = async (id, payload) => {
       }
     }
 
-    changes[field] = value;
+    if (!['title', 'description', 'impact', 'commander'].includes(field)) {
+      changes[field] = value;
+    }
   }
 
   if (['Resolved', 'Closed'].includes(changes.status) && changes.resolvedAt === undefined) {
@@ -128,9 +154,15 @@ const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassign
     throw error;
   }
 
+  if (payload.message.trim().length > 2000) {
+    const error = new Error('message must not exceed 2000 characters');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const update = {
     id: nextIncidentUpdateId(id),
-    message: payload.message.trim(),
+    message: sanitizeInputText(payload.message),
     author: authenticatedAuthor,
     createdAt: new Date().toISOString(),
   };
@@ -145,4 +177,5 @@ module.exports = {
   createMajorIncident,
   changeMajorIncident,
   createIncidentUpdate,
+  sanitizeInputText,
 };

@@ -18,9 +18,26 @@ const respondWithError = (res, error, fallbackMessage) => {
   });
 };
 
+/**
+ * Tenant boundary check: returns true if a non-admin user attempts to access
+ * a major incident belonging to another organisation.
+ */
+const isCrossTenant = (incident, user) => {
+  if (!incident || !user) return false;
+  if (user.role === 'Admin') return false;
+  if (user.organisationId && incident.organisationId && incident.organisationId !== user.organisationId) {
+    return true;
+  }
+  return false;
+};
+
 const listMajorIncidents = async (req, res) => {
   try {
-    const incidents = await getMajorIncidents(req.query);
+    const filters = { ...req.query };
+    if (req.user && req.user.role !== 'Admin' && req.user.organisationId) {
+      filters.organisationId = req.user.organisationId;
+    }
+    const incidents = await getMajorIncidents(filters);
     res.status(200).json({ success: true, data: incidents });
   } catch (error) {
     respondWithError(res, error, 'Failed to fetch major incidents');
@@ -30,7 +47,7 @@ const listMajorIncidents = async (req, res) => {
 const getMajorIncident = async (req, res) => {
   try {
     const incident = await getMajorIncidentById(req.params.incidentId);
-    if (!incident) {
+    if (!incident || isCrossTenant(incident, req.user)) {
       return res.status(404).json({ success: false, message: 'Major incident not found' });
     }
     return res.status(200).json({ success: true, data: incident });
@@ -41,7 +58,11 @@ const getMajorIncident = async (req, res) => {
 
 const addMajorIncident = async (req, res) => {
   try {
-    const incident = await createMajorIncident(req.body);
+    const payload = { ...req.body };
+    if (req.user && req.user.role !== 'Admin' && req.user.organisationId) {
+      payload.organisationId = req.user.organisationId;
+    }
+    const incident = await createMajorIncident(payload);
     res.status(201).json({ success: true, data: incident });
   } catch (error) {
     respondWithError(res, error, 'Failed to create major incident');
@@ -50,10 +71,11 @@ const addMajorIncident = async (req, res) => {
 
 const editMajorIncident = async (req, res) => {
   try {
-    const incident = await changeMajorIncident(req.params.incidentId, req.body);
-    if (!incident) {
+    const existing = await getMajorIncidentById(req.params.incidentId);
+    if (!existing || isCrossTenant(existing, req.user)) {
       return res.status(404).json({ success: false, message: 'Major incident not found' });
     }
+    const incident = await changeMajorIncident(req.params.incidentId, req.body);
     return res.status(200).json({ success: true, data: incident });
   } catch (error) {
     return respondWithError(res, error, 'Failed to update major incident');
@@ -62,6 +84,10 @@ const editMajorIncident = async (req, res) => {
 
 const addMajorIncidentUpdate = async (req, res) => {
   try {
+    const existing = await getMajorIncidentById(req.params.incidentId);
+    if (!existing || isCrossTenant(existing, req.user)) {
+      return res.status(404).json({ success: false, message: 'Major incident not found' });
+    }
     const author = req.user?.email || req.user?.id || 'Unassigned';
     const incident = await createIncidentUpdate(
       req.params.incidentId,
@@ -85,7 +111,7 @@ const streamMajorIncidentUpdates = async (req, res) => {
   try {
     const incident = await getMajorIncidentById(req.params.incidentId);
 
-    if (!incident) {
+    if (!incident || isCrossTenant(incident, req.user)) {
       return res.status(404).json({
         success: false,
         message: 'Major incident not found',
@@ -114,10 +140,15 @@ const streamMajorIncidentUpdates = async (req, res) => {
       }
     }, 25000);
 
-    res.on('close', () => {
+    const cleanup = () => {
       clearInterval(heartbeat);
       unsubscribe();
-  });
+    };
+
+    res.on('close', cleanup);
+    res.on('error', cleanup);
+    res.on('finish', cleanup);
+    req.on('aborted', cleanup);
   } catch (error) {
     if (!res.headersSent) {
       return respondWithError(

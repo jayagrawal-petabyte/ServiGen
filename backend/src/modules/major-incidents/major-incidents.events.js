@@ -27,9 +27,19 @@ const publishIncidentUpdate = (incidentId, update) => {
   const event = `event: incident-update\ndata: ${JSON.stringify(update)}\n\n`;
 
   for (const client of clients) {
-    if (!client.destroyed && !client.writableEnded) {
-      client.write(event);
+    if (client.destroyed || client.writableEnded) {
+      clients.delete(client);
+    } else {
+      try {
+        client.write(event);
+      } catch {
+        clients.delete(client);
+      }
     }
+  }
+
+  if (clients.size === 0) {
+    subscribers.delete(incidentId);
   }
 };
 
