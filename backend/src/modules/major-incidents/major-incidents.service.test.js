@@ -77,4 +77,36 @@ describe('Major Incidents Service', () => {
       Date.now = originalNow;
     }
   });
+
+    it('rejects missing, empty, whitespace-only, and non-string update messages', async () => {
+    const invalidMessages = [
+      undefined,
+      '',
+      '   ',
+      123,
+    ];
+
+    for (const message of invalidMessages) {
+      await assert.rejects(
+        majorIncidentsService.createIncidentUpdate('MI-001', { message }),
+        (error) =>
+          error.statusCode === 400 &&
+          /message must be a non-empty string/.test(error.message),
+      );
+    }
+  });
+      it('uses the authenticated author instead of a client-supplied author', async () => {
+    const incident = await majorIncidentsService.createIncidentUpdate(
+      'MI-001',
+      {
+        message: 'Database recovery is in progress',
+        author: 'Fake User',
+      },
+      'verified@example.com',
+    );
+
+    const latestUpdate = incident.updates.at(-1);
+
+    assert.equal(latestUpdate.author, 'verified@example.com');
+  });
 });
