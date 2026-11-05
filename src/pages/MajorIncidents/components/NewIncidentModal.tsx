@@ -77,9 +77,14 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
   }, [onClose]);
 
   const validate = () => {
-    if (!title.trim()) {
+    const cleanTitle = title.replace(/<[^>]*>?/gm, '').trim();
+    if (!cleanTitle) {
       setErrors({ title: 'Title is required' });
       titleRef.current?.focus();
+      return false;
+    }
+    if (cleanTitle.length > 255) {
+      setErrors({ title: 'Title must be 255 characters or fewer' });
       return false;
     }
     return true;
@@ -90,11 +95,13 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
     if (!validate()) return;
 
     const id = `MI-${Date.now().toString().slice(-6)}`;
+    const cleanTitle = title.replace(/<[^>]*>?/gm, '').trim();
+    const cleanProduct = product.replace(/<[^>]*>?/gm, '').trim();
     const incident: MajorIncident = {
       id,
-      title: title.trim(),
+      title: cleanTitle,
       priority,
-      product: product.trim() || 'General',
+      product: cleanProduct || 'General',
       resolutionTarget: 'TBD',
       responseTarget: 'TBD',
       assignee: assignee.trim() || 'Unassigned',
@@ -145,6 +152,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }
             <input
               ref={titleRef}
               type="text"
+              maxLength={255}
               value={title}
               onChange={(e) => { setTitle(e.target.value); setErrors({}); }}
               placeholder="Brief description of the incident…"

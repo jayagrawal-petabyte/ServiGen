@@ -91,8 +91,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     setIsSubmitting(true);
     setStatusMessage(null);
     try {
+      const cleanMsg = broadcastMessage.replace(/<[^>]*>?/gm, '').trim();
+      if (!cleanMsg) return;
       const targetId = targetIncidentId || defaultIncidentId || (incidents.length > 0 ? incidents[0].id : undefined);
-      await onPostUpdate(broadcastMessage.trim(), targetId);
+      await onPostUpdate(cleanMsg, targetId);
       setBroadcastMessage('');
       setStatusMessage('✓ Update posted to live timeline');
       setTimeout(() => setStatusMessage(null), 3000);
@@ -147,6 +149,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             <textarea
               value={broadcastMessage}
               onChange={(e) => setBroadcastMessage(e.target.value)}
+              maxLength={1000}
               rows={2}
               placeholder="e.g. Teams war-room link shared with Database responders..."
               className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] resize-none text-gray-800"

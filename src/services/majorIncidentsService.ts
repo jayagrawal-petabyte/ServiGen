@@ -4,7 +4,7 @@
  * with live /api/major-incidents backend endpoints.
  */
 
-import { api, ApiError, logServiceError } from './apiClient';
+import { api, ApiError, logServiceError, getApiBaseUrl } from './apiClient';
 import {
   STAGE_LABELS,
   normaliseStatus,
@@ -319,6 +319,59 @@ export const majorIncidentsService = {
     payload: { message: string; author?: string }
   ): Promise<MajorIncident | null> {
     return this.addMajorIncidentUpdate(incidentId, payload);
+  },
+
+  /**
+   * Subscribe to live Server-Sent Events (SSE) updates for a specific major incident
+   * Endpoint: GET /api/major-incidents/:id/stream
+   */
+  subscribeToIncidentStream(
+    incidentId: string,
+    onUpdate: (update: IncidentUpdate) => void,
+    onError?: (err: any) => void
+  ): () => void {
+    if (!incidentId || typeof window === 'undefined' || !window.EventSource) {
+      return () => {};
+    }
+
+    const baseUrl = getApiBaseUrl();
+    const streamUrl = `${baseUrl}/api/major-incidents/${encodeURIComponent(incidentId)}/stream`;
+
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.addEventListener('incident-update', (event: MessageEvent) => {
+        try {
+          const raw = JSON.parse(event.data);
+          const mappedUpdate: IncidentUpdate = {
+            id: String(raw.id || `sse-${Date.now()}`),
+            timestamp: raw.createdAt
+              ? new Date(raw.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            author: raw.author || 'System',
+            authorRole: (raw.authorRole || 'Responder') as UserRole,
+            type: raw.type || 'comment',
+            content: raw.message || raw.content || '',
+          };
+          onUpdate(mappedUpdate);
+        } catch (e) {
+          console.warn('[MajorIncidents SSE] Failed to parse update payload:', e);
+        }
+      });
+
+      eventSource.onerror = (err) => {
+        if (onError) onError(err);
+      };
+    } catch (e) {
+      if (onError) onError(e);
+    }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   },
 };
 

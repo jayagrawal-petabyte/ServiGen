@@ -19,6 +19,7 @@ interface IncidentDetailPanelProps {
   onReassign?: (incidentId: string, newAssignee: string) => void;
   onUpdatePriority?: (incidentId: string, newPriority: Priority) => void;
   onUpdateProduct?: (incidentId: string, newProduct: string) => void;
+  onMobiliseWarRoom?: (incidentId: string) => void;
 }
 
 const STAGE_ORDER = STAGE_LABELS;
@@ -35,6 +36,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   onReassign,
   onUpdatePriority,
   onUpdateProduct,
+  onMobiliseWarRoom,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();

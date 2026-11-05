@@ -435,6 +435,58 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     }).catch(() => {});
   }, [selectedIncidentId]);
 
+  // Real-time live update stream for active incident via Server-Sent Events (SSE)
+  useEffect(() => {
+    const activeId = selectedIncidentId || allIncidents[0]?.id;
+    if (!activeId) return;
+
+    const unsubscribe = majorIncidentsService.subscribeToIncidentStream(
+      activeId,
+      (streamUpdate) => {
+        setServerIncidents((prev) =>
+          prev.map((inc) => {
+            if (inc.id !== activeId) return inc;
+            const exists = (inc.updates || []).some(
+              (u) => u.id === streamUpdate.id || (u.content === streamUpdate.content && u.timestamp === streamUpdate.timestamp)
+            );
+            if (exists) return inc;
+            return { ...inc, updates: [streamUpdate, ...(inc.updates || [])] };
+          })
+        );
+        setLocalIncidents((prev) =>
+          prev.map((inc) => {
+            if (inc.id !== activeId) return inc;
+            const exists = (inc.updates || []).some(
+              (u) => u.id === streamUpdate.id || (u.content === streamUpdate.content && u.timestamp === streamUpdate.timestamp)
+            );
+            if (exists) return inc;
+            return { ...inc, updates: [streamUpdate, ...(inc.updates || [])] };
+          })
+        );
+        setFeedUnreadCount((c) => c + 1);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedIncidentId, allIncidents[0]?.id]);
+
+  const handleMobiliseWarRoom = async (incidentId: string) => {
+    const inc = allIncidents.find((i) => i.id === incidentId);
+    if (!inc) return;
+
+    const warRoomUrl = `https://teams.microsoft.com/l/meetup-join/19%3ameeting_${incidentId}_warroom%40thread.v2/0`;
+    const message = `⚡ ONE-CLICK MOBILISATION: Commander mobilized incident responders. On-Call rosters (1st Line Lead & Cloud Ops) paged. MS Teams War Room: ${warRoomUrl}`;
+
+    await handlePostFeedUpdate(message, incidentId);
+
+    const activeIdx = inc.lifecycleStages.findIndex((s) => s.isActive);
+    if (activeIdx === 0) {
+      handleAdvanceStage(incidentId);
+    }
+  };
+
   const handlePostFeedUpdate = async (message: string, targetIncidentId?: string) => {
     const incId = targetIncidentId || selectedIncidentId || allIncidents[0]?.id;
     if (!incId || !message.trim()) return;
@@ -1277,6 +1329,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               onReassign={handleReassign}
               onUpdatePriority={handleUpdatePriority}
               onUpdateProduct={handleUpdateProduct}
+              onMobiliseWarRoom={handleMobiliseWarRoom}
             />
           )}
 
