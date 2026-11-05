@@ -1,4 +1,4 @@
-export type EventType = "phone-call" | "meeting" | "site-visit" | "resource-booking" | "change-request";
+export type EventType = "phone-call" | "meeting" | "site-visit" | "resource-booking" | "change-request" | "maintenance";
 
 export interface CalendarEvent {
   id: string;
@@ -18,6 +18,7 @@ export const APPOINTMENT_TYPES: { id: EventType; label: string; color: string }[
   { id: "site-visit", label: "Site Visit", color: "#2f855a" },
   { id: "resource-booking", label: "Office Resource Booking", color: "#263a5e" },
   { id: "change-request", label: "Change Request", color: "#d97706" },
+  { id: "maintenance", label: "Maintenance Window", color: "#dc2626" },
 ];
 
 function pad(n: number) {
