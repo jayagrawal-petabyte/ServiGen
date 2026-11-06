@@ -1,4 +1,5 @@
-﻿# ServiGen - Frontend Workspace
+﻿
+# ServiGen - Frontend Workspace
 
 Welcome to the frontend repository for ServiGen. 
 This structure is based on the task allocations for our team.
