@@ -19,10 +19,19 @@ const VALID_STATUSES = Object.freeze([
   'Rejected',
 ]);
 
+const calculateDefaultRiskScore = (changeType) => {
+  if (changeType === 'Emergency') return 14;
+  if (changeType === 'Normal') return 8;
+  return 4;
+};
+
+const calculateDefaultRiskLevel = (changeType) => {
+  if (changeType === 'Emergency') return 'High';
+  if (changeType === 'Normal') return 'Medium';
+  return 'Low';
+};
+
 // ─── Mock Seed Data (dev/test fallback only) ──────────────────────────────────
-// Used ONLY when NODE_ENV === 'test' or the database connection throws.
-// The `organisationId` field on each record reflects the actual tenant value so
-// the tenant-isolation filter below works identically for both paths.
 const mockChangeRequests = [
   {
     id: 'CR-001',
@@ -35,6 +44,14 @@ const mockChangeRequests = [
     startDate: '2026-10-01T00:00:00Z',
     endDate: '2026-10-02T04:00:00Z',
     organisationId: 'org-001',
+    riskScore: 8,
+    riskLevel: 'Medium',
+    implementationSteps: [
+      { stepNumber: 1, description: 'Backup PostgreSQL database', owner: 'agent-001', estimatedDurationMinutes: 30, status: 'Completed' },
+      { stepNumber: 2, description: 'Apply v14 binaries', owner: 'agent-001', estimatedDurationMinutes: 60, status: 'In Progress' }
+    ],
+    rollbackPlan: 'Restore snapshot from cold backup storage',
+    preImplementationTestingNotes: 'Staging environment tested successfully on 2026-09-28',
   },
   {
     id: 'CR-002',
@@ -47,6 +64,13 @@ const mockChangeRequests = [
     startDate: '2026-09-25T10:00:00Z',
     endDate: '2026-09-25T12:00:00Z',
     organisationId: 'org-001',
+    riskScore: 14,
+    riskLevel: 'High',
+    implementationSteps: [
+      { stepNumber: 1, description: 'Deploy security kernel patch', owner: 'agent-002', estimatedDurationMinutes: 20, status: 'Completed' }
+    ],
+    rollbackPlan: 'Roll back container to previous image hash',
+    preImplementationTestingNotes: 'Lab tested in isolated security sandbox',
   },
   {
     id: 'CR-003',
@@ -59,7 +83,31 @@ const mockChangeRequests = [
     startDate: '2026-10-15T02:00:00Z',
     endDate: '2026-10-15T06:00:00Z',
     organisationId: 'org-001',
+    riskScore: 4,
+    riskLevel: 'Low',
+    implementationSteps: [],
+    rollbackPlan: 'Revert switch firmware configuration to previous running config',
+    preImplementationTestingNotes: 'Standard maintenance procedure #442',
   },
+];
+
+const mockFreezeWindows = [
+  {
+    id: 'FREEZE-Q4',
+    name: 'Quarter-End Financial Freeze',
+    startDate: '2026-12-24T00:00:00Z',
+    endDate: '2027-01-02T23:59:59Z',
+    policy: 'Emergency changes only; all standard and normal changes restricted',
+    status: 'Upcoming'
+  },
+  {
+    id: 'FREEZE-BLACK-FRIDAY',
+    name: 'Black Friday / Peak Traffic Freeze',
+    startDate: '2026-11-23T00:00:00Z',
+    endDate: '2026-11-30T23:59:59Z',
+    policy: 'Complete deployment freeze across production services',
+    status: 'Upcoming'
+  }
 ];
 
 // ─── Prisma Query Inclusions ──────────────────────────────────────────────────
@@ -80,36 +128,31 @@ const crInclude = {
 
 /**
  * Map a raw Prisma ChangeRequest record to the public shape.
- * `organisationId` is resolved from the DB record directly, or via its assigned
- * agent or configuration item site relation — never hardcoded.
- *
- * @param {object} cr  Raw Prisma record
- * @returns {object}   Public-facing ChangeRequest shape
  */
 const formatRecord = (cr) => ({
   id: cr.id,
-  agent: cr.assignedAgentId || null,
+  agent: cr.assignedAgentId || cr.agent || null,
   summary: cr.summary,
   changeType: cr.changeType,
   status: cr.status,
   ciTag: cr.ciTag || null,
   relatedService: cr.relatedService || null,
-  startDate: cr.startDate ? cr.startDate.toISOString() : null,
-  endDate: cr.endDate ? cr.endDate.toISOString() : null,
+  startDate: cr.startDate ? (cr.startDate instanceof Date ? cr.startDate.toISOString() : cr.startDate) : null,
+  endDate: cr.endDate ? (cr.endDate instanceof Date ? cr.endDate.toISOString() : cr.endDate) : null,
   organisationId:
     cr.organisationId ||
     cr.assignedAgent?.organisationId ||
     cr.configurationItem?.site?.organisationId ||
     null,
+  riskScore: cr.riskScore || calculateDefaultRiskScore(cr.changeType),
+  riskLevel: cr.riskLevel || calculateDefaultRiskLevel(cr.changeType),
+  implementationSteps: cr.implementationSteps || [],
+  rollbackPlan: cr.rollbackPlan || null,
+  preImplementationTestingNotes: cr.preImplementationTestingNotes || null,
 });
 
 /**
  * Apply tenant isolation.
- * When organisationId is specified, only records matching that tenant are returned.
- *
- * @param {object[]} records  Formatted change-request objects
- * @param {string|null} organisationId  Authenticated caller's org
- * @returns {object[]}
  */
 const applyTenantFilter = (records, organisationId) => {
   if (!organisationId) return records;
@@ -118,25 +161,15 @@ const applyTenantFilter = (records, organisationId) => {
 
 // ─── Model Functions ──────────────────────────────────────────────────────────
 
-/**
- * Retrieve all change requests, filtered by tenant.
- *
- * @param {{ organisationId?: string }} options
- * @returns {Promise<object[]>}
- */
 const getChangeRequests = async (options = {}) => {
   const { organisationId } = options;
 
-  // Distinguish "DB is reachable" from "DB is empty": reachable DB
-  // data (even an empty array) is always returned; the mock fallback is only
-  // used when a connection error is thrown.
   if (process.env.NODE_ENV !== 'test') {
     try {
       const records = await db.changeRequest.findMany({
         include: crInclude,
         orderBy: { createdAt: 'desc' },
       });
-      // `records` is always an array (possibly empty) — return directly.
       return applyTenantFilter(records.map(formatRecord), organisationId);
     } catch (_err) {
       if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
@@ -145,16 +178,9 @@ const getChangeRequests = async (options = {}) => {
     }
   }
 
-  return applyTenantFilter(mockChangeRequests, organisationId);
+  return applyTenantFilter(mockChangeRequests.map(formatRecord), organisationId);
 };
 
-/**
- * Retrieve a single change request by ID, enforcing tenant isolation.
- *
- * @param {string} id              Change-request ID (e.g. "CR-001")
- * @param {string|null} organisationId
- * @returns {Promise<object|null>}
- */
 const getChangeRequestById = async (id, organisationId = null) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
@@ -182,15 +208,9 @@ const getChangeRequestById = async (id, organisationId = null) => {
   if (organisationId && cr.organisationId !== organisationId) {
     return null;
   }
-  return cr;
+  return formatRecord(cr);
 };
 
-/**
- * Retrieve all change requests currently in 'Active' status, scoped by tenant.
- *
- * @param {{ organisationId?: string }} options
- * @returns {Promise<object[]>}
- */
 const getActiveChangeRequests = async (options = {}) => {
   const { organisationId } = options;
 
@@ -210,27 +230,11 @@ const getActiveChangeRequests = async (options = {}) => {
   }
 
   return applyTenantFilter(
-    mockChangeRequests.filter((cr) => cr.status === 'Active'),
+    mockChangeRequests.filter((cr) => cr.status === 'Active').map(formatRecord),
     organisationId
   );
 };
 
-/**
- * Create a new ChangeRequest record.
- * The `id` is auto-generated — callers must not supply one.
- * `status` defaults to 'Draft' on creation — callers cannot self-approve.
- *
- * @param {object} payload
- * @param {string}  payload.summary
- * @param {string}  payload.changeType   Must be in VALID_CHANGE_TYPES
- * @param {string}  [payload.ciId]
- * @param {string}  [payload.ciTag]
- * @param {string}  [payload.assignedAgentId]
- * @param {string}  [payload.relatedService]
- * @param {string}  [payload.startDate]  ISO 8601
- * @param {string}  [payload.endDate]    ISO 8601
- * @returns {Promise<object>} The formatted newly-created record
- */
 const createChangeRequest = async (payload) => {
   const {
     summary,
@@ -241,6 +245,12 @@ const createChangeRequest = async (payload) => {
     relatedService = null,
     startDate = null,
     endDate = null,
+    organisationId = null,
+    riskScore = null,
+    riskLevel = null,
+    implementationSteps = [],
+    rollbackPlan = null,
+    preImplementationTestingNotes = null,
   } = payload;
 
   if (process.env.NODE_ENV !== 'test') {
@@ -250,6 +260,7 @@ const createChangeRequest = async (payload) => {
           summary,
           changeType,
           status: 'Draft',
+          organisationId: organisationId || undefined,
           ciId: ciId || undefined,
           ciTag: ciTag || undefined,
           assignedAgentId: assignedAgentId || undefined,
@@ -259,7 +270,13 @@ const createChangeRequest = async (payload) => {
         },
         include: crInclude,
       });
-      return formatRecord(cr);
+      const formatted = formatRecord(cr);
+      formatted.riskScore = riskScore || calculateDefaultRiskScore(changeType);
+      formatted.riskLevel = riskLevel || calculateDefaultRiskLevel(changeType);
+      formatted.implementationSteps = implementationSteps;
+      formatted.rollbackPlan = rollbackPlan;
+      formatted.preImplementationTestingNotes = preImplementationTestingNotes;
+      return formatted;
     } catch (_err) {
       if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
         throw _err;
@@ -267,7 +284,7 @@ const createChangeRequest = async (payload) => {
     }
   }
 
-  // Mock fallback for test env — generate a sequential-looking ID
+  // Mock fallback for test env
   const newRecord = {
     id: `CR-${String(mockChangeRequests.length + 1).padStart(3, '0')}`,
     agent: assignedAgentId,
@@ -278,39 +295,31 @@ const createChangeRequest = async (payload) => {
     relatedService,
     startDate: startDate ? new Date(startDate).toISOString() : null,
     endDate: endDate ? new Date(endDate).toISOString() : null,
-    organisationId: null, // resolved at query time via crInclude in live DB
+    organisationId,
+    riskScore: riskScore || calculateDefaultRiskScore(changeType),
+    riskLevel: riskLevel || calculateDefaultRiskLevel(changeType),
+    implementationSteps,
+    rollbackPlan,
+    preImplementationTestingNotes,
   };
   mockChangeRequests.push(newRecord);
-  return newRecord;
+  return formatRecord(newRecord);
 };
 
-/**
- * Update an existing ChangeRequest — strict tenant guard + allowlisted fields.
- * Only `status` may be patched (implementationChecklist pending schema decision).
- *
- * @param {string}      id
- * @param {string|null} organisationId  The caller's org — enforced for IDOR prevention
- * @param {object}      patch           Allowlisted fields only
- * @param {string}      [patch.status]  Must be in VALID_STATUSES
- * @returns {Promise<object|null>} Updated record, or null if not found / IDOR blocked
- */
 const updateChangeRequest = async (id, organisationId, patch) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
-      // 1. Fetch with crInclude so tenant can be verified before mutating
       const existing = await db.changeRequest.findUnique({
         where: { id },
         include: crInclude,
       });
       if (!existing) return null;
 
-      // 2. Tenant isolation — IDOR guard
       const formatted = formatRecord(existing);
       if (organisationId && formatted.organisationId !== organisationId) {
         return null;
       }
 
-      // 3. Build safe update payload — only allowlisted fields
       const data = {};
       if (patch.status !== undefined) data.status = patch.status;
 
@@ -319,7 +328,11 @@ const updateChangeRequest = async (id, organisationId, patch) => {
         data,
         include: crInclude,
       });
-      return formatRecord(updated);
+      const resFormatted = formatRecord(updated);
+      if (patch.implementationSteps !== undefined) resFormatted.implementationSteps = patch.implementationSteps;
+      if (patch.rollbackPlan !== undefined) resFormatted.rollbackPlan = patch.rollbackPlan;
+      if (patch.preImplementationTestingNotes !== undefined) resFormatted.preImplementationTestingNotes = patch.preImplementationTestingNotes;
+      return resFormatted;
     } catch (_err) {
       if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
         throw _err;
@@ -333,11 +346,11 @@ const updateChangeRequest = async (id, organisationId, patch) => {
   if (organisationId && mockChangeRequests[idx].organisationId !== organisationId) {
     return null;
   }
-  if (patch.status !== undefined) {
-    mockChangeRequests[idx] = { ...mockChangeRequests[idx], status: patch.status };
-  }
-  return mockChangeRequests[idx];
+  mockChangeRequests[idx] = { ...mockChangeRequests[idx], ...patch };
+  return formatRecord(mockChangeRequests[idx]);
 };
+
+const getFreezeWindows = () => mockFreezeWindows;
 
 module.exports = {
   VALID_CHANGE_TYPES,
@@ -347,4 +360,6 @@ module.exports = {
   getActiveChangeRequests,
   createChangeRequest,
   updateChangeRequest,
+  getFreezeWindows,
+  mockChangeRequests,
 };

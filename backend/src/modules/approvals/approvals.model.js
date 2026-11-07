@@ -262,12 +262,28 @@ const conditionalUpdateStatus = async (id, requiredStatus, newStatus, options = 
           // ignore circular reference
         }
       }
+      if (current.changeRequestId) {
+        try {
+          const crModel = require('../change-requests/change-requests.model');
+          crModel.updateChangeRequest(current.changeRequestId, current.organisationId, { status: 'Approved' });
+        } catch (_err) {
+          // ignore circular reference
+        }
+      }
     }
   } else if (newStatus === 'Rejected') {
     if (current.serviceRequestId) {
       try {
         const scModel = require('../services-catalogue/services-catalogue.model');
         scModel.updateRequestStatus(current.serviceRequestId, 'Rejected');
+      } catch (_err) {
+        // ignore circular reference
+      }
+    }
+    if (current.changeRequestId) {
+      try {
+        const crModel = require('../change-requests/change-requests.model');
+        crModel.updateChangeRequest(current.changeRequestId, current.organisationId, { status: 'Draft' });
       } catch (_err) {
         // ignore circular reference
       }

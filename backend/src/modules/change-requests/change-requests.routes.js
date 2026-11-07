@@ -1,9 +1,10 @@
-// Implementation Summary: Express routes for Change Requests (SCR-009 & SCR-026),
-// defining list, active filter, details, create, and update-status endpoints.
+'use strict';
+
 const express = require('express');
 const {
   getChangeRequestsList,
   getActiveChangeRequestsList,
+  getChangeCalendar,
   getChangeRequestById,
   createChangeRequest,
   updateChangeRequest,
@@ -14,6 +15,7 @@ const router = express.Router();
 router.get('/', getChangeRequestsList);
 router.post('/', createChangeRequest);
 router.get('/active', getActiveChangeRequestsList);
+router.get('/calendar', getChangeCalendar);
 router.get('/:id', getChangeRequestById);
 router.patch('/:id', updateChangeRequest);
 

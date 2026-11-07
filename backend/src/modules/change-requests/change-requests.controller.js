@@ -6,6 +6,7 @@ const {
   getActiveChangeRequestsData,
   createNewChangeRequest,
   updateChangeRequestData,
+  getCalendarOverlayData,
 } = require('./change-requests.service');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
@@ -16,9 +17,6 @@ const { HTTP_STATUS } = require('../../shared/constants/http.constants');
  * Resolve the effective organisationId for the authenticated caller.
  * Admins may supply an explicit ?organisationId=... to scope cross-org queries.
  * All other roles are restricted to their own organisation from the JWT.
- *
- * @param {import('express').Request} req
- * @returns {string|null}
  */
 const getEffectiveOrgId = (req) => {
   if (req.user?.role === 'Admin' && typeof req.query.organisationId === 'string') {
@@ -43,9 +41,6 @@ const getChangeRequestsList = async (req, res, next) => {
       data: changeRequests,
     });
   } catch (err) {
-    // BUG FIX: Previously caught errors were swallowed into raw 500 JSON,
-    // bypassing the centralized error handler and audit logging.
-    // Now all errors propagate to Express errorHandler via next(err).
     return next(err);
   }
 };
@@ -61,6 +56,24 @@ const getActiveChangeRequestsList = async (req, res, next) => {
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: activeChangeRequests,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * GET /api/change-requests/calendar
+ * Returns scheduled changes and maintenance freeze windows for calendar visualization.
+ */
+const getChangeCalendar = async (req, res, next) => {
+  try {
+    const organisationId = getEffectiveOrgId(req);
+    const { startDate, endDate } = req.query;
+    const data = await getCalendarOverlayData({ startDate, endDate, organisationId });
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data,
     });
   } catch (err) {
     return next(err);
@@ -122,8 +135,8 @@ const createChangeRequest = async (req, res, next) => {
 
 /**
  * PATCH /api/change-requests/:id
- * Update a Change Request's status (and future: implementation checklist).
- * Enforces tenant isolation before mutating. Only allowlisted fields are applied.
+ * Update a Change Request's status and implementation plan.
+ * Enforces tenant isolation and workflow state transitions before mutating.
  */
 const updateChangeRequest = async (req, res, next) => {
   try {
@@ -149,7 +162,6 @@ const updateChangeRequest = async (req, res, next) => {
       data: updated,
     });
   } catch (err) {
-    // Validation errors from service layer — map to 422
     if (err.isOperational) return next(err);
     return next(new AppError(err.message, HTTP_STATUS.UNPROCESSABLE_ENTITY));
   }
@@ -158,6 +170,7 @@ const updateChangeRequest = async (req, res, next) => {
 module.exports = {
   getChangeRequestsList,
   getActiveChangeRequestsList,
+  getChangeCalendar,
   getChangeRequestById,
   createChangeRequest,
   updateChangeRequest,

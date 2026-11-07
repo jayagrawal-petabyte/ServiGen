@@ -89,6 +89,78 @@ describe('createNewChangeRequest — validation & creation', () => {
     const r = await createNewChangeRequest({ summary: 'Emergency hotfix', changeType: 'Emergency' }, 'org-001');
     assert.equal(r.changeType, 'Emergency');
   });
+
+  test('computes dynamic riskScore and riskLevel based on inputs and service criticality', async () => {
+    const highRisk = await createNewChangeRequest({
+      summary: 'Emergency database migration',
+      changeType: 'Emergency',
+      impact: 'High',
+      urgency: 'High',
+      relatedService: 'Core Database Cluster',
+    }, 'org-001');
+    assert.ok(highRisk.riskScore >= 16, `Expected riskScore >= 16, got ${highRisk.riskScore}`);
+    assert.equal(highRisk.riskLevel, 'Critical');
+
+    const lowRisk = await createNewChangeRequest({
+      summary: 'Standard font update',
+      changeType: 'Standard',
+      impact: 'Low',
+      urgency: 'Low',
+      relatedService: 'Marketing Page',
+    }, 'org-001');
+    assert.ok(lowRisk.riskScore <= 7, `Expected riskScore <= 7, got ${lowRisk.riskScore}`);
+    assert.equal(lowRisk.riskLevel, 'Low');
+  });
+
+  test('sanitizes HTML and script tags from input fields', async () => {
+    const sanitized = await createNewChangeRequest({
+      summary: '<script>alert("xss")</script>Upgrade proxy',
+      changeType: 'Normal',
+      rollbackPlan: '<b>Revert snapshot</b><iframe src="evil.com"></iframe>',
+      preImplementationTestingNotes: '<img onerror="steal()"/>Notes tested',
+      implementationSteps: [
+        { stepNumber: 1, description: '<svg onload="alert(1)"/>Step 1' }
+      ],
+    }, 'org-001');
+
+    assert.equal(sanitized.summary, 'scriptalert("xss")/scriptUpgrade proxy');
+    assert.equal(sanitized.rollbackPlan, 'bRevert snapshot/biframe src="evil.com"/iframe');
+    assert.equal(sanitized.preImplementationTestingNotes, 'img onerror="steal()"/Notes tested');
+    assert.equal(sanitized.implementationSteps[0].description, 'svg onload="alert(1)"/Step 1');
+  });
+
+  test('rejects rollbackPlan exceeding 10000 characters', async () => {
+    await assert.rejects(
+      () => createNewChangeRequest({
+        summary: 'Upgrade',
+        changeType: 'Normal',
+        rollbackPlan: 'R'.repeat(10001),
+      }, 'org-001'),
+      /rollbackPlan must not exceed 10000 characters/
+    );
+  });
+
+  test('rejects preImplementationTestingNotes exceeding 10000 characters', async () => {
+    await assert.rejects(
+      () => createNewChangeRequest({
+        summary: 'Upgrade',
+        changeType: 'Normal',
+        preImplementationTestingNotes: 'N'.repeat(10001),
+      }, 'org-001'),
+      /preImplementationTestingNotes must not exceed 10000 characters/
+    );
+  });
+
+  test('rejects implementation step description exceeding 2000 characters', async () => {
+    await assert.rejects(
+      () => createNewChangeRequest({
+        summary: 'Upgrade',
+        changeType: 'Normal',
+        implementationSteps: [{ description: 'S'.repeat(2001) }],
+      }, 'org-001'),
+      /Step description must not exceed 2000 characters/
+    );
+  });
 });
 
 // ─── Stage 2B: PATCH /api/change-requests/:id ────────────────────────────────
@@ -99,6 +171,27 @@ describe('updateChangeRequestData — status patch & IDOR guard', () => {
     const updated = await updateChangeRequestData('CR-001', { status: 'Completed' }, 'org-001');
     assert.ok(updated !== null, 'Expected update to succeed');
     assert.equal(updated.status, 'Completed');
+  });
+
+  test('R4-Bug 2 FIX: blocks direct status transition from Draft or On Hold to Approved', async () => {
+    // CR-001 created in test or seed can be put into Draft
+    await updateChangeRequestData('CR-001', { status: 'Draft' }, 'org-001');
+    await assert.rejects(
+      () => updateChangeRequestData('CR-001', { status: 'Approved' }, 'org-001'),
+      /Cannot transition directly from "Draft" to "Approved" \(workflow bypass prevented\)/
+    );
+
+    await updateChangeRequestData('CR-001', { status: 'On Hold' }, 'org-001');
+    await assert.rejects(
+      () => updateChangeRequestData('CR-001', { status: 'Approved' }, 'org-001'),
+      /Cannot transition directly from "On Hold" to "Approved" \(workflow bypass prevented\)/
+    );
+  });
+
+  test('allows transition from Pending Approval to Approved', async () => {
+    await updateChangeRequestData('CR-001', { status: 'Pending Approval' }, 'org-001');
+    const approved = await updateChangeRequestData('CR-001', { status: 'Approved' }, 'org-001');
+    assert.equal(approved.status, 'Approved');
   });
 
   test('IDOR: blocks update for wrong tenant', async () => {
@@ -132,6 +225,46 @@ describe('updateChangeRequestData — status patch & IDOR guard', () => {
       const r = await updateChangeRequestData('CR-002', { status: s }, 'org-001');
       // CR-002 is in mock data with org-001, so should succeed for valid statuses
       assert.ok(r !== undefined);
+    }
+  });
+
+  test('patches structured fields with sanitization', async () => {
+    const updated = await updateChangeRequestData('CR-001', {
+      rollbackPlan: '<script>revert()</script>Clean Rollback',
+      preImplementationTestingNotes: '<test>verified</test>',
+      implementationSteps: [
+        { stepNumber: 1, description: '<b>Step 1</b>', owner: 'DevOps' }
+      ]
+    }, 'org-001');
+
+    assert.equal(updated.rollbackPlan, 'scriptrevert()/scriptClean Rollback');
+    assert.equal(updated.preImplementationTestingNotes, 'testverified/test');
+    assert.equal(updated.implementationSteps[0].description, 'bStep 1/b');
+  });
+});
+
+// ─── Stage 2C: Calendar Overlay Data ─────────────────────────────────────────
+
+describe('getCalendarOverlayData — scheduled changes & freeze windows', () => {
+  const { getCalendarOverlayData } = require('./change-requests.service');
+
+  test('returns scheduledChanges and freezeWindows', async () => {
+    const data = await getCalendarOverlayData({ organisationId: 'org-001' });
+    assert.ok(Array.isArray(data.scheduledChanges), 'scheduledChanges must be an array');
+    assert.ok(Array.isArray(data.freezeWindows), 'freezeWindows must be an array');
+    assert.ok(data.freezeWindows.length > 0, 'Must include pre-configured freeze windows');
+  });
+
+  test('filters scheduledChanges by date range', async () => {
+    const data = await getCalendarOverlayData({
+      startDate: '2026-10-01T00:00:00Z',
+      endDate: '2026-10-31T23:59:59Z',
+      organisationId: 'org-001',
+    });
+    for (const change of data.scheduledChanges) {
+      if (change.startDate) {
+        assert.ok(new Date(change.startDate) <= new Date('2026-10-31T23:59:59Z'));
+      }
     }
   });
 });
