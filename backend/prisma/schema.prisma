@@ -86,6 +86,8 @@ model User {
   createdTicketLinks TicketLink[] @relation("TicketLinkCreator")
   resolvedTickets Ticket[] @relation("TicketResolvedBy")
   loggedTicketTimeEntries TicketTimeEntry[] @relation("TicketTimeEntryAgent")
+  ownedProjects Project[] @relation("ProjectOwner")
+  projectResourceAssignments ProjectResourceAssignment[]
   @@map("users")
 }
 
@@ -303,33 +305,77 @@ model ChangeRequest {
 // ─── Projects & Tasks ──────────────────────────────────────────────────────
 
 model Project {
-  id             String           @id // e.g., "P-001"
-  organisationId String?
-  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
-  name           String
-  status         String           @default("ACTIVE") // "ACTIVE", "COMPLETED"
-  startDate      DateTime?
-  endDate        DateTime?
-  timeSpent      Int              @default(0) // Hours or minutes spent
-  subtasks       ProjectSubtask[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                 String                    @id // e.g., "P-001"
+  organisationId     String?
+  organisation       Organisation?              @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  name               String
+  description        String?                    @db.Text
+  code               String
+  status             String                    @default("ACTIVE")
+  priority           String?
+  startDate          DateTime?
+  endDate            DateTime?
+  timeSpent          Int                       @default(0)
+  ownerId            String?
+  owner              User?                     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  subtasks           ProjectSubtask[]
+  resourceAssignments ProjectResourceAssignment[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
+  @@unique([organisationId, code])
   @@index([organisationId, status])
+  @@index([ownerId])
   @@map("projects")
 }
 
 model ProjectSubtask {
-  id        String   @id // e.g., "ST-001"
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title     String
-  status    String   @default("PENDING") // "PENDING", "COMPLETED"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String                      @id // e.g., "ST-001"
+  projectId    String
+  project      Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  status       String                      @default("PENDING")
+  dependencies  ProjectSubtaskDependency[]   @relation("SubtaskDependencies")
+  dependents    ProjectSubtaskDependency[]   @relation("SubtaskDependents")
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
 
   @@map("project_subtasks")
 }
+
+model ProjectSubtaskDependency {
+  id                String        @id @default(uuid())
+  subtaskId         String
+  subtask           ProjectSubtask @relation("SubtaskDependencies", fields: [subtaskId], references: [id], onDelete: Cascade)
+  dependsOnSubtaskId String
+  dependsOnSubtask  ProjectSubtask @relation("SubtaskDependents", fields: [dependsOnSubtaskId], references: [id], onDelete: Cascade)
+  dependencyType    String        @default("FINISH_TO_START")
+  lagTime           Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([subtaskId, dependsOnSubtaskId])
+  @@index([subtaskId])
+  @@index([dependsOnSubtaskId])
+  @@map("project_subtask_dependencies")
+}
+
+model ProjectResourceAssignment {
+  id             String   @id @default(uuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allocatedHours Float
+  capacityHours  Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_resource_assignments")
+}
+
 
 // ─── List Builder (Custom Lists) ───────────────────────────────────────────
 
