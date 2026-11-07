@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User } from './types';
 import { fetchOrganisationUsers, createOrganisationUser } from '../../services/organisationsService';
 import { usePersistentState } from '../../utils/persistentState';
+import { useAuth } from './AuthContext';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './OrganisationUsersScreen.css';
 
@@ -14,6 +15,8 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   users,
 }) => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'Administrator' || currentUser?.role === 'System Manager' || (currentUser?.role as any) === 'Admin';
   const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users || []);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSite, setSelectedSite] = useState<string>('ALL');
@@ -176,15 +179,17 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                 <span>{isLoading ? '⏳' : '🔄'}</span>
                 <span>Refresh</span>
               </button>
-              <button
-                type="button"
-                className="org-btn-add-user"
-                onClick={() => setIsAddUserModalOpen(true)}
-                title="Add a new organisation user"
-              >
-                <span>+</span>
-                <span>Add User</span>
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="org-btn-add-user"
+                  onClick={() => setIsAddUserModalOpen(true)}
+                  title="Add a new organisation user"
+                >
+                  <span>+</span>
+                  <span>Add User</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

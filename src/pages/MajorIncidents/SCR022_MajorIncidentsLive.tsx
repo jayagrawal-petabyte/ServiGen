@@ -443,26 +443,18 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     const unsubscribe = majorIncidentsService.subscribeToIncidentStream(
       activeId,
       (streamUpdate) => {
-        setServerIncidents((prev) =>
-          prev.map((inc) => {
+        const appendStreamUpdate = (list: MajorIncident[]) =>
+          list.map((inc) => {
             if (inc.id !== activeId) return inc;
             const exists = (inc.updates || []).some(
               (u) => u.id === streamUpdate.id || (u.content === streamUpdate.content && u.timestamp === streamUpdate.timestamp)
             );
             if (exists) return inc;
             return { ...inc, updates: [streamUpdate, ...(inc.updates || [])] };
-          })
-        );
-        setLocalIncidents((prev) =>
-          prev.map((inc) => {
-            if (inc.id !== activeId) return inc;
-            const exists = (inc.updates || []).some(
-              (u) => u.id === streamUpdate.id || (u.content === streamUpdate.content && u.timestamp === streamUpdate.timestamp)
-            );
-            if (exists) return inc;
-            return { ...inc, updates: [streamUpdate, ...(inc.updates || [])] };
-          })
-        );
+          });
+
+        setServerIncidents(appendStreamUpdate);
+        setLocalIncidents(appendStreamUpdate);
         setFeedUnreadCount((c) => c + 1);
       }
     );

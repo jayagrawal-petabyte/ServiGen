@@ -1,4 +1,5 @@
 const express = require('express');
+const { restrictTo } = require('../../shared/middleware');
 
 const {
   listMajorIncidents,
@@ -11,7 +12,7 @@ const {
 const router = express.Router();
 
 router.get('/', listMajorIncidents);
-router.post('/', addMajorIncident);
+router.post('/', restrictTo('Admin'), addMajorIncident);
 router.get('/:incidentId', getMajorIncident);
 router.patch('/:incidentId', editMajorIncident);
 router.post('/:incidentId/updates', addMajorIncidentUpdate);
