@@ -34,7 +34,9 @@ model Organisation {
   calendarEvents        CalendarEvent[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-
+  ticketNotes           TicketNote[]
+  ticketLinks           TicketLink[]
+  ticketTimeEntries TicketTimeEntry[]
   @@map("organisations")
 }
 
@@ -80,7 +82,10 @@ model User {
   moodEntries      AgentMood[]
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-
+  authoredTicketNotes TicketNote[]
+  createdTicketLinks TicketLink[] @relation("TicketLinkCreator")
+  resolvedTickets Ticket[] @relation("TicketResolvedBy")
+  loggedTicketTimeEntries TicketTimeEntry[] @relation("TicketTimeEntryAgent")
   @@map("users")
 }
 
@@ -107,12 +112,24 @@ model Ticket {
   timeRecord      Int             @default(0) // Cumulative logged minutes spent
   holdReason      String?
   holdStartedAt   DateTime?
+  responseTargetAt     DateTime?
+  resolutionTargetAt   DateTime?
+  responseMetAt        DateTime?
   incident        Incident?
   serviceRequest  ServiceRequest?
   approvals       Approval[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
+  notes           TicketNote[]
+  outgoingLinks TicketLink[] @relation("TicketLinkSource")
+  incomingLinks TicketLink[] @relation("TicketLinkTarget")
+  resolutionCode     String?
+  resolutionNotes    String?   @db.Text
+  rootCauseSummary   String?   @db.Text
+  resolvedAt         DateTime?
+  resolvedById       String?
+  resolvedBy         User?     @relation("TicketResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  timeEntries TicketTimeEntry[]
   @@index([assignedAgentId, status])
   @@index([organisationId])
   @@map("tickets")
@@ -252,7 +269,7 @@ model ConfigurationItem {
   changeRequests ChangeRequest[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-
+  ticketLinks TicketLink[]
   @@index([organisationId, status])
   @@map("configuration_items")
 }
@@ -415,4 +432,84 @@ model CalendarEvent {
   @@index([organisationId, startsAt])
   @@index([agentId, startsAt])
   @@map("calendar_events")
+}
+model TicketNote {
+  id             String        @id @default(uuid())
+  ticketId       String
+  ticket         Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName     String
+  authorEmail    String?
+
+  noteType       String
+  content        String        @db.Text
+  createdAt      DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([organisationId, createdAt])
+  @@index([authorId])
+  @@map("ticket_notes")
+}
+model TicketLink {
+  id                 String             @id @default(uuid())
+
+  ticketId           String
+  ticket             Ticket             @relation("TicketLinkSource", fields: [ticketId], references: [id], onDelete: Cascade)
+
+  relatedTicketId    String?
+  relatedTicket      Ticket?            @relation("TicketLinkTarget", fields: [relatedTicketId], references: [id], onDelete: Cascade)
+
+  problemId          String?
+
+  configurationItemId String?
+  configurationItem  ConfigurationItem? @relation(fields: [configurationItemId], references: [id], onDelete: Cascade)
+
+  organisationId     String?
+  organisation       Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  createdById        String?
+  createdBy          User?              @relation("TicketLinkCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  relationType       String
+  createdAt          DateTime           @default(now())
+
+  @@unique([ticketId, relatedTicketId, relationType])
+  @@unique([ticketId, problemId, relationType])
+  @@unique([ticketId, configurationItemId, relationType])
+  @@index([organisationId, createdAt])
+  @@index([relatedTicketId])
+  @@index([configurationItemId])
+  @@map("ticket_links")
+}
+model TicketTimeEntry {
+  id              String        @id @default(uuid())
+
+  ticketId        String
+  ticket          Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  organisationId  String?
+  organisation    Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  agentId         String?
+  agent           User?         @relation("TicketTimeEntryAgent", fields: [agentId], references: [id], onDelete: SetNull)
+
+  agentName       String
+  agentEmail      String?
+
+  durationMinutes Int
+  description     String        @db.Text
+
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([organisationId, createdAt])
+  @@index([agentId, createdAt])
+  @@map("ticket_time_entries")
 }

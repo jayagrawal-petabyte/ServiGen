@@ -2,6 +2,10 @@
 
 const db = require('../../config/db');
 
+const {
+  validateAndSanitizeTicketInput,
+} = require('../../shared/ticket-validation');
+
 const mockServices = [
   {
     id: '1',
@@ -279,6 +283,16 @@ const createRequest = async (requestData) => {
 
   const service = await getServiceById(requestData.serviceId);
 
+// Final validation at the persistence boundary.
+// This prevents unsafe or oversized ticket text from reaching PostgreSQL.
+const ticketText = validateAndSanitizeTicketInput({
+  summary: `Request for ${requestData.serviceName || 'Service'}`,
+  description:
+    requestData.reason ||
+    requestData.description ||
+    `Service request for ${requestData.serviceName || 'Service'}`,
+});
+
   if (process.env.NODE_ENV !== 'test') {
     try {
       const defaultOrg = await db.organisation.findFirst();
@@ -287,8 +301,8 @@ const createRequest = async (requestData) => {
       if (orgId) {
         const ticket = await db.ticket.create({
           data: {
-            summary: `Request for ${requestData.serviceName || 'Service'}`,
-            description: requestData.reason || requestData.description || `Service request for ${requestData.serviceName}`,
+            summary: ticketText.summary,
+	    description: ticketText.description,
             priority: requestData.priority || 'Medium',
             status: service?.requiresApproval ? 'Pending Approval' : 'Submitted',
             ticketType: 'Service Request',

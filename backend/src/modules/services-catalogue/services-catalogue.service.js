@@ -1,7 +1,10 @@
 'use strict';
 
 const servicesCatalogueModel = require('./services-catalogue.model');
-
+const {
+  MAX_DESCRIPTION_LENGTH,
+  validateAndSanitizeTicketInput,
+} = require('../../shared/ticket-validation');
 const sanitizeInputText = (str) => {
   if (typeof str !== 'string') return '';
   return str.replace(/[<>]/g, '').trim();
@@ -104,16 +107,29 @@ const createServiceRequest = async (serviceId, requestData, user = {}) => {
     }
   }
 
-  // Sanitize and validate lengths for all string inputs
-  const safeData = {};
-  for (const [key, val] of Object.entries(callerData)) {
-    if (typeof val === 'string') {
+// Sanitize and validate all user-provided string inputs.
+const safeData = {};
+
+for (const [key, val] of Object.entries(callerData)) {
+  if (typeof val === 'string') {
+    if (key === 'reason' || key === 'description') {
+      // Ticket descriptions support up to 10,000 characters
+      // and only the safe rich-text formatting defined centrally.
+      validateValueLength(val, key, MAX_DESCRIPTION_LENGTH);
+
+      safeData[key] = validateAndSanitizeTicketInput({
+        summary: 'Service Request',
+        description: val,
+      }).description;
+    } else {
+      // Other dynamic form fields retain their existing 2,000-char limit.
       validateValueLength(val, key, 2000);
       safeData[key] = sanitizeInputText(val);
-    } else {
-      safeData[key] = val;
     }
+  } else {
+    safeData[key] = val;
   }
+}
 
   const organisationId = user.organisationId || service.organisationId || 'org-1';
 
