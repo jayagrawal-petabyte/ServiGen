@@ -174,13 +174,13 @@ describe('Services Catalogue Controller', () => {
       assert.notEqual(data.submittedAt, '1970-01-01T00:00:00Z', 'submittedAt must be server-generated');
     });
 
-    it('should sanitize HTML payloads and bound input lengths', async () => {
+    it('should sanitize unsafe HTML from ticket descriptions', async () => {
       const req = mockReq({
         params: { serviceId: '1' },
         body: {
           requester: '<script>alert(1)</script>Bob',
           reason: '<img onerror=alert(2) src=x>Need laptop',
-        }
+        },
       });
       const res = mockRes();
 
@@ -188,29 +188,57 @@ describe('Services Catalogue Controller', () => {
 
       assert.equal(res._status, 201);
       assert.equal(res._body.data.requester, 'scriptalert(1)/scriptBob');
-      assert.equal(res._body.data.reason, 'img onerror=alert(2) src=xNeed laptop');
+      assert.equal(res._body.data.reason, 'Need laptop');
     });
 
-    it('should reject text values exceeding 2000 characters', async () => {
+    it('should accept ticket descriptions up to 10000 characters', async () => {
       const req = mockReq({
         params: { serviceId: '1' },
         body: {
           requester: 'Bob',
-          reason: 'A'.repeat(2001),
-        }
+          reason: 'A'.repeat(10000),
+        },
+      });
+      const res = mockRes();
+
+      await controller.submitServiceRequest(req, res);
+
+      assert.equal(res._status, 201);
+      assert.equal(res._body.data.reason.length, 10000);
+    });
+
+    it('should reject ticket descriptions exceeding 10000 characters', async () => {
+      const req = mockReq({
+        params: { serviceId: '1' },
+        body: {
+          requester: 'Bob',
+          reason: 'A'.repeat(10001),
+        },
       });
       const res = mockRes();
 
       await controller.submitServiceRequest(req, res);
 
       assert.equal(res._status, 400);
-      assert.equal(res._body.success, false);
-      assert.match(res._body.message, /must not exceed 2000 characters/);
+      assert.match(res._body.message, /10000 characters/);
+    });
+
+    it('should reject other form fields exceeding 2000 characters', async () => {
+      const req = mockReq({
+        params: { serviceId: '1' },
+        body: {
+          requester: 'Bob',
+          shippingAddress: 'A'.repeat(2001),
+        },
+      });
+      const res = mockRes();
+
+      await controller.submitServiceRequest(req, res);
+
+      assert.equal(res._status, 400);
+      assert.match(res._body.message, /2000 characters/);
     });
   });
-
-  // ── getServiceRequests & getServiceRequestDetail ─────────────────────────
-
   describe('getServiceRequests and getServiceRequestDetail', () => {
     it('should return 200 and list of requests', async () => {
       const req = mockReq();
