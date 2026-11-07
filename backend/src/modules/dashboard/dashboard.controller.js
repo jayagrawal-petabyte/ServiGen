@@ -6,6 +6,7 @@ const {
   getIncidentsByCategory,
   getNewTicketsPanel,
   getAgentSummary,
+  getWorkloadKpis,
 } = require('./dashboard.service');
 
 /**
@@ -139,6 +140,21 @@ const getSummaryHandler = async (req, res) => {
   }
 };
 
+/**
+ * GET /dashboard/workload
+ * Returns workload distribution data: tickets by priority (donut chart),
+ * tickets by team (bar chart), unassigned tickets count, and avg response time.
+ */
+const getWorkloadHandler = async (req, res) => {
+  try {
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getWorkloadKpis(organisationId);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch workload metrics');
+  }
+};
+
 module.exports = {
   getKpisHandler,
   getMoodHandler,
@@ -147,4 +163,5 @@ module.exports = {
   getIncidentsByCategoryHandler,
   getNewTicketsHandler,
   getSummaryHandler,
+  getWorkloadHandler,
 };

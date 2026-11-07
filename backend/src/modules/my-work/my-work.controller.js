@@ -7,6 +7,7 @@ const {
   getTicket,
   changeTicketStatus,
   logTicketTime,
+  getAgentTimeAggregation,
 } = require('./my-work.service');
 
 /**
@@ -186,6 +187,22 @@ const logTimeHandler = async (req, res) => {
   }
 };
 
+/**
+ * GET /my-work/time-summary - Return total time logged by agent today and this week
+ */
+const getTimeSummaryHandler = async (req, res) => {
+  try {
+    const agentId = getAgentIdFromReq(req);
+    const data = await getAgentTimeAggregation(agentId);
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch time summary');
+  }
+};
+
 module.exports = {
   listMyWorkTickets,
   listActiveTickets,
@@ -195,4 +212,5 @@ module.exports = {
   getTicketDetails,
   updateTicketStatusHandler,
   logTimeHandler,
+  getTimeSummaryHandler,
 };

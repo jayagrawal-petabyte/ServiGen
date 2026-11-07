@@ -176,7 +176,15 @@ const getAgentTickets = async (agentId = 'agent-001', query = {}) => {
     filters.organisation = query.organisation.trim();
   }
 
-  const allMatched = await getTickets(filters);
+  let allMatched = await getTickets(filters);
+
+  // SLA risk filter: ?slaRisk=true — keep only tickets that are already breached
+  // or within 60 minutes of breaching their SLA (priority-agnostic quick filter).
+  if (query.slaRisk === 'true' || query.slaRisk === true) {
+    allMatched = allMatched.filter(
+      (t) => typeof t.slaTimeLeft === 'number' && t.slaTimeLeft <= 60
+    );
+  }
 
   // Sort by priority: Critical → High → Medium → Low
   // Ensures highest-urgency tickets are always on the first page.
@@ -352,6 +360,61 @@ const logTicketTime = async (ticketId, minutesSpent, agentId) => {
   return formatTicket(updatedTicket);
 };
 
+/**
+ * Calculate how many minutes of work the agent has logged today and this week.
+ * Uses the ticket's timeRecord field (cumulative minutes) from the agent's ticket list.
+ *
+ * NOTE: timeRecord is a cumulative total per ticket — this aggregates across all
+ * of the agent's tickets to give a total-work-logged overview for the period.
+ * When the backend migrates to per-session time entries this can be refined.
+ */
+const getAgentTimeAggregation = async (agentId = 'agent-001') => {
+  const allTickets = await getTickets({ assignedAgentId: agentId });
+
+  const now = new Date();
+
+  // Start of today (midnight, local time converted to UTC)
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  // Start of this ISO week (Monday 00:00)
+  const startOfWeek = new Date(now);
+  const dayOfWeek = startOfWeek.getDay(); // 0 = Sunday
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Sum timeRecord for tickets last updated today / this week
+  let totalToday = 0;
+  let totalThisWeek = 0;
+
+  for (const ticket of allTickets) {
+    const updatedAt = new Date(ticket.updatedAt);
+    const timeRecord = ticket.timeRecord || 0;
+    if (updatedAt >= startOfToday) {
+      totalToday += timeRecord;
+    }
+    if (updatedAt >= startOfWeek) {
+      totalThisWeek += timeRecord;
+    }
+  }
+
+  return {
+    today: {
+      totalMinutes: totalToday,
+      formatted: totalToday >= 60
+        ? `${Math.floor(totalToday / 60)}h ${totalToday % 60}m`
+        : `${totalToday}m`,
+    },
+    thisWeek: {
+      totalMinutes: totalThisWeek,
+      formatted: totalThisWeek >= 60
+        ? `${Math.floor(totalThisWeek / 60)}h ${totalThisWeek % 60}m`
+        : `${totalThisWeek}m`,
+    },
+  };
+};
+
 module.exports = {
   VALID_STATUSES,
   VALID_PRIORITIES,
@@ -370,4 +433,5 @@ module.exports = {
   getTicket,
   changeTicketStatus,
   logTicketTime,
+  getAgentTimeAggregation,
 };
