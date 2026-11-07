@@ -368,8 +368,12 @@ const logTicketTime = async (ticketId, minutesSpent, agentId) => {
  * of the agent's tickets to give a total-work-logged overview for the period.
  * When the backend migrates to per-session time entries this can be refined.
  */
-const getAgentTimeAggregation = async (agentId = 'agent-001') => {
-  const allTickets = await getTickets({ assignedAgentId: agentId });
+const getAgentTimeAggregation = async (agentId = 'agent-001', organisationId = null) => {
+  const filters = { assignedAgentId: agentId };
+  if (organisationId) {
+    filters.organisationId = organisationId;
+  }
+  const allTickets = await getTickets(filters);
 
   const now = new Date();
 

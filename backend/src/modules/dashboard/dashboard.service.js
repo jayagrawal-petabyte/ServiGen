@@ -86,7 +86,7 @@ const submitMood = async (agentId, mood) => {
 /**
  * Return incidents grouped by support team.
  */
-const getIncidentsByTeam = async () => getTeamBreakdown();
+const getIncidentsByTeam = async (organisationId = null) => getTeamBreakdown(organisationId);
 
 /**
  * Return incidents grouped by category.
@@ -192,7 +192,7 @@ const getWorkloadKpis = async (organisationId = null) => {
   const avgResponseMins = avgResponseTimeMinutes % 60;
 
   // ── Team breakdown (bar chart) — reuse existing team breakdown model ────────
-  const ticketsByTeam = await getTeamBreakdown();
+  const ticketsByTeam = await getTeamBreakdown(organisationId);
 
   return {
     ticketsByPriority,

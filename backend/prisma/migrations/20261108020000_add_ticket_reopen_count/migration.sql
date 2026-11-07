@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "tickets" ADD COLUMN IF NOT EXISTS "reopenCount" INTEGER NOT NULL DEFAULT 0;

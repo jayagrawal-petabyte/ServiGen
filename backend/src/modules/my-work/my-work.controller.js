@@ -193,7 +193,8 @@ const logTimeHandler = async (req, res) => {
 const getTimeSummaryHandler = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const data = await getAgentTimeAggregation(agentId);
+    const organisationId = getOrganisationIdFromReq(req);
+    const data = await getAgentTimeAggregation(agentId, organisationId);
     return res.status(200).json({
       success: true,
       data,

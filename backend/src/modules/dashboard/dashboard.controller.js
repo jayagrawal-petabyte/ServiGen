@@ -85,7 +85,8 @@ const submitMoodHandler = async (req, res) => {
  */
 const getIncidentsByTeamHandler = async (req, res) => {
   try {
-    const data = await getIncidentsByTeam();
+    const organisationId = req.user?.role === 'Admin' ? (req.query?.organisationId || null) : req.user?.organisationId;
+    const data = await getIncidentsByTeam(organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch team breakdown');
@@ -147,7 +148,7 @@ const getSummaryHandler = async (req, res) => {
  */
 const getWorkloadHandler = async (req, res) => {
   try {
-    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const organisationId = req.user?.role === 'Admin' ? (req.query?.organisationId || null) : req.user?.organisationId;
     const data = await getWorkloadKpis(organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {

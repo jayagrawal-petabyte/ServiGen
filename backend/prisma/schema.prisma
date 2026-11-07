@@ -110,6 +110,7 @@ model Ticket {
   assignedTeam    String?         // "1st Line Support", "2nd Line Support", "Major Incidents"
   slaTimeLeft     Int?            // Remaining minutes before SLA breach
   timeRecord      Int             @default(0) // Cumulative logged minutes spent
+  reopenCount     Int             @default(0) // Times ticket transitioned from Resolved/Closed back to Active
   holdReason      String?
   holdStartedAt   DateTime?
   responseTargetAt     DateTime?

@@ -299,16 +299,23 @@ const updateTicketStatus = async (req, res, next) => {
       const isTerminal = ['Resolved', 'Closed'].includes(existing.status);
       const isAllowedClose =
         existing.status === 'Resolved' && normalizedStatus === 'Closed';
+      const isReopening =
+        isTerminal && normalizedStatus === 'Active';
 
       if (
         isTerminal &&
         normalizedStatus !== existing.status &&
-        !isAllowedClose
+        !isAllowedClose &&
+        !isReopening
       ) {
         return res.status(409).json({
           success: false,
-          message: 'A resolved or closed incident cannot be reopened through this endpoint',
+          message: 'A resolved or closed incident cannot transition to this status',
         });
+      }
+
+      if (isReopening) {
+        data.reopenCount = { increment: 1 };
       }
 
       if (

@@ -209,14 +209,18 @@ const saveMoodEntry = async (agentId, mood) => {
 
 /**
  * Return incidents-by-team breakdown (SCR-015)
+ * Scoped by organisationId to prevent cross-tenant data leaks.
  */
-const getTeamBreakdown = async () => {
+const getTeamBreakdown = async (organisationId = null) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
+      const teamWhere = organisationId ? { organisationId } : {};
+      const ticketWhere = { status: 'Active', ...(organisationId ? { organisationId } : {}) };
       const teams = await db.team.findMany({
+        where: teamWhere,
         include: {
           tickets: {
-            where: { status: 'Active' },
+            where: ticketWhere,
             select: { slaTimeLeft: true },
           },
         },
