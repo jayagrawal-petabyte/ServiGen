@@ -13,7 +13,7 @@ const mockApprovals = [
     stage: 1,
     totalStages: 2,
     stageName: 'Line Manager Review',
-    organisationId: 'org-1',
+    organisationId: 'org-001',
     submittedAt: '2026-09-24T10:00:00Z',
     description: 'Requires a standard dev laptop.'
   },
@@ -26,7 +26,7 @@ const mockApprovals = [
     stage: 1,
     totalStages: 1,
     stageName: 'Security Review',
-    organisationId: 'org-1',
+    organisationId: 'org-001',
     submittedAt: '2026-09-25T14:30:00Z',
     description: 'VPN access for remote work.'
   },
@@ -39,7 +39,7 @@ const mockApprovals = [
     stage: 1,
     totalStages: 1,
     stageName: 'Manager Review',
-    organisationId: 'org-1',
+    organisationId: 'org-001',
     submittedAt: '2026-09-20T09:15:00Z',
     description: 'Creative Cloud for Marketing team.'
   }
@@ -247,7 +247,7 @@ const conditionalUpdateStatus = async (id, requiredStatus, newStatus, options = 
         totalStages: current.totalStages,
         stageName: `Stage ${current.stage + 1} Review`,
         approverId: current.approverId || null,
-        organisationId: current.organisationId || 'org-1',
+        organisationId: current.organisationId || 'org-001',
         submittedAt: now,
         description: current.description,
       };
