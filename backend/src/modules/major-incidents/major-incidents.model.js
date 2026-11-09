@@ -17,6 +17,7 @@ const mockMajorIncidents = [
     impact: 'Customer-facing portal is unavailable.',
     affectedServices: ['Customer Portal', 'Authentication API'],
     commander: 'Unassigned',
+    version: 1,
     startedAt: '2026-09-25T08:00:00.000Z',
     resolvedAt: null,
     updates: [
@@ -54,6 +55,7 @@ const getMajorIncidents = async (filters = {}) => {
         impact: mi.impact,
         affectedServices: mi.affectedServices,
         commander: mi.commander,
+        version: mi.version,
         startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
         resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
         updates: (mi.updates || []).map((u) => ({
@@ -98,6 +100,7 @@ const getMajorIncidentById = async (id) => {
           impact: mi.impact,
           affectedServices: mi.affectedServices,
           commander: mi.commander,
+          version: mi.version,
           startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
           resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
           updates: (mi.updates || []).map((u) => ({
@@ -132,6 +135,7 @@ const saveMajorIncident = async (incident) => {
           impact: incident.impact || 'High',
           affectedServices: incident.affectedServices || [],
           commander: incident.commander || 'Unassigned',
+          version: incident.version || 1,
         },
       });
     } catch (_err) {
@@ -145,27 +149,53 @@ const saveMajorIncident = async (incident) => {
   return incident;
 };
 
-const updateMajorIncident = async (id, changes) => {
+const updateMajorIncident = async (id, changes, expectedVersion) => {
+  let updatedInDatabase = false;
   if (process.env.NODE_ENV !== 'test') {
     try {
       const data = { ...changes };
       if ('resolvedAt' in data) {
         data.resolvedAt = data.resolvedAt ? new Date(data.resolvedAt) : null;
       }
-      await db.majorIncident.update({
-        where: { id },
+      data.version = { increment: 1 };
+      const result = await db.majorIncident.updateMany({
+        where: { id, version: expectedVersion },
         data,
       });
+      if (result.count === 0) {
+        const current = await db.majorIncident.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+        if (!current) return null;
+        const error = new Error('Major incident has been modified; refresh and retry with the latest version');
+        error.statusCode = 409;
+        throw error;
+      }
+      updatedInDatabase = true;
     } catch (_err) {
+      if (_err.statusCode) throw _err;
       if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
         throw _err;
       }
     }
   }
 
+  // The database version was incremented atomically above. Re-read the mapped
+  // record rather than applying the patch to a potentially stale in-memory copy.
+  if (updatedInDatabase) {
+    return getMajorIncidentById(id);
+  }
+
   const incident = await getMajorIncidentById(id);
   if (!incident) return null;
+  if ((incident.version || 1) !== expectedVersion) {
+    const error = new Error('Major incident has been modified; refresh and retry with the latest version');
+    error.statusCode = 409;
+    throw error;
+  }
   Object.assign(incident, changes);
+  incident.version = (incident.version || 1) + 1;
   return incident;
 };
 

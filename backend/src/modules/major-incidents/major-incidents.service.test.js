@@ -9,6 +9,7 @@ describe('Major Incidents Service', () => {
         id: 'MI-corrupted',
         updates: null,
         status: '',
+        version: 1,
       }),
       (error) => error.statusCode === 400 && /protected fields/.test(error.message),
     );
@@ -20,15 +21,15 @@ describe('Major Incidents Service', () => {
 
   it('validates editable field types and values before mutation', async () => {
     await assert.rejects(
-      majorIncidentsService.changeMajorIncident('MI-001', { priority: null }),
+      majorIncidentsService.changeMajorIncident('MI-001', { priority: null, version: 1 }),
       (error) => error.statusCode === 400 && /priority/.test(error.message),
     );
     await assert.rejects(
-      majorIncidentsService.changeMajorIncident('MI-001', { status: '' }),
+      majorIncidentsService.changeMajorIncident('MI-001', { status: '', version: 1 }),
       (error) => error.statusCode === 400 && /status/.test(error.message),
     );
     await assert.rejects(
-      majorIncidentsService.changeMajorIncident('MI-001', { title: 123 }),
+      majorIncidentsService.changeMajorIncident('MI-001', { title: 123, version: 1 }),
       (error) => error.statusCode === 400 && /title/.test(error.message),
     );
   });
@@ -37,12 +38,14 @@ describe('Major Incidents Service', () => {
     const incident = await majorIncidentsService.changeMajorIncident('MI-001', {
       title: 'Customer portal availability issue',
       commander: 'Jasmini',
-      status: 'Diagnosed',
+      status: 'Escalated',
+      version: 1,
     });
 
     assert.equal(incident.title, 'Customer portal availability issue');
     assert.equal(incident.commander, 'Jasmini');
-    assert.equal(incident.status, 'Diagnosed');
+    assert.equal(incident.status, 'Escalated');
+    assert.equal(incident.version, 2);
   });
 
   it('generates distinct incident and activity IDs under a fixed clock', async () => {
@@ -134,25 +137,51 @@ describe('Major Incidents Service', () => {
       affectedServices: [],
     });
 
-    assert.equal(sanitizedIncident.title, 'scriptalert(1)/scriptTest Incident');
-    assert.equal(sanitizedIncident.description, 'img src=x onerror=alert(2)Database outage');
+    assert.equal(sanitizedIncident.title, 'Test Incident');
+    assert.equal(sanitizedIncident.description, 'Database outage');
 
     // Title length limit
     await assert.rejects(
       majorIncidentsService.createMajorIncident({
-        title: 'A'.repeat(501),
+        title: 'A'.repeat(256),
         description: 'Valid',
         priority: 'P1',
         impact: 'High',
         affectedServices: [],
       }),
-      (err) => err.statusCode === 400 && /title must not exceed 500 characters/.test(err.message),
+      (err) => err.statusCode === 400 && /title must not exceed 255 characters/.test(err.message),
     );
 
     // Message length limit
     await assert.rejects(
       majorIncidentsService.createIncidentUpdate('MI-001', { message: 'M'.repeat(2001) }),
       (err) => err.statusCode === 400 && /message must not exceed 2000 characters/.test(err.message),
+    );
+  });
+
+  it('enforces sequential state changes and rejects stale update versions', async () => {
+    const incident = await majorIncidentsService.createMajorIncident({
+      title: 'State-machine test',
+      description: 'Validate lifecycle controls.',
+      priority: 'P1',
+      impact: 'High',
+      affectedServices: ['Portal'],
+    });
+
+    await assert.rejects(
+      majorIncidentsService.changeMajorIncident(incident.id, { status: 'Resolved', version: 1 }),
+      (err) => err.statusCode === 409 && /Invalid status transition/.test(err.message),
+    );
+
+    const escalated = await majorIncidentsService.changeMajorIncident(incident.id, {
+      status: 'Escalated',
+      version: 1,
+    });
+    assert.equal(escalated.version, 2);
+
+    await assert.rejects(
+      majorIncidentsService.changeMajorIncident(incident.id, { status: 'Mitigated', version: 1 }),
+      (err) => err.statusCode === 409 && /modified/.test(err.message),
     );
   });
 });

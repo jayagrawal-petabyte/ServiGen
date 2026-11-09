@@ -9,11 +9,17 @@ const {
 const VALID_STATUSES = [
   'Started',
   'Escalated',
-  'Diagnosed',
   'Mitigated',
   'Resolved',
   'Closed',
 ];
+const ALLOWED_STATUS_TRANSITIONS = {
+  Started: ['Escalated'],
+  Escalated: ['Mitigated'],
+  Mitigated: ['Resolved'],
+  Resolved: ['Closed'],
+  Closed: [],
+};
 const VALID_PRIORITIES = ['P1', 'P2'];
 const EDITABLE_FIELDS = new Set([
   'title',
@@ -23,7 +29,6 @@ const EDITABLE_FIELDS = new Set([
   'impact',
   'affectedServices',
   'commander',
-  'resolvedAt',
 ]);
 
 let incidentSequence = 0;
@@ -37,7 +42,13 @@ const createValidationError = (message) => {
 
 const sanitizeInputText = (str) => {
   if (typeof str !== 'string') return '';
-  return str.replace(/[<>]/g, '').trim();
+  return str
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 const requireNonBlankString = (value, field, maxLength = 10000) => {
@@ -47,6 +58,28 @@ const requireNonBlankString = (value, field, maxLength = 10000) => {
   if (value.trim().length > maxLength) {
     throw createValidationError(`${field} must not exceed ${maxLength} characters`);
   }
+};
+
+const sanitizeRequiredText = (value, field, maxLength) => {
+  if (typeof value !== 'string') {
+    throw createValidationError(`${field} must be a non-empty string`);
+  }
+  const sanitized = sanitizeInputText(value);
+  requireNonBlankString(sanitized, field, maxLength);
+  return sanitized;
+};
+
+const sanitizeAffectedServices = (value) => {
+  if (!Array.isArray(value) || value.some((service) => typeof service !== 'string')) {
+    throw createValidationError('affectedServices must be an array of service names');
+  }
+  return value.map((service) => sanitizeRequiredText(service, 'affectedServices item', 255));
+};
+
+const createConflictError = (message) => {
+  const error = new Error(message);
+  error.statusCode = 409;
+  return error;
 };
 
 const nextIncidentId = () => `MI-${Date.now()}-${++incidentSequence}`;
@@ -61,8 +94,10 @@ const createMajorIncident = async (payload) => {
     throw error;
   }
 
-  requireNonBlankString(title, 'title', 500);
-  requireNonBlankString(description, 'description', 10000);
+  const sanitizedTitle = sanitizeRequiredText(title, 'title', 255);
+  const sanitizedDescription = sanitizeRequiredText(description, 'description', 10000);
+  const sanitizedImpact = sanitizeRequiredText(impact, 'impact', 500);
+  const sanitizedAffectedServices = sanitizeAffectedServices(affectedServices);
 
   if (!VALID_PRIORITIES.includes(priority)) {
     const error = new Error('priority must be P1 or P2');
@@ -74,14 +109,15 @@ const createMajorIncident = async (payload) => {
   const incident = {
     id: nextIncidentId(),
     organisationId: payload.organisationId || null,
-    title: sanitizeInputText(title),
-    description: sanitizeInputText(description),
+    title: sanitizedTitle,
+    description: sanitizedDescription,
     // Status and commander are system-controlled on create to prevent mass-assignment flaws
     status: 'Started',
     priority,
-    impact,
-    affectedServices,
+    impact: sanitizedImpact,
+    affectedServices: sanitizedAffectedServices,
     commander: 'Unassigned',
+    version: 1,
     startedAt: now,
     resolvedAt: null,
     updates: [],
@@ -95,26 +131,35 @@ const changeMajorIncident = async (id, payload) => {
     throw createValidationError('incident changes must be an object');
   }
 
-  const unsupportedFields = Object.keys(payload).filter((field) => !EDITABLE_FIELDS.has(field));
+  const { version: expectedVersion, ...requestedChanges } = payload;
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+    throw createValidationError('version must be a positive integer');
+  }
+
+  const existing = await getMajorIncidentById(id);
+  if (!existing) return null;
+
+  if ((existing.version || 1) !== expectedVersion) {
+    throw createConflictError('Major incident has been modified; refresh and retry with the latest version');
+  }
+
+  const unsupportedFields = Object.keys(requestedChanges).filter((field) => !EDITABLE_FIELDS.has(field));
   if (unsupportedFields.length) {
     throw createValidationError(`cannot update protected fields: ${unsupportedFields.join(', ')}`);
   }
 
   const changes = {};
-  for (const [field, value] of Object.entries(payload)) {
+  for (const [field, value] of Object.entries(requestedChanges)) {
     if (['impact', 'commander'].includes(field)) {
-      requireNonBlankString(value, field, 500);
-      changes[field] = sanitizeInputText(value);
+      changes[field] = sanitizeRequiredText(value, field, 500);
     }
 
     if (field === 'title') {
-      requireNonBlankString(value, 'title', 500);
-      changes.title = sanitizeInputText(value);
+      changes.title = sanitizeRequiredText(value, 'title', 255);
     }
 
     if (field === 'description') {
-      requireNonBlankString(value, 'description', 10000);
-      changes.description = sanitizeInputText(value);
+      changes.description = sanitizeRequiredText(value, 'description', 10000);
     }
 
     if (field === 'status' && (typeof value !== 'string' || !VALID_STATUSES.includes(value))) {
@@ -125,14 +170,8 @@ const changeMajorIncident = async (id, payload) => {
       throw createValidationError('priority must be P1 or P2');
     }
 
-    if (field === 'affectedServices' && !Array.isArray(value)) {
-      throw createValidationError('affectedServices must be an array');
-    }
-
-    if (field === 'resolvedAt') {
-      if (value !== null && typeof value !== 'string') {
-        throw createValidationError('resolvedAt must be an ISO date string or null');
-      }
+    if (field === 'affectedServices') {
+      changes.affectedServices = sanitizeAffectedServices(value);
     }
 
     if (!['title', 'description', 'impact', 'commander'].includes(field)) {
@@ -144,7 +183,15 @@ const changeMajorIncident = async (id, payload) => {
     changes.resolvedAt = new Date().toISOString();
   }
 
-  return updateMajorIncident(id, changes);
+  if (
+    changes.status &&
+    changes.status !== existing.status &&
+    !ALLOWED_STATUS_TRANSITIONS[existing.status]?.includes(changes.status)
+  ) {
+    throw createConflictError(`Invalid status transition from ${existing.status} to ${changes.status}`);
+  }
+
+  return updateMajorIncident(id, changes, expectedVersion);
 };
 
 const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassigned') => {
@@ -160,9 +207,10 @@ const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassign
     throw error;
   }
 
+  const message = sanitizeRequiredText(payload.message, 'message', 2000);
   const update = {
     id: nextIncidentUpdateId(id),
-    message: sanitizeInputText(payload.message),
+    message,
     author: authenticatedAuthor,
     createdAt: new Date().toISOString(),
   };
@@ -172,6 +220,7 @@ const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassign
 
 module.exports = {
   VALID_STATUSES,
+  ALLOWED_STATUS_TRANSITIONS,
   getMajorIncidents,
   getMajorIncidentById,
   createMajorIncident,

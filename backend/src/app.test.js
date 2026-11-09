@@ -11,7 +11,7 @@ before(async () => {
   base = 'http://127.0.0.1:' + server.address().port;
 });
 after(async () => { server.closeIdleConnections?.(); await new Promise(resolve => server.close(resolve)); });
-const token = generateToken({ id: 'agent-001', role: 'Service Agent' });
+const token = generateToken({ id: 'agent-001', role: 'Service Agent', organisationId: 'org-001' });
 const headers = { authorization: 'Bearer ' + token };
 test('health is public but business APIs reject anonymous access', async () => {
   const healthRes = await fetch(base + '/api/health');
@@ -104,7 +104,7 @@ test('invalid JWT identities are rejected', async () => {
   assert.equal((await fetch(base + '/api/my-work', {headers: {authorization:'Bearer ' + invalid}})).status, 401);
 });
 
-const authFor = (role, id = 'test-user') => ({authorization:'Bearer ' + generateToken({id,role})});
+const authFor = (role, id = 'test-user') => ({authorization:'Bearer ' + generateToken({id,role,organisationId:'org-001'})});
 test('documented role matrix is enforced for module access', async () => {
   const cases = [
     ['/api/my-work', ['Service Agent','Support Team User']],

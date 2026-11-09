@@ -171,6 +171,7 @@ model MajorIncident {
   updateDueAt      DateTime? // Update Required is derived from this deadline
   productTags      String[]              @default([])
   commander        String                @default("Unassigned")
+  version          Int                   @default(1)
   startedAt        DateTime              @default(now())
   resolvedAt       DateTime?
   updates          MajorIncidentUpdate[]
