@@ -124,11 +124,24 @@ const getKpis = async (organisationId = null) => {
       });
       const resolved = await db.ticket.findMany({
         where: { ...where, status: { in: ['Closed', 'Resolved'] } },
-        select: { timeRecord: true },
-        take: 50,
+        select: { timeRecord: true, createdAt: true, updatedAt: true },
+        take: 100,
       });
-      const avgResolutionTimeMinutes = resolved.length
-        ? Math.round(resolved.reduce((acc, t) => acc + (t.timeRecord || 0), 0) / resolved.length)
+
+      let totalResolutionMinutes = 0;
+      let countWithDuration = 0;
+      for (const t of resolved) {
+        if (typeof t.timeRecord === 'number' && t.timeRecord > 0) {
+          totalResolutionMinutes += t.timeRecord;
+          countWithDuration++;
+        } else if (t.createdAt && t.updatedAt) {
+          const diffMinutes = Math.max(1, Math.round((new Date(t.updatedAt) - new Date(t.createdAt)) / 60000));
+          totalResolutionMinutes += diffMinutes;
+          countWithDuration++;
+        }
+      }
+      const avgResolutionTimeMinutes = countWithDuration > 0
+        ? Math.round(totalResolutionMinutes / countWithDuration)
         : 185;
 
       return {
@@ -143,6 +156,21 @@ const getKpis = async (organisationId = null) => {
       }
     }
   }
+
+  // In test / offline mode: compute dynamically if mock incidents exist for this tenant
+  try {
+    const { getIncidents } = require('../incidents/incidents.model');
+    const mockList = await getIncidents(organisationId ? { organisationId } : {});
+    const resolved = mockList.filter((i) => ['Closed', 'Resolved'].includes(i.status));
+    if (resolved.length > 0) {
+      const sum = resolved.reduce((acc, t) => acc + (t.timeRecord || 60), 0);
+      return {
+        ...kpiData,
+        avgResolutionTimeMinutes: Math.round(sum / resolved.length),
+      };
+    }
+  } catch (_e) {}
+
   return { ...kpiData };
 };
 

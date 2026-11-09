@@ -6,6 +6,7 @@ const {
   createProjectDependency,
   getProjectResourcesData,
   getProjectSubtasks: getProjectSubtasksService,
+  createProjectSubtask: createProjectSubtaskService,
   createProject: createProjectService,
 } = require('./projects.service');
 
@@ -148,6 +149,53 @@ const getProjectSubtasks = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch project subtasks',
+    });
+  }
+};
+
+const createProjectSubtask = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    if (!projectId || projectId.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID format',
+      });
+    }
+
+    const organisationId = getEffectiveOrgId(req, res);
+    if (organisationId === undefined) return;
+
+    const subtask = await createProjectSubtaskService(
+      projectId.trim(),
+      organisationId,
+      req.body
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Subtask created successfully',
+      data: subtask,
+    });
+  } catch (error) {
+    if (error.code === 'PROJECT_NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found',
+      });
+    }
+
+    if (error.message && !error.code) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create subtask',
     });
   }
 };
@@ -341,6 +389,7 @@ module.exports = {
   getProjectDependencies,
   addProjectDependency,
   getProjectSubtasks,
+  createProjectSubtask,
   createProject,
   getProjectResources,
 };

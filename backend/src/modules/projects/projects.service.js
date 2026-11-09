@@ -3,6 +3,7 @@ const {
     getActiveProjects,
     getProjectById,
     getSubtasksByProject,
+    createSubtaskRecord,
     findProjectOwner,
     getProjectResources,
     createProjectRecord,
@@ -54,6 +55,39 @@ const getProjectDetail = async (projectId, organisationId = null) => {
 
 const getProjectSubtasks = async (projectId, organisationId = null) => {
     return getSubtasksByProject(projectId, organisationId);
+};
+
+const createProjectSubtask = async (projectId, organisationId, subtaskData) => {
+    if (!projectId || !organisationId) {
+        throw new Error('Project and organisation are required');
+    }
+    if (!subtaskData || typeof subtaskData !== 'object') {
+        throw new Error('Subtask data is required');
+    }
+    const { title, status = 'PENDING' } = subtaskData;
+    if (typeof title !== 'string' || !title.trim()) {
+        throw new Error('Subtask title is required');
+    }
+    if (title.trim().length > 255) {
+        throw new Error('Subtask title cannot exceed 255 characters');
+    }
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];
+    if (!validStatuses.includes(status)) {
+        throw new Error(`Subtask status must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const project = await getProjectDetail(projectId, organisationId);
+    if (!project) {
+        const error = new Error('Project not found');
+        error.code = 'PROJECT_NOT_FOUND';
+        throw error;
+    }
+
+    return createSubtaskRecord({
+        projectId,
+        title: title.trim(),
+        status,
+    });
 };
 
 const createProject = async (projectData) => {
@@ -354,6 +388,7 @@ module.exports = {
     getActiveProjectsData,
     getProjectDetail,
     getProjectSubtasks,
+    createProjectSubtask,
     createProject,
     getProjectDependenciesData,
     createProjectDependency,

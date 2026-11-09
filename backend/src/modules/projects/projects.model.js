@@ -5,6 +5,9 @@ const mockProjects = [
   {
     id: 'P-001',
     name: 'Network Upgrade',
+    code: 'PRJ-NET-001',
+    description: 'Corporate network infrastructure upgrade',
+    priority: 'HIGH',
     status: 'ACTIVE',
     startDate: '2026-09-01',
     endDate: '2026-10-15',
@@ -26,6 +29,9 @@ const mockProjects = [
   {
     id: 'P-002',
     name: 'Server Migration',
+    code: 'PRJ-SRV-002',
+    description: 'Migration to cloud servers',
+    priority: 'MEDIUM',
     status: 'ACTIVE',
     startDate: '2026-09-10',
     endDate: '2026-11-01',
@@ -52,6 +58,9 @@ const mockProjects = [
   {
     id: 'P-003',
     name: 'Employee Portal',
+    code: 'PRJ-PORT-003',
+    description: 'New internal employee portal',
+    priority: 'LOW',
     status: 'COMPLETED',
     startDate: '2026-07-01',
     endDate: '2026-08-30',
@@ -66,6 +75,9 @@ const mockProjects = [
     ],
   },
 ];
+
+const mockDependencies = [];
+const mockResources = [];
 
 const useMockData = process.env.NODE_ENV === 'test';
 const allowOfflineMocks = process.env.ALLOW_OFFLINE_MOCKS === 'true';
@@ -240,16 +252,74 @@ const getSubtasksByProject = async (projectId, organisationId = null) => {
   }
 };
 
+const createSubtaskRecord = async (subtaskData) => {
+  const { projectId, title, status } = subtaskData;
+  if (useMockData) {
+    const project = mockProjects.find((p) => p.id === projectId);
+    if (!project) return null;
+    const newSubtask = {
+      id: `ST-${Date.now().toString().slice(-4)}`,
+      title,
+      status: status || 'PENDING',
+    };
+    if (!project.subtasks) project.subtasks = [];
+    project.subtasks.push(newSubtask);
+    return newSubtask;
+  }
+
+  try {
+    return await db.projectSubtask.create({
+      data: {
+        id: randomUUID(),
+        projectId,
+        title,
+        status: status || 'PENDING',
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = mockProjects.find((p) => p.id === projectId);
+      const newSubtask = {
+        id: `ST-${Date.now().toString().slice(-4)}`,
+        title,
+        status: status || 'PENDING',
+      };
+      if (project) {
+        if (!project.subtasks) project.subtasks = [];
+        project.subtasks.push(newSubtask);
+      }
+      return newSubtask;
+    }
+    throw error;
+  }
+};
+
 const findProjectOwner = async (ownerId, organisationId) => {
-  return db.user.findFirst({
-    where: {
-      id: ownerId,
-      organisationId,
-    },
-    select: {
-      id: true,
-    },
-  });
+  if (useMockData) {
+    return { id: ownerId };
+  }
+
+  try {
+    return await db.user.findFirst({
+      where: {
+        id: ownerId,
+        organisationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      return { id: ownerId };
+    }
+    throw error;
+  }
 };
 
 const createProjectRecord = async (projectData) => {
@@ -265,69 +335,135 @@ const createProjectRecord = async (projectData) => {
     ownerId,
   } = projectData;
 
-  return db.project.create({
-    data: {
+  if (useMockData) {
+    const existing = mockProjects.find(
+      (p) => p.organisationId === organisationId && p.code === code
+    );
+    if (existing) {
+      const err = new Error('A project with this code already exists in the organisation');
+      err.code = 'P2002';
+      throw err;
+    }
+
+    const created = {
       id: randomUUID(),
       organisationId,
       name: title.trim(),
-      description,
+      description: description || null,
       code,
       status: status || 'ACTIVE',
-      priority,
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: targetEndDate ? new Date(targetEndDate) : null,
+      priority: priority || null,
+      startDate: startDate ? new Date(startDate).toISOString().slice(0, 10) : null,
+      endDate: targetEndDate ? new Date(targetEndDate).toISOString().slice(0, 10) : null,
       timeSpent: 0,
       ownerId: ownerId || null,
-    },
-    include: {
-      subtasks: true,
-    },
-  });
+      subtasks: [],
+    };
+    mockProjects.push(created);
+    return formatProject(created);
+  }
+
+  try {
+    const project = await db.project.create({
+      data: {
+        id: randomUUID(),
+        organisationId,
+        name: title.trim(),
+        description,
+        code,
+        status: status || 'ACTIVE',
+        priority,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: targetEndDate ? new Date(targetEndDate) : null,
+        timeSpent: 0,
+        ownerId: ownerId || null,
+      },
+      include: {
+        subtasks: true,
+      },
+    });
+    return formatProject(project);
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const created = {
+        id: randomUUID(),
+        organisationId,
+        name: title.trim(),
+        description: description || null,
+        code,
+        status: status || 'ACTIVE',
+        priority: priority || null,
+        startDate: startDate ? new Date(startDate).toISOString().slice(0, 10) : null,
+        endDate: targetEndDate ? new Date(targetEndDate).toISOString().slice(0, 10) : null,
+        timeSpent: 0,
+        ownerId: ownerId || null,
+        subtasks: [],
+      };
+      mockProjects.push(created);
+      return formatProject(created);
+    }
+    throw error;
+  }
 };
 
 
 const getProjectDependencies = async (projectId, organisationId = null) => {
-  const project = await db.project.findFirst({
-    where: {
-      id: projectId,
-      ...(organisationId ? { organisationId } : {}),
-    },
-    select: {
-      id: true,
-    },
-  });
+  if (useMockData) {
+    const project = getMockProjects(organisationId).find(p => p.id === projectId);
+    if (!project) return null;
+    return mockDependencies.filter(d => d.projectId === projectId);
+  }
 
-  if (!project) return null;
+  try {
+    const project = await db.project.findFirst({
+      where: {
+        id: projectId,
+        ...(organisationId ? { organisationId } : {}),
+      },
+      select: {
+        id: true,
+      },
+    });
 
-  return db.projectSubtaskDependency.findMany({
-    where: {
-      subtask: {
-        is: { projectId },
-      },
-      dependsOnSubtask: {
-        is: { projectId },
-      },
-    },
-    include: {
-      subtask: {
-        select: {
-          id: true,
-          title: true,
-          status: true,
+    if (!project) return null;
+
+    return await db.projectSubtaskDependency.findMany({
+      where: {
+        subtask: {
+          is: { projectId },
+        },
+        dependsOnSubtask: {
+          is: { projectId },
         },
       },
-      dependsOnSubtask: {
-        select: {
-          id: true,
-          title: true,
-          status: true,
+      include: {
+        subtask: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
+        dependsOnSubtask: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-  });
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = getMockProjects(organisationId).find(p => p.id === projectId);
+      if (!project) return null;
+      return mockDependencies.filter(d => d.projectId === projectId);
+    }
+    throw error;
+  }
 };
 
 const createProjectDependencyRecord = async (dependencyData) => {
@@ -338,90 +474,160 @@ const createProjectDependencyRecord = async (dependencyData) => {
     lagTime,
   } = dependencyData;
 
-  return db.projectSubtaskDependency.upsert({
-    where: {
-      subtaskId_dependsOnSubtaskId: {
-        subtaskId,
-        dependsOnSubtaskId,
-      },
-    },
-    create: {
+  if (useMockData) {
+    const idx = mockDependencies.findIndex(
+      d => d.subtaskId === subtaskId && d.dependsOnSubtaskId === dependsOnSubtaskId
+    );
+    const record = {
+      id: randomUUID(),
       subtaskId,
       dependsOnSubtaskId,
-      dependencyType,
-      lagTime,
-    },
-    update: {
-      dependencyType,
-      lagTime,
-    },
-    include: {
-      subtask: true,
-      dependsOnSubtask: true,
-    },
-  });
+      dependencyType: dependencyType || 'FINISH_TO_START',
+      lagTime: Number(lagTime) || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      subtask: { id: subtaskId, title: 'Mock Subtask', status: 'PENDING' },
+      dependsOnSubtask: { id: dependsOnSubtaskId, title: 'Mock Dependency', status: 'COMPLETED' },
+    };
+    if (idx >= 0) {
+      mockDependencies[idx] = { ...mockDependencies[idx], ...record };
+      return mockDependencies[idx];
+    }
+    mockDependencies.push(record);
+    return record;
+  }
+
+  try {
+    return await db.projectSubtaskDependency.upsert({
+      where: {
+        subtaskId_dependsOnSubtaskId: {
+          subtaskId,
+          dependsOnSubtaskId,
+        },
+      },
+      create: {
+        subtaskId,
+        dependsOnSubtaskId,
+        dependencyType,
+        lagTime,
+      },
+      update: {
+        dependencyType,
+        lagTime,
+      },
+      include: {
+        subtask: true,
+        dependsOnSubtask: true,
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const record = {
+        id: randomUUID(),
+        subtaskId,
+        dependsOnSubtaskId,
+        dependencyType: dependencyType || 'FINISH_TO_START',
+        lagTime: Number(lagTime) || 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mockDependencies.push(record);
+      return record;
+    }
+    throw error;
+  }
 };
 
 const getProjectSubtaskForDependency = async (subtaskId, projectId) => {
-  return db.projectSubtask.findFirst({
-    where: {
-      id: subtaskId,
-      projectId,
-    },
-    select: {
-      id: true,
-      projectId: true,
-    },
-  });
+  if (useMockData) {
+    const project = mockProjects.find(p => p.id === projectId);
+    const subtask = project?.subtasks?.find(s => s.id === subtaskId);
+    return subtask ? { id: subtask.id, projectId } : null;
+  }
+
+  try {
+    return await db.projectSubtask.findFirst({
+      where: {
+        id: subtaskId,
+        projectId,
+      },
+      select: {
+        id: true,
+        projectId: true,
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = mockProjects.find(p => p.id === projectId);
+      const subtask = project?.subtasks?.find(s => s.id === subtaskId);
+      return subtask ? { id: subtask.id, projectId } : null;
+    }
+    throw error;
+  }
 };
 
 
 const getProjectResources = async (projectId, organisationId = null) => {
-  const project = await db.project.findFirst({
-    where: {
-      id: projectId,
-      ...(organisationId ? { organisationId } : {}),
-    },
-    select: {
-      id: true,
-      organisationId: true,
-    },
-  });
+  if (useMockData) {
+    const project = getMockProjects(organisationId).find(p => p.id === projectId);
+    if (!project) return null;
+    return mockResources.filter(r => r.projectId === projectId);
+  }
 
-  if (!project) return null;
+  try {
+    const project = await db.project.findFirst({
+      where: {
+        id: projectId,
+        ...(organisationId ? { organisationId } : {}),
+      },
+      select: {
+        id: true,
+        organisationId: true,
+      },
+    });
 
-  return db.projectResourceAssignment.findMany({
-    where: {
-      projectId,
-      ...(project.organisationId
-        ? {
-            user: {
-              is: {
-                organisationId: project.organisationId,
+    if (!project) return null;
+
+    return await db.projectResourceAssignment.findMany({
+      where: {
+        projectId,
+        ...(project.organisationId
+          ? {
+              user: {
+                is: {
+                  organisationId: project.organisationId,
+                },
               },
-            },
-          }
-        : {}),
-    },
-    select: {
-      id: true,
-      allocatedHours: true,
-      capacityHours: true,
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          role: true,
-          availability: true,
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        allocatedHours: true,
+        capacityHours: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+            availability: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-  });
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = getMockProjects(organisationId).find(p => p.id === projectId);
+      if (!project) return null;
+      return mockResources.filter(r => r.projectId === projectId);
+    }
+    throw error;
+  }
 };
 
 module.exports = {
@@ -429,6 +635,7 @@ module.exports = {
   getActiveProjects,
   getProjectById,
   getSubtasksByProject,
+  createSubtaskRecord,
   findProjectOwner,
   createProjectRecord,
   getProjectDependencies,

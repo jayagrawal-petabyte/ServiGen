@@ -45,6 +45,8 @@ const calendarRouter = require('./modules/calendar/calendar.routes');
 const knowledgeRouter = require('./modules/knowledge/knowledge.routes');
 const ticketsRouter = require('./modules/tickets/tickets.routes');
 const usersRouter = require('./modules/users/users.routes');
+const problemsRouter = require('./modules/problems/problems.routes');
+const reportsRouter = require('./modules/reports/reports.routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -170,6 +172,10 @@ app.use('/api/articles', restrictTo(...PERMISSIONS.STAFF), knowledgeRouter);
 app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);
 // Only Admin can list users or view personal directory details
 app.use('/api/users', restrictTo(...PERMISSIONS.USERS), usersRouter);
+app.use('/api/problems', restrictTo(...PERMISSIONS.STAFF));
+app.use('/api', problemsRouter);
+app.use('/api/reports', restrictTo(...PERMISSIONS.STAFF));
+app.use('/api', reportsRouter);
 app.use('/api/ai-core/intent', intentRouter);
 app.use('/api/ai-core', escalationRouter);
 

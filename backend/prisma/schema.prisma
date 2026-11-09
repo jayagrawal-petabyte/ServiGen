@@ -37,6 +37,7 @@ model Organisation {
   ticketNotes           TicketNote[]
   ticketLinks           TicketLink[]
   ticketTimeEntries TicketTimeEntry[]
+  problems              Problem[]
   @@map("organisations")
 }
 
@@ -88,6 +89,7 @@ model User {
   loggedTicketTimeEntries TicketTimeEntry[] @relation("TicketTimeEntryAgent")
   ownedProjects Project[] @relation("ProjectOwner")
   projectResourceAssignments ProjectResourceAssignment[]
+  assignedProblems Problem[] @relation("ProblemAssignedAgent")
   @@map("users")
 }
 
@@ -513,6 +515,7 @@ model TicketLink {
   relatedTicket      Ticket?            @relation("TicketLinkTarget", fields: [relatedTicketId], references: [id], onDelete: Cascade)
 
   problemId          String?
+  problem            Problem?           @relation("ProblemTicketLinks", fields: [problemId], references: [id], onDelete: Cascade)
 
   configurationItemId String?
   configurationItem  ConfigurationItem? @relation(fields: [configurationItemId], references: [id], onDelete: Cascade)
@@ -560,4 +563,33 @@ model TicketTimeEntry {
   @@index([organisationId, createdAt])
   @@index([agentId, createdAt])
   @@map("ticket_time_entries")
+}
+
+// ─── Problem Management ───────────────────────────────────────────────────
+
+model Problem {
+  id                 String             @id
+  problemNumber      String?
+  summary            String
+  description        String?            @db.Text
+  category           String             @default("General")
+  priority           String             @default("Medium")
+  urgency            String             @default("Medium")
+  impact             String             @default("Medium")
+  status             String             @default("Open")
+  rootCause          String?            @db.Text
+  workaround         String?            @db.Text
+  knownError         Boolean            @default(false)
+  assignedAgentId    String?
+  assignedAgent      User?              @relation("ProblemAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  organisationId     String?
+  organisation       Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  ticketLinks        TicketLink[]       @relation("ProblemTicketLinks")
+
+  @@index([organisationId, status])
+  @@index([assignedAgentId])
+  @@map("problems")
 }
