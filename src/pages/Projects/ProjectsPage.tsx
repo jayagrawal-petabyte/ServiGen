@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type Project, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
+import { type Project, type ProjectPriority, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
 import { getSessionUserName, loadProjectsScreen } from "./projectsApi";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./projects.css";
@@ -9,7 +9,6 @@ type SortKey = "id" | "name" | "target" | "progress";
 
 const PAGE_SIZE = 3;
 
-// Shown on controls whose backend endpoint is not in the API doc yet.
 const NO_API = "Waiting for backend API (not in the API doc yet)";
 
 const MY_LISTS: { id: View; label: string; icon: string }[] = [
@@ -26,8 +25,6 @@ const MY_PROJECTS: { id: View; label: string; icon: string }[] = [
 ];
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-/* ---------- helpers ---------- */
 
 function parseDate(key: string) {
   return new Date(`${key}T00:00`);
@@ -85,6 +82,49 @@ export default function ProjectsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [calMonth, setCalMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const searchRef = useRef<HTMLInputElement>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newOwner, setNewOwner] = useState("");
+  const [newPriority, setNewPriority] = useState<ProjectPriority>("Medium");
+  const [newStatus, setNewStatus] = useState<ProjectStatus>("New");
+  const [newStart, setNewStart] = useState("");
+  const [newTarget, setNewTarget] = useState("");
+  const [newError, setNewError] = useState("");
+
+  function openNewModal() {
+    setNewName("");
+    setNewDesc("");
+    setNewOwner(userName);
+    setNewPriority("Medium");
+    setNewStatus("New");
+    setNewStart(toDateKey(new Date()));
+    setNewTarget("");
+    setNewError("");
+    setShowNewModal(true);
+  }
+
+  function saveNewProject() {
+    if (!newName.trim()) { setNewError("Project name is required."); return; }
+    const id = `LOCAL-${Date.now()}`;
+    const proj: Project = {
+      id,
+      name: newName.trim(),
+      description: newDesc.trim(),
+      owner: newOwner.trim() || userName || "Unassigned",
+      status: newStatus,
+      statusLabel: newStatus,
+      priority: newPriority,
+      startDate: newStart,
+      targetDate: newTarget,
+      hoursSpent: 0,
+      hoursBudget: 0,
+      tasks: [],
+    };
+    setProjects((prev) => [proj, ...prev]);
+    setActiveIds((prev) => [id, ...prev]);
+    setShowNewModal(false);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,8 +148,6 @@ export default function ProjectsPage() {
   useEffect(() => setPage(0), [activeView, search, sortBy]);
 
   const detail = projects.find((p) => p.id === detailId) ?? null;
-
-  /* ---------- filtering ---------- */
 
   const searched = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -145,8 +183,6 @@ export default function ProjectsPage() {
   const pageItems = useMemo(() => listed.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE), [listed, page]);
   const rangeStart = listed.length === 0 ? 0 : page * PAGE_SIZE + 1;
   const rangeEnd = Math.min(listed.length, (page + 1) * PAGE_SIZE);
-
-  /* ---------- views ---------- */
 
   function renderCard(p: Project) {
     const pct = progress(p);
@@ -455,7 +491,6 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex-1 w-full h-full flex flex-col bg-[#fff7f3] overflow-hidden">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -544,7 +579,7 @@ export default function ProjectsPage() {
                 </button>
               </>
             )}
-            <button className="pj-new" disabled title={NO_API}>
+            <button className="pj-new" onClick={openNewModal}>
               + New
             </button>
             <div className="pj-menu-wrap">
@@ -592,7 +627,6 @@ export default function ProjectsPage() {
         {renderContent()}
       </main>
 
-      {/* PROJECT DETAILS (read-only until update APIs exist) */}
       {detail && (
         <div className="pj-overlay" onClick={() => setDetailId(null)}>
           <div className="pj-modal wide" onClick={(e) => e.stopPropagation()}>
@@ -673,6 +707,84 @@ export default function ProjectsPage() {
               <button className="pj-btn primary" onClick={() => setDetailId(null)}>
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNewModal && (
+        <div className="pj-overlay" onClick={() => setShowNewModal(false)}>
+          <div className="pj-modal wide" onClick={(e) => e.stopPropagation()}>
+            <div className="pj-modal-head">
+              <div>
+                <h2>New Project</h2>
+                <p className="pj-muted">This project is saved locally (no backend API yet). It will disappear on page refresh.</p>
+              </div>
+              <button className="pj-close" aria-label="Close" onClick={() => setShowNewModal(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="pj-form">
+              <label>
+                Project Name *
+                <input
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Server Migration Phase 2"
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  rows={3}
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Brief description of the project"
+                />
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <label>
+                  Owner
+                  <input
+                    value={newOwner}
+                    onChange={(e) => setNewOwner(e.target.value)}
+                    placeholder={userName || "Owner name"}
+                  />
+                </label>
+                <label>
+                  Priority
+                  <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as ProjectPriority)}>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </label>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <label>
+                  Status
+                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value as ProjectStatus)}>
+                    {PROJECT_STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Start Date
+                  <input type="date" value={newStart} onChange={(e) => setNewStart(e.target.value)} />
+                </label>
+                <label>
+                  Target Date
+                  <input type="date" value={newTarget} onChange={(e) => setNewTarget(e.target.value)} />
+                </label>
+              </div>
+              {newError && <p className="pj-error">{newError}</p>}
+            </div>
+
+            <div className="pj-modal-actions">
+              <button className="pj-btn" onClick={() => setShowNewModal(false)}>Cancel</button>
+              <button className="pj-btn primary" onClick={saveNewProject}>Create Project</button>
             </div>
           </div>
         </div>
