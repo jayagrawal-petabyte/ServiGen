@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Project, type ProjectPriority, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
-import { getSessionUserName, loadProjectsScreen } from "./projectsApi";
+import {
+  getSessionUserName,
+  loadProjectsScreen,
+  createProject,
+  updateProject,
+  createSubtask,
+  updateSubtask,
+} from "./projectsApi";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import "./projects.css";
 
@@ -90,7 +97,24 @@ export default function ProjectsPage() {
   const [newStatus, setNewStatus] = useState<ProjectStatus>("New");
   const [newStart, setNewStart] = useState("");
   const [newTarget, setNewTarget] = useState("");
+  const [newBudget, setNewBudget] = useState("");
   const [newError, setNewError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [editStatus, setEditStatus] = useState<ProjectStatus>("Active");
+  const [editStart, setEditStart] = useState("");
+  const [editTarget, setEditTarget] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskAssignee, setTaskAssignee] = useState("");
+  const [taskDue, setTaskDue] = useState("");
+  const [taskSaving, setTaskSaving] = useState(false);
+  const [taskError, setTaskError] = useState("");
+
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
   function openNewModal() {
     setNewName("");
@@ -100,30 +124,124 @@ export default function ProjectsPage() {
     setNewStatus("New");
     setNewStart(toDateKey(new Date()));
     setNewTarget("");
+    setNewBudget("");
     setNewError("");
+    setSaving(false);
     setShowNewModal(true);
   }
 
-  function saveNewProject() {
+  async function saveNewProject() {
     if (!newName.trim()) { setNewError("Project name is required."); return; }
-    const id = `LOCAL-${Date.now()}`;
-    const proj: Project = {
-      id,
-      name: newName.trim(),
-      description: newDesc.trim(),
-      owner: newOwner.trim() || userName || "Unassigned",
-      status: newStatus,
-      statusLabel: newStatus,
-      priority: newPriority,
-      startDate: newStart,
-      targetDate: newTarget,
-      hoursSpent: 0,
-      hoursBudget: 0,
-      tasks: [],
-    };
-    setProjects((prev) => [proj, ...prev]);
-    setActiveIds((prev) => [id, ...prev]);
-    setShowNewModal(false);
+    setSaving(true);
+    setNewError("");
+    try {
+      const created = await createProject({
+        name: newName.trim(),
+        description: newDesc.trim(),
+        owner: newOwner.trim() || userName || "Unassigned",
+        priority: newPriority,
+        status: newStatus,
+        startDate: newStart,
+        targetDate: newTarget,
+        hoursBudget: newBudget ? parseFloat(newBudget) : undefined,
+      });
+      setProjects((prev) => [created, ...prev]);
+      setActiveIds((prev) => [created.id, ...prev]);
+      setShowNewModal(false);
+    } catch (err) {
+      setNewError(err instanceof Error ? err.message : "Failed to create project.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function replaceProject(id: string, updated: Project) {
+    setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)));
+  }
+
+  function replaceTaskInProject(projectId: string, taskId: string, updated: ProjectTask) {
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId
+          ? { ...p, tasks: p.tasks.map((t) => (t.id === taskId ? updated : t)) }
+          : p
+      )
+    );
+  }
+
+  function addTaskToProject(projectId: string, task: ProjectTask) {
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p
+      )
+    );
+  }
+
+  async function handleUpdateProject(p: Project) {
+    setEditSaving(true);
+    setEditError("");
+    try {
+      const updated = await updateProject(p.id, {
+        status: editStatus,
+        startDate: editStart,
+        targetDate: editTarget,
+      });
+      replaceProject(p.id, { ...p, ...updated, tasks: p.tasks });
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to update project.");
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function handleToggleTask(projectId: string, task: ProjectTask) {
+    setTogglingTaskId(task.id);
+    try {
+      const updated = await updateSubtask(projectId, task.id, { done: !task.done });
+      replaceTaskInProject(projectId, task.id, updated);
+    } catch {
+    } finally {
+      setTogglingTaskId(null);
+    }
+  }
+
+  async function handleAddTask(projectId: string) {
+    if (!taskTitle.trim()) { setTaskError("Task title is required."); return; }
+    setTaskSaving(true);
+    setTaskError("");
+    try {
+      const created = await createSubtask(projectId, {
+        title: taskTitle.trim(),
+        assignee: taskAssignee.trim() || undefined,
+        dueDate: taskDue || undefined,
+      });
+      addTaskToProject(projectId, created);
+      setTaskTitle("");
+      setTaskAssignee("");
+      setTaskDue("");
+      setShowAddTask(false);
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : "Failed to add subtask.");
+    } finally {
+      setTaskSaving(false);
+    }
+  }
+
+  function openDetail(id: string) {
+    const p = projects.find((proj) => proj.id === id);
+    if (p) {
+      setEditStatus(p.status);
+      setEditStart(p.startDate);
+      setEditTarget(p.targetDate);
+      setEditError("");
+      setEditSaving(false);
+      setShowAddTask(false);
+      setTaskTitle("");
+      setTaskAssignee("");
+      setTaskDue("");
+      setTaskError("");
+    }
+    setDetailId(id);
   }
 
   const load = useCallback(async () => {
@@ -188,7 +306,7 @@ export default function ProjectsPage() {
     const pct = progress(p);
     const shown = p.tasks.slice(0, 6);
     return (
-      <article key={p.id} className="pj-card" onClick={() => setDetailId(p.id)}>
+      <article key={p.id} className="pj-card" onClick={() => openDetail(p.id)}>
         <div className="pj-card-main">
           <div className="pj-card-title">
             <h2>{p.name}</h2>
@@ -252,7 +370,7 @@ export default function ProjectsPage() {
                 <span className="pj-count">{items.length}</span>
               </div>
               {items.map((p) => (
-                <button key={p.id} className="pj-board-card" onClick={() => setDetailId(p.id)}>
+                <button key={p.id} className="pj-board-card" onClick={() => openDetail(p.id)}>
                   <span className="pj-id small">#{p.id}</span>
                   <strong>{p.name}</strong>
                   <span className="pj-muted">{p.owner}</span>
@@ -330,7 +448,7 @@ export default function ProjectsPage() {
                     key={`${t.project.id}-${t.id}`}
                     className={`pj-cal-task ${t.done ? "done" : ""} ${isOverdue(t) ? "overdue" : ""}`}
                     title={`${t.project.name} – ${t.title}`}
-                    onClick={() => setDetailId(t.project.id)}
+                    onClick={() => openDetail(t.project.id)}
                   >
                     #{t.id} {t.title}
                   </button>
@@ -376,7 +494,7 @@ export default function ProjectsPage() {
           const width = Math.max(pos(parseDate(p.targetDate).getTime()) - left, 1.5);
           return (
             <div key={p.id} className="pj-gantt-row">
-              <button className="pj-gantt-name" onClick={() => setDetailId(p.id)}>
+              <button className="pj-gantt-name" onClick={() => openDetail(p.id)}>
                 <strong>{p.name}</strong>
                 <span className="pj-muted">#{p.id}</span>
               </button>
@@ -386,7 +504,7 @@ export default function ProjectsPage() {
                   className={`pj-gantt-bar ${statusClass(p.status)}`}
                   style={{ left: `${left}%`, width: `${width}%` }}
                   title={`${formatDate(p.startDate)} → ${formatDate(p.targetDate)}`}
-                  onClick={() => setDetailId(p.id)}
+                  onClick={() => openDetail(p.id)}
                 >
                   <span className="pj-gantt-fill" style={{ width: `${progress(p)}%` }} />
                   <span className="pj-gantt-label">{progress(p)}%</span>
@@ -420,11 +538,18 @@ export default function ProjectsPage() {
         </div>
         {tasks.map((t) => (
           <div key={`${t.project.id}-${t.id}`} className={`pj-table-row ${t.done ? "done" : ""}`}>
-            <span className={`pj-state ${t.done ? "done" : ""}`}>{t.done ? "Done" : "Open"}</span>
+            <span
+              className={`pj-state ${t.done ? "done" : ""}`}
+              style={{ cursor: "pointer" }}
+              title={t.done ? "Mark as open" : "Mark as done"}
+              onClick={() => handleToggleTask(t.project.id, t)}
+            >
+              {togglingTaskId === t.id ? "..." : t.done ? "Done" : "Open"}
+            </span>
             <span>
               <strong>#{t.id}</strong> {t.title}
             </span>
-            <button className="pj-link" onClick={() => setDetailId(t.project.id)}>
+            <button className="pj-link" onClick={() => openDetail(t.project.id)}>
               {t.project.name}
             </button>
             <span>{t.assignee}</span>
@@ -644,7 +769,15 @@ export default function ProjectsPage() {
             <div className="pj-detail-grid">
               <div>
                 <span>Status</span>
-                <strong>{detail.statusLabel}</strong>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as ProjectStatus)}
+                  style={{ fontWeight: 600, fontSize: 13, padding: "2px 4px", border: "1px solid #ddd", borderRadius: 4 }}
+                >
+                  {PROJECT_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <span>Priority</span>
@@ -656,11 +789,47 @@ export default function ProjectsPage() {
               </div>
               <div>
                 <span>Timeline</span>
-                <strong>
-                  {formatDate(detail.startDate)} → {formatDate(detail.targetDate)}
-                </strong>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <input
+                    type="date"
+                    value={editStart}
+                    onChange={(e) => setEditStart(e.target.value)}
+                    style={{ fontSize: 12, padding: "2px 4px", border: "1px solid #ddd", borderRadius: 4 }}
+                  />
+                  <span>&rarr;</span>
+                  <input
+                    type="date"
+                    value={editTarget}
+                    onChange={(e) => setEditTarget(e.target.value)}
+                    style={{ fontSize: 12, padding: "2px 4px", border: "1px solid #ddd", borderRadius: 4 }}
+                  />
+                </div>
               </div>
             </div>
+
+            {(editStatus !== detail.status || editStart !== detail.startDate || editTarget !== detail.targetDate) && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0" }}>
+                <button
+                  className="pj-btn primary"
+                  disabled={editSaving}
+                  onClick={() => handleUpdateProject(detail)}
+                >
+                  {editSaving ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  className="pj-btn"
+                  onClick={() => {
+                    setEditStatus(detail.status);
+                    setEditStart(detail.startDate);
+                    setEditTarget(detail.targetDate);
+                    setEditError("");
+                  }}
+                >
+                  Cancel
+                </button>
+                {editError && <span className="pj-error" style={{ margin: 0 }}>{editError}</span>}
+              </div>
+            )}
 
             <div className="pj-detail-hours">
               <div className="pj-detail-hours-top">
@@ -679,12 +848,64 @@ export default function ProjectsPage() {
 
             <h3 className="pj-section-title">
               Subtasks <span className="pj-muted">{progress(detail)}% complete</span>
+              <button
+                className="pj-btn"
+                style={{ marginLeft: 12, fontSize: 12, padding: "2px 10px" }}
+                onClick={() => setShowAddTask(!showAddTask)}
+              >
+                {showAddTask ? "Cancel" : "+ Add Task"}
+              </button>
             </h3>
+
+            {showAddTask && (
+              <div className="pj-form" style={{ marginBottom: 12, padding: 12, background: "#faf6f4", borderRadius: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8 }}>
+                  <label>
+                    Title *
+                    <input
+                      autoFocus
+                      value={taskTitle}
+                      onChange={(e) => setTaskTitle(e.target.value)}
+                      placeholder="Task title"
+                    />
+                  </label>
+                  <label>
+                    Assignee
+                    <input
+                      value={taskAssignee}
+                      onChange={(e) => setTaskAssignee(e.target.value)}
+                      placeholder={userName || "Name"}
+                    />
+                  </label>
+                  <label>
+                    Due Date
+                    <input type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} />
+                  </label>
+                </div>
+                {taskError && <p className="pj-error">{taskError}</p>}
+                <button
+                  className="pj-btn primary"
+                  style={{ marginTop: 8 }}
+                  disabled={taskSaving}
+                  onClick={() => handleAddTask(detail.id)}
+                >
+                  {taskSaving ? "Adding..." : "Add Subtask"}
+                </button>
+              </div>
+            )}
+
             {detail.tasksError && <p className="pj-error">Couldn't load subtasks: {detail.tasksError}</p>}
             <div className="pj-checklist">
               {detail.tasks.map((t) => (
                 <div key={t.id} className={`pj-check-row ${t.done ? "done" : ""}`}>
-                  <span className={`pj-state ${t.done ? "done" : ""}`}>{t.done ? "Done" : "Open"}</span>
+                  <span
+                    className={`pj-state ${t.done ? "done" : ""}`}
+                    style={{ cursor: "pointer" }}
+                    title={t.done ? "Mark as open" : "Mark as done"}
+                    onClick={() => handleToggleTask(detail.id, t)}
+                  >
+                    {togglingTaskId === t.id ? "..." : t.done ? "Done" : "Open"}
+                  </span>
                   <span className="pj-check-title">
                     <strong>#{t.id}</strong> {t.title}
                   </span>
@@ -694,14 +915,10 @@ export default function ProjectsPage() {
               ))}
               {detail.tasks.length === 0 && !detail.tasksError && (
                 <div className="pj-check-row">
-                  <span className="pj-muted">No subtasks</span>
+                  <span className="pj-muted">No subtasks yet &mdash; click "+ Add Task" above</span>
                 </div>
               )}
             </div>
-
-            <p className="pj-readonly-note">
-              Editing status, subtasks and hours will be enabled once the backend provides the update APIs.
-            </p>
 
             <div className="pj-modal-actions">
               <button className="pj-btn primary" onClick={() => setDetailId(null)}>
@@ -717,7 +934,7 @@ export default function ProjectsPage() {
             <div className="pj-modal-head">
               <div>
                 <h2>New Project</h2>
-                <p className="pj-muted">This project is saved locally (no backend API yet). It will disappear on page refresh.</p>
+                <p className="pj-muted">Create a new project and save it to the database.</p>
               </div>
               <button className="pj-close" aria-label="Close" onClick={() => setShowNewModal(false)}>
                 ✕
@@ -761,7 +978,7 @@ export default function ProjectsPage() {
                   </select>
                 </label>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
                 <label>
                   Status
                   <select value={newStatus} onChange={(e) => setNewStatus(e.target.value as ProjectStatus)}>
@@ -778,13 +995,25 @@ export default function ProjectsPage() {
                   Target Date
                   <input type="date" value={newTarget} onChange={(e) => setNewTarget(e.target.value)} />
                 </label>
+                <label>
+                  Hours Budget
+                  <input
+                    type="number"
+                    min="0"
+                    value={newBudget}
+                    onChange={(e) => setNewBudget(e.target.value)}
+                    placeholder="e.g. 120"
+                  />
+                </label>
               </div>
               {newError && <p className="pj-error">{newError}</p>}
             </div>
 
             <div className="pj-modal-actions">
               <button className="pj-btn" onClick={() => setShowNewModal(false)}>Cancel</button>
-              <button className="pj-btn primary" onClick={saveNewProject}>Create Project</button>
+              <button className="pj-btn primary" disabled={saving} onClick={saveNewProject}>
+                {saving ? "Creating..." : "Create Project"}
+              </button>
             </div>
           </div>
         </div>
