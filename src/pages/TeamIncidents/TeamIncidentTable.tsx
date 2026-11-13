@@ -15,6 +15,7 @@ import {
 import type { TeamIncident } from "./teamIncidents.types";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 import { api } from "../../services/apiClient";
+import { ticketEvents } from "../../services/ticketEvents";
 
 export type Incident = TeamIncident;
 
@@ -49,6 +50,9 @@ export type TeamViewSelection =
   | { kind: "team"; team: "1st Line Support" | "2nd Line Support" | "Infrastructure" }
   | { kind: "agent"; team: "1st Line Support" | "2nd Line Support" | "Infrastructure"; agent: string }
   | { kind: "breaching-sla" };
+
+export type SortColumn = 'id' | 'sla' | 'summary' | 'category' | 'priority' | 'status' | 'type' | 'dateLogged';
+export type SortDirection = 'asc' | 'desc' | null;
 
 interface TeamIncidentTableProps {
   team?: string;
@@ -111,7 +115,7 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
 
   return (
     <tr
-      className={isActive ? "row-viewing-active" : isSelected ? "selected" : ""}
+      className={`h-11 ${isActive ? "row-viewing-active" : isSelected ? "selected" : ""}`}
       onClick={handleRowClick}
       style={{ cursor: "pointer" }}
     >
@@ -122,38 +126,38 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
           onChange={handleCheckboxChange}
         />
       </td>
-      <td>
+      <td style={{ textAlign: "center" }}>
         {incident.isStarred ? (
           <span className="star-indicator" title="Starred / Flagged">⭐</span>
         ) : (
-          <span className="viewing-dash">—</span>
+          <span className="text-slate-300 text-xs">☆</span>
         )}
       </td>
-      <td className="font-bold text-gray-900">
+      <td className="font-bold text-gray-900 font-mono text-xs whitespace-nowrap">
         {incident.id}
       </td>
-      <td>
+      <td className="whitespace-nowrap">
         <SlaBadge slaTimeLeft={incident.sla} status={incident.status} />
       </td>
-      <td className="team-table-summary-link font-medium">
+      <td className="team-table-summary-link font-medium leading-snug max-w-[320px] truncate" title={incident.summary}>
         {incident.summary}
       </td>
-      <td className="text-gray-600 text-xs">
+      <td className="text-gray-600 text-xs truncate max-w-[140px]" title={incident.category}>
         {incident.category}
       </td>
-      <td>
+      <td className="whitespace-nowrap">
         <PriorityIndicator priority={incident.priority} />
       </td>
-      <td>
+      <td className="whitespace-nowrap">
         {incident.escalatedToTier2 ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
             ✓ Tier 2 Handoff
           </span>
         ) : (
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {aiRisk.level === 'High Risk' ? (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 shrink-0"
                 title="High AI Risk: Approaching SLA breach threshold"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
@@ -161,14 +165,14 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
               </span>
             ) : aiRisk.level === 'At Risk' ? (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0"
                 title="At Risk: Elevated likelihood of SLA breach"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 At Risk {aiRisk.score}%
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Normal {aiRisk.score}%
               </span>
@@ -179,7 +183,7 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
                 type="button"
                 disabled={isEscalating}
                 onClick={() => onEscalateToTier2(incident)}
-                className="px-2 py-0.5 rounded bg-[#13273e] hover:bg-[#1e3b5e] text-white text-[10px] font-bold cursor-pointer transition-all shadow-2xs flex items-center gap-1 shrink-0 disabled:opacity-50"
+                className="px-2.5 py-0.5 rounded-md bg-[#13273e] hover:bg-[#1e3b5e] text-white text-[10px] font-bold cursor-pointer transition-all shadow-sm flex items-center gap-1 shrink-0 disabled:opacity-50"
                 title="1-Click Escalate to 2nd Line Support via AI Handoff"
               >
                 {isEscalating ? (
@@ -192,15 +196,15 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
           </div>
         )}
       </td>
-      <td>
+      <td className="whitespace-nowrap">
         <span className={statusClass}>
           {incident.status}
         </span>
       </td>
-      <td className="text-gray-600 text-xs">
+      <td className="text-gray-600 text-xs whitespace-nowrap">
         {incident.type}
       </td>
-      <td className="text-gray-500 text-xs">
+      <td className="text-gray-500 text-xs text-right whitespace-nowrap">
         {incident.dateLogged || "28/07/2026"}
       </td>
     </tr>
@@ -255,6 +259,16 @@ function TeamIncidentTable({
       )
     );
 
+    ticketEvents.emit({
+      type: 'TICKET_UPDATED',
+      ticket: {
+        id: incident.id,
+        team: '2nd Line Support',
+        escalatedToTier2: true,
+        aiRisk: 'Normal',
+      },
+    });
+
     setEscalatingId(null);
     setEscalationToast(`⚡ Ticket #${incident.id} escalated to 2nd Line Support (Tier 2 AI Handoff Created)!`);
     setTimeout(() => setEscalationToast(null), 4000);
@@ -292,6 +306,41 @@ function TeamIncidentTable({
     };
   }, [team]);
 
+  // Global ticket event subscription for real-time queue synchronization
+  useEffect(() => {
+    const unsubscribe = ticketEvents.subscribe((event) => {
+      if (event.type === 'TICKET_UPDATED') {
+        const u = event.ticket;
+        setIncidents((prev) =>
+          prev.map((inc) =>
+            inc.id === u.id
+              ? {
+                  ...inc,
+                  status: (u.status as string) || inc.status,
+                  priority: (u.priority as any) || inc.priority,
+                  category: (u.category as string) || inc.category,
+                  agent: (u.agent as string) !== undefined ? (u.agent as string) : inc.agent,
+                  team: (u.team as TeamIncident['team']) || inc.team,
+                  escalatedToTier2: u.escalatedToTier2 !== undefined ? (u.escalatedToTier2 as boolean) : inc.escalatedToTier2,
+                  aiRisk: (u.aiRisk as any) || inc.aiRisk,
+                }
+              : inc
+          )
+        );
+      } else if (event.type === 'TICKET_CREATED') {
+        const newInc = event.ticket as unknown as TeamIncident;
+        setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== newInc.id)]);
+      } else if (event.type === 'TICKET_DELETED') {
+        setIncidents((prev) => prev.filter((i) => i.id !== event.id));
+      } else if (event.type === 'REFRESH_QUEUES') {
+        fetchAllTeamIncidents().then((res) => {
+          if (res?.incidents) setIncidents(res.incidents);
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const [selectedView, setSelectedView] = useState<TeamViewSelection>(() => {
     if (initialViewKind === "breaching-sla") {
       return { kind: "breaching-sla" };
@@ -305,6 +354,14 @@ function TeamIncidentTable({
   const [search, setSearch] = useState("");
   const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_items_per_page');
+      return saved ? parseInt(saved, 10) : 25;
+    } catch {
+      return 25;
+    }
+  });
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
   // Popover & Drawer States
@@ -526,12 +583,58 @@ function TeamIncidentTable({
     document.body.removeChild(link);
   };
 
-  const itemsPerPage = 50;
-  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage) || 1;
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn !== col) {
+      setSortColumn(col);
+      setSortDirection('asc');
+    } else if (sortDirection === 'asc') {
+      setSortDirection('desc');
+    } else {
+      setSortColumn(null);
+      setSortDirection(null);
+    }
+  };
+
+  const sortedIncidents = useMemo(() => {
+    if (!sortColumn || !sortDirection) return filteredIncidents;
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    const priMap: Record<string, number> = { critical: 1, p1: 1, high: 2, p2: 2, medium: 3, p3: 3, low: 4, p4: 4 };
+
+    return [...filteredIncidents].sort((a, b) => {
+      if (sortColumn === 'priority') {
+        const aP = priMap[a.priority?.toLowerCase()] || 99;
+        const bP = priMap[b.priority?.toLowerCase()] || 99;
+        return (aP - bP) * dir;
+      }
+      if (sortColumn === 'id') {
+        const aNum = parseInt(a.id.replace(/[^\d]/g, ''), 10) || 0;
+        const bNum = parseInt(b.id.replace(/[^\d]/g, ''), 10) || 0;
+        return (aNum - bNum) * dir;
+      }
+      if (sortColumn === 'sla') {
+        const aM = computeAiRisk(a).score;
+        const bM = computeAiRisk(b).score;
+        return (aM - bM) * dir;
+      }
+      if (sortColumn === 'dateLogged') {
+        const aD = new Date(a.dateLogged).getTime() || 0;
+        const bD = new Date(b.dateLogged).getTime() || 0;
+        return (aD - bD) * dir;
+      }
+      const aVal = (a[sortColumn] || '').toString().toLowerCase();
+      const bVal = (b[sortColumn] || '').toString().toLowerCase();
+      return aVal.localeCompare(bVal) * dir;
+    });
+  }, [filteredIncidents, sortColumn, sortDirection]);
+
+  const totalPages = Math.ceil(sortedIncidents.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedIncidents = useMemo(() => {
-    return filteredIncidents.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredIncidents, startIndex, itemsPerPage]);
+    return sortedIncidents.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedIncidents, startIndex, itemsPerPage]);
 
   const allFilteredSelected = useMemo(() => {
     return (
@@ -566,12 +669,18 @@ function TeamIncidentTable({
   const selectedIncidentsSet = useMemo(() => new Set(selectedIncidents), [selectedIncidents]);
 
   const handleBulkAssignToMe = () => {
-    const myName = user?.fullName || "";
+    const myName = user?.fullName || "Assigned Agent";
     setIncidents((prev) =>
       prev.map((inc) =>
         selectedIncidents.includes(inc.id) ? { ...inc, agent: myName } : inc
       )
     );
+    selectedIncidents.forEach((id) => {
+      api.patch(`/tickets/${id}/assign`, { agentName: myName }).catch(() => {});
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, agent: myName } });
+    });
+    setEscalationToast(`✓ Assigned ${selectedIncidents.length} incident(s) to ${myName}`);
+    setTimeout(() => setEscalationToast(null), 3000);
     setSelectedIncidents([]);
   };
 
@@ -581,6 +690,11 @@ function TeamIncidentTable({
         selectedIncidents.includes(inc.id) ? { ...inc, priority: newPri } : inc
       )
     );
+    selectedIncidents.forEach((id) => {
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, priority: newPri } });
+    });
+    setEscalationToast(`✓ Set priority to ${newPri} for ${selectedIncidents.length} incident(s)`);
+    setTimeout(() => setEscalationToast(null), 3000);
   };
 
   const handleBulkSetStatus = (newStat: string) => {
@@ -589,10 +703,12 @@ function TeamIncidentTable({
         selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
       )
     );
-    // Push status updates to backend API
     selectedIncidents.forEach((id) => {
-      updateSupportIncidentStatus(id, newStat);
+      updateSupportIncidentStatus(id, newStat).catch(() => {});
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, status: newStat } });
     });
+    setEscalationToast(`✓ Set status to ${newStat} for ${selectedIncidents.length} incident(s)`);
+    setTimeout(() => setEscalationToast(null), 3000);
   };
 
   const handleCreateIncident = () => {
@@ -1037,6 +1153,28 @@ function TeamIncidentTable({
             </div>
 
             <div className="team-toolbar-right-group">
+              <div className="flex items-center gap-1 text-xs text-slate-500 mr-1">
+                <span className="text-[11px] font-medium text-slate-500">Rows:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setItemsPerPage(val);
+                    try {
+                      localStorage.setItem('servigen_items_per_page', String(val));
+                    } catch {}
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#eb6a47]"
+                  title="Rows per page"
+                >
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
               <span className="team-count-display">
                 {paginatedIncidents.length > 0
                   ? `${startIndex + 1}-${Math.min(startIndex + itemsPerPage, filteredIncidents.length)} of ${filteredIncidents.length}`
@@ -1227,7 +1365,7 @@ function TeamIncidentTable({
             <table className="incident-table">
               <thead>
                 <tr>
-                  <th style={{ width: 36 }}>
+                  <th style={{ width: 36, textAlign: "center" }}>
                     <input
                       type="checkbox"
                       aria-label="Select all incidents"
@@ -1235,16 +1373,64 @@ function TeamIncidentTable({
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th style={{ width: 70 }}>Viewing</th>
-                  <th style={{ width: 90 }}>ID</th>
-                  <th style={{ width: 120 }}>SLA Time Left</th>
-                  <th>Summary</th>
-                  <th>Category</th>
-                  <th>Priority</th>
-                  <th style={{ width: 175 }}>AI Risk & Handoff</th>
-                  <th>Status</th>
-                  <th>Type</th>
-                  <th>Date Logged</th>
+                  <th style={{ width: 32, textAlign: "center" }} title="Flagged">★</th>
+                  <th
+                    style={{ width: 125, whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('id')}
+                    title="Click to sort by ID"
+                  >
+                    ID {sortColumn === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ width: 160, whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('sla')}
+                    title="Click to sort by SLA Time Left"
+                  >
+                    SLA Time Left {sortColumn === 'sla' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ minWidth: 260, cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('summary')}
+                    title="Click to sort by Summary"
+                  >
+                    Summary {sortColumn === 'summary' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ width: 160, cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('category')}
+                    title="Click to sort by Category"
+                  >
+                    Category {sortColumn === 'category' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ width: 95, cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('priority')}
+                    title="Click to sort by Priority"
+                  >
+                    Priority {sortColumn === 'priority' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th style={{ width: 195, whiteSpace: "nowrap" }}>AI Risk & Handoff</th>
+                  <th
+                    style={{ width: 105, cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('status')}
+                    title="Click to sort by Status"
+                  >
+                    Status {sortColumn === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ width: 110, cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('type')}
+                    title="Click to sort by Type"
+                  >
+                    Type {sortColumn === 'type' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
+                  <th
+                    style={{ width: 110, textAlign: "right", whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" }}
+                    onClick={() => handleSort('dateLogged')}
+                    title="Click to sort by Date Logged"
+                  >
+                    Date Logged {sortColumn === 'dateLogged' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
+                  </th>
                 </tr>
               </thead>
               <tbody>

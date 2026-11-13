@@ -7,6 +7,7 @@ const listArticles = async (req, res, next) => {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
     if (req.query.category) filter.category = req.query.category;
+    if (req.query.search) filter.search = req.query.search;
     const articles = await knowledgeModel.getArticles(filter);
     return res.status(200).json({
       success: true,

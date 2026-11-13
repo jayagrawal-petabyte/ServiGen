@@ -40,6 +40,13 @@ export interface ProblemItem {
     type: string;
     status: string;
   }>;
+  linkedIncidents?: Array<{
+    id: string;
+    summary: string;
+    priority: string;
+    status: string;
+    dateLogged?: string;
+  }>;
   endUser: {
     name: string;
     initials: string;

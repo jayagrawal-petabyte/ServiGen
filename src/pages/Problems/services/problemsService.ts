@@ -27,6 +27,10 @@ export const INITIAL_PROBLEMS: ProblemItem[] = [
       { id: 'CI-102', name: 'Teams Voice Relay', type: 'Application Service', status: 'Degraded' },
       { id: 'CI-108', name: 'WebRTC TURN Cluster', type: 'Infrastructure', status: 'Operational' },
     ],
+    linkedIncidents: [
+      { id: '1024', summary: 'VPN Authentication Failures across EMEA', priority: 'High', status: 'In Progress', dateLogged: '17/05/2026' },
+      { id: '1031', summary: 'Teams call drops during screen share', priority: 'Medium', status: 'Open', dateLogged: '17/05/2026' },
+    ],
     endUser: {
       name: 'General User',
       initials: 'U',

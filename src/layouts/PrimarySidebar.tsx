@@ -12,7 +12,7 @@ import {
   Calendar as CalendarIcon,
   Users,
   Database,
-  Contact,
+  FileText,
   CheckSquare
 } from 'lucide-react';
 
@@ -29,6 +29,7 @@ export type ActiveModule =
   | 'calendar'
   | 'organisations'
   | 'cmdb'
+  | 'contracts'
   | 'contacts'
   | 'my-approvals';
 
@@ -54,7 +55,7 @@ export const PrimarySidebar: React.FC<PrimarySidebarProps> = ({
     { id: 'calendar' as ActiveModule, label: 'Calendar', icon: CalendarIcon },
     { id: 'organisations' as ActiveModule, label: 'Organisations', icon: Users },
     { id: 'cmdb' as ActiveModule, label: 'CMDB', icon: Database },
-    { id: 'contacts' as ActiveModule, label: 'Contacts', icon: Contact },
+    { id: 'contracts' as ActiveModule, label: 'Contracts', icon: FileText },
     { id: 'my-approvals' as ActiveModule, label: 'My Approvals', icon: CheckSquare },
   ];
 

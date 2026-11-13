@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ProblemItem, ProblemLogEntry, ProblemStage } from './types/problem.types';
+import { api } from '../../services/apiClient';
 
 interface ProblemDetailViewProps {
   problem: ProblemItem;
@@ -10,19 +11,106 @@ interface ProblemDetailViewProps {
 
 const STAGES: ProblemStage[] = ['Investigation', 'Workaround', 'Known Error Review', 'Resolved'];
 
+const FALLBACK_INCIDENTS = [
+  { id: '1024', summary: 'VPN Authentication Failures across EMEA', priority: 'High', status: 'In Progress', dateLogged: '17/05/2026' },
+  { id: '1031', summary: 'Teams call drops during screen share', priority: 'Medium', status: 'Open', dateLogged: '17/05/2026' },
+  { id: '1042', summary: 'Outlook SMTP timeout when sending attachments > 10MB', priority: 'High', status: 'In Progress', dateLogged: '16/05/2026' },
+  { id: '1055', summary: 'Audio device disconnected during active conference call', priority: 'Low', status: 'Open', dateLogged: '16/05/2026' },
+  { id: '1068', summary: 'Single Sign-On loop on enterprise intranet portal', priority: 'Critical', status: 'Open', dateLogged: '17/05/2026' },
+  { id: '1072', summary: 'Database latency spike on payroll query execution', priority: 'Critical', status: 'In Progress', dateLogged: '15/05/2026' },
+  { id: '1085', summary: 'Active Directory token expiration during mid-session SSO', priority: 'High', status: 'Open', dateLogged: '16/05/2026' },
+];
+
 export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
   problem,
   onBack,
   onUpdateProblem,
   onAddLog,
 }) => {
-  const [activeTab, setActiveTab] = useState<'progress' | 'cis' | 'viewLog' | 'notifLog'>('progress');
+  const [activeTab, setActiveTab] = useState<'progress' | 'linkedIncidents' | 'cis' | 'viewLog' | 'notifLog'>('progress');
   const [newNote, setNewNote] = useState('');
   const [showReassignDropdown, setShowReassignDropdown] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSubject, setEmailSubject] = useState(`Update on Problem [${problem.prefixId}]: ${problem.summary}`);
   const [emailBody, setEmailBody] = useState('');
   const noteInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Link Incident Modal state
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [incidentSearch, setIncidentSearch] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState<'All' | 'Critical' | 'High' | 'Medium' | 'Low'>('All');
+  const [availableIncidents, setAvailableIncidents] = useState<Array<{ id: string; summary: string; priority: string; status: string; dateLogged?: string }>>(FALLBACK_INCIDENTS);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
+
+  const fetchIncidents = async () => {
+    setLoadingIncidents(true);
+    try {
+      const res = await api.get('/api/tickets');
+      const raw = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (raw.length > 0) {
+        const mapped = raw.map((t: any) => ({
+          id: String(t.id || ''),
+          summary: t.summary || t.title || 'Incident ticket',
+          priority: t.priority || 'Medium',
+          status: t.status || 'Open',
+          dateLogged: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recent',
+        }));
+        setAvailableIncidents(mapped);
+      } else {
+        setAvailableIncidents(FALLBACK_INCIDENTS);
+      }
+    } catch {
+      setAvailableIncidents(FALLBACK_INCIDENTS);
+    } finally {
+      setLoadingIncidents(false);
+    }
+  };
+
+  const handleOpenLinkModal = () => {
+    setShowLinkModal(true);
+    void fetchIncidents();
+  };
+
+  const handleLinkIncident = async (inc: { id: string; summary: string; priority: string; status: string; dateLogged?: string }) => {
+    const current = problem.linkedIncidents || [];
+    if (current.some((i) => i.id === inc.id)) return;
+    try {
+      await api.post(`/api/problems/${problem.id}/incidents`, { incidentId: inc.id });
+    } catch {
+      // offline fallback
+    }
+    const updated = {
+      ...problem,
+      linkedIncidents: [...current, inc],
+    };
+    onUpdateProblem(updated);
+    onAddLog('Ken Yang', `Linked Incident #${inc.id} ("${inc.summary}") to problem investigation`, 'note');
+  };
+
+  const handleUnlinkIncident = async (incId: string) => {
+    const current = problem.linkedIncidents || [];
+    const target = current.find((i) => i.id === incId);
+    try {
+      await api.delete(`/api/problems/${problem.id}/incidents/${incId}`);
+    } catch {
+      // offline fallback
+    }
+    const updated = {
+      ...problem,
+      linkedIncidents: current.filter((i) => i.id !== incId),
+    };
+    onUpdateProblem(updated);
+    onAddLog('Ken Yang', `Unlinked Incident #${incId} ${target ? `("${target.summary}")` : ''} from problem investigation`, 'note');
+  };
+
+  const filteredAvailableIncidents = useMemo(() => {
+    const q = incidentSearch.trim().toLowerCase();
+    return availableIncidents.filter((inc) => {
+      const matchesQuery = !q || inc.id.toLowerCase().includes(q) || inc.summary.toLowerCase().includes(q);
+      const matchesPriority = priorityFilter === 'All' || inc.priority.toLowerCase() === priorityFilter.toLowerCase();
+      return matchesQuery && matchesPriority;
+    });
+  }, [availableIncidents, incidentSearch, priorityFilter]);
 
   const handleStageClick = (stage: ProblemStage) => {
     const updated: ProblemItem = {
@@ -102,7 +190,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               Problem
             </span>
             <span>›</span>
-            <span className="text-slate-900 font-bold">{problem.id}</span>
+            <span className="text-slate-900 font-bold">{problem.prefixId || problem.id}</span>
           </div>
         </div>
 
@@ -132,6 +220,16 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           >
             <span>⊘</span>
             <span>Cause Unknown</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenLinkModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-all cursor-pointer shadow-2xs"
+            title="Link Incident to this Problem investigation"
+          >
+            <span>🔗</span>
+            <span>+ Link Incident</span>
           </button>
 
           <button
@@ -247,9 +345,10 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col">
             {/* Console Tab Bar */}
             <div className="flex items-center justify-between border-b border-slate-200 px-5 pt-3 bg-slate-50/50">
-              <div className="flex items-center gap-6 text-xs font-bold">
+              <div className="flex items-center gap-6 text-xs font-bold overflow-x-auto">
                 {[
                   { id: 'progress', label: 'Progress' },
+                  { id: 'linkedIncidents', label: `Linked Incidents (${problem.linkedIncidents?.length ?? 0})` },
                   { id: 'cis', label: `Child Ticket CIs (${problem.childCis.length})` },
                   { id: 'viewLog', label: `View Log (${problem.logs.length})` },
                   { id: 'notifLog', label: 'Notification Log' },
@@ -258,7 +357,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`pb-3 border-b-2 transition-all cursor-pointer ${
+                    className={`pb-3 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-[#eb6a47] text-[#eb6a47]'
                         : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -280,7 +379,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       <div key={log.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-[#13273e] text-white flex items-center justify-center font-bold text-[10px]">
+                            <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]">
                               {log.author[0]}
                             </span>
                             <span className="font-bold text-slate-800">{log.author}</span>
@@ -312,13 +411,98 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       <button
                         type="submit"
                         disabled={!newNote.trim()}
-                        className="px-4 py-2 bg-[#13273e] hover:bg-[#0c1a2b] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
+                        className="px-4 py-2 bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
                       >
                         Post Note
                       </button>
                     </div>
                   </form>
                 </>
+              )}
+
+              {activeTab === 'linkedIncidents' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800">Linked Incident Tickets ({problem.linkedIncidents?.length ?? 0})</h4>
+                      <p className="text-[11px] text-slate-500">
+                        Incidents associated with this root cause investigation. Resolving this problem can cascade workarounds or resolutions.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleOpenLinkModal}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                    >
+                      <span>+ Link Incident</span>
+                    </button>
+                  </div>
+
+                  {!problem.linkedIncidents || problem.linkedIncidents.length === 0 ? (
+                    <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 space-y-2">
+                      <p className="text-xs font-semibold text-slate-600">No Incidents Linked Yet</p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        Link related incidents experiencing this failure pattern to track blast radius and coordinate communication.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleOpenLinkModal}
+                        className="mt-2 px-3 py-1.5 text-xs font-bold text-[#eb6a47] bg-white border border-[#eb6a47]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
+                      >
+                        + Search &amp; Link Incidents
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {problem.linkedIncidents.map((inc) => (
+                        <div
+                          key={inc.id}
+                          className="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all flex items-center justify-between text-xs gap-3 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md text-[11px] shrink-0">
+                              #{inc.id}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <span className="font-semibold text-slate-900 block truncate leading-snug">
+                                {inc.summary}
+                              </span>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                <span>Logged: {inc.dateLogged || 'Recent'}</span>
+                                <span>•</span>
+                                <span>Status: {inc.status}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                inc.priority === 'Critical'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : inc.priority === 'High'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  : inc.priority === 'Medium'
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+                              }`}
+                            >
+                              {inc.priority}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleUnlinkIncident(inc.id)}
+                              className="px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+                              title="Unlink this incident"
+                            >
+                              ✕ Unlink
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {activeTab === 'cis' && (
@@ -493,13 +677,13 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             </div>
 
             {/* AI Suggested Articles Panel */}
-            <div className="bg-[#13273e] rounded-2xl p-4 text-white shadow-lg space-y-3 text-xs">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-amber-400 font-bold">✨</span>
-                  <span className="font-bold">AI Suggested Articles</span>
+                  <span className="text-amber-500 font-bold">✨</span>
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">AI Suggested Articles</span>
                 </div>
-                <span className="text-[10px] text-slate-400">Knowledge Base</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Knowledge Base</span>
               </div>
 
               <div className="space-y-2">
@@ -511,16 +695,16 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 ].map((art) => (
                   <div
                     key={art.title}
-                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5 cursor-pointer flex items-center justify-between group"
+                    className="p-2.5 rounded-xl bg-slate-50/80 hover:bg-slate-100 transition-colors border border-slate-200/60 cursor-pointer flex items-center justify-between group"
                     onClick={() => {
                       onAddLog('Ken Yang', `Attached knowledge base reference article: "${art.title}"`, 'note');
                     }}
                     title="Click to reference in problem logs"
                   >
-                    <span className="text-[11px] text-slate-200 group-hover:text-white font-medium truncate mr-2">
+                    <span className="text-[11px] text-slate-700 group-hover:text-slate-900 font-semibold truncate mr-2">
                       {art.title}
                     </span>
-                    <span className="text-[9px] bg-[#eb6a47] text-white px-1.5 py-0.5 rounded font-bold">
+                    <span className="text-[9px] bg-[#eb6a47]/10 text-[#eb6a47] border border-[#eb6a47]/20 px-1.5 py-0.5 rounded font-bold">
                       {art.tag}
                     </span>
                   </div>
@@ -591,6 +775,158 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Link Incident Search Modal (ITSM-2) ── */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#eb6a47] flex items-center justify-center font-bold text-sm">
+                  🔗
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Link Incident to Problem</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Associate related incidents with investigation <span className="font-semibold text-slate-700">[{problem.prefixId}]</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Search and Filters Bar */}
+            <div className="p-4 border-b border-slate-100 bg-white space-y-3">
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                <input
+                  type="text"
+                  value={incidentSearch}
+                  onChange={(e) => setIncidentSearch(e.target.value)}
+                  placeholder="Search incidents by ID (#1024) or summary keyword..."
+                  className="w-full pl-9 pr-8 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/30 text-slate-800 placeholder-slate-400"
+                  autoFocus
+                />
+                {incidentSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setIncidentSearch('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs w-4 h-4 rounded-full flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Priority Badges Filter */}
+              <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+                <span className="text-[11px] font-semibold text-slate-400 mr-1">Priority:</span>
+                {(['All', 'Critical', 'High', 'Medium', 'Low'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPriorityFilter(p)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                      priorityFilter === p
+                        ? 'bg-[#eb6a47] text-white shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                {loadingIncidents && (
+                  <span className="ml-auto text-[11px] text-slate-400 animate-pulse">Loading incidents...</span>
+                )}
+              </div>
+            </div>
+
+            {/* Incident List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 divide-y divide-slate-100">
+              {filteredAvailableIncidents.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  <p className="font-semibold text-slate-600">No matching incidents found</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Try refining your search keyword or clearing the priority filter.</p>
+                </div>
+              ) : (
+                filteredAvailableIncidents.map((inc) => {
+                  const isLinked = (problem.linkedIncidents || []).some((i) => i.id === inc.id);
+                  return (
+                    <div
+                      key={inc.id}
+                      className="pt-2 first:pt-0 flex items-center justify-between gap-3 text-xs hover:bg-slate-50/70 p-2 rounded-xl transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md text-[11px] shrink-0">
+                          #{inc.id}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 truncate leading-snug">{inc.summary}</p>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                            <span>Logged: {inc.dateLogged || 'Recent'}</span>
+                            <span>•</span>
+                            <span>Status: {inc.status}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            inc.priority === 'Critical'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              : inc.priority === 'High'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : inc.priority === 'Medium'
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {inc.priority}
+                        </span>
+
+                        {isLinked ? (
+                          <span className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                            <span>✓</span>
+                            <span>Linked</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleLinkIncident(inc)}
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#eb6a47] hover:bg-[#d65736] text-white transition-all cursor-pointer shadow-2xs"
+                          >
+                            + Link
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+              <span>{filteredAvailableIncidents.length} incidents found</span>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

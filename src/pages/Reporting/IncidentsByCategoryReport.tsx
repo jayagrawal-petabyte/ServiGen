@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import * as Dialog from '@radix-ui/react-dialog';
+import * as Popover from '@radix-ui/react-popover';
+import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { api } from '../../services/apiClient';
@@ -218,11 +221,31 @@ export default function IncidentsByCategoryReport() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activeCategoryTag, setActiveCategoryTag] = useState<string | null>(
-    (location.state as any)?.category || 'Network>VPN>Connection Failure'
+    (location.state as any)?.category || null
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
   const [tickets, setTickets] = useState<ReportTicketRow[]>(DEFAULT_REPORT_TICKETS);
+
+  // Scheduled export state
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleFreq, setScheduleFreq] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
+  const [scheduleFormat, setScheduleFormat] = useState<'CSV' | 'PDF'>('CSV');
+  const [scheduleEmail, setScheduleEmail] = useState('');
+  const [savedSchedule, setSavedSchedule] = useState<{ freq: string; email: string; format: string } | null>(null);
+
+  // Custom column visibility builder
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    id: true,
+    summary: true,
+    priority: true,
+    category: true,
+    agent: true,
+    targetSla: true,
+    status: true,
+    slaMet: true,
+    breachDuration: true,
+  });
 
   React.useEffect(() => {
     let mounted = true;
@@ -274,43 +297,8 @@ export default function IncidentsByCategoryReport() {
     };
   }, [activeCategoryTag]);
 
-  // Filter rows matching Image 2 with interactive condition capabilities
-  const [filters, setFilters] = useState<FilterRow[]>([
-    {
-      id: 'f1',
-      field: 'Category',
-      operator: 'Is not blank',
-    },
-    {
-      id: 'f2',
-      field: 'Category',
-      operator: 'Does not include',
-      tags: [
-        { id: 'c1', label: 'Standard Applications>Email' },
-        { id: 'c2', label: 'Standard Applications>Internet' },
-        { id: 'c3', label: 'Standard Applications>Other (Not Listed)' },
-        { id: 'c4', label: 'Hardware>Laptop' },
-        { id: 'c5', label: 'Hardware>Printer' },
-        { id: 'c6', label: 'Account Administration' },
-        { id: 'c7', label: 'Account Administration>Application Access' },
-      ],
-    },
-    {
-      id: 'f3',
-      field: 'ITIL Type',
-      operator: 'Includes',
-      tags: [{ id: 't1', label: 'Incident' }],
-    },
-    {
-      id: 'f4',
-      field: 'Team',
-      operator: 'Includes',
-      tags: [
-        { id: 'tm1', label: '1st Line Support' },
-        { id: 'tm2', label: '2nd Line Support' },
-      ],
-    },
-  ]);
+  // Clean default filter conditions
+  const [filters, setFilters] = useState<FilterRow[]>([]);
 
   const handleCloseTab = () => {
     if (window.history.length > 2) {
@@ -367,12 +355,26 @@ export default function IncidentsByCategoryReport() {
       }
       // Check custom condition rows
       for (const f of filters) {
-        if (f.field === 'Priority' && f.value) {
-          if (f.operator === 'Equals' && t.priority.toLowerCase() !== f.value.toLowerCase()) return false;
-          if (f.operator === 'Does not include' && t.priority.toLowerCase() === f.value.toLowerCase()) return false;
-        }
-        if (f.field === 'Status' && f.value) {
-          if (f.operator === 'Equals' && t.status.toLowerCase() !== f.value.toLowerCase()) return false;
+        let fieldVal = '';
+        if (f.field === 'Category') fieldVal = t.category || '';
+        else if (f.field === 'Priority') fieldVal = t.priority || '';
+        else if (f.field === 'Status') fieldVal = t.status || '';
+        else if (f.field === 'Team') fieldVal = t.team || '';
+        else if (f.field === 'Agent') fieldVal = t.agent || '';
+        else if (f.field === 'ITIL Type') fieldVal = (t as any).itilType || (t.id.startsWith('REQ') ? 'Service Request' : t.id.startsWith('CHG') ? 'Change' : 'Incident');
+        else continue;
+
+        const target = (f.value || '').trim().toLowerCase();
+        const current = fieldVal.trim().toLowerCase();
+
+        if (f.operator === 'Is blank') {
+          if (current !== '') return false;
+        } else if (f.operator === 'Is not blank') {
+          if (current === '') return false;
+        } else if (target) {
+          if (f.operator === 'Equals' && current !== target) return false;
+          if (f.operator === 'Includes' && !current.includes(target)) return false;
+          if (f.operator === 'Does not include' && current.includes(target)) return false;
         }
       }
       return true;
@@ -423,21 +425,52 @@ export default function IncidentsByCategoryReport() {
     } else if (activeReport === 'agents') {
       filename = 'agent_performance_and_workload.csv';
       headers = ['Agent', 'Role / Team', 'Active Tickets', 'Resolved', 'Avg Handle Time', 'SLA Met %'];
-      rows = [
-        ['Alex Rivera', '1st Line Senior Agent', '7', '28', '1h 24m', '96.4%'],
-        ['Sarah Jenkins', '1st Line Support Specialist', '4', '22', '1h 52m', '92.8%'],
-        ['Alex Agent', '1st Line Help Desk', '0', '10', '2h 10m', '90.0%'],
-        ['Alice Approver', 'Change & Operations Lead', '2', '8', '45m', '100.0%'],
-      ];
+      const agentMap: Record<string, { active: number; resolved: number; met: number; total: number }> = {};
+      filteredTickets.forEach((t) => {
+        const ag = t.agent || 'Unassigned';
+        if (!agentMap[ag]) agentMap[ag] = { active: 0, resolved: 0, met: 0, total: 0 };
+        agentMap[ag].total += 1;
+        if (t.status === 'Resolved' || t.status === 'Closed') agentMap[ag].resolved += 1;
+        else agentMap[ag].active += 1;
+        if (t.slaResolutionMet === 1) agentMap[ag].met += 1;
+      });
+      rows = Object.entries(agentMap).map(([ag, stats]) => [
+        ag,
+        'Support Operations',
+        stats.active.toString(),
+        stats.resolved.toString(),
+        '1h 35m',
+        stats.total > 0 ? `${((stats.met / stats.total) * 100).toFixed(1)}%` : '100%',
+      ]);
+      if (rows.length === 0) {
+        rows = [
+          ['Alex Rivera', '1st Line Senior Agent', '7', '28', '1h 24m', '96.4%'],
+          ['Sarah Jenkins', '1st Line Support Specialist', '4', '22', '1h 52m', '92.8%'],
+        ];
+      }
     } else {
       filename = 'first_contact_resolution_report.csv';
       headers = ['Category', 'Total Handled', 'First Contact Resolved', 'FCR Rate %', 'Industry Benchmark'];
-      rows = [
-        ['Account Administration & Passwords', '35', '33', '94.3%', '75.0%'],
-        ['Office & Collaboration Tools', '28', '24', '85.7%', '72.0%'],
-        ['Hardware & Peripherals', '18', '12', '66.7%', '65.0%'],
-        ['Network & VPN Access', '16', '11', '68.8%', '60.0%'],
-      ];
+      const catMap: Record<string, { total: number; met: number }> = {};
+      filteredTickets.forEach((t) => {
+        const cat = t.category || 'General';
+        if (!catMap[cat]) catMap[cat] = { total: 0, met: 0 };
+        catMap[cat].total += 1;
+        if (t.slaResolutionMet === 1) catMap[cat].met += 1;
+      });
+      rows = Object.entries(catMap).map(([cat, stats]) => [
+        cat,
+        stats.total.toString(),
+        stats.met.toString(),
+        stats.total > 0 ? `${((stats.met / stats.total) * 100).toFixed(1)}%` : '100%',
+        '75.0%',
+      ]);
+      if (rows.length === 0) {
+        rows = [
+          ['Account Administration & Passwords', '35', '33', '94.3%', '75.0%'],
+          ['Office & Collaboration Tools', '28', '24', '85.7%', '72.0%'],
+        ];
+      }
     }
 
     const csvContent =
@@ -471,50 +504,15 @@ export default function IncidentsByCategoryReport() {
         </div>
       )}
 
-      {/* ── Top Browser Navigation Bar (matching Image 2) ── */}
-      <div className="reporting-top-nav-bar">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <span>Service Desk</span>
-            <span>/</span>
-            <span className="text-gray-900">Reporting & Analytics</span>
-          </div>
-
-          <div className="reporting-tabs-group">
-            <div className="reporting-active-tab">
-              <span className="tab-title">
-                {activeReport === 'category'
-                  ? 'Incidents by Category'
-                  : activeReport === 'sla'
-                  ? 'SLA Compliance & Breaches'
-                  : activeReport === 'agents'
-                  ? 'Agent Performance'
-                  : 'FCR Rate Analysis'}
-              </span>
-              <button
-                type="button"
-                className="tab-close-btn"
-                onClick={handleCloseTab}
-                title="Close Reporting Tab"
-              >
-                ✕
-              </button>
-            </div>
-            <button
-              type="button"
-              className="reporting-new-tab-btn"
-              title="Open New Tab"
-              onClick={() => {
-                setStatusMessage('New report workspace opened');
-                setTimeout(() => setStatusMessage(null), 2000);
-              }}
-            >
-              +
-            </button>
-          </div>
+      {/* ── Top Navbar (matching Dashboard & Reference Image) ── */}
+      <header className="reporting-top-nav-bar">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-0 shrink-0">
+          <span>Service Desk</span>
+          <span>/</span>
+          <span className="text-gray-900">Reporting &amp; Analytics</span>
         </div>
 
-        {/* Right utility items from Image 2 */}
+        {/* Right utility items */}
         <div className="reporting-top-right-tools">
           <GlobalNavbarActions
             onGetStarted={() => navigate('/dashboard')}
@@ -525,7 +523,7 @@ export default function IncidentsByCategoryReport() {
             }}
           />
         </div>
-      </div>
+      </header>
 
       {/* ── Main Reporting Canvas ── */}
       <div className="reporting-main-canvas">
@@ -533,73 +531,121 @@ export default function IncidentsByCategoryReport() {
         <div className="report-action-toolbar">
           <button
             type="button"
-            className="report-pill-btn"
+            className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
             onClick={handleExportCSV}
             title="Download report data as CSV file"
           >
-            <svg className="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
+            <Download className="w-3.5 h-3.5 text-gray-500" />
             <span>Export to CSV</span>
           </button>
 
           <button
             type="button"
-            className={`report-pill-btn ${isFavorite ? 'favorited' : ''}`}
+            className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            onClick={() => setIsScheduleOpen(true)}
+            title="Automate recurring report generation"
+          >
+            <Clock className="w-3.5 h-3.5 text-gray-500" />
+            <span>{savedSchedule ? `Scheduled (${savedSchedule.freq})` : 'Schedule Export'}</span>
+          </button>
+
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+                title="Customize table column display"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
+                <span>Columns</span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                className="bg-white border border-slate-200 shadow-xl rounded-xl p-3 z-50 w-52 flex flex-col gap-1.5 text-xs text-slate-700 animate-in fade-in"
+                sideOffset={6}
+              >
+                <span className="font-bold text-slate-800 pb-1 border-b border-slate-100">Toggle Visible Columns</span>
+                {Object.keys(visibleColumns).map((colKey) => (
+                  <label key={colKey} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[colKey]}
+                      onChange={(e) => setVisibleColumns((prev) => ({ ...prev, [colKey]: e.target.checked }))}
+                      className="rounded text-indigo-600 focus:ring-0"
+                    />
+                    <span className="capitalize">{colKey.replace(/([A-Z])/g, ' $1')}</span>
+                  </label>
+                ))}
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+
+          <button
+            type="button"
+            className={`px-3 py-1.5 border text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all ${
+              isFavorite
+                ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
+            }`}
             onClick={handleToggleFavorite}
             title="Save to personalized My Reports list"
           >
-            <span className="text-sm">{isFavorite ? '★' : '☆'}</span>
+            <Star className={`w-3.5 h-3.5 ${isFavorite ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
             <span>Add to My Reports</span>
           </button>
         </div>
 
-        {/* ── Halo Gap Bridge: Report Catalog Switcher Tabs ── */}
-        <div className="mb-4">
-          <div className="inline-flex items-center gap-1.5 bg-slate-200/90 p-1.5 rounded-xl shadow-inner border border-slate-300">
+        {/* ── Report Catalog Switcher Tabs ── */}
+        <div className="mb-5">
+          <div className="inline-flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-lg shadow-2xs">
             <button
               type="button"
               onClick={() => setActiveReport('category')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeReport === 'category'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-              📊 Incidents by Category
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Incidents by Category</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveReport('sla')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeReport === 'sla'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-              ⏱️ SLA Compliance & Breach Analysis
+              <Clock className="w-3.5 h-3.5" />
+              <span>SLA Compliance &amp; Breach Analysis</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveReport('agents')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeReport === 'agents'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-              👥 Agent Performance & Workload
+              <Users className="w-3.5 h-3.5" />
+              <span>Agent Performance &amp; Workload</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveReport('fcr')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeReport === 'fcr'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-              🎯 First Contact Resolution (FCR)
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>First Contact Resolution (FCR)</span>
             </button>
           </div>
         </div>
@@ -707,8 +753,8 @@ export default function IncidentsByCategoryReport() {
 
         {/* ── Section 1: Reporting Period ── */}
         <div className="report-section-block">
-          <div className="report-section-header-pill">
-            <span>Reporting Period</span>
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            Reporting Period
           </div>
 
           <div className="report-period-row">
@@ -749,7 +795,7 @@ export default function IncidentsByCategoryReport() {
                   onClick={() => setSlaFilterMode('all')}
                   className={`px-3 py-1 rounded-md text-xs font-semibold ${
                     slaFilterMode === 'all'
-                      ? 'bg-[#13273e] text-white'
+                      ? 'bg-[#eb6a47] text-white shadow-2xs font-bold'
                       : 'bg-white text-slate-600 border border-slate-200'
                   }`}
                 >
@@ -784,20 +830,27 @@ export default function IncidentsByCategoryReport() {
 
         {/* ── Section 2: Custom Filter Condition Builder ── */}
         <div className="report-section-block filters-block">
-          <div className="report-section-header-pill filters-header-pill">
-            <span>Filter Conditions Builder</span>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Filter Conditions Builder
+            </span>
             <button
               type="button"
-              className="filter-add-plus-btn"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-[#eb6a47] hover:bg-[#eb6a47]/10 rounded-lg border border-[#eb6a47]/30 transition-all cursor-pointer"
               onClick={handleAddFilterRow}
               title="Add another filter condition"
             >
-              ⊕ Add Condition
+              <span>+ Add Condition</span>
             </button>
           </div>
 
-          <div className="filter-rows-container">
-            {filters.map((filter) => (
+          {filters.length === 0 ? (
+            <div className="p-3.5 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
+              <span>No custom filter conditions applied. All incidents are included in this report.</span>
+            </div>
+          ) : (
+            <div className="filter-rows-container">
+              {filters.map((filter) => (
               <div key={filter.id} className="filter-item-row">
                 {/* Field select (e.g. Category, ITIL Type, Team, Priority, Status, Agent) */}
                 <div className="filter-select-field">
@@ -923,6 +976,7 @@ export default function IncidentsByCategoryReport() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* ── Active Filter Tag ── */}
@@ -946,7 +1000,7 @@ export default function IncidentsByCategoryReport() {
         <div className="report-table-action-bar">
           <button
             type="button"
-            className="report-refresh-btn"
+            className="px-4 py-2 bg-[#eb6a47] hover:bg-[#d65a37] text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
             onClick={() => {
               setIsRefreshing(true);
               setStatusMessage('Refreshed report data with latest metrics');
@@ -957,7 +1011,7 @@ export default function IncidentsByCategoryReport() {
             }}
             title="Refresh current report query"
           >
-            <span className={`text-sm ${isRefreshing ? 'animate-spin inline-block' : ''}`}>🔄</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Refresh Report</span>
           </button>
 
@@ -1020,7 +1074,17 @@ export default function IncidentsByCategoryReport() {
                     <td>
                       <span className="report-status-badge">{t.status}</span>
                     </td>
-                    <td className="report-sla-met-cell">{t.slaResolutionMet}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      {t.slaResolutionMet === 1 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          ✓ Met
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          ✕ Breached
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1030,19 +1094,89 @@ export default function IncidentsByCategoryReport() {
 
         {/* ── View 2: SLA Compliance & Breach Analysis Table ── */}
         {activeReport === 'sla' && (
-          <div className="report-table-wrapper">
+          <div className="flex flex-col gap-5">
+            {/* Visual Charts: Donut Gauge + Priority Breach Bars */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-2">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Resolution SLA Met vs Breached</span>
+                <div className="flex items-center gap-6 mt-1">
+                  <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-slate-100"
+                        strokeWidth="3.8"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-emerald-500 transition-all duration-1000"
+                        strokeDasharray={`${slaMetrics.metPercent}, 100`}
+                        strokeWidth="3.8"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-lg font-black text-slate-800">{slaMetrics.metPercent}%</span>
+                      <span className="text-[9px] uppercase font-bold text-emerald-600">Compliance</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                      <span className="font-medium text-slate-700">Met Target ({slaMetrics.met} tickets)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-rose-500" />
+                      <span className="font-medium text-slate-700">Breached SLA ({slaMetrics.breached} tickets)</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Contractual SLA objective: 95.0% compliance</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">SLA Breach Breakdown by Priority</span>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { label: 'Critical (P1)', count: filteredTickets.filter(t => t.priority === 'Critical' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Critical').length || 1, color: 'bg-rose-600' },
+                    { label: 'High (P2)', count: filteredTickets.filter(t => t.priority === 'High' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'High').length || 1, color: 'bg-orange-500' },
+                    { label: 'Medium (P3)', count: filteredTickets.filter(t => t.priority === 'Medium' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Medium').length || 1, color: 'bg-amber-400' },
+                    { label: 'Low (P4)', count: filteredTickets.filter(t => t.priority === 'Low' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Low').length || 1, color: 'bg-blue-400' },
+                  ].map((row) => {
+                    const pct = Math.round((row.count / row.total) * 100);
+                    return (
+                      <div key={row.label} className="flex flex-col gap-1 text-xs">
+                        <div className="flex justify-between font-semibold text-slate-700">
+                          <span>{row.label}</span>
+                          <span className="text-slate-500">{row.count} breached ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div className={`h-full ${row.color} transition-all duration-500`} style={{ width: `${Math.min(100, Math.max(pct, 4))}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="report-table-wrapper">
             <table className="report-data-table">
               <thead>
                 <tr>
-                  <th>Ticket ID</th>
-                  <th>Summary</th>
-                  <th>Priority</th>
-                  <th>Category</th>
-                  <th>Assigned Agent</th>
-                  <th>Target SLA</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>Resolution SLA Met</th>
-                  <th>Breach Analysis & Overrun</th>
+                  {visibleColumns.id && <th>Ticket ID</th>}
+                  {visibleColumns.summary && <th>Summary</th>}
+                  {visibleColumns.priority && <th>Priority</th>}
+                  {visibleColumns.category && <th>Category</th>}
+                  {visibleColumns.agent && <th>Assigned Agent</th>}
+                  {visibleColumns.targetSla && <th>Target SLA</th>}
+                  {visibleColumns.status && <th>Status</th>}
+                  {visibleColumns.slaMet && <th style={{ textAlign: 'center' }}>Resolution SLA Met</th>}
+                  {visibleColumns.breachDuration && <th>Breach Analysis & Overrun</th>}
                 </tr>
               </thead>
               <tbody>
@@ -1052,60 +1186,99 @@ export default function IncidentsByCategoryReport() {
                     onClick={() => setSelectedTicket(t)}
                     title={`View ticket #${t.id} details`}
                   >
-                    <td>
-                      <button
-                        type="button"
-                        className="report-ticket-id-link font-bold"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTicket(t);
-                        }}
-                      >
-                        {t.id}
-                      </button>
-                    </td>
-                    <td className="report-summary-cell font-medium">{t.summary}</td>
-                    <td>
-                      <span className={`report-priority-badge priority-${t.priority.toLowerCase()}`}>
-                        {t.priority}
-                      </span>
-                    </td>
-                    <td className="text-xs text-slate-600">{t.category}</td>
-                    <td className="whitespace-nowrap">{t.agent}</td>
-                    <td className="whitespace-nowrap font-mono text-xs">{t.slaTarget || '4h Target'}</td>
-                    <td>
-                      <span className="report-status-badge">{t.status}</span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {t.slaResolutionMet === 1 ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          ✓ Met
+                    {visibleColumns.id && (
+                      <td>
+                        <button
+                          type="button"
+                          className="report-ticket-id-link font-bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTicket(t);
+                          }}
+                        >
+                          {t.id}
+                        </button>
+                      </td>
+                    )}
+                    {visibleColumns.summary && <td className="report-summary-cell font-medium">{t.summary}</td>}
+                    {visibleColumns.priority && (
+                      <td>
+                        <span className={`report-priority-badge priority-${t.priority.toLowerCase()}`}>
+                          {t.priority}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
-                          ✕ Breached
+                      </td>
+                    )}
+                    {visibleColumns.category && <td className="text-xs text-slate-600">{t.category}</td>}
+                    {visibleColumns.agent && <td className="whitespace-nowrap">{t.agent}</td>}
+                    {visibleColumns.targetSla && <td className="whitespace-nowrap font-mono text-xs">{t.slaTarget || '4h Target'}</td>}
+                    {visibleColumns.status && (
+                      <td>
+                        <span className="report-status-badge">{t.status}</span>
+                      </td>
+                    )}
+                    {visibleColumns.slaMet && (
+                      <td style={{ textAlign: 'center' }}>
+                        {t.slaResolutionMet === 1 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ✓ Met
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                            ✕ Breached
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.breachDuration && (
+                      <td className="whitespace-nowrap">
+                        <span
+                          className={`text-xs font-semibold ${
+                            t.slaResolutionMet === 0 ? 'text-rose-600 font-bold' : 'text-slate-600'
+                          }`}
+                        >
+                          {t.breachDuration || (t.slaResolutionMet ? 'Within Target' : '+20m Breach')}
                         </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap">
-                      <span
-                        className={`text-xs font-semibold ${
-                          t.slaResolutionMet === 0 ? 'text-rose-600 font-bold' : 'text-slate-600'
-                        }`}
-                      >
-                        {t.breachDuration || (t.slaResolutionMet ? 'Within Target' : '+20m Breach')}
-                      </span>
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
         )}
 
         {/* ── View 3: Agent Performance Table ── */}
         {activeReport === 'agents' && (
-          <div className="report-table-wrapper">
+          <div className="flex flex-col gap-5">
+            {/* Visual Workload Distribution Bars */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3 mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Agent Resolution Velocity & SLA Adherence</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                {[
+                  { name: 'Alex Rivera', role: '1st Line Senior', closed: 28, metPct: 96.4, color: 'bg-emerald-500' },
+                  { name: 'Sarah Jenkins', role: 'Support Specialist', closed: 22, metPct: 92.8, color: 'bg-emerald-500' },
+                  { name: 'Alex Agent', role: 'Help Desk', closed: 10, metPct: 90.0, color: 'bg-amber-500' },
+                  { name: 'Alice Approver', role: 'Operations Lead', closed: 8, metPct: 100.0, color: 'bg-indigo-500' },
+                ].map((ag) => (
+                  <div key={ag.name} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-slate-800">{ag.name}</span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{ag.metPct}% Met</span>
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-black text-slate-900">{ag.closed}</span>
+                      <span className="text-xs text-slate-400">tickets resolved</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div className={`h-full ${ag.color}`} style={{ width: `${ag.metPct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="report-table-wrapper">
             <table className="report-data-table">
               <thead>
                 <tr>
@@ -1174,6 +1347,7 @@ export default function IncidentsByCategoryReport() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
 
         {/* ── View 4: First Contact Resolution (FCR) Table ── */}
@@ -1248,17 +1422,103 @@ export default function IncidentsByCategoryReport() {
         />
       )}
 
-      {/* ── Bottom Right Assistant Help Bubble ── */}
-      <div className="reporting-floating-assistant" title="ITSM Reporting Assistant">
-        <div className="assistant-circle-cyan">
-          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-          </svg>
-        </div>
-        <div className="assistant-circle-navy">
-          <span className="text-sm">✦</span>
-        </div>
-      </div>
+      {/* ── Schedule Automated Export Dialog ── */}
+      <Dialog.Root open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-full max-w-md z-50 flex flex-col gap-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <Dialog.Title className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <span>⏰ Schedule Automated Export</span>
+              </Dialog.Title>
+              <Dialog.Close className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</Dialog.Close>
+            </div>
+            <Dialog.Description className="text-xs text-slate-500">
+              Configure recurring delivery of this report directly to your team's email inboxes.
+            </Dialog.Description>
+
+            <div className="flex flex-col gap-3.5 text-xs text-slate-700">
+              <div>
+                <label className="font-semibold block mb-1.5">Export Frequency</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['Daily', 'Weekly', 'Monthly'] as const).map((freq) => (
+                    <button
+                      key={freq}
+                      type="button"
+                      onClick={() => setScheduleFreq(freq)}
+                      className={`py-2 rounded-lg font-semibold border transition-all cursor-pointer ${
+                        scheduleFreq === freq
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {freq}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1.5">Report File Format</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['CSV', 'PDF'] as const).map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      onClick={() => setScheduleFormat(fmt)}
+                      className={`py-2 rounded-lg font-semibold border transition-all cursor-pointer ${
+                        scheduleFormat === fmt
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {fmt === 'CSV' ? '📊 CSV Spreadsheet' : '📄 PDF Document'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Recipient Email(s)</label>
+                <input
+                  type="email"
+                  value={scheduleEmail}
+                  onChange={(e) => setScheduleEmail(e.target.value)}
+                  placeholder="e.g. operations@servigen.io, team@halo.ai"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsScheduleOpen(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedSchedule({
+                    freq: scheduleFreq,
+                    format: scheduleFormat,
+                    email: scheduleEmail || 'current_user@servigen.io',
+                  });
+                  setIsScheduleOpen(false);
+                  setStatusMessage(`Export schedule configured: ${scheduleFreq} ${scheduleFormat} to ${scheduleEmail || 'your email'}.`);
+                }}
+                className="px-4 py-2 text-xs font-bold bg-[#eb6a47] hover:bg-[#d65a37] text-white rounded-lg shadow-sm cursor-pointer transition-all"
+              >
+                Save Schedule
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Refresh Report Button & Results Count */}
     </div>
   );
 }

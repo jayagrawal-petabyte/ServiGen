@@ -113,6 +113,20 @@ function layoutDay(events: CalendarEvent[]) {
 
 type Draft = Omit<CalendarEvent, "id">;
 
+export interface BlackoutWindow {
+  id: string;
+  name: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  reason: string;
+  scope: string;
+  emergencyExemptionRequired: boolean;
+}
+
+function getBlackoutConflict(dateKey: string, windows: BlackoutWindow[]): BlackoutWindow | undefined {
+  return windows.find((w) => dateKey >= w.startDate && dateKey <= w.endDate);
+}
+
 function emptyDraft(date: Date, hour = 9): Draft {
   return {
     title: "",
@@ -156,6 +170,7 @@ export default function CalendarPage() {
   const [draftError, setDraftError] = useState("");
   const [changeEvents, setChangeEvents] = useState<CalendarEvent[]>([]);
   const [showChangeOverlay, setShowChangeOverlay] = useState(true);
+  const [showBlackoutOverlay, setShowBlackoutOverlay] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Fetch calendar events on mount
@@ -329,6 +344,56 @@ export default function CalendarPage() {
     );
   }, [allEvents, search, hiddenTypes, hiddenAgents]);
 
+  // Dynamic corporate change freeze / blackout windows
+  const dynamicBlackoutWindows = useMemo<BlackoutWindow[]>(() => {
+    const y = anchor.getFullYear();
+    const m = anchor.getMonth();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const lastDay = new Date(y, m + 1, 0).getDate();
+
+    return [
+      {
+        id: `freeze-end-${y}-${m}`,
+        name: "Month-End Production Freeze",
+        startDate: `${y}-${pad(m + 1)}-${pad(Math.max(lastDay - 4, 1))}`,
+        endDate: `${y}-${pad(m + 1)}-${pad(lastDay)}`,
+        reason: "Financial close & billing reconciliation freeze. Non-emergency production deployments restricted.",
+        scope: "Production Infrastructure",
+        emergencyExemptionRequired: true,
+      },
+      {
+        id: `freeze-mid-${y}-${m}`,
+        name: "Release Blackout Window",
+        startDate: `${y}-${pad(m + 1)}-14`,
+        endDate: `${y}-${pad(m + 1)}-16`,
+        reason: "Core network backbone maintenance. All infrastructure changes locked.",
+        scope: "Core Routing & Identity",
+        emergencyExemptionRequired: true,
+      },
+      {
+        id: "freeze-2026-q2",
+        name: "Q2 Enterprise Release Freeze",
+        startDate: "2026-05-25",
+        endDate: "2026-05-31",
+        reason: "Quarter-end audit and compliance change lockdown.",
+        scope: "Global",
+        emergencyExemptionRequired: true,
+      },
+    ];
+  }, [anchor]);
+
+  // Detect if any blackout window falls in the current view range
+  const currentRangeBlackouts = useMemo(() => {
+    if (!showBlackoutOverlay) return [];
+    const checkDays = view === "month" ? monthGrid(anchor) : view === "day" ? [anchor] : weekDays;
+    const activeSet = new Map<string, BlackoutWindow>();
+    for (const d of checkDays) {
+      const match = getBlackoutConflict(toDateKey(d), dynamicBlackoutWindows);
+      if (match) activeSet.set(match.id, match);
+    }
+    return Array.from(activeSet.values());
+  }, [view, anchor, weekDays, dynamicBlackoutWindows, showBlackoutOverlay]);
+
   function eventsOn(date: Date) {
     const key = toDateKey(date);
     return visibleEvents
@@ -416,10 +481,13 @@ export default function CalendarPage() {
           <div className="cal-gutter-label">{gmtLabel(now)}</div>
           {days.map((d) => {
             const isToday = isSameDay(d, now);
+            const dKey = toDateKey(d);
+            const blackout = showBlackoutOverlay ? getBlackoutConflict(dKey, dynamicBlackoutWindows) : undefined;
             return (
               <button
-                key={toDateKey(d)}
+                key={dKey}
                 className={`cal-day-head ${isToday ? "is-today" : ""}`}
+                style={blackout ? { borderBottom: '2px solid #f43f5e' } : undefined}
                 onClick={() => {
                   goTo(d);
                   setView("day");
@@ -427,6 +495,11 @@ export default function CalendarPage() {
               >
                 <span className="cal-day-name">{WEEKDAYS[d.getDay()]}</span>
                 <span className="cal-day-num">{d.getDate()}</span>
+                {blackout && (
+                  <span style={{ fontSize: 9, background: '#fef3c7', color: '#92400e', padding: '1px 4px', borderRadius: 3, fontWeight: 700, marginTop: 2, display: 'inline-block' }}>
+                    🔒 Freeze
+                  </span>
+                )}
               </button>
             );
           })}
@@ -434,22 +507,26 @@ export default function CalendarPage() {
 
         <div className="cal-allday-row">
           <div className="cal-gutter-label small">all-day</div>
-          {days.map((d) => (
-            <div key={toDateKey(d)} className={`cal-allday-cell ${isSameDay(d, now) ? "is-today" : ""}`}>
-              {eventsOn(d)
-                .filter((e) => e.allDay)
-                .map((e) => (
-                  <button
-                    key={e.id}
-                    className="cal-chip"
-                    style={{ background: typeMeta(e.type).color }}
-                    onClick={() => setSelected(e)}
-                  >
-                    {e.title}
-                  </button>
-                ))}
-            </div>
-          ))}
+          {days.map((d) => {
+            const dKey = toDateKey(d);
+            const blackout = showBlackoutOverlay ? getBlackoutConflict(dKey, dynamicBlackoutWindows) : undefined;
+            return (
+              <div key={dKey} className={`cal-allday-cell ${isSameDay(d, now) ? "is-today" : ""} ${blackout ? "cal-blackout-cell" : ""}`}>
+                {eventsOn(d)
+                  .filter((e) => e.allDay)
+                  .map((e) => (
+                    <button
+                      key={e.id}
+                      className="cal-chip"
+                      style={{ background: typeMeta(e.type).color }}
+                      onClick={() => setSelected(e)}
+                    >
+                      {e.title}
+                    </button>
+                  ))}
+              </div>
+            );
+          })}
         </div>
 
         <div className="cal-grid-body">
@@ -465,8 +542,10 @@ export default function CalendarPage() {
             const isToday = isSameDay(d, now);
             const timed = eventsOn(d).filter((e) => !e.allDay);
             const { lanes, laneCount } = layoutDay(timed);
+            const dKey = toDateKey(d);
+            const blackout = showBlackoutOverlay ? getBlackoutConflict(dKey, dynamicBlackoutWindows) : undefined;
             return (
-              <div key={toDateKey(d)} className={`cal-day-col ${isToday ? "is-today" : ""}`}>
+              <div key={dKey} className={`cal-day-col ${isToday ? "is-today" : ""} ${blackout ? "cal-blackout-col" : ""}`}>
                 {hours.map((h) => (
                   <button
                     key={h}
@@ -529,22 +608,35 @@ export default function CalendarPage() {
         {days.map((d) => {
           const dayEvents = eventsOn(d);
           const outside = d.getMonth() !== anchor.getMonth();
+          const dKey = toDateKey(d);
+          const blackout = showBlackoutOverlay ? getBlackoutConflict(dKey, dynamicBlackoutWindows) : undefined;
           return (
             <div
-              key={toDateKey(d)}
-              className={`cal-month-cell ${outside ? "is-outside" : ""} ${isSameDay(d, now) ? "is-today" : ""}`}
+              key={dKey}
+              className={`cal-month-cell ${outside ? "is-outside" : ""} ${isSameDay(d, now) ? "is-today" : ""} ${blackout ? "cal-blackout-cell" : ""}`}
               onClick={() => openDraft(d)}
             >
-              <button
-                className="cal-month-num"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  goTo(d);
-                  setView("day");
-                }}
-              >
-                {d.getDate()}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <button
+                  className="cal-month-num"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    goTo(d);
+                    setView("day");
+                  }}
+                >
+                  {d.getDate()}
+                </button>
+                {blackout && (
+                  <span
+                    className="cal-blackout-pill"
+                    title={`${blackout.name} (${blackout.startDate} to ${blackout.endDate}): ${blackout.reason}`}
+                    onClick={(ev) => ev.stopPropagation()}
+                  >
+                    🔒 Freeze
+                  </span>
+                )}
+              </div>
               {dayEvents.slice(0, 3).map((e) => (
                 <button
                   key={e.id}
@@ -857,6 +949,33 @@ export default function CalendarPage() {
               )}
             </span>
           </button>
+
+          {/* Change Freeze / Blackout Overlay Toggle */}
+          <button
+            className={`cal-side-item ${showBlackoutOverlay ? "is-active" : "is-off"}`}
+            onClick={() => setShowBlackoutOverlay((prev) => !prev)}
+            title={showBlackoutOverlay ? "Hide change freeze windows" : "Show change freeze windows"}
+          >
+            <span
+              className={`cal-dot big ${!showBlackoutOverlay ? "is-off" : ""}`}
+              style={{
+                backgroundColor: showBlackoutOverlay ? "#e11d48" : "transparent",
+                borderColor: "#e11d48",
+              }}
+            >
+              {showBlackoutOverlay && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </span>
+            <span className="cal-side-item-label">
+              Change Freezes
+              <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: '#f43f5e' }}>
+                ({dynamicBlackoutWindows.length})
+              </span>
+            </span>
+          </button>
         </section>
       </aside>
 
@@ -919,6 +1038,43 @@ export default function CalendarPage() {
         </div>
         {error && <div className="cal-error" style={{ margin: "8px 16px" }}>{error}</div>}
 
+        {/* Active Change Freeze Advisory Banner */}
+        {showBlackoutOverlay && currentRangeBlackouts.length > 0 && (
+          <div style={{
+            margin: '0 16px 12px',
+            padding: '8px 14px',
+            borderRadius: 8,
+            background: 'linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '1px solid #fde68a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: 12,
+            color: '#92400e',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15 }}>⚠️</span>
+              <div>
+                <strong>Active Change Freeze Window:</strong>{' '}
+                {currentRangeBlackouts.map((b) => b.name).join(', ')} ({currentRangeBlackouts[0].startDate} to {currentRangeBlackouts[0].endDate}).
+                <span style={{ marginLeft: 6, opacity: 0.85 }}>Standard production deployments locked.</span>
+              </div>
+            </div>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              background: '#b45309',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: 4,
+              whiteSpace: 'nowrap',
+            }}>
+              Emergency CAB Required
+            </span>
+          </div>
+        )}
+
         {view === "week" && renderTimeGrid(weekDays)}
         {view === "day" && renderTimeGrid([anchor])}
         {view === "month" && renderMonth()}
@@ -936,6 +1092,27 @@ export default function CalendarPage() {
                 ✕
               </button>
             </div>
+            {(() => {
+              const conflict = getBlackoutConflict(selected.date, dynamicBlackoutWindows);
+              if (!conflict) return null;
+              return (
+                <div style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  color: '#92400e',
+                  fontSize: 12,
+                  margin: '10px 14px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}>
+                  <span>⚠️</span>
+                  <span><strong>Change Freeze:</strong> Scheduled during <em>{conflict.name}</em> (Emergency CAB sign-off required).</span>
+                </div>
+              );
+            })()}
             <dl className="cal-details">
               <dt>Type</dt>
               <dd>{typeMeta(selected.type).label}</dd>
@@ -978,6 +1155,31 @@ export default function CalendarPage() {
                 ✕
               </button>
             </div>
+            {(() => {
+              const conflict = getBlackoutConflict(draft.date, dynamicBlackoutWindows);
+              if (!conflict) return null;
+              return (
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#991b1b',
+                  fontSize: 12,
+                  margin: '10px 14px 0',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 2 }}>
+                    <span>⚠️ Blackout Window Conflict Detected</span>
+                  </div>
+                  <div>
+                    The selected date <strong>({draft.date})</strong> falls inside <strong>{conflict.name}</strong>.
+                  </div>
+                  <div style={{ fontSize: 11, marginTop: 4, color: '#b91c1c' }}>
+                    {conflict.reason} Non-emergency changes are restricted; Emergency CAB approval is required.
+                  </div>
+                </div>
+              );
+            })()}
             <div className="cal-form">
               <label>
                 Title *

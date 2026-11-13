@@ -1008,3 +1008,45 @@
     flex-direction: column;
   }
 }
+
+/* Change Freeze & Blackout Overlay Styles */
+.cal-blackout-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(245, 158, 11, 0.09),
+    rgba(245, 158, 11, 0.09) 10px,
+    rgba(245, 158, 11, 0.18) 10px,
+    rgba(245, 158, 11, 0.18) 20px
+  ) !important;
+  border-left: 2px dashed rgba(217, 119, 6, 0.6) !important;
+  border-right: 2px dashed rgba(217, 119, 6, 0.6) !important;
+}
+
+.cal-blackout-col {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(245, 158, 11, 0.04),
+    rgba(245, 158, 11, 0.04) 12px,
+    rgba(245, 158, 11, 0.08) 12px,
+    rgba(245, 158, 11, 0.08) 24px
+  );
+}
+
+.cal-blackout-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  margin: 2px 0 4px;
+  max-width: calc(100% - 4px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}

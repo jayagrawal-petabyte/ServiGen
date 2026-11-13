@@ -8,6 +8,7 @@ import ArticleDraftSidebar, {
   type ArticleDraftView,
 } from './ArticleDraftSidebar';
 import ArticleDraftsDesignView from './ArticleDraftsDesignView';
+import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
 import CreateArticleDraftModal from './CreateArticleDraftModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
@@ -16,6 +17,7 @@ import './articleDrafts.css';
 export default function ArticleDraftsPage() {
   const [drafts, setDrafts] = useState<ArticleDraft[]>([]);
   const [activeSubnavView, setActiveSubnavView] = useState<ArticleDraftView>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [perPage, setPerPage] = useState<number>(20);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -249,9 +251,31 @@ export default function ArticleDraftsPage() {
 
         {/* Right Content Area */}
         <main className="article-drafts-main">
-          <h1 className="drafts-title">
-            Open Article Drafts (Including SLA Hold)
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="drafts-title" style={{ margin: 0 }}>
+              Open Article Drafts (Including SLA Hold)
+            </h1>
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                📋 Table View
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                  viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                🎴 Card View
+              </button>
+            </div>
+          </div>
 
           {/* Error alert */}
           {error && (
@@ -271,28 +295,36 @@ export default function ArticleDraftsPage() {
             </div>
           )}
 
-          {/* Table View matching UI/UX design */}
-          <ArticleDraftsDesignView
-            drafts={paginatedDrafts}
-            totalDrafts={filteredDrafts.length}
-            currentPage={safeCurrentPage}
-            totalPages={totalPages}
-            perPage={perPage}
-            onPageChange={setCurrentPage}
-            onPerPageChange={(newPerPage) => {
-              setPerPage(newPerPage);
-              setCurrentPage(1);
-            }}
-            selectedIds={selectedIds}
-            onToggleSelect={handleToggleSelect}
-            onToggleSelectAll={handleToggleSelectAll}
-            onOpenArticle={(draft) => setSelectedArticle(draft)}
-            sortDirection={sortDirection}
-            onToggleSort={() =>
-              setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-            }
-            isLoading={isLoading}
-          />
+          {/* Table or Card View */}
+          {viewMode === 'table' ? (
+            <ArticleDraftsDesignView
+              drafts={paginatedDrafts}
+              totalDrafts={filteredDrafts.length}
+              currentPage={safeCurrentPage}
+              totalPages={totalPages}
+              perPage={perPage}
+              onPageChange={setCurrentPage}
+              onPerPageChange={(newPerPage) => {
+                setPerPage(newPerPage);
+                setCurrentPage(1);
+              }}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+              onOpenArticle={(draft) => setSelectedArticle(draft)}
+              sortDirection={sortDirection}
+              onToggleSort={() =>
+                setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+              }
+              isLoading={isLoading}
+            />
+          ) : (
+            <ArticleDraftsLiveView
+              drafts={filteredDrafts}
+              onOpenArticle={(draft) => setSelectedArticle(draft)}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          )}
         </main>
       </div>
 

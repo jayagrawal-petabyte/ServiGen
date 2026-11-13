@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Plus } from "lucide-react";
 import { type Project, type ProjectPriority, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
 import {
   getSessionUserName,
@@ -706,7 +707,8 @@ export default function ProjectsPage() {
               </>
             )}
             <button className="pj-new" onClick={openNewModal}>
-              + New
+              <Plus size={14} strokeWidth={2.5} className="shrink-0" />
+              <span>New</span>
             </button>
             <div className="pj-menu-wrap">
               <button className="pj-circle" aria-label="More options" onClick={() => setMenuOpen(!menuOpen)}>
