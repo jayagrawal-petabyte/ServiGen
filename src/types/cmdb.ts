@@ -112,6 +112,21 @@ export interface CiSpecification {
   serialNumber?: string;
   model?: string;
   rackLocation?: string;
+  warrantyExpiry?: string;
+  // Type-specific dynamic attributes
+  version?: string;
+  runtime?: string;
+  port?: string;
+  protocol?: string;
+  vendor?: string;
+  vlan?: string;
+  firmwareVersion?: string;
+  deviceCategory?: string;
+  engine?: string;
+  databaseRole?: string;
+  cloudProvider?: string;
+  region?: string;
+  [key: string]: any;
 }
 
 export interface CiSoftwareLicense {
@@ -137,6 +152,7 @@ export interface ConfigurationItem {
   linkedChangesCount: number;
   ipAddress?: string;
   lastUpdated?: string;
+  warrantyExpiry?: string;
   specifications?: CiSpecification;
   relationships?: CiRelationship[];
   softwareLicenses?: CiSoftwareLicense[];

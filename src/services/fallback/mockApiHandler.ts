@@ -39,6 +39,7 @@ let mutableOnHoldTickets: any[] = JSON.parse(JSON.stringify(MOCK_ON_HOLD_TICKETS
 let mutableActiveTickets: any[] = JSON.parse(JSON.stringify(MOCK_ACTIVE_TICKETS));
 let mutableClosedTickets: any[] = JSON.parse(JSON.stringify(MOCK_CLOSED_TICKETS));
 let mutableCustomLists: any[] = JSON.parse(JSON.stringify(MOCK_CUSTOM_LISTS));
+let mutableConfigItems: any[] = JSON.parse(JSON.stringify(MOCK_CONFIG_ITEMS));
 let currentAgentMood = 'Good';
 let currentAgentPresence = 'available';
 
@@ -489,7 +490,105 @@ export function handleOfflineRequest(
 
   // 12. CMDB
   if (path.startsWith('/api/cmdb')) {
-    return { success: true, data: MOCK_CONFIG_ITEMS };
+    if (path === '/api/cmdb/configuration-items' && upperMethod === 'POST') {
+      const generatedId = parsedBody?.id || `CI-${Math.floor(1000 + Math.random() * 9000)}`;
+      const prefix = (parsedBody?.type || 'SRV').slice(0, 3).toUpperCase();
+      const generatedTag = parsedBody?.tag || `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+      const newCi = {
+        id: generatedId,
+        tag: generatedTag,
+        name: parsedBody?.name || 'New Configuration Item',
+        type: parsedBody?.type || 'Server',
+        site: parsedBody?.site || 'London Primary DC (Lon-01)',
+        status: parsedBody?.status || 'Active',
+        lifecycleState: parsedBody?.lifecycleState || 'Deployed',
+        businessOwner: parsedBody?.businessOwner || 'Technology',
+        technicalContact: parsedBody?.technicalContact || 'Platform Operations',
+        environment: parsedBody?.environment || 'Production',
+        ipAddress: parsedBody?.ipAddress || parsedBody?.specifications?.ipAddress || undefined,
+        activeIncidentsCount: 0,
+        linkedChangesCount: 0,
+        lastUpdated: 'Just now',
+        criticality: parsedBody?.criticality || 'Tier 2 - Business Operational',
+        specifications: parsedBody?.specifications || {},
+        relationships: Array.isArray(parsedBody?.relationships) ? parsedBody.relationships : [],
+        softwareLicenses: Array.isArray(parsedBody?.softwareLicenses) ? parsedBody.softwareLicenses : [],
+      };
+      mutableConfigItems = [newCi, ...mutableConfigItems];
+      return { success: true, data: newCi };
+    }
+
+    const singleCiMatch = path.match(/^\/api\/cmdb\/configuration-items\/([^/]+)$/);
+    if (singleCiMatch && upperMethod === 'PATCH') {
+      const targetKey = decodeURIComponent(singleCiMatch[1]);
+      const idx = mutableConfigItems.findIndex((c) => c.id === targetKey || c.tag === targetKey);
+      if (idx !== -1) {
+        mutableConfigItems[idx] = {
+          ...mutableConfigItems[idx],
+          ...parsedBody,
+          specifications: {
+            ...(mutableConfigItems[idx].specifications || {}),
+            ...(parsedBody?.specifications || {}),
+          },
+        };
+        return { success: true, data: mutableConfigItems[idx] };
+      }
+    }
+
+    const relMatch = path.match(/^\/api\/cmdb\/configuration-items\/([^/]+)\/relationships$/);
+    if (relMatch && upperMethod === 'POST') {
+      const sourceId = decodeURIComponent(relMatch[1]);
+      const source = mutableConfigItems.find((c) => c.id === sourceId || c.tag === sourceId);
+      if (source) {
+        source.relationships = source.relationships || [];
+        const targetId = parsedBody?.targetId || parsedBody?.targetCiId || parsedBody?.targetCiTag;
+        const target = mutableConfigItems.find((c) => c.id === targetId || c.tag === targetId);
+        const rel = {
+          type: parsedBody?.type || 'depends_on',
+          targetCiId: target ? target.id : targetId,
+          targetCiName: target ? target.name : targetId,
+          targetCiTag: target ? target.tag : targetId,
+          direction: parsedBody?.direction || 'downstream',
+        };
+        source.relationships.push(rel);
+        return { success: true, data: source.relationships };
+      }
+    }
+
+    const delRelMatch = path.match(/^\/api\/cmdb\/configuration-items\/([^/]+)\/relationships\/([^/]+)$/);
+    if (delRelMatch && upperMethod === 'DELETE') {
+      const sourceId = decodeURIComponent(delRelMatch[1]);
+      const targetId = decodeURIComponent(delRelMatch[2]);
+      const source = mutableConfigItems.find((c) => c.id === sourceId || c.tag === sourceId);
+      if (source && source.relationships) {
+        source.relationships = source.relationships.filter(
+          (r: any) => r.targetCiId !== targetId && r.targetCiTag !== targetId
+        );
+        return { success: true, data: source.relationships };
+      }
+    }
+
+    const topoMatch = path.match(/^\/api\/cmdb\/configuration-items\/([^/]+)\/topology$/);
+    if (topoMatch) {
+      const rootId = decodeURIComponent(topoMatch[1]);
+      const root = mutableConfigItems.find((c) => c.id === rootId || c.tag === rootId);
+      return {
+        success: true,
+        data: {
+          rootId: root?.id || rootId,
+          rootTag: root?.tag,
+          nodes: mutableConfigItems.slice(0, 5),
+          edges: (root?.relationships || []).map((r: any) => ({
+            source: root?.id,
+            target: r.targetCiId || r.targetCiTag,
+            type: r.type,
+            direction: r.direction,
+          })),
+        },
+      };
+    }
+
+    return { success: true, data: mutableConfigItems };
   }
 
   // 13. Services Catalogue

@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { LoginCredentials } from './types';
+import brainmintLogo from '../../assets/brainmint-logo-transparent.png';
 import './auth.css';
 
 export interface LoginScreenProps {
   onLoginSubmit?: (credentials: LoginCredentials) => Promise<boolean> | void;
   onForgotPasswordClick?: () => void;
+  initialErrorMessage?: string | null;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSubmit,
   onForgotPasswordClick,
+  initialErrorMessage,
 }) => {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     username: '',
@@ -19,7 +22,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(initialErrorMessage || null);
+
+  React.useEffect(() => {
+    if (initialErrorMessage) {
+      setErrorMessage(initialErrorMessage);
+    }
+  }, [initialErrorMessage]);
 
   const handleInputChange = (field: keyof LoginCredentials, value: string) => {
     setCredentials((prev) => ({ ...prev, [field]: value }));
@@ -28,7 +37,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!credentials.username.trim() || !credentials.password.trim()) {
@@ -36,23 +45,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    setLoading(true);
     setErrorMessage(null);
 
-    try {
-      if (onLoginSubmit) {
-        const result = await onLoginSubmit(credentials);
-
-        if (result === false) {
-          setErrorMessage('Invalid username or password.');
-        }
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || err?.message || 'Invalid username or password.');
-    } finally {
-      setLoading(false);
+    if (onLoginSubmit) {
+      onLoginSubmit(credentials);
     }
   };
 
@@ -71,7 +67,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         />
       </svg>
 
-      {/* Decorative Dots & Shapes matching Figma screenshot */}
+      {/* Decorative Dots & Shapes matching Figma screenshot with ambient floating animations */}
       <div className="figma-decor-layer">
         <div className="decor-dot-1" />
         <div className="decor-dot-2" />
@@ -85,9 +81,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       {/* Login Card Area */}
       <div className="figma-login-wrapper">
+        {/* BrainMint Official Brand Logo Header */}
+        <div className="figma-brand-header">
+          <img
+            src={brainmintLogo}
+            alt="BrainMint"
+            className="figma-brand-logo"
+          />
+        </div>
+
         <h1 className="figma-login-header">Login</h1>
 
-        <div className="figma-card-box">
+        <div className={`figma-card-box ${errorMessage ? 'has-error' : ''}`}>
           {errorMessage && <div className="figma-error-msg">{errorMessage}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
@@ -105,6 +110,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   handleInputChange('username', e.target.value)
                 }
                 autoComplete="username"
+                placeholder="Enter your username"
               />
             </div>
 
@@ -123,6 +129,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     handleInputChange('password', e.target.value)
                   }
                   autoComplete="current-password"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -168,10 +175,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </div>
             </div>
 
-            {/* Login Button */}
+            {/* Login Button with Spinner and Micro-interactions */}
             <div className="figma-btn-row">
-              <button type="submit" className="figma-submit-btn" disabled={loading}>
-                {loading ? 'Logging in...' : 'Login'}
+              <button
+                type="submit"
+                className="figma-submit-btn"
+                disabled={loading}
+              >
+                {loading && <span className="figma-btn-spinner" />}
+                <span>{loading ? 'Logging in...' : 'Login'}</span>
               </button>
             </div>
           </form>

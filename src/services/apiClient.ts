@@ -239,18 +239,12 @@ export async function refreshSession(): Promise<string | null> {
       });
 
       if (!res.ok) {
-        if (!isOfflineFallbackToken(currentToken)) {
-          clearAuthToken();
-        }
         return null;
       }
 
       const json = await res.json();
       const token = json?.data?.token || json?.token;
       if (!token) {
-        if (!isOfflineFallbackToken(currentToken)) {
-          clearAuthToken();
-        }
         return null;
       }
 
@@ -449,8 +443,8 @@ async function executeRequest<T = any>(
         headers: retryHeaders,
       });
     }
-    // Refresh failed: the session is genuinely over unless running an offline fallback token
-    if (!isOfflineFallbackToken(token)) {
+    // Refresh failed: only expire the entire app session if the auth verification endpoint itself rejected the token
+    if (normalizedEndpoint.includes('/auth/session') && !isOfflineFallbackToken(token)) {
       clearAuthToken();
       announceSessionExpiry();
     }

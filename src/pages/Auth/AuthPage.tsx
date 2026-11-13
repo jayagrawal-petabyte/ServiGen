@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LoginScreen from './LoginScreen';
 import SplashScreen from './SplashScreen';
@@ -13,17 +13,22 @@ export const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   
-  const redirectTarget = searchParams.get('redirect') || searchParams.get('from') || '/dashboard';
-  const initialTab: AuthTab = searchParams.get('tab') === 'users' ? 'users' : 'login';
+  const rawRedirect = searchParams.get('redirect') || searchParams.get('from') || '/dashboard';
+  const redirectTarget = !rawRedirect || rawRedirect === '/auth' || rawRedirect === '/login' || rawRedirect.startsWith('/auth')
+    ? '/dashboard'
+    : rawRedirect;
+  const initialTab: AuthTab = searchParams.get('tab') === 'users' ? 'users' : searchParams.get('tab') === 'splash' ? 'splash' : 'login';
   const [currentTab, setCurrentTab] = useState<AuthTab>(initialTab);
-  const [loggedInUser, setLoggedInUser] = useState<string>('Demo');
+  const [loggedInUser, setLoggedInUser] = useState<string>('admin001');
+  const isLoggingInRef = useRef<boolean>(false);
 
   // If already authenticated and not verifying, redirect directly to intended page
+  // (unless user is currently performing login or viewing the splash screen)
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (isAuthenticated && !authLoading && !isLoggingInRef.current && currentTab !== 'splash') {
       navigate(redirectTarget, { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate, redirectTarget]);
+  }, [isAuthenticated, authLoading, currentTab, navigate, redirectTarget]);
 
   // Forgot Password modal state
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
@@ -32,22 +37,54 @@ export const AuthPage: React.FC = () => {
   const [resetLoading, setResetLoading] = useState<boolean>(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
-  const handleLoginSubmit = async (credentials: LoginCredentials): Promise<boolean> => {
-    const success = await login(credentials);
-    if (success) {
-      setLoggedInUser(credentials.username || 'Demo');
-      setCurrentTab('splash');
+  // Login error state for returning from failed splash attempt
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const authPromiseRef = useRef<Promise<boolean> | null>(null);
 
-      // Pre-warm the dashboard chunk & initial API responses in parallel
-      import('../Dashboard/Dashboard');
-      api.get('/api/dashboard/kpis').catch(() => {});
-      api.get('/api/dashboard/summary').catch(() => {});
-      api.get('/api/tickets').catch(() => {});
-      api.get('/api/approvals').catch(() => {});
+  const handleLoginSubmit = (credentials: LoginCredentials) => {
+    isLoggingInRef.current = true;
+    const cleanUser = credentials.username?.trim() || 'admin001';
+    setLoggedInUser(cleanUser);
+    setLoginError(null);
+    setCurrentTab('splash'); // Instantly switch to Splash Screen on click!
 
-      return true;
+    // Concurrently authenticate and pre-warm data in background while splash plays
+    authPromiseRef.current = (async () => {
+      try {
+        const success = await login(credentials);
+        if (success) {
+          import('../Dashboard/Dashboard');
+          api.get('/api/dashboard/kpis').catch(() => {});
+          api.get('/api/dashboard/summary').catch(() => {});
+          api.get('/api/tickets').catch(() => {});
+          api.get('/api/approvals').catch(() => {});
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    })();
+  };
+
+  const handleSplashComplete = async () => {
+    let success = true;
+    if (authPromiseRef.current) {
+      try {
+        success = await authPromiseRef.current;
+      } catch {
+        success = false;
+      }
     }
-    return false;
+
+    if (success) {
+      isLoggingInRef.current = false;
+      navigate(redirectTarget, { replace: true });
+    } else {
+      isLoggingInRef.current = false;
+      setCurrentTab('login');
+      setLoginError('Invalid username or password.');
+    }
   };
 
   const handleResetSubmit = async (e: React.FormEvent) => {
@@ -82,13 +119,14 @@ export const AuthPage: React.FC = () => {
         <LoginScreen
           onLoginSubmit={handleLoginSubmit}
           onForgotPasswordClick={() => setShowForgotPassword(true)}
+          initialErrorMessage={loginError}
         />
       )}
       {currentTab === 'splash' && (
         <SplashScreen
           userName={loggedInUser}
-          durationMs={750}
-          onComplete={() => navigate(redirectTarget, { replace: true })}
+          durationMs={1500}
+          onComplete={handleSplashComplete}
         />
       )}
       {currentTab === 'users' && <OrganisationUsersScreen />}

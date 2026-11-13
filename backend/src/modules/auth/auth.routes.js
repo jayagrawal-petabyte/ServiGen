@@ -4,6 +4,7 @@ const {
   loginHandler,
   getSessionHandler,
   forgotPasswordHandler,
+  refreshHandler,
 } = require('./auth.controller');
 
 const router = express.Router();
@@ -28,5 +29,12 @@ router.post('/forgot-password', forgotPasswordHandler);
  * Load the currently authenticated user's session.
  */
 router.get('/session', getSessionHandler);
+
+/**
+ * POST /auth/refresh
+ *
+ * Refresh the active session token.
+ */
+router.post('/refresh', refreshHandler);
 
 module.exports = router;
