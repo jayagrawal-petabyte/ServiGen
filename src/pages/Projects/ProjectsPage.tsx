@@ -200,6 +200,7 @@ export default function ProjectsPage() {
       const updated = await updateSubtask(projectId, task.id, { done: !task.done });
       replaceTaskInProject(projectId, task.id, updated);
     } catch {
+      // silently fail — task stays as-is in UI
     } finally {
       setTogglingTaskId(null);
     }
