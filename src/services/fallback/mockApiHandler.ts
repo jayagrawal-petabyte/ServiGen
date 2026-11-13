@@ -341,7 +341,9 @@ export function handleOfflineRequest(
             }));
           }
         }
-        if (parsedBody?.priority) incident.priority = parsedBody.priority;
+        if (parsedBody?.priority) {
+          incident.priority = parsedBody.priority === 'P1' ? 'Critical' : parsedBody.priority === 'P2' ? 'High' : parsedBody.priority;
+        }
         if (parsedBody?.assignee) incident.assignee = parsedBody.assignee;
       }
       return { success: true, data: incident || { id: miId, ...parsedBody } };
@@ -359,10 +361,11 @@ export function handleOfflineRequest(
       author: parsedBody?.author || 'Alex Rivera',
       authorRole: parsedBody?.authorRole || 'Admin',
       type: parsedBody?.type || 'comment',
-      content: parsedBody?.content || '',
+      content: parsedBody?.content || parsedBody?.message || '',
     };
     if (incident) {
-      incident.updates = [...(incident.updates || []), newUpdate];
+      incident.updates = [newUpdate, ...(incident.updates || [])];
+      return { success: true, data: incident };
     }
     return { success: true, data: newUpdate };
   }

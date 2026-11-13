@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { User } from './types';
 import { fetchOrganisationUsers, createOrganisationUser } from '../../services/organisationsService';
 import { usePersistentState } from '../../utils/persistentState';
@@ -14,7 +14,7 @@ interface OrganisationUsersScreenProps {
 export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = ({
   users,
 }) => {
-  const navigate = useNavigate();
+  const location = useLocation();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'Administrator' || currentUser?.role === 'System Manager' || (currentUser?.role as any) === 'Admin';
   const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users || []);
@@ -26,6 +26,15 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState<boolean>(false);
+
+  // Sync organisation filter from URL search params (e.g. ?organisation=Acme%20Corp)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const orgParam = params.get('organisation');
+    if (orgParam) {
+      setSelectedOrganisation(orgParam);
+    }
+  }, [location.search]);
 
   // Fetch users from live backend on mount or when organization filter changes
   useEffect(() => {
@@ -150,11 +159,11 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-[#fffaf7]">
       {/* ── Top Navbar ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
-          <span className="text-gray-900">Organisations</span>
+          <span className="text-gray-900">Contacts</span>
         </div>
         <GlobalNavbarActions />
       </header>
@@ -163,8 +172,10 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         {/* Header Section */}
         <div className="org-users-header-row">
           <div className="org-users-title-col">
-            <h1>Organisations - Users List</h1>
-            <p>Manage organisation users, sites, emails, contact numbers, and domain logins across EMEA, APAC &amp; Americas</p>
+            <h1>Contacts &amp; Users Directory</h1>
+            <p className="mt-1 text-xs text-gray-500">
+              Directory of user contacts, emails, phone numbers, sites, and roles across organisations
+            </p>
           </div>
 
           <div className="org-users-header-right">

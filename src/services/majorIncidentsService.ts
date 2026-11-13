@@ -107,7 +107,7 @@ function buildLifecycleStages(
  * Converts a backend major incident object to the frontend MajorIncident shape.
  */
 export function mapBackendToFrontendIncident(backend: BackendMajorIncident): MajorIncident {
-  const priority: Priority = backend.priority === 'P1' ? 'Critical' : 'High';
+  const priority: Priority = (backend.priority as string) === 'P1' || (backend.priority as string) === 'Critical' ? 'Critical' : 'High';
   const product = Array.isArray(backend.affectedServices) && backend.affectedServices.length > 0
     ? backend.affectedServices.join(', ')
     : 'Core Platform';
@@ -301,8 +301,13 @@ export const majorIncidentsService = {
     try {
       const res = await api.post(`/api/major-incidents/${incidentId}/updates`, payload);
       const updateRes = res?.data ?? res;
-      if (updateRes && (updateRes.id || updateRes.title)) {
-        return mapBackendToFrontendIncident(updateRes as BackendMajorIncident);
+      if (updateRes) {
+        if (updateRes.id === incidentId) {
+          return mapBackendToFrontendIncident(updateRes as BackendMajorIncident);
+        }
+        // If API returned update object (id is MI-xxx-U...), do not corrupt incident ID:
+        const fresh = await this.getMajorIncidentById(incidentId);
+        if (fresh) return fresh;
       }
     } catch (error) {
       logServiceError('majorIncidents.addMajorIncidentUpdate', error);

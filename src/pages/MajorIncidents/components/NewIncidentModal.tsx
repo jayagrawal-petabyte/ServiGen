@@ -7,6 +7,7 @@ import Combobox from '../../../components/shared/Combobox';
 interface NewIncidentModalProps {
   onClose: () => void;
   onSubmit: (incident: MajorIncident) => void;
+  defaultPriority?: Priority;
 }
 
 const PRIORITIES: Priority[] = ['Critical', 'High', 'Medium', 'Low'];
@@ -27,9 +28,9 @@ const INITIAL_STAGES = [
   { label: 'Closed',    timestamp: '', isActive: false, isCompleted: false },
 ];
 
-const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit }) => {
+const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, defaultPriority }) => {
   const [title, setTitle]       = useState('');
-  const [priority, setPriority] = useState<Priority>('High');
+  const [priority, setPriority] = useState<Priority>(defaultPriority || 'High');
   const [product, setProduct]   = useState('');
   const [assignee, setAssignee] = useState('');
   const [errors, setErrors]     = useState<{ title?: string }>({});

@@ -87,49 +87,56 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   };
 
   return (
-    <div className="shrink-0 bg-white border-b border-gray-200 relative">
-      <div className="flex items-center justify-between px-4 py-2">
+    <div className="shrink-0 bg-white border-b border-gray-200 relative select-none">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 min-w-0">
+        {/* Left: New Incident CTA + Pagination */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={handleNew}
-            className="w-7 h-7 rounded-full border border-[#eb6a47] text-[#eb6a47] flex items-center justify-center bg-white hover:bg-[#fdede7] transition-colors cursor-pointer text-sm font-bold shadow-2xs"
+            className="flex items-center gap-1 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-semibold px-2.5 py-1 rounded-full transition-colors shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
             title="Create New Major Incident"
           >
-            +
+            <span className="text-sm leading-none font-light">+</span>
+            <span>New</span>
           </button>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-gray-500 whitespace-nowrap">
             {totalCount === 0
               ? '0-0 of 0'
               : `${pageStart ?? 1}–${pageEnd ?? totalCount} of ${totalCount}`}
           </span>
 
-          <button
-            onClick={onPrev}
-            disabled={prevDisabled}
-            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
-          >
-            ‹
-          </button>
-          <button
-            onClick={onNext}
-            disabled={nextDisabled}
-            className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
-          >
-            ›
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={onPrev}
+              disabled={prevDisabled}
+              className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
+              title="Previous Page"
+            >
+              ‹
+            </button>
+            <button
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 text-xs transition-colors cursor-pointer"
+              title="Next Page"
+            >
+              ›
+            </button>
+          </div>
+        </div>
 
+        {/* Right: Search + Refresh + Feed */}
+        <div className="flex items-center gap-1.5 min-w-0 justify-end">
           {onSearchChange && (
-            <div className="relative">
+            <div className="relative min-w-[70px] max-w-[130px] flex-1">
               <input
                 type="text"
                 placeholder="Search…"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="text-xs border border-gray-200 rounded-full pl-3 pr-6 py-1 w-32 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50"
+                className="text-xs border border-gray-200 rounded-full pl-2.5 pr-6 py-1 w-full outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 transition-all"
               />
               <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -139,7 +146,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
           <button
             onClick={handleRefresh}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors shrink-0"
             aria-label="Refresh"
             title="Refresh major incidents from database"
           >
@@ -155,32 +162,27 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {onResetDemo && (
             <button
               onClick={onResetDemo}
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600 hover:text-amber-700 bg-gray-100 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
+              className="hidden lg:inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:text-amber-700 bg-gray-100 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 px-2 py-0.5 rounded-full transition-colors whitespace-nowrap shrink-0"
               title="Reset the 3 demo incidents to their initial stages"
             >
-              <span>↺ Reset Demo</span>
+              <span>↺ Reset</span>
             </button>
           )}
 
-          <button
-            onClick={handleNew}
-            className="flex items-center gap-1 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-semibold px-3.5 py-1 rounded-full transition-colors shadow-xs whitespace-nowrap cursor-pointer"
-          >
-            <span className="text-sm leading-none font-light">+</span> New
-          </button>
-
-          <button
-            onClick={onToggleFeed}
-            className="relative w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-            aria-label="Toggle feed"
-          >
-            <span className="text-base leading-none tracking-widest">···</span>
-            {feedNewCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-white text-[8px] flex items-center justify-center font-bold">
-                {feedNewCount > 9 ? '9+' : feedNewCount}
-              </span>
-            )}
-          </button>
+          {onToggleFeed && (
+            <button
+              onClick={onToggleFeed}
+              className="relative w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors shrink-0"
+              aria-label="Toggle feed"
+            >
+              <span className="text-sm leading-none tracking-wider">···</span>
+              {feedNewCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-white text-[8px] flex items-center justify-center font-bold">
+                  {feedNewCount > 9 ? '9+' : feedNewCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

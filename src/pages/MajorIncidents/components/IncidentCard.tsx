@@ -54,31 +54,31 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
       }`}
     >
       {/* Top Header Line */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className="shrink-0 text-xs font-bold font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 rounded px-2 py-0.5">
             #{incident.id}
           </span>
-          <h3 className="text-sm font-bold text-gray-900 leading-tight">
+          <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">
             {incident.title}
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className={`text-xs font-bold ${
             incident.priority === 'Critical' ? 'text-red-600' : incident.priority === 'High' ? 'text-orange-600' : 'text-yellow-600'
           }`}>
             {incident.priority}
           </span>
-          <span className="text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-            {incident.product || 'MyFinance PROD'}
+          <span className="text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full whitespace-nowrap hidden sm:inline-block">
+            {incident.product || 'Core Platform'}
           </span>
         </div>
       </div>
 
       {/* Target Subtitle Line */}
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
           <span>
             Resolution Target <strong className={resolutionTargetStyle(incident.resolutionTarget)}>{incident.resolutionTarget}</strong>
           </span>

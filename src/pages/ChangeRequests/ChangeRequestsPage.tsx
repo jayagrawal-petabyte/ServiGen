@@ -57,13 +57,8 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      if (filterMode === 'active') {
-        const res = await fetchActiveChangeRequests();
-        setInternalRequests(res.data);
-      } else {
-        const res = await fetchChangeRequests();
-        setInternalRequests(res.data);
-      }
+      const res = await fetchChangeRequests();
+      setInternalRequests(res.data);
       if (onRefreshData) {
         onRefreshData();
       }
@@ -73,7 +68,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [filterMode, onRefreshData]);
+  }, [onRefreshData]);
 
   useEffect(() => {
     if (!externalRequests) {
@@ -94,7 +89,9 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
     const matchesType = selectedType === 'ALL' || cr.type === selectedType;
     const matchesStatus = selectedStatus === 'ALL' || cr.status === selectedStatus;
-    const matchesActiveTab = filterMode === 'all' || cr.status !== 'Completed';
+    const matchesActiveTab =
+      filterMode === 'all' ||
+      (cr.status !== 'Completed' && cr.status !== 'Rejected' && cr.status !== 'Failed');
 
     const matchesCi =
       !ciId && !ciName

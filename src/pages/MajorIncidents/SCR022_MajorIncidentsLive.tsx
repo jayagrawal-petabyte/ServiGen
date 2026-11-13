@@ -37,19 +37,27 @@ const STAGE_ORDER = STAGE_LABELS;
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
   switch (listId) {
+    case 'active':
     case 'update-required': return incidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive));
     case 'my-team':         return incidents.filter((i) => i.assignee !== 'Unassigned');
+    case 'unassigned':      return incidents.filter((i) => i.assignee === 'Unassigned');
     case 'critical':        return incidents.filter((i) => i.priority === 'Critical');
+    case 'high-priority':   return incidents.filter((i) => i.priority === 'High');
     case 'closed':          return incidents.filter((i) => (i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive));
+    case 'all':             return incidents;
     default:                return incidents;
   }
 };
 
 const BREADCRUMB_LABELS: Record<string, string> = {
-  'update-required': 'Update Required',
+  'active':          'Active Major Incidents',
+  'update-required': 'Updates Required',
+  'critical':        'Critical Major Incident',
+  'high-priority':   'High Priority (P2)',
   'my-team':         'My Team',
-  'critical':        'Critical Major Incidents',
-  'closed':          'Closed',
+  'unassigned':      'Unassigned Major Incidents',
+  'closed':          'Closed Major Incidents',
+  'all':             'All Major Incidents',
   'board':           'Major Incident Board',
   'calendar':        'Major Incident Calendar',
   'dashboard':       '🌐 Major Incident Dashboard',
@@ -227,13 +235,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const allIncidents = useMemo(() => {
     const map = new Map<string, MajorIncident>();
     serverIncidents.forEach((inc) => {
-      if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
+      if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX) && !inc.id.includes('-U')) {
         map.set(inc.id, inc);
       }
     });
     if (!isFetchingLive) {
       localIncidents.forEach((inc) => {
-        if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
+        if (!inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX) && !inc.id.includes('-U')) {
           map.set(inc.id, inc);
         }
       });
@@ -381,10 +389,14 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   const sidebarCounts = useMemo(() => {
     return {
+      'active': allIncidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length,
       'update-required': allIncidents.filter((i) => !(i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length,
       'my-team': allIncidents.filter((i) => i.assignee !== 'Unassigned').length,
+      'unassigned': allIncidents.filter((i) => i.assignee === 'Unassigned').length,
       'critical': allIncidents.filter((i) => i.priority === 'Critical').length,
+      'high-priority': allIncidents.filter((i) => i.priority === 'High').length,
       'closed': allIncidents.filter((i) => (i.lifecycleStages[5]?.isCompleted || i.lifecycleStages[5]?.isActive)).length,
+      'all': allIncidents.length,
       'board': allIncidents.length,
       'dashboard': allIncidents.length,
     };
@@ -817,10 +829,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-gray-50 overflow-hidden font-sans">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-gray-50 overflow-hidden font-sans">
       <InlineErrorBanner message={loadError} onRetry={loadLiveIncidents} />
       {/* Full-width top navbar */}
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px]">
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
@@ -835,11 +847,12 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       </header>
 
       {/* Two-Column Body below top navbar */}
-      <div className="flex flex-1 min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
-        <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} />
+      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
+        <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} selectedListId={selectedListId} />
 
-        <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <PageHeader
+        <main className="flex-1 flex min-w-0 h-full overflow-y-hidden overflow-x-auto gap-4">
+          <div className="flex-1 flex flex-col min-w-[340px] sm:min-w-[380px] h-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xs shrink-0 md:shrink">
+            <PageHeader
           totalCount={totalCount}
           pageStart={pageStart}
           pageEnd={pageEnd}
@@ -893,11 +906,10 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           onHelp={() => handlePanel('help')}
           onProfile={() => handlePanel('profile')}
           breadcrumb={BREADCRUMB_LABELS[selectedListId] ?? selectedListId}
-        />
+            />
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Main content area */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
+            {/* Main content area */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
             {selectedListId === 'board' ? (
               <div className="flex h-full gap-4 overflow-x-auto pb-4">
                 {['Started', 'Diagnosed', 'Mitigated', 'Resolved'].map((column) => {
@@ -1300,7 +1312,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               </div>
             </div>
           )}
-
+          </div>
 
           {/* ── Incident Detail Side Bar Menu (Primary) ── */}
           {selectedIncident && (
@@ -1335,12 +1347,12 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               defaultIncidentId={selectedIncidentId || allIncidents[0]?.id}
             />
           )}
-        </div>
-      </main>
+        </main>
       </div>
 
       {showNewModal && (
         <NewIncidentModal
+          defaultPriority={selectedListId === 'critical' ? 'Critical' : 'High'}
           onClose={() => setShowNewModal(false)}
           onSubmit={handleAddIncident}
         />

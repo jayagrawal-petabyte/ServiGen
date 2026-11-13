@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
 import { FeedPopover } from './FeedPopover';
 import { api, getAuthToken } from '../../services/apiClient';
+import { problemsService } from '../../pages/Problems/services/problemsService';
+import { defaultConfigurationItems } from '../../pages/CMDB/cmdbData';
+import { MOCK_ARTICLES, MOCK_USERS } from '../../services/fallback/mockData';
 import './GlobalNavbarActions.css';
 
 export interface GlobalNavbarActionsProps {
@@ -164,8 +167,23 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchScope, setSearchScope] = useState<'all' | 'tickets' | 'problems' | 'cmdb' | 'articles' | 'users'>('all');
   const [ticketList, setTicketList] = useState<QuickSearchItem[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Global shortcut Ctrl+K / Cmd+K to toggle global search
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setActiveFlyout((prev) => (prev === 'search' ? null : 'search'));
+      } else if (e.key === 'Escape' && activeFlyout === 'search') {
+        setActiveFlyout(null);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [activeFlyout]);
 
   // Notifications state
   const [readNotifIds, setReadNotifIds] = useState<Record<string, boolean>>(() => {
@@ -308,15 +326,26 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close flyouts on click outside
+  // Close flyouts on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setActiveFlyout(null);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveFlyout(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('click', handleClickOutside, true);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('click', handleClickOutside, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Auto focus search input when search flyout opens
@@ -367,15 +396,113 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     handleTicketClick(item.ticketId);
   };
 
-  // Filtered search results
-  const filteredSearch = searchQuery.trim()
-    ? ticketList.filter(
-        (t) =>
-          t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          t.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (t.category && t.category.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : ticketList.slice(0, 8);
+  // Multi-entity search datasets
+  const allProblems = useMemo(() => {
+    try {
+      return problemsService.getProblems();
+    } catch {
+      return [];
+    }
+  }, [activeFlyout]);
+
+  const allCis = useMemo(() => defaultConfigurationItems || [], []);
+  const allArticles = useMemo(() => MOCK_ARTICLES || [], []);
+  const allUsers = useMemo(() => MOCK_USERS || [], []);
+
+  // Filtered multi-entity search results
+  const query = searchQuery.trim().toLowerCase();
+
+  const matchingTickets = useMemo(() => {
+    if (!query) return ticketList.slice(0, 5);
+    return ticketList.filter(
+      (t) =>
+        t.id.toLowerCase().includes(query) ||
+        t.summary.toLowerCase().includes(query) ||
+        (t.category && t.category.toLowerCase().includes(query))
+    ).slice(0, 6);
+  }, [ticketList, query]);
+
+  const matchingProblems = useMemo(() => {
+    if (!query) return allProblems.slice(0, 3);
+    return allProblems.filter(
+      (p) =>
+        p.id.toLowerCase().includes(query) ||
+        p.prefixId.toLowerCase().includes(query) ||
+        p.summary.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        p.team.toLowerCase().includes(query)
+    ).slice(0, 5);
+  }, [allProblems, query]);
+
+  const matchingCis = useMemo(() => {
+    if (!query) return allCis.slice(0, 3);
+    return allCis.filter(
+      (ci) =>
+        ci.tag.toLowerCase().includes(query) ||
+        ci.name.toLowerCase().includes(query) ||
+        ci.type.toLowerCase().includes(query) ||
+        ci.site.toLowerCase().includes(query) ||
+        (ci.businessOwner && ci.businessOwner.toLowerCase().includes(query))
+    ).slice(0, 5);
+  }, [allCis, query]);
+
+  const matchingArticles = useMemo(() => {
+    if (!query) return allArticles.slice(0, 3);
+    return allArticles.filter(
+      (a) =>
+        a.id.toLowerCase().includes(query) ||
+        a.title.toLowerCase().includes(query) ||
+        (a.category && a.category.toLowerCase().includes(query))
+    ).slice(0, 5);
+  }, [allArticles, query]);
+
+  const matchingUsers = useMemo(() => {
+    if (!query) return allUsers.slice(0, 3);
+    return allUsers.filter(
+      (u: any) =>
+        (u.name && u.name.toLowerCase().includes(query)) ||
+        (u.fullName && u.fullName.toLowerCase().includes(query)) ||
+        (u.email && u.email.toLowerCase().includes(query)) ||
+        (u.role && u.role.toLowerCase().includes(query))
+    ).slice(0, 5);
+  }, [allUsers, query]);
+
+  const totalResultsCount =
+    matchingTickets.length +
+    matchingProblems.length +
+    matchingCis.length +
+    matchingArticles.length +
+    matchingUsers.length;
+
+  const handleTicketSelect = (ticketId: string) => {
+    setActiveFlyout(null);
+    setSearchQuery('');
+    handleTicketClick(ticketId);
+  };
+
+  const handleProblemSelect = (problemId: string) => {
+    setActiveFlyout(null);
+    setSearchQuery('');
+    navigate('/problems', { state: { selectedProblemId: problemId } });
+  };
+
+  const handleCiSelect = (_ciId: string) => {
+    setActiveFlyout(null);
+    setSearchQuery('');
+    navigate('/cmdb');
+  };
+
+  const handleArticleSelect = (_articleId: string) => {
+    setActiveFlyout(null);
+    setSearchQuery('');
+    navigate('/article-drafts');
+  };
+
+  const handleUserSelect = (_userId: string) => {
+    setActiveFlyout(null);
+    setSearchQuery('');
+    navigate('/organisations');
+  };
 
   const handleQuickCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -458,9 +585,9 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         <button
           type="button"
           className={`global-nav-icon-btn ${activeFlyout === 'search' ? 'is-active' : ''}`}
-          title="Search tickets & incidents"
+          title="Global Search (Ctrl + K)"
           onClick={() => toggleFlyout('search')}
-          aria-label="Search"
+          aria-label="Global Search"
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
@@ -574,25 +701,40 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
       </button>
       </div>
 
-      {/* ─── FLYOUT 1: QUICK SEARCH ─── */}
+      {/* ─── Transparent Backdrop Shield to auto-close flyouts on click outside ─── */}
+      {activeFlyout && (
+        <div
+          className="fixed inset-0 z-40 bg-transparent cursor-default pointer-events-auto"
+          onClick={() => setActiveFlyout(null)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ─── FLYOUT 1: GLOBAL MULTI-ENTITY SEARCH ─── */}
       {activeFlyout === 'search' && (
-        <div className="global-flyout-dropdown global-search-flyout">
-          <div className="global-flyout-header">
-            <span className="global-flyout-title">Quick Search</span>
+        <div className="global-flyout-dropdown global-search-flyout" role="dialog" aria-label="Global Search">
+          <div className="global-flyout-header flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="global-flyout-title">Global Search</span>
+              <span className="global-search-kbd-badge">Ctrl + K</span>
+            </div>
             <button
               type="button"
               className="global-flyout-action-btn"
               onClick={() => setActiveFlyout(null)}
+              title="Close search (Esc)"
             >
               ✕
             </button>
           </div>
+
+          {/* Search Input Box */}
           <div className="global-search-input-wrap">
             <svg
               className="global-search-icon-inside"
               viewBox="0 0 24 24"
-              width="14"
-              height="14"
+              width="15"
+              height="15"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -604,63 +746,235 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               ref={searchInputRef}
               type="text"
               className="global-search-input"
-              placeholder="Search by ID, summary, or category..."
+              placeholder="Search across tickets, problems, CIs, articles, users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 type="button"
                 className="global-search-clear-btn"
                 onClick={() => setSearchQuery('')}
+                title="Clear query"
               >
                 ✕
               </button>
+            ) : (
+              <span className="global-search-hint-kbd">ESC</span>
             )}
           </div>
+
+          {/* Scope Filters */}
+          <div className="global-search-scope-tabs">
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'all' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('all')}
+            >
+              All ({totalResultsCount})
+            </button>
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'tickets' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('tickets')}
+            >
+              Tickets ({matchingTickets.length})
+            </button>
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'problems' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('problems')}
+            >
+              Problems ({matchingProblems.length})
+            </button>
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'cmdb' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('cmdb')}
+            >
+              Assets / CIs ({matchingCis.length})
+            </button>
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'articles' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('articles')}
+            >
+              Articles ({matchingArticles.length})
+            </button>
+            <button
+              type="button"
+              className={`global-search-scope-tab ${searchScope === 'users' ? 'is-active' : ''}`}
+              onClick={() => setSearchScope('users')}
+            >
+              Users ({matchingUsers.length})
+            </button>
+          </div>
+
+          {/* Results List */}
           <div className="global-search-results-list">
-            {filteredSearch.length > 0 ? (
-              filteredSearch.map((item) => (
-                <div
-                  key={item.id}
-                  className="global-search-item"
-                  onClick={() => handleTicketClick(item.id)}
-                >
-                  <div className="flex flex-col">
-                    <span className="global-search-item-id">{item.id}</span>
-                    <span className="global-search-item-summary" title={item.summary}>
-                      {item.summary}
-                    </span>
-                  </div>
-                  {item.priority && (
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background:
-                          item.priority === 'Critical'
-                            ? '#fee2e2'
-                            : item.priority === 'High'
-                            ? '#ffedd5'
-                            : '#f1f5f9',
-                        color:
-                          item.priority === 'Critical'
-                            ? '#dc2626'
-                            : item.priority === 'High'
-                            ? '#c2410c'
-                            : '#475569',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.priority}
-                    </span>
-                  )}
-                </div>
-              ))
+            {totalResultsCount === 0 ? (
+              <div className="global-search-empty">
+                <p className="font-semibold text-slate-600">No matching records found</p>
+                <p className="text-xs text-slate-400 mt-1">Try searching for ticket IDs, server tags (PAY-001), problem causes, or user names.</p>
+              </div>
             ) : (
-              <div className="global-search-empty">No matching tickets found</div>
+              <>
+                {/* 1. TICKETS SECTION */}
+                {(searchScope === 'all' || searchScope === 'tickets') && matchingTickets.length > 0 && (
+                  <div className="global-search-section">
+                    <div className="global-search-section-header">
+                      <span>🎫 Tickets & Incidents</span>
+                      <span className="global-search-section-badge">{matchingTickets.length}</span>
+                    </div>
+                    {matchingTickets.map((t) => (
+                      <div
+                        key={t.id}
+                        className="global-search-item"
+                        onClick={() => handleTicketSelect(t.id)}
+                      >
+                        <div className="global-search-item-left">
+                          <span className="global-search-item-id">{t.id}</span>
+                          <span className="global-search-item-title" title={t.summary}>{t.summary}</span>
+                          <span className="global-search-item-sub">{t.category || 'General Support'}</span>
+                        </div>
+                        <div className="global-search-item-right">
+                          {t.priority && (
+                            <span className={`global-search-badge priority-${t.priority.toLowerCase()}`}>
+                              {t.priority}
+                            </span>
+                          )}
+                          <span className="global-search-arrow">→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. PROBLEMS SECTION */}
+                {(searchScope === 'all' || searchScope === 'problems') && matchingProblems.length > 0 && (
+                  <div className="global-search-section">
+                    <div className="global-search-section-header">
+                      <span>⚠️ Problems & Root Causes</span>
+                      <span className="global-search-section-badge">{matchingProblems.length}</span>
+                    </div>
+                    {matchingProblems.map((p) => (
+                      <div
+                        key={p.id}
+                        className="global-search-item"
+                        onClick={() => handleProblemSelect(p.id)}
+                      >
+                        <div className="global-search-item-left">
+                          <span className="global-search-item-id text-amber-600">{p.prefixId}</span>
+                          <span className="global-search-item-title" title={p.summary}>{p.summary}</span>
+                          <span className="global-search-item-sub">{p.category} • Stage: {p.currentStage}</span>
+                        </div>
+                        <div className="global-search-item-right">
+                          <span className={`global-search-badge priority-${p.priority.toLowerCase()}`}>
+                            {p.priority}
+                          </span>
+                          <span className="global-search-arrow">→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 3. CMDB / ASSETS SECTION */}
+                {(searchScope === 'all' || searchScope === 'cmdb') && matchingCis.length > 0 && (
+                  <div className="global-search-section">
+                    <div className="global-search-section-header">
+                      <span>💻 CMDB Assets & CIs</span>
+                      <span className="global-search-section-badge">{matchingCis.length}</span>
+                    </div>
+                    {matchingCis.map((ci) => (
+                      <div
+                        key={ci.id}
+                        className="global-search-item"
+                        onClick={() => handleCiSelect(ci.id)}
+                      >
+                        <div className="global-search-item-left">
+                          <span className="global-search-item-id text-indigo-600">{ci.tag}</span>
+                          <span className="global-search-item-title" title={ci.name}>{ci.name}</span>
+                          <span className="global-search-item-sub">{ci.type} • {ci.site}</span>
+                        </div>
+                        <div className="global-search-item-right">
+                          <span className="global-search-badge ci-status">
+                            {ci.status || ci.lifecycleState || 'Active'}
+                          </span>
+                          <span className="global-search-arrow">→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 4. KNOWLEDGE ARTICLES SECTION */}
+                {(searchScope === 'all' || searchScope === 'articles') && matchingArticles.length > 0 && (
+                  <div className="global-search-section">
+                    <div className="global-search-section-header">
+                      <span>📖 Knowledge Articles</span>
+                      <span className="global-search-section-badge">{matchingArticles.length}</span>
+                    </div>
+                    {matchingArticles.map((a: any) => (
+                      <div
+                        key={a.id}
+                        className="global-search-item"
+                        onClick={() => handleArticleSelect(a.id)}
+                      >
+                        <div className="global-search-item-left">
+                          <span className="global-search-item-id text-emerald-700">KB-{a.id}</span>
+                          <span className="global-search-item-title" title={a.title}>{a.title}</span>
+                          <span className="global-search-item-sub">{a.category || 'Knowledge Base'} • By {a.author || 'Admin'}</span>
+                        </div>
+                        <div className="global-search-item-right">
+                          <span className="global-search-badge article-status">
+                            {a.status || 'Draft'}
+                          </span>
+                          <span className="global-search-arrow">→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 5. USERS SECTION */}
+                {(searchScope === 'all' || searchScope === 'users') && matchingUsers.length > 0 && (
+                  <div className="global-search-section">
+                    <div className="global-search-section-header">
+                      <span>👤 Staff & Contacts</span>
+                      <span className="global-search-section-badge">{matchingUsers.length}</span>
+                    </div>
+                    {matchingUsers.map((u: any) => (
+                      <div
+                        key={u.id}
+                        className="global-search-item"
+                        onClick={() => handleUserSelect(u.id)}
+                      >
+                        <div className="global-search-item-left">
+                          <span className="global-search-item-id text-slate-700 font-semibold">{u.fullName || u.name}</span>
+                          <span className="global-search-item-sub">{u.role} • {u.organisation || u.email}</span>
+                        </div>
+                        <div className="global-search-item-right">
+                          <span className="global-search-badge user-role">
+                            {u.role}
+                          </span>
+                          <span className="global-search-arrow">→</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
+          </div>
+
+          {/* Footer Shortcuts */}
+          <div className="global-search-footer">
+            <div className="global-search-shortcuts">
+              <span><kbd className="global-kbd">ESC</kbd> to close</span>
+              <span><kbd className="global-kbd">Ctrl+K</kbd> to toggle</span>
+            </div>
+            <span className="text-[11px] font-medium text-slate-400">Click any result to jump directly</span>
           </div>
         </div>
       )}

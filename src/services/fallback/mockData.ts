@@ -147,8 +147,8 @@ export const MOCK_TICKETS = [
     requester: 'Priya Nair',
     createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     description: 'Emergency access request for debugging cross-region latency spike in EU-West-1.',
-    slaTimeLeft: 60,
-    slaFormatted: '1h SLA',
+    slaTimeLeft: 45,
+    slaFormatted: '45m left',
   },
   {
     id: 'REQ-2024-004',
@@ -210,8 +210,8 @@ export const MOCK_TICKETS = [
     assignedAgent: { id: 'USR-003', firstName: 'David', lastName: 'Kim', fullName: 'David Kim' },
     createdAt: new Date(Date.now() - 300 * 60 * 1000).toISOString(),
     description: 'Users receiving SAML response clock skew error when logging into Jira.',
-    slaTimeLeft: 60,
-    slaFormatted: '1h SLA',
+    slaTimeLeft: 45,
+    slaFormatted: '45m left',
   },
   {
     id: 'INC-2024-007',

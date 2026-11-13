@@ -23,11 +23,29 @@ export interface Subtask {
 
 export type SubTask = Subtask;
 
+export interface CabVote {
+  id: string;
+  voterName: string;
+  voterRole: string;
+  decision: 'Approved' | 'Rejected';
+  note?: string;
+  timestamp: string;
+}
+
+export interface RiskQuestionnaire {
+  causesDowntime: boolean;
+  testedInStaging: boolean;
+  hasRollbackScript: boolean;
+  inMaintenanceWindow: boolean;
+}
+
 export interface CabReview {
   reviewDate?: string;
   decision: 'Pending' | 'Approved' | 'Rejected';
   decisionBy?: string;
   cabNotes?: string;
+  votes?: CabVote[];
+  riskQuestionnaire?: RiskQuestionnaire;
 }
 
 export interface RollbackPlan {

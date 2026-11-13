@@ -66,6 +66,9 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   const [isEditingProduct, setIsEditingProduct] = useState(false);
   const [customProductInput, setCustomProductInput] = useState(incident.product);
 
+  type DetailTab = 'overview' | 'lifecycle' | 'timeline';
+  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
+
   const activeStageIndex = incident.lifecycleStages.findIndex((s) => s.isActive);
   const isClosed = incident.lifecycleStages[5]?.isCompleted || activeStageIndex === 5;
   const isPrivileged = role === 'Manager' || role === 'Admin';
@@ -107,7 +110,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   };
 
   return (
-    <aside className="w-[430px] shrink-0 border-l border-gray-200 bg-white flex flex-col shadow-2xl overflow-hidden font-sans z-20 animate-in slide-in-from-right duration-200">
+    <aside className="w-full max-w-[460px] sm:w-[420px] md:w-[460px] shrink-0 rounded-xl border border-gray-200 bg-white flex flex-col shadow-xl overflow-hidden font-sans z-10 animate-in slide-in-from-right duration-200 h-full">
       {/* ── Panel Header ── */}
       <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 bg-[#fbfcfd]">
         <div className="flex-1 min-w-0 pr-3">
@@ -159,8 +162,57 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
         </button>
       </div>
 
+      {/* ── Tabbed Navigation (Clean De-congested UX) ── */}
+      <div className="flex items-center border-b border-gray-200 bg-gray-50/90 px-3 text-xs font-semibold shrink-0 gap-1 select-none">
+        <button
+          type="button"
+          onClick={() => setActiveTab('overview')}
+          className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'overview'
+              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              : 'border-transparent text-gray-500 hover:text-gray-800'
+          }`}
+        >
+          <span>Overview & Health</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('lifecycle')}
+          className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'lifecycle'
+              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              : 'border-transparent text-gray-500 hover:text-gray-800'
+          }`}
+        >
+          <span>Lifecycle</span>
+          <span className="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.2 rounded-full font-bold">
+            {activeStageIndex !== -1 ? activeStageIndex + 1 : (isClosed ? 6 : 1)}/6
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('timeline')}
+          className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'timeline'
+              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              : 'border-transparent text-gray-500 hover:text-gray-800'
+          }`}
+        >
+          <span>Timeline & Notes</span>
+          {incident.updates && incident.updates.length > 0 && (
+            <span className="text-[10px] bg-[#fdede7] text-[#eb6a47] px-1.5 py-0.2 rounded-full font-bold">
+              {incident.updates.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* ── Panel Body ── */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {activeTab === 'overview' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
         {/* Key Info Cards */}
         <div className="grid grid-cols-2 gap-2.5 p-3 bg-gray-50/80 rounded-xl border border-gray-100 text-xs">
           {/* Commander / Assignee */}
@@ -312,8 +364,12 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           isClosedOrResolved={isClosed}
           onNavigateCmdb={() => navigate('/cmdb')}
         />
+          </div>
+        )}
 
-{/* ── Lifecycle Stage Progression & Controls ── */}
+        {activeTab === 'lifecycle' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* ── Lifecycle Stage Progression & Controls ── */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
@@ -420,7 +476,12 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           )}
         </div>
 
-        {/* ── Timeline Updates Feed ── */}
+          </div>
+        )}
+
+        {activeTab === 'timeline' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* ── Timeline Updates Feed ── */}
         <div className="space-y-2 pt-2 border-t border-gray-100">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
@@ -483,6 +544,8 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             Post Update
           </button>
         </form>
+          </div>
+        )}
       </div>
     </aside>
   );

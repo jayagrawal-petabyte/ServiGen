@@ -397,7 +397,11 @@ export default function MyWork() {
                   SLA Time Left
                 </p>
                 <div className="mt-1">
-                  <SlaBadge slaTimeLeft={selectedTicket.slaTimeLeft} slaFormatted={selectedTicket.slaFormatted} />
+                  <SlaBadge
+                    slaTimeLeft={selectedTicket.slaTimeLeft}
+                    slaFormatted={selectedTicket.slaFormatted}
+                    status={selectedTicket.status}
+                  />
                 </div>
               </div>
             </div>
@@ -703,7 +707,11 @@ export default function MyWork() {
                     </td>
 
                     <td className="whitespace-nowrap px-4 py-3">
-                      <SlaBadge slaTimeLeft={ticket.slaTimeLeft} slaFormatted={ticket.slaFormatted} />
+                      <SlaBadge
+                        slaTimeLeft={ticket.slaTimeLeft}
+                        slaFormatted={ticket.slaFormatted}
+                        status={ticket.status}
+                      />
                     </td>
 
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">

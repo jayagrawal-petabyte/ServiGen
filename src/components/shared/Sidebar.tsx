@@ -137,6 +137,16 @@ const MyApprovalsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+// 15. Reporting: Analytics bar chart icon
+const ReportingNavIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <path d="M3 3v18h18" />
+    <path d="M18 17V9" />
+    <path d="M13 17V5" />
+    <path d="M8 17v-3" />
+  </svg>
+);
+
 /* ──────────────────────────────────────────────────────────────────────────
    Navigation Items Configuration
    Exact order:
@@ -171,7 +181,7 @@ export interface NavItemConfig {
   roles?: User['role'][];
 }
 
-export const NAV_ITEMS: NavItemConfig[] = [
+const NAV_ITEMS: NavItemConfig[] = [
   {
     to: '/dashboard',
     label: 'Dashboard',
@@ -272,6 +282,12 @@ export const NAV_ITEMS: NavItemConfig[] = [
     matchActive: (path) => path.startsWith('/approvals'),
     roles: ['Administrator', 'System Manager', 'Team Lead'],
   },
+  {
+    to: '/reporting',
+    label: 'Reporting',
+    icon: ReportingNavIcon,
+    matchActive: (path) => path.startsWith('/reporting') || path.startsWith('/reports'),
+  },
 ];
 
 const PREFETCH_MAP: Record<string, () => Promise<any>> = {
@@ -279,7 +295,7 @@ const PREFETCH_MAP: Record<string, () => Promise<any>> = {
   '/my-work': () => import('../../pages/MyWork/MyWork'),
   '/incidents': () => import('../../pages/Incidents'),
   '/major-incidents/live': () => import('../../pages/MajorIncidents'),
-  '/problems': () => import('../../pages/Incidents'),
+  '/problems': () => import('../../pages/Problems'),
   '/requests': () => import('../../pages/Requests/RequestsPage'),
   '/change-requests': () => import('../../pages/ChangeRequests/ChangeRequestsPage'),
   '/projects': () => import('../../pages/Projects/ProjectsPage'),
@@ -289,6 +305,7 @@ const PREFETCH_MAP: Record<string, () => Promise<any>> = {
   '/cmdb': () => import('../../pages/CMDB/CmdbPage'),
   '/contacts': () => import('../../pages/Auth'),
   '/approvals': () => import('../../pages/Approvals/ApprovalsPage'),
+  '/reporting': () => import('../../pages/Reporting/IncidentsByCategoryReport'),
 };
 
 const prefetchRoute = (to: string) => {

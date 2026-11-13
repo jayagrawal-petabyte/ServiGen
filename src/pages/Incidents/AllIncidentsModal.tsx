@@ -279,7 +279,7 @@ export default function AllIncidentsModal({
                       <StatusPill status={incident.status} />
                     </td>
                     <td className="py-3 px-3">
-                      <SlaBadge slaTimeLeft={incident.slaTimeLeft} />
+                      <SlaBadge slaTimeLeft={incident.slaTimeLeft} status={incident.status} />
                     </td>
                     <td className="py-3 px-3 text-slate-600">{incident.assignedTo || "Unassigned"}</td>
                     <td className="py-3 px-3 text-slate-500 max-w-[140px] truncate" title={incident.organisation}>

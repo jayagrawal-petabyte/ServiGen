@@ -40,11 +40,16 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // 4-Question Interactive Risk Questionnaire State
+  const [causesDowntime, setCausesDowntime] = useState(false);
+  const [testedInStaging, setTestedInStaging] = useState(true);
+  const [hasRollbackScript, setHasRollbackScript] = useState(true);
+  const [inMaintenanceWindow, setInMaintenanceWindow] = useState(true);
+
   if (!isOpen) return null;
 
-  const weights = { Low: 1, Medium: 2, High: 3 };
-  const riskScore = weights[impact] * weights[urgency];
-  const computedRisk: RiskLevel = riskScore >= 6 ? 'Critical' : riskScore >= 4 ? 'High' : riskScore >= 2 ? 'Medium' : 'Low';
+  const riskScore = 1 + (causesDowntime ? 3 : 0) + (!testedInStaging ? 3 : 0) + (!hasRollbackScript ? 2 : 0) + (!inMaintenanceWindow ? 1 : 0);
+  const computedRisk: RiskLevel = riskScore >= 7 ? 'Critical' : riskScore >= 5 ? 'High' : riskScore >= 3 ? 'Medium' : 'Low';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +103,14 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
         cabReview: {
           decision: type === 'Standard' ? 'Approved' : 'Pending',
           cabNotes: cabRequired ? 'Requires review by CAB before execution.' : 'Standard pre-approved template.',
+          riskQuestionnaire: {
+            causesDowntime,
+            testedInStaging,
+            hasRollbackScript,
+            inMaintenanceWindow,
+          },
         },
+        freezeWindowConflict: !inMaintenanceWindow,
       });
 
       onClose();
@@ -201,6 +213,54 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
               </select>
+            </div>
+          </div>
+
+          {/* 4-Question Risk Questionnaire */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <span className="text-slate-700 font-bold text-xs uppercase tracking-wider block">
+              Risk Assessment Questionnaire:
+            </span>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <label className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={causesDowntime}
+                  onChange={(e) => setCausesDowntime(e.target.checked)}
+                  className="rounded text-[#eb6a47] focus:ring-[#eb6a47]"
+                />
+                <span className="text-slate-700 font-semibold text-[11px]">Causes User Downtime (+3)</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!testedInStaging}
+                  onChange={(e) => setTestedInStaging(!e.target.checked)}
+                  className="rounded text-[#eb6a47] focus:ring-[#eb6a47]"
+                />
+                <span className="text-slate-700 font-semibold text-[11px]">Untested in Staging (+3)</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!hasRollbackScript}
+                  onChange={(e) => setHasRollbackScript(!e.target.checked)}
+                  className="rounded text-[#eb6a47] focus:ring-[#eb6a47]"
+                />
+                <span className="text-slate-700 font-semibold text-[11px]">No Automated Rollback (+2)</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!inMaintenanceWindow}
+                  onChange={(e) => setInMaintenanceWindow(!e.target.checked)}
+                  className="rounded text-[#eb6a47] focus:ring-[#eb6a47]"
+                />
+                <span className="text-slate-700 font-semibold text-[11px]">Out of Window (+1 / Freeze)</span>
+              </label>
             </div>
           </div>
 

@@ -6,12 +6,16 @@ import AppLayout from './layouts/AppLayout'
 import { AuthProvider } from './pages/Auth'
 const AuthPage = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.AuthPage })))
 const OrganisationUsersScreen = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.OrganisationUsersScreen })))
+const OrganisationsScreen = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.OrganisationsScreen })))
 
 // Dashboard
 const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'))
 
 // Incidents
 const Incidents = React.lazy(() => import('./pages/Incidents'))
+
+// Problems
+const ProblemsPage = React.lazy(() => import('./pages/Problems'))
 
 // Major Incidents
 const MajorIncidentsDesign = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsDesign })))
@@ -224,7 +228,7 @@ export default function App() {
               <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
               <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
               <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
-              <Route path="/problems" element={<Incidents />} />
+              <Route path="/problems" element={<ProblemsPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/requests" element={<RequestsPage />} />
@@ -233,7 +237,7 @@ export default function App() {
               <Route path="/article-drafts" element={<ArticleDraftsPage />} />
               <Route path="/on-hold" element={<OnHoldTicketScreen />} />
               <Route path="/custom-lists" element={<CustomLists />} />
-              <Route path="/organisations" element={<OrganisationUsersScreen />} />
+              <Route path="/organisations" element={<OrganisationsScreen />} />
               <Route path="/contacts" element={<OrganisationUsersScreen />} />
               <Route path="/team/1st-line-live" element={<FirstLineLive />} />
               <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
