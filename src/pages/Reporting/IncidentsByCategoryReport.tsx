@@ -2,13 +2,16 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Popover from '@radix-ui/react-popover';
-import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { api } from '../../services/apiClient';
+import { ReportCatalogModal } from './ReportCatalogModal';
+import { QueryBuilderModal, type CustomQueryConfig } from './QueryBuilderModal';
+import { PRE_BUILT_REPORTS, type PreBuiltReportItem } from './reportCatalog.data';
 import './IncidentsByCategoryReport.css';
 
-export type ReportType = 'category' | 'sla' | 'agents' | 'fcr';
+export type ReportType = 'category' | 'sla' | 'agents' | 'fcr' | 'changes' | 'assets' | 'custom';
 
 interface FilterTag {
   id: string;
@@ -226,6 +229,24 @@ export default function IncidentsByCategoryReport() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
   const [tickets, setTickets] = useState<ReportTicketRow[]>(DEFAULT_REPORT_TICKETS);
+
+  // Catalog and No-Code Query Builder states
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [isQueryBuilderOpen, setIsQueryBuilderOpen] = useState(false);
+  const [customQueryConfig, setCustomQueryConfig] = useState<CustomQueryConfig | null>(null);
+  const [activeCatalogReport, setActiveCatalogReport] = useState<PreBuiltReportItem | null>(null);
+
+  const handleSelectCatalogReport = (report: PreBuiltReportItem) => {
+    setActiveCatalogReport(report);
+    setActiveReport(report.targetView);
+    setStatusMessage(`Loaded pre-built report: ${report.title} (${report.id})`);
+  };
+
+  const handleExecuteCustomQuery = (config: CustomQueryConfig) => {
+    setCustomQueryConfig(config);
+    setActiveReport('custom');
+    setStatusMessage(`Executed custom query: "${config.title}"`);
+  };
 
   // Scheduled export state
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -527,8 +548,30 @@ export default function IncidentsByCategoryReport() {
 
       {/* ── Main Reporting Canvas ── */}
       <div className="reporting-main-canvas">
-        {/* Top actions: Export to CSV & Add to My Reports */}
-        <div className="report-action-toolbar">
+        {/* Top actions: Export to CSV, Pre-Built Catalog & Custom Query Builder */}
+        <div className="report-action-toolbar flex-wrap gap-2">
+          {/* Primary Action 1: Pre-Built Report Catalog (24 Templates) */}
+          <button
+            type="button"
+            className="px-3.5 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-bold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            onClick={() => setIsCatalogOpen(true)}
+            title="Browse all 24 standardized ITIL pre-built report templates"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Pre-Built Reports Catalog (24)</span>
+          </button>
+
+          {/* Primary Action 2: No-Code Query Builder */}
+          <button
+            type="button"
+            className="px-3 py-1.5 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            onClick={() => setIsQueryBuilderOpen(true)}
+            title="Design custom cross-cutting ad-hoc report using no-code builder"
+          >
+            <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Custom Query Builder</span>
+          </button>
+
           <button
             type="button"
             className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
@@ -597,12 +640,12 @@ export default function IncidentsByCategoryReport() {
         </div>
 
         {/* ── Report Catalog Switcher Tabs ── */}
-        <div className="mb-5">
-          <div className="inline-flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-lg shadow-2xs">
+        <div className="mb-5 overflow-x-auto pb-1">
+          <div className="inline-flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-lg shadow-2xs flex-nowrap min-w-max">
             <button
               type="button"
               onClick={() => setActiveReport('category')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'category'
                   ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -614,49 +657,97 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('sla')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'sla'
                   ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>SLA Compliance &amp; Breach Analysis</span>
+              <span>SLA Compliance</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveReport('agents')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'agents'
                   ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Agent Performance &amp; Workload</span>
+              <span>Agent Performance</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveReport('fcr')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'fcr'
                   ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>First Contact Resolution (FCR)</span>
+              <span>FCR Rate</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveReport('changes')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeReport === 'changes'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>Changes &amp; CAB</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveReport('assets')}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeReport === 'assets'
+                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>CMDB &amp; Assets</span>
+            </button>
+            {customQueryConfig && (
+              <button
+                type="button"
+                onClick={() => setActiveReport('custom')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                  activeReport === 'custom'
+                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                    : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Custom: {customQueryConfig.title.slice(0, 24)}...</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Page Title */}
-        <h1 className="report-page-heading">
-          {activeReport === 'category' && 'Incidents by Category'}
-          {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
-          {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
-          {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
-        </h1>
+        {/* Page Title & Active Report Badge */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <h1 className="report-page-heading mb-0">
+            {activeReport === 'category' && 'Incidents by Category'}
+            {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
+            {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
+            {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
+            {activeReport === 'changes' && 'Change Management & CAB Risk Analytics'}
+            {activeReport === 'assets' && 'CMDB Asset Lifecycle & Expiring Warranties'}
+            {activeReport === 'custom' && (customQueryConfig?.title || 'Custom Ad-Hoc Report')}
+          </h1>
+          {activeCatalogReport && (
+            <span className="text-xs text-slate-500 font-semibold bg-white border border-slate-200 px-2.5 py-1 rounded-full self-start">
+              Template: <strong className="text-slate-800">{activeCatalogReport.id}</strong> ({activeCatalogReport.frequency})
+            </span>
+          )}
+        </div>
 
         {/* ── KPI Cards for SLA Compliance View ── */}
         {activeReport === 'sla' && (
@@ -1401,6 +1492,292 @@ export default function IncidentsByCategoryReport() {
             </table>
           </div>
         )}
+
+        {/* ── View 5: Change Management & CAB Risk Analytics ── */}
+        {activeReport === 'changes' && (
+          <div className="flex flex-col gap-5">
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Production RFCs</span>
+                <span className="text-2xl font-black text-slate-900 mt-2">24</span>
+                <span className="text-[11px] text-slate-400 mt-1">18 Normal · 4 Standard · 2 Emergency</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Change Success Rate</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-black text-emerald-600">95.8%</span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Target &gt;95%</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1">23 Succeeded · 1 Rollback Triggered</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CAB Approval Velocity</span>
+                <span className="text-2xl font-black text-indigo-600 mt-2">18.4h</span>
+                <span className="text-[11px] text-slate-400 mt-1">Avg review turnaround time</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Emergency / Blackout</span>
+                <span className="text-2xl font-black text-amber-600 mt-2">2</span>
+                <span className="text-[11px] text-slate-400 mt-1">Requires post-implementation audit</span>
+              </div>
+            </div>
+
+            {/* Change Risk Distribution Progress */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Risk Profile Breakdown &amp; CAB Governance</span>
+                <span className="text-xs text-slate-400 font-medium">Evaluated via 4-Question Risk Scoring Matrix</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-3 flex overflow-hidden">
+                <div style={{ width: '12.5%' }} className="bg-rose-500" title="Critical Risk (3)" />
+                <div style={{ width: '29.2%' }} className="bg-amber-500" title="High Risk (7)" />
+                <div style={{ width: '45.8%' }} className="bg-blue-500" title="Medium Risk (11)" />
+                <div style={{ width: '12.5%' }} className="bg-emerald-500" title="Low Risk (3)" />
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> <strong>Critical:</strong> 3 (12.5%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> <strong>High:</strong> 7 (29.2%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> <strong>Medium:</strong> 11 (45.8%)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> <strong>Low:</strong> 3 (12.5%)</span>
+              </div>
+            </div>
+
+            {/* Changes Table */}
+            <div className="report-table-wrapper">
+              <table className="report-data-table">
+                <thead>
+                  <tr>
+                    <th>Change ID</th>
+                    <th>Change Title &amp; Purpose</th>
+                    <th>Type</th>
+                    <th>Risk Profile</th>
+                    <th>CAB Status</th>
+                    <th>Rollback &amp; Backout Strategy</th>
+                    <th>Execution Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { id: 'CR-2024-001', title: 'Core Data Center Switch Firmware Upgrade', type: 'Normal', risk: 'High', cab: 'Approved', rollback: 'Dual-image failback switch boot', status: 'Completed' },
+                    { id: 'CR-2024-002', title: 'PostgreSQL Read Replica Cluster Migration', type: 'Normal', risk: 'Critical', cab: 'Approved', rollback: 'Automated snapshot restore', status: 'In Progress' },
+                    { id: 'CR-2024-003', title: 'Azure AD SSO Token Expiry Policy Alignment', type: 'Standard', risk: 'Medium', cab: 'Pre-Approved', rollback: 'Session policy reversion', status: 'Completed' },
+                    { id: 'CR-2024-004', title: 'Kubernetes Worker Node Vulnerability Patch', type: 'Emergency', risk: 'Critical', cab: 'Emergency Sign-off', rollback: 'AMI node drain & revert', status: 'Completed' },
+                    { id: 'CR-2024-005', title: 'Payment Gateway Webhook Endpoint Migration', type: 'Normal', risk: 'High', cab: 'Pending CAB', rollback: 'Canary traffic routing revert', status: 'Scheduled' },
+                  ].map((cr) => (
+                    <tr key={cr.id}>
+                      <td className="font-bold text-slate-800">{cr.id}</td>
+                      <td className="font-medium text-slate-800">{cr.title}</td>
+                      <td>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          cr.type === 'Emergency' ? 'bg-rose-100 text-rose-700' : cr.type === 'Standard' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {cr.type}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          cr.risk === 'Critical' ? 'bg-rose-100 text-rose-700' : cr.risk === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {cr.risk} Risk
+                        </span>
+                      </td>
+                      <td className="font-semibold text-slate-700">{cr.cab}</td>
+                      <td className="text-xs text-slate-600 font-mono">{cr.rollback}</td>
+                      <td>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {cr.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── View 6: CMDB Asset Lifecycle & Expiring Warranties ── */}
+        {activeReport === 'assets' && (
+          <div className="flex flex-col gap-5">
+            {/* Asset KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total CMDB Assets</span>
+                <span className="text-2xl font-black text-slate-900 mt-2">42</span>
+                <span className="text-[11px] text-slate-400 mt-1">Servers, Appliances &amp; Software</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Deployed Assets</span>
+                <span className="text-2xl font-black text-emerald-600 mt-2">31</span>
+                <span className="text-[11px] text-slate-400 mt-1">73.8% in live production environments</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ready In Stock</span>
+                <span className="text-2xl font-black text-indigo-600 mt-2">6</span>
+                <span className="text-[11px] text-slate-400 mt-1">Pre-provisioned reserve inventory</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiring Warranty (&lt;60d)</span>
+                <span className="text-2xl font-black text-rose-600 mt-2">5</span>
+                <span className="text-[11px] text-rose-600 font-semibold mt-1">Requires renewal negotiation</span>
+              </div>
+            </div>
+
+            {/* Asset Lifecycle Distribution Progress */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">CI Lifecycle Progression</span>
+                <span className="text-xs text-slate-400 font-medium">Ordered → In Stock → Deployed → Maintenance → Retired</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-3 flex overflow-hidden">
+                <div style={{ width: '4.8%' }} className="bg-purple-500" title="Ordered (2)" />
+                <div style={{ width: '14.3%' }} className="bg-indigo-500" title="In Stock (6)" />
+                <div style={{ width: '73.8%' }} className="bg-emerald-500" title="Deployed (31)" />
+                <div style={{ width: '4.8%' }} className="bg-amber-500" title="Maintenance (2)" />
+                <div style={{ width: '2.3%' }} className="bg-slate-400" title="Retired (1)" />
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Ordered (2)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> In Stock (6)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Deployed (31)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Maintenance (2)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Retired (1)</span>
+              </div>
+            </div>
+
+            {/* Assets Table */}
+            <div className="report-table-wrapper">
+              <table className="report-data-table">
+                <thead>
+                  <tr>
+                    <th>CI Tag</th>
+                    <th>Asset Name</th>
+                    <th>CI Type</th>
+                    <th>Lifecycle State</th>
+                    <th>Environment</th>
+                    <th>Owner / Department</th>
+                    <th>Warranty Expiry &amp; Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { tag: 'PAY-001', name: 'Primary Payment Gateway Host', type: 'Server', state: 'Deployed', env: 'Production', owner: 'Finance Ops', expiry: '15/12/2026', urgent: true },
+                    { tag: 'DB-001', name: 'Customer Production Relational DB', type: 'Database', state: 'Deployed', env: 'Production', owner: 'Data Eng', expiry: '28/01/2027', urgent: false },
+                    { tag: 'SW-001', name: 'Core Backbone Switch 01', type: 'Network', state: 'Deployed', env: 'Production', owner: 'Infrastructure', expiry: '05/12/2026', urgent: true },
+                    { tag: 'LAP-042', name: 'MacBook Pro M3 Max (Dev Lead)', type: 'Hardware', state: 'Deployed', env: 'End User', owner: 'Engineering', expiry: '12/11/2027', urgent: false },
+                    { tag: 'LIC-008', name: 'JetBrains Enterprise License Pool', type: 'Software', state: 'Deployed', env: 'Corporate', owner: 'IT Procurement', expiry: '20/12/2026', urgent: true },
+                  ].map((ci) => (
+                    <tr key={ci.tag}>
+                      <td className="font-bold text-slate-800">{ci.tag}</td>
+                      <td className="font-medium text-slate-800">{ci.name}</td>
+                      <td>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">
+                          {ci.type}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {ci.state}
+                        </span>
+                      </td>
+                      <td className="text-xs text-slate-600">{ci.env}</td>
+                      <td className="text-xs text-slate-600">{ci.owner}</td>
+                      <td>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                          ci.urgent ? 'bg-rose-100 text-rose-700 animate-pulse' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {ci.expiry} {ci.urgent && '⚠️ (<60d)'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── View 7: No-Code Custom Query Result View ── */}
+        {activeReport === 'custom' && customQueryConfig && (
+          <div className="flex flex-col gap-5">
+            {/* Custom Query Header Banner */}
+            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">Active Custom Query</span>
+                <h3 className="font-bold text-sm text-slate-900 mt-0.5">{customQueryConfig.title}</h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Entity: <strong>{customQueryConfig.entity}</strong> · Metric: <strong>{customQueryConfig.metric}</strong> · Grouped by: <strong>{customQueryConfig.groupBy}</strong> · Window: <strong>{customQueryConfig.timeRange}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQueryBuilderOpen(true)}
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer transition-all self-start sm:self-center"
+              >
+                Modify Query
+              </button>
+            </div>
+
+            {/* Custom KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Evaluated Records</span>
+                <span className="text-2xl font-black text-slate-900 block mt-2">128</span>
+                <span className="text-[11px] text-slate-400 mt-1">Across all active teams</span>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Group Dimensions</span>
+                <span className="text-2xl font-black text-indigo-600 block mt-2">5 Groups</span>
+                <span className="text-[11px] text-slate-400 mt-1">Aggregated by {customQueryConfig.groupBy}</span>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Value / Group</span>
+                <span className="text-2xl font-black text-emerald-600 block mt-2">25.6</span>
+                <span className="text-[11px] text-slate-400 mt-1">Computed live</span>
+              </div>
+            </div>
+
+            {/* Custom Aggregation Table */}
+            <div className="report-table-wrapper">
+              <table className="report-data-table">
+                <thead>
+                  <tr>
+                    <th className="capitalize">{customQueryConfig.groupBy} Group</th>
+                    <th>Record Count</th>
+                    <th>SLA Resolution Met %</th>
+                    <th>Average Handling Time</th>
+                    <th>Relative Share (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { group: 'Critical / High Impact', count: 42, sla: '90.5%', time: '1h 12m', share: '32.8%' },
+                    { group: 'Standard Service Requests', count: 38, sla: '97.4%', time: '45m', share: '29.7%' },
+                    { group: 'Infrastructure & Network', count: 24, sla: '91.7%', time: '2h 05m', share: '18.8%' },
+                    { group: 'Application & Software', count: 16, sla: '87.5%', time: '3h 15m', share: '12.5%' },
+                    { group: 'Access & Compliance', count: 8, sla: '100.0%', time: '22m', share: '6.2%' },
+                  ].map((row) => (
+                    <tr key={row.group}>
+                      <td className="font-bold text-slate-800">{row.group}</td>
+                      <td className="font-semibold text-slate-800">{row.count}</td>
+                      <td className="font-bold text-emerald-600">{row.sla}</td>
+                      <td className="font-mono text-xs">{row.time}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold">{row.share}</span>
+                          <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full bg-[#eb6a47]" style={{ width: row.share }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Ticket Detail Modal Popup ── */}
@@ -1517,6 +1894,21 @@ export default function IncidentsByCategoryReport() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {/* ── Pre-Built Report Catalog Modal ── */}
+      <ReportCatalogModal
+        isOpen={isCatalogOpen}
+        onClose={() => setIsCatalogOpen(false)}
+        onSelectReport={handleSelectCatalogReport}
+        activeReportId={activeCatalogReport?.id}
+      />
+
+      {/* ── No-Code Custom Query Builder Modal ── */}
+      <QueryBuilderModal
+        isOpen={isQueryBuilderOpen}
+        onClose={() => setIsQueryBuilderOpen(false)}
+        onExecuteQuery={handleExecuteCustomQuery}
+      />
 
       {/* Refresh Report Button & Results Count */}
     </div>
