@@ -8,21 +8,25 @@ export default {
     extend: {
       colors: {
         brand: {
-          coral: '#eb6a47',
-          peach: '#f6c0af',
-          navy: '#131d2b',
+          canvas: '#FFF9F5',
+          peach: '#F4A58A',
+          coral: '#F7C4B3',
+          terracotta: '#C96F55',
+          navy: '#263B5E',
+          text: '#332B28',
+          card: '#FFFFFF',
         },
         cyan: {
-          50: '#fdede7',
-          100: '#fbdcd0',
-          200: '#f8c5b1',
-          300: '#f4a98d',
-          400: '#f08d6d',
-          500: '#eb6a47',
-          600: '#db5936',
-          700: '#c54928',
-          800: '#a33b1e',
-          900: '#7f2d16',
+          50: '#FFF9F5',
+          100: '#FDEEE7',
+          200: '#F7C4B3',
+          300: '#F4A58A',
+          400: '#E08569',
+          500: '#C96F55',
+          600: '#B85E44',
+          700: '#A34E37',
+          800: '#8A3E2A',
+          900: '#6E2E1E',
         }
       }
     },

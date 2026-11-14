@@ -617,7 +617,7 @@ export default function ProjectsPage() {
   const [title, subtitle] = viewTitles[activeView];
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col bg-[#fff7f3] overflow-hidden">
+    <div className="flex-1 w-full h-full flex flex-col bg-[#FFF9F5] overflow-hidden">
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>

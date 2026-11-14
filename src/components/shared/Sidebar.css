@@ -10,7 +10,7 @@
 
 .figma-left-sidebar {
   width: 80px;
-  background-color: #23354e;
+  background-color: var(--navy-contrast, #263B5E);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,7 +38,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #081929;
+  background: var(--navy-contrast-text, #202530);
   flex-shrink: 0;
   position: relative;
   padding: 4px 6px;
@@ -79,7 +79,8 @@
 
 .sidebar-nav-link.active {
   color: #ffffff;
-  background-color: #f2967a;
+  background-color: var(--primary-peach, #F4A58A);
+  box-shadow: 0 2px 8px rgba(244, 165, 138, 0.35);
 }
 
 .sidebar-nav-icon {

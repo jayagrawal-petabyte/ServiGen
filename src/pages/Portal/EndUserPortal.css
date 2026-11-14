@@ -2,8 +2,8 @@
 
 .portal-canvas {
   min-height: 100vh;
-  background-color: #FAF7F5;
-  color: #1e293b;
+  background-color: var(--bg-canvas, #FFF9F5);
+  color: var(--text-main, #332B28);
   font-family: inherit;
   display: flex;
   flex-direction: column;

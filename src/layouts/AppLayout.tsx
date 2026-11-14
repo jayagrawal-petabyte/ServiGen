@@ -49,9 +49,9 @@ export const AppLayout: React.FC = () => {
   // If session verification is in progress, show an accessible loading spinner
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#faf6f2]">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#FFF9F5]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-[#C96F55] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-semibold text-slate-500">Authenticating ServiGen...</span>
         </div>
       </div>
@@ -100,9 +100,9 @@ export const AppLayout: React.FC = () => {
     : 'AA';
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-[#faf6f2]">
+    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-[#FFF9F5]">
       {/* Mobile Top Header (< 768px) with Hamburger Drawer Trigger */}
-      <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-[#0b2239] text-white z-40 shrink-0 shadow-sm relative">
+      <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-[#263B5E] text-white z-40 shrink-0 shadow-sm relative">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -121,7 +121,7 @@ export const AppLayout: React.FC = () => {
           </button>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm tracking-wide text-white">ServiGen</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#eb6a47]/70 text-white font-medium">ITSM</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#C96F55]/80 text-white font-medium">ITSM</span>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export const AppLayout: React.FC = () => {
               setProfileMenuOpen((prev) => !prev);
               setMobileSidebarOpen(false);
             }}
-            className="w-8 h-8 rounded-full bg-[#eb6a47] text-white font-bold text-xs flex items-center justify-center border border-white/20 hover:bg-[#d28072] cursor-pointer transition-colors relative"
+            className="w-8 h-8 rounded-full bg-[#C96F55] text-white font-bold text-xs flex items-center justify-center border border-white/20 hover:bg-[#B85E44] cursor-pointer transition-colors relative"
             title={`Signed in as ${user?.fullName || 'Adam Admin'} (${presence})`}
             aria-label="User Profile"
           >

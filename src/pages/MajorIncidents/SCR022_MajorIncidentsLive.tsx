@@ -829,7 +829,7 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-gray-50 overflow-hidden font-sans">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans">
       <InlineErrorBanner message={loadError} onRetry={loadLiveIncidents} />
       {/* Full-width top navbar */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">

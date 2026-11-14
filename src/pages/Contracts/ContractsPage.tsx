@@ -180,7 +180,7 @@ export const ContractsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FAF7F5] overflow-y-auto font-sans select-text">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-y-auto font-sans select-text">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">

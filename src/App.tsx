@@ -208,9 +208,9 @@ export default function App() {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <React.Suspense
           fallback={
-            <div className="flex h-screen w-screen items-center justify-center bg-[#faf6f2]">
+            <div className="flex h-screen w-screen items-center justify-center bg-[#FFF9F5]">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-3 border-[#C96F55] border-t-transparent rounded-full animate-spin" />
                 <span className="text-xs font-semibold text-slate-500">Loading ServiGen...</span>
               </div>
             </div>

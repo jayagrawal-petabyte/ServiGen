@@ -658,7 +658,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  background-color: #fbf9f6;
+  background-color: var(--bg-canvas, #FFF9F5);
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
   position: sticky;
