@@ -639,7 +639,10 @@ const updateSubtaskRecord = async (projectId, subtaskId, organisationId, patch) 
     const subtask = (project.subtasks || []).find((s) => s.id === subtaskId);
     if (!subtask) return null;
 
-    Object.assign(subtask, patch);
+    if (patch.title !== undefined) subtask.title = patch.title;
+    if (patch.status !== undefined) subtask.status = patch.status;
+    if (patch.assigneeId !== undefined) subtask.assigneeId = patch.assigneeId;
+    if (patch.dueDate !== undefined) subtask.dueDate = patch.dueDate;
     return subtask;
   }
 
@@ -672,7 +675,10 @@ const updateSubtaskRecord = async (projectId, subtaskId, organisationId, patch) 
       if (!project || (organisationId && project.organisationId !== organisationId)) return null;
       const subtask = (project.subtasks || []).find((s) => s.id === subtaskId);
       if (!subtask) return null;
-      Object.assign(subtask, patch);
+      if (patch.title !== undefined) subtask.title = patch.title;
+      if (patch.status !== undefined) subtask.status = patch.status;
+      if (patch.assigneeId !== undefined) subtask.assigneeId = patch.assigneeId;
+      if (patch.dueDate !== undefined) subtask.dueDate = patch.dueDate;
       return subtask;
     }
     throw error;
@@ -724,7 +730,14 @@ const updateProjectRecord = async (projectId, organisationId, patch) => {
     if (allowOfflineMocks) {
       const project = mockProjects.find((p) => p.id === projectId);
       if (!project || (organisationId && project.organisationId !== organisationId)) return null;
-      Object.assign(project, patch);
+      if (patch.name) project.name = patch.name;
+      if (patch.description !== undefined) project.description = patch.description;
+      if (patch.status) project.status = patch.status;
+      if (patch.priority !== undefined) project.priority = patch.priority;
+      if (patch.startDate !== undefined) project.startDate = patch.startDate;
+      if (patch.endDate !== undefined) project.endDate = patch.endDate;
+      if (patch.hoursBudget !== undefined) project.hoursBudget = patch.hoursBudget;
+      if (patch.progressPercentage !== undefined) project.progressPercentage = patch.progressPercentage;
       return formatProject(project);
     }
     throw error;

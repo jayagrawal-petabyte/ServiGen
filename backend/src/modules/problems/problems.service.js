@@ -13,6 +13,7 @@ const {
   unlinkCiFromProblemRecord,
   addProblemLogEntry,
 } = require('./problems.model');
+const { getConfigurationItemById } = require('../cmdb/cmdb.model');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
 
@@ -108,6 +109,18 @@ const createProblem = async (payload = {}, organisationId) => {
   const cleanDescription = description ? sanitizeText(description) : null;
   const cleanRootCause = rootCause ? sanitizeText(rootCause) : null;
   const cleanWorkaround = workaround ? sanitizeText(workaround) : null;
+
+  if (organisationId && Array.isArray(ciIds) && ciIds.length > 0) {
+    for (const item of ciIds) {
+      const cid = String(item).trim();
+      if (cid) {
+        const ci = await getConfigurationItemById(cid, organisationId);
+        if (!ci) {
+          throw new AppError(`Configuration Item ${cid} not found in this organisation`, HTTP_STATUS.BAD_REQUEST);
+        }
+      }
+    }
+  }
 
   return createProblemRecord({
     summary: cleanSummary,
@@ -403,6 +416,14 @@ const linkCi = async (problemId, organisationId, payload = {}) => {
   }
 
   const existing = await getProblemDetail(problemId, organisationId);
+
+  if (organisationId) {
+    const ci = await getConfigurationItemById(ciId.trim(), organisationId);
+    if (!ci) {
+      throw new AppError('Configuration Item not found in this organisation', HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
   const updated = await linkCiToProblemRecord(existing.id, organisationId, ciId.trim());
 
   await addProblemLogEntry(existing.id, organisationId, {
@@ -437,7 +458,7 @@ const getProblemLogs = async (id, organisationId) => {
 };
 
 const postProblemLog = async (id, organisationId, payload = {}) => {
-  const { author = 'Agent', content, type = 'note' } = payload;
+  const { author, content, type = 'note', verifiedUser } = payload;
   if (!content || typeof content !== 'string' || !content.trim()) {
     throw new AppError('Log content is required', HTTP_STATUS.BAD_REQUEST);
   }
@@ -446,7 +467,14 @@ const postProblemLog = async (id, organisationId, payload = {}) => {
   }
 
   const cleanContent = sanitizeText(content);
-  const cleanAuthor = sanitizeText(author) || 'Agent';
+  let cleanAuthor = 'Agent';
+  if (verifiedUser) {
+    cleanAuthor = (author && sanitizeText(author) !== sanitizeText(verifiedUser))
+      ? `${sanitizeText(author)} (${sanitizeText(verifiedUser)})`
+      : sanitizeText(verifiedUser);
+  } else if (author) {
+    cleanAuthor = sanitizeText(author);
+  }
 
   const existing = await getProblemDetail(id, organisationId);
   return addProblemLogEntry(existing.id, organisationId, {
@@ -473,14 +501,20 @@ const sendProblemEmail = async (id, organisationId, payload = {}) => {
     throw new AppError('Email body is required', HTTP_STATUS.BAD_REQUEST);
   }
 
-  const cleanSubject = sanitizeText(subject);
+  const cleanSubject = sanitizeText(subject).replace(/[\r\n]+/g, ' ');
   const cleanBody = sanitizeText(body);
-  const cleanTo = sanitizeText(to);
+  const cleanTo = sanitizeText(to).replace(/[\r\n]+/g, '');
 
   const existing = await getProblemDetail(id, organisationId);
 
+  const senderAuthor = payload.verifiedUser
+    ? (payload.author && sanitizeText(payload.author) !== sanitizeText(payload.verifiedUser)
+        ? `${sanitizeText(payload.author)} (${sanitizeText(payload.verifiedUser)})`
+        : sanitizeText(payload.verifiedUser))
+    : (payload.author || 'Service Desk');
+
   const logEntry = await addProblemLogEntry(existing.id, organisationId, {
-    author: payload.author || 'Service Desk',
+    author: senderAuthor,
     content: `Email sent to ${cleanTo} | Subject: ${cleanSubject}\n\n${cleanBody}`,
     type: 'email',
   });

@@ -333,7 +333,11 @@ const postProblemLogHandler = async (req, res, next) => {
     const organisationId = getEffectiveOrgId(req, res);
     if (organisationId === undefined) return;
 
-    const logEntry = await postProblemLog(req.params.id, organisationId, req.body);
+    const verifiedUser = req.user?.name || req.user?.email || req.user?.id || 'Agent';
+    const logEntry = await postProblemLog(req.params.id, organisationId, {
+      ...req.body,
+      verifiedUser,
+    });
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: 'Log entry posted successfully',
@@ -349,7 +353,11 @@ const sendProblemEmailHandler = async (req, res, next) => {
     const organisationId = getEffectiveOrgId(req, res);
     if (organisationId === undefined) return;
 
-    const result = await sendProblemEmail(req.params.id, organisationId, req.body);
+    const verifiedUser = req.user?.name || req.user?.email || req.user?.id || 'Service Desk';
+    const result = await sendProblemEmail(req.params.id, organisationId, {
+      ...req.body,
+      verifiedUser,
+    });
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: 'Email update sent successfully',

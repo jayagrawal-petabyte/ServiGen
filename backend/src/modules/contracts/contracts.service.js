@@ -11,6 +11,7 @@ const {
   unlinkCiFromContract,
   getExpiringContracts,
 } = require('./contracts.model');
+const { getConfigurationItemById } = require('../cmdb/cmdb.model');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
 
@@ -115,6 +116,18 @@ const createContract = async (payload = {}, organisationId) => {
 
   if (notes && (typeof notes !== 'string' || notes.length > 10000)) {
     throw new AppError('Notes cannot exceed 10000 characters', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (organisationId && Array.isArray(ciIds) && ciIds.length > 0) {
+    for (const item of ciIds) {
+      const cid = String(item).trim();
+      if (cid) {
+        const ci = await getConfigurationItemById(cid, organisationId);
+        if (!ci) {
+          throw new AppError(`Configuration Item ${cid} not found in this organisation`, HTTP_STATUS.BAD_REQUEST);
+        }
+      }
+    }
   }
 
   return createContractRecord({
@@ -251,6 +264,14 @@ const linkCi = async (contractId, organisationId, payload = {}) => {
   }
 
   const existing = await getContractDetail(contractId, organisationId);
+
+  if (organisationId) {
+    const ci = await getConfigurationItemById(ciId.trim(), organisationId);
+    if (!ci) {
+      throw new AppError('Configuration Item not found in this organisation', HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
   const notes = payload.notes ? sanitizeText(payload.notes) : null;
 
   return linkCiToContract(existing.id, organisationId, ciId.trim(), notes);

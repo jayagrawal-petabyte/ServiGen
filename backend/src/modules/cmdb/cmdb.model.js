@@ -71,6 +71,23 @@ const mockConfigurationItems = [
     createdAt: '2026-09-20T10:00:00.000Z',
     updatedAt: '2026-10-10T12:00:00.000Z',
   },
+  {
+    id: 'CI-005',
+    name: 'Core Network Switch',
+    type: 'Network',
+    tag: 'NET-001',
+    site: 'Chennai',
+    status: 'Active',
+    lifecycleStatus: 'Deployed',
+    businessOwner: 'Infrastructure',
+    environment: 'Production',
+    ipAddress: '192.168.1.1',
+    operatingSystem: 'Cisco IOS-XE',
+    supportTeam: 'Network Ops',
+    organisationId: 'org-001',
+    createdAt: '2026-09-25T10:00:00.000Z',
+    updatedAt: '2026-10-12T12:00:00.000Z',
+  },
 ];
 
 const mockDependencies = [

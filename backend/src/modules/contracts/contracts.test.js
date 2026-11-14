@@ -141,6 +141,12 @@ test.describe('Contracts Management Module', () => {
 
     const afterUnlink = await contractsService.getLinkedCis('CON-1001', 'org-001');
     assert.ok(!afterUnlink.linkedCiIds.includes('CI-003'));
+
+    // Security: reject linking cross-tenant or non-existent CI
+    await assert.rejects(
+      contractsService.linkCi('CON-1001', 'org-001', { ciId: 'CI-NONEXISTENT' }),
+      /Configuration Item not found in this organisation/
+    );
   });
 
   test('deletes/archives contract with tenant check', async () => {

@@ -153,6 +153,12 @@ describe('Problem Management Service', () => {
 
     const unlinkedCiRes = await problemsService.unlinkCi('PRB-1001', 'org-001', 'CI-005');
     assert.ok(!unlinkedCiRes.linkedCiIds.includes('CI-005'));
+
+    // Security: reject linking cross-tenant or non-existent CI
+    await assert.rejects(
+      problemsService.linkCi('PRB-1001', 'org-001', { ciId: 'CI-NONEXISTENT' }),
+      /Configuration Item not found in this organisation/
+    );
   });
 
   it('posts work notes and sends email updates', async () => {
@@ -160,20 +166,35 @@ describe('Problem Management Service', () => {
       author: 'Lead DBA',
       content: 'Executed query plan analysis on production schema.',
       type: 'note',
+      verifiedUser: 'alice@servigen.local',
     });
     assert.ok(note.id);
     assert.equal(note.content, 'Executed query plan analysis on production schema.');
+    assert.ok(note.author.includes('alice@servigen.local'));
 
     const logs = await problemsService.getProblemLogs('PRB-1001', 'org-001');
     assert.ok(logs.some((l) => l.content.includes('query plan analysis')));
 
+    // Rejects header injection in recipient email
+    await assert.rejects(
+      problemsService.sendProblemEmail('PRB-1001', 'org-001', {
+        to: 'manager@servigen.local\r\nBcc: attacker@evil.local',
+        subject: 'Test Subject',
+        body: 'Test Body',
+      }),
+      /Valid recipient email address is required/
+    );
+
+    // Strips CRLF in subject
     const emailRes = await problemsService.sendProblemEmail('PRB-1001', 'org-001', {
       to: 'manager@servigen.local',
-      subject: 'Investigation Update for PRB-1001',
+      subject: 'Investigation Update for PRB-1001\r\nSubject-Injection: false',
       body: 'Workaround has been deployed successfully.',
     });
     assert.equal(emailRes.success, true);
     assert.equal(emailRes.to, 'manager@servigen.local');
+    assert.ok(!emailRes.subject.includes('\r'));
+    assert.ok(!emailRes.subject.includes('\n'));
   });
 
   it('deletes problem with tenant IDOR check', async () => {

@@ -189,11 +189,19 @@ const getProblemById = async (id, organisationId = null) => {
   }
 
   try {
+    const cleanTarget = String(id).trim().replace(/^prb?-?/i, '');
+    const candidateIds = [id];
+    if (cleanTarget) {
+      candidateIds.push(cleanTarget, `PR-${cleanTarget}`, `PRB-${cleanTarget}`);
+      if (/^\d+$/.test(cleanTarget)) {
+        candidateIds.push(`PR-${cleanTarget.padStart(7, '0')}`);
+      }
+    }
+
     const where = {
       OR: [
-        { id },
-        { problemNumber: id },
-        { id: { endsWith: id } },
+        { id: { in: candidateIds } },
+        { problemNumber: { in: candidateIds } },
       ],
     };
     if (organisationId) where.organisationId = organisationId;

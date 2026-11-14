@@ -109,4 +109,14 @@ describe('Projects Service & Controller Logic', () => {
       (err) => err.code === 'PROJECT_NOT_FOUND'
     );
   });
+
+  it('prevents prototype pollution in subtask and project updates', async () => {
+    const maliciousPayload = JSON.parse('{"__proto__":{"polluted":true},"title":"Safe Task"}');
+    await projectsService.updateProjectSubtask('P-001', 'ST-002', 'org-001', maliciousPayload);
+    assert.equal({}.polluted, undefined);
+
+    const maliciousProject = JSON.parse('{"__proto__":{"polluted":true},"name":"Safe Name"}');
+    await projectsService.updateProject('P-001', 'org-001', maliciousProject);
+    assert.equal({}.polluted, undefined);
+  });
 });
