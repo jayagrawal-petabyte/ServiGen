@@ -31,6 +31,9 @@ const ServiceCatalogue = React.lazy(() => import('./pages/ServicesCatalogue/Serv
 // Approvals
 const ApprovalsPage = React.lazy(() => import('./pages/Approvals/ApprovalsPage'))
 
+// Contracts & Supplier Agreements
+const ContractsPage = React.lazy(() => import('./pages/Contracts/ContractsPage'))
+
 // Article Drafts
 const ArticleDraftsPage = React.lazy(() => import('./pages/ArticleDrafts/ArticleDraftsPage'))
 
@@ -236,7 +239,7 @@ export default function App() {
               <Route path="/on-hold" element={<OnHoldTicketScreen />} />
               <Route path="/custom-lists" element={<CustomLists />} />
               <Route path="/organisations" element={<OrganisationsScreen />} />
-              <Route path="/contracts" element={<OrganisationUsersScreen />} />
+              <Route path="/contracts" element={<ContractsPage />} />
               <Route path="/contacts" element={<OrganisationUsersScreen />} />
               <Route path="/team/1st-line-live" element={<FirstLineLive />} />
               <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
