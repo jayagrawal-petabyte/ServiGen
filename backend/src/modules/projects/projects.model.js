@@ -1,6 +1,5 @@
 const { randomUUID } = require('crypto');
 const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockProjects = [
   {

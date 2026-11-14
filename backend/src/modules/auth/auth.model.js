@@ -1,7 +1,6 @@
 'use strict';
 
 const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
 
 /**
  * Authentication Data Model.

@@ -29,7 +29,6 @@ const EDITABLE_FIELDS = new Set([
   'impact',
   'affectedServices',
   'commander',
-  'resolvedAt', // allowed so frontend can set/clear on stage changes
 ]);
 
 let incidentSequence = 0;

@@ -53,11 +53,4 @@ router.post('/reset-password', resetPasswordHandler);
  */
 router.get('/session', getSessionHandler);
 
-/**
- * POST /auth/refresh
- *
- * Refresh the active session token.
- */
-router.post('/refresh', refreshHandler);
-
 module.exports = router;

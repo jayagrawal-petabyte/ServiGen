@@ -26,6 +26,12 @@ const getEffectiveOrgId = (req) => {
   return req.user?.organisationId || null;
 };
 
+// ─── Controllers ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/change-requests
+ * Returns all change requests scoped to the caller's organisation (SCR-009).
+ */
 const getChangeRequestsList = async (req, res, next) => {
   try {
     const organisationId = getEffectiveOrgId(req);
@@ -39,6 +45,10 @@ const getChangeRequestsList = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/change-requests/active
+ * Returns only Active-status change requests for SCR-026.
+ */
 const getActiveChangeRequestsList = async (req, res, next) => {
   try {
     const organisationId = getEffectiveOrgId(req);
@@ -78,6 +88,7 @@ const getChangeRequestById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // Validate ID format before hitting DB — rejects oversized or malformed values.
     if (typeof id !== 'string' || !id.trim() || id.length > 50) {
       return next(
         new AppError('Invalid change request ID format', HTTP_STATUS.BAD_REQUEST)
@@ -102,6 +113,11 @@ const getChangeRequestById = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/change-requests
+ * Create a new Change Request submitted from the frontend modal.
+ * Caller cannot supply `id` or `status` — both are enforced server-side.
+ */
 const createChangeRequest = async (req, res, next) => {
   try {
     const organisationId = getEffectiveOrgId(req);
@@ -111,6 +127,7 @@ const createChangeRequest = async (req, res, next) => {
       data: record,
     });
   } catch (err) {
+    // Validation errors from service layer are plain Error objects — map to 422
     if (err.isOperational) return next(err);
     return next(new AppError(err.message, HTTP_STATUS.UNPROCESSABLE_ENTITY));
   }
@@ -132,38 +149,13 @@ const updateChangeRequest = async (req, res, next) => {
     }
 
     const organisationId = getEffectiveOrgId(req);
-    const existing = await getChangeRequestDetails(id.trim(), organisationId);
-    if (!existing) {
+    const updated = await updateChangeRequestData(id.trim(), req.body, organisationId);
+
+    if (!updated) {
       return next(
         new AppError('Change request not found', HTTP_STATUS.NOT_FOUND)
       );
     }
-
-    const { status } = req.body;
-    if (status) {
-      if (status === 'Approved' && existing.status === 'On Hold') {
-        return next(
-          new AppError(
-            'Cannot transition directly from On Hold to Approved. The change must be resubmitted for approval.',
-            HTTP_STATUS.UNPROCESSABLE_ENTITY
-          )
-        );
-      }
-
-      if ((status === 'Approved' || status === 'Rejected') && req.user) {
-        const allowedRoles = ['Admin', 'Approver', 'System Manager'];
-        if (!allowedRoles.includes(req.user.role)) {
-          return next(
-            new AppError(
-              'Only Approver or Administrator roles may approve or reject change requests.',
-              HTTP_STATUS.FORBIDDEN
-            )
-          );
-        }
-      }
-    }
-
-    const updated = await updateChangeRequestData(id.trim(), req.body, organisationId);
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,

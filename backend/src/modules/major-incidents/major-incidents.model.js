@@ -199,7 +199,6 @@ const updateMajorIncident = async (id, changes, expectedVersion) => {
   return incident;
 };
 
-
 const addIncidentUpdate = async (id, update) => {
   if (process.env.NODE_ENV !== 'test') {
     try {
@@ -222,8 +221,7 @@ const addIncidentUpdate = async (id, update) => {
     }
   }
 
-  // In-memory mock fallback (test env or DB unavailable)
-  const incident = mockMajorIncidents.find((i) => i.id === id);
+  const incident = await getMajorIncidentById(id);
   if (!incident) return null;
 
   if (!incident.updates.some((u) => u.id === update.id)) {
@@ -232,7 +230,6 @@ const addIncidentUpdate = async (id, update) => {
 
   return incident;
 };
-
 
 module.exports = {
   getMajorIncidents,

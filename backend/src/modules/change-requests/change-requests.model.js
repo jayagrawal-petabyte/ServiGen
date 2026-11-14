@@ -2,7 +2,6 @@
 
 const { randomUUID } = require('node:crypto');
 const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
 
 // ─── Domain Constants ─────────────────────────────────────────────────────────
 

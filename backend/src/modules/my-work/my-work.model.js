@@ -115,7 +115,6 @@ const tickets = [
 ];
 
 const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
 
 const getTickets = async (filters = {}) => {
   if (process.env.NODE_ENV !== 'test') {

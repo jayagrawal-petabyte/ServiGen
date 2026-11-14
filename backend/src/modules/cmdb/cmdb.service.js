@@ -315,26 +315,6 @@ const getCiTopologyTree = async (ciId, organisationId = null) => {
   return getCiTopology(existing.id, organisationId);
 };
 
-const createNewConfigurationItem = async (payload, organisationId = null) => {
-  return await createConfigurationItem(payload, organisationId);
-};
-
-const updateConfigurationItemDetail = async (id, payload, organisationId = null) => {
-  return await updateConfigurationItem(id, payload, organisationId);
-};
-
-const linkCiRelationship = async (id, relationshipData, organisationId = null) => {
-  return await addCiRelationship(id, relationshipData, organisationId);
-};
-
-const unlinkCiRelationship = async (id, targetId, organisationId = null) => {
-  return await removeCiRelationship(id, targetId, organisationId);
-};
-
-const getCiTopologyGraph = async (id, organisationId = null) => {
-  return await getCiTopology(id, organisationId);
-};
-
 module.exports = {
   VALID_LIFECYCLE_STATUSES,
   ALLOWED_LIFECYCLE_TRANSITIONS,
