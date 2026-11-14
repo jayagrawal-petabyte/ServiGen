@@ -13,12 +13,12 @@ export interface CalendarEvent {
 }
 
 export const APPOINTMENT_TYPES: { id: EventType; label: string; color: string }[] = [
-  { id: "phone-call", label: "Phone Call", color: "#6d28d9" },
-  { id: "meeting", label: "Meeting", color: "#d9694f" },
-  { id: "site-visit", label: "Site Visit", color: "#2f855a" },
-  { id: "resource-booking", label: "Office Resource Booking", color: "#263a5e" },
-  { id: "change-request", label: "Change Request", color: "#d97706" },
-  { id: "maintenance", label: "Maintenance Window", color: "#dc2626" },
+  { id: "phone-call", label: "Phone Call", color: "#7c3aed" },
+  { id: "meeting", label: "Meeting", color: "#e85d3a" },
+  { id: "site-visit", label: "Site Visit", color: "#16a34a" },
+  { id: "resource-booking", label: "Office Resource Booking", color: "#2563eb" },
+  { id: "change-request", label: "Change Request", color: "#ea8c00" },
+  { id: "maintenance", label: "Maintenance Window", color: "#ef4444" },
 ];
 
 function pad(n: number) {

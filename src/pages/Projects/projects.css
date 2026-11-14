@@ -1,5 +1,4 @@
-/* Projects page – peach / navy theme. Everything is scoped under .projects-page
-   so it does not leak into other teams' pages. */
+
 
 .projects-page {
   --pj-bg: #fff7f3;
@@ -142,8 +141,8 @@
 .pj-nav-icon {
   width: 16px;
   text-align: center;
-  color: var(--pj-accent-dark);
-  font-size: 14px;
+  color: #1c2541;
+  font-size: 15px;
 }
 
 .pj-nav.active .pj-nav-icon {
@@ -271,18 +270,11 @@
 }
 
 .pj-new {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
   border: none;
   border-radius: 999px;
   background: var(--pj-btn);
-  padding: 6px 16px;
-  font-weight: 600;
-  color: #ffffff;
-  line-height: 1;
-  cursor: pointer;
+  padding: 7px 18px;
+  font-weight: 500;
 }
 
 .pj-new:hover {
