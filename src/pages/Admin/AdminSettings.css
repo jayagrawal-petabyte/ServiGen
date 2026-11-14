@@ -90,7 +90,7 @@
 }
 
 .admin-nav-btn.active {
-  color: #eb6a47;
+  color: #C96F55;
   background-color: #ffffff;
   border-color: #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -120,7 +120,7 @@
 }
 
 .admin-input-box:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
   box-shadow: 0 0 0 3px rgba(235, 106, 71, 0.15);
 }
 
@@ -128,7 +128,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -141,5 +141,5 @@
 }
 
 .admin-save-btn:hover {
-  background-color: #db5936;
+  background-color: #b55f46;
 }

@@ -659,7 +659,7 @@ export default function ArticleDraftDetailModal({
                     onClick={() => handleSave(true)}
                     disabled={isSubmitting}
                     style={{
-                      backgroundColor: '#eb6a47',
+                      backgroundColor: '#C96F55',
                       color: 'white',
                       padding: '7px 16px',
                       borderRadius: '999px',

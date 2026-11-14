@@ -227,7 +227,7 @@
 
 .dropdown-item.selected {
   background: #e0f2fe;
-  color: #0369a1;
+  color: #b55f46;
   font-weight: 700;
 }
 
@@ -305,7 +305,7 @@
 }
 
 .chevron-step.chevron-active {
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
 }
 
@@ -364,9 +364,9 @@
 }
 
 .ticket-nav-tab.tab-active {
-  color: #eb6a47;
+  color: #C96F55;
   font-weight: 700;
-  border-bottom-color: #eb6a47;
+  border-bottom-color: #C96F55;
 }
 
 .ticket-subnav-center {
@@ -384,7 +384,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #38bdf8;
+  background: #F4A58A;
   opacity: 0.8;
 }
 
@@ -475,7 +475,7 @@
   height: 34px;
   border-radius: 50%;
   background: #f0fdfa;
-  border: 2px solid #38bdf8;
+  border: 2px solid #F4A58A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -589,7 +589,7 @@
 .reaction-pill.reaction-active {
   background: #eff6ff;
   border-color: #93c5fd;
-  color: #1d4ed8;
+  color: #C96F55;
 }
 
 /* Activity Translate Popover */
@@ -651,7 +651,7 @@
 
 .translate-lang-item.active-lang {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #C96F55;
   font-weight: 600;
 }
 
@@ -728,7 +728,7 @@
 }
 
 .activity-edit-textarea:focus {
-  border-color: #0284c7;
+  border-color: #C96F55;
   box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
 }
 
@@ -815,7 +815,7 @@
 
 .notif-refresh-btn:hover {
   background: #fdede7;
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 .notif-table-header {
@@ -865,7 +865,7 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  border: 9px solid #eb6a47;
+  border: 9px solid #C96F55;
   border-right-color: transparent;
   animation: cyanSpin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
 }
@@ -910,7 +910,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -923,7 +923,7 @@
 .sidebar-user-link {
   font-size: 13.5px;
   font-weight: 700;
-  color: #0284c7;
+  color: #C96F55;
   text-decoration: none;
 }
 
@@ -951,7 +951,7 @@
 .sidebar-field-link {
   font-size: 13px;
   font-weight: 600;
-  color: #0284c7;
+  color: #C96F55;
   text-decoration: none;
 }
 
@@ -993,7 +993,7 @@
   gap: 8px;
   width: 100%;
   padding: 8px 14px;
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 600;
@@ -1005,7 +1005,7 @@
 }
 
 .teams-action-btn:hover {
-  background: #db5936;
+  background: #b55f46;
   transform: translateY(-1px);
 }
 
@@ -1073,7 +1073,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #eb6a47;
+  background: #C96F55;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1090,7 +1090,7 @@
 .asset-id-link {
   font-size: 12.5px;
   font-weight: 700;
-  color: #0284c7;
+  color: #C96F55;
   text-decoration: none;
 }
 
@@ -1126,7 +1126,7 @@
   transform: translateX(-50%);
   margin-top: 8px;
   background: #18181b;
-  color: #38bdf8;
+  color: #F4A58A;
   font-size: 11px;
   font-weight: 600;
   padding: 4px 10px;
@@ -1225,7 +1225,7 @@
 }
 
 .add-followers-btn:hover {
-  color: #0284c7;
+  color: #C96F55;
 }
 
 .add-followers-plus {
@@ -1323,7 +1323,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
   font-size: 12.5px;
   font-weight: 600;
@@ -1336,7 +1336,7 @@
 }
 
 .share-copy-link-btn:hover {
-  background: #0369a1;
+  background: #b55f46;
   transform: translateY(-1px);
 }
 
@@ -1803,7 +1803,7 @@
   height: 32px;
   border-radius: 50%;
   background: #fdede7;
-  border: 1.5px solid #eb6a47;
+  border: 1.5px solid #C96F55;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2009,7 +2009,7 @@
 }
 
 .supplier-rich-textarea:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 .supplier-bottom-fields-row {
@@ -2043,7 +2043,7 @@
 }
 
 .supplier-field-select:focus, .supplier-field-textinput:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 .supplier-composer-footer {
@@ -2132,7 +2132,7 @@
   padding: 0;
   font-size: 13.5px;
   font-weight: 700;
-  color: #0284c7;
+  color: #C96F55;
   cursor: pointer;
   text-align: left;
 }
@@ -2375,7 +2375,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #0369a1;
+  color: #b55f46;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 6px;
 }
@@ -2407,7 +2407,7 @@
 
 .status-badge-inline {
   background: #dbeafe;
-  color: #1d4ed8;
+  color: #C96F55;
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 11px;

@@ -510,7 +510,7 @@ export default function Dashboard() {
             onClick={() => navigate('/incidents')}
             className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
           >
-            <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center text-[#0284C7] flex-shrink-0">
+            <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center text-[#C96F55] flex-shrink-0">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-6l-2 3h-4l-2-3H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7Z" />
                 <path d="M5.45 5.11 2 12v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
@@ -781,7 +781,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => navigate('/approvals')}
-                className="text-xs font-semibold text-[#0284C7] hover:underline cursor-pointer"
+                className="text-xs font-semibold text-[#C96F55] hover:underline cursor-pointer"
               >
                 View All
               </button>

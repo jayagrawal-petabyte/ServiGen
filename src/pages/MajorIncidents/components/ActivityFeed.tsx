@@ -194,7 +194,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
               maxLength={1000}
               rows={2}
               placeholder="e.g. Teams war-room link shared with Database responders..."
-              className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] resize-none text-gray-800"
+              className="w-full text-xs p-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55] resize-none text-gray-800"
               disabled={isSubmitting}
             />
             <div className="flex items-center justify-between">
@@ -208,7 +208,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
               <button
                 type="submit"
                 disabled={!broadcastMessage.trim() || isSubmitting}
-                className="px-3 py-1 bg-[#eb6a47] hover:bg-[#db5936] disabled:opacity-50 text-white text-[11px] font-bold rounded-md transition-colors cursor-pointer border-none flex items-center gap-1 shadow-2xs"
+                className="px-3 py-1 bg-[#C96F55] hover:bg-[#b55f46] disabled:opacity-50 text-white text-[11px] font-bold rounded-md transition-colors cursor-pointer border-none flex items-center gap-1 shadow-2xs"
               >
                 {isSubmitting ? 'Posting...' : 'Post Update'}
               </button>
@@ -243,7 +243,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             onClick={() => setShowFilterDropdown((prev) => !prev)}
             className={`p-1.5 rounded transition-colors cursor-pointer border ${
               showFilterDropdown || activeFilter !== 'all'
-                ? 'bg-orange-50 text-[#eb6a47] border-orange-200 shadow-2xs'
+                ? 'bg-orange-50 text-[#C96F55] border-orange-200 shadow-2xs'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 border-transparent'
             }`}
             title="Filter activity stream"
@@ -270,7 +270,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 {activeFilter !== 'all' && (
                   <button
                     onClick={() => setActiveFilter('all')}
-                    className="text-[10px] text-[#eb6a47] hover:underline font-medium cursor-pointer"
+                    className="text-[10px] text-[#C96F55] hover:underline font-medium cursor-pointer"
                   >
                     Reset
                   </button>
@@ -289,7 +289,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       }}
                       className={`w-full text-left px-3 py-1.5 flex items-center justify-between transition-colors cursor-pointer ${
                         isSelected
-                          ? 'bg-orange-50 text-[#eb6a47] font-semibold'
+                          ? 'bg-orange-50 text-[#C96F55] font-semibold'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -301,14 +301,14 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                             isSelected
-                              ? 'bg-orange-100 text-[#eb6a47]'
+                              ? 'bg-orange-100 text-[#C96F55]'
                               : 'bg-gray-100 text-gray-500'
                           }`}
                         >
                           {counts[opt.value]}
                         </span>
                         {isSelected && (
-                          <svg className="w-3.5 h-3.5 text-[#eb6a47]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <svg className="w-3.5 h-3.5 text-[#C96F55]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}

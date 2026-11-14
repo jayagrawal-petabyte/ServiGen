@@ -94,7 +94,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           <button
             type="button"
             onClick={handleNew}
-            className="flex items-center gap-1 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-semibold px-2.5 py-1 rounded-full transition-colors shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
+            className="flex items-center gap-1 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-semibold px-2.5 py-1 rounded-full transition-colors shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
             title="Create New Major Incident"
           >
             <span className="text-sm leading-none font-light">+</span>
@@ -136,7 +136,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 placeholder="Search…"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="text-xs border border-gray-200 rounded-full pl-2.5 pr-6 py-1 w-full outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 transition-all"
+                className="text-xs border border-gray-200 rounded-full pl-2.5 pr-6 py-1 w-full outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 transition-all"
               />
               <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -189,7 +189,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {showToast && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(100%+6px)] z-50 pointer-events-none">
           <div className="flex items-center gap-2 bg-gray-800 text-white text-xs font-medium px-4 py-2 rounded-lg shadow-xl">
-            <svg className="w-3.5 h-3.5 text-[#eb6a47] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg className="w-3.5 h-3.5 text-[#C96F55] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
             New Major Incident form opening…

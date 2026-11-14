@@ -80,7 +80,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Critical Incidents Breaching SLA by Region"
-                className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                 required
               />
             </div>
@@ -93,7 +93,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={entity}
                   onChange={(e) => setEntity(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                 >
                   <option value="incidents">Tickets &amp; Incidents</option>
                   <option value="requests">Service Requests &amp; Orders</option>
@@ -109,7 +109,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={metric}
                   onChange={(e) => setMetric(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                 >
                   <option value="count">Record Volume Count (Total #)</option>
                   <option value="slaMet">SLA Resolution Met Percentage (%)</option>
@@ -124,7 +124,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                 >
                   <option value="category">Category (Service Taxonomy)</option>
                   <option value="priority">Priority (Critical, High, Medium, Low)</option>
@@ -140,7 +140,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                 >
                   <option value="today">Today (Last 24 Hours)</option>
                   <option value="7days">Last 7 Days</option>
@@ -201,7 +201,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+                className="px-5 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
               >
                 <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Execute Query &amp; Load Report</span>

@@ -305,7 +305,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-xs font-mono font-extrabold text-[#eb6a47]">{currentCi.tag}</span>
+                <span className="text-xs font-mono font-extrabold text-[#C96F55]">{currentCi.tag}</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
                   {currentCi.type}
                 </span>
@@ -393,7 +393,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             onClick={() => setActiveTab('specs')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'specs'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -405,7 +405,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             onClick={() => setActiveTab('relationships')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'relationships'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -417,7 +417,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             onClick={() => setActiveTab('impact')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'impact'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -429,7 +429,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             onClick={() => setActiveTab('licenses')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'licenses'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -450,7 +450,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsEditingSpecs(!isEditingSpecs)}
-                  className="px-3 py-1 text-xs font-bold text-[#eb6a47] hover:bg-orange-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1 text-xs font-bold text-[#C96F55] hover:bg-orange-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>{isEditingSpecs ? 'Cancel' : 'Edit Specs'}</span>
@@ -541,7 +541,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                     <button
                       type="submit"
                       disabled={isUpdatingStatus}
-                      className="px-4 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       {isUpdatingStatus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                       <span>Save Changes</span>
@@ -641,7 +641,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                           disabled={isUpdatingStatus}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             isCurrent
-                              ? 'bg-[#eb6a47] text-white shadow-xs ring-2 ring-[#eb6a47]/30'
+                              ? 'bg-[#C96F55] text-white shadow-xs ring-2 ring-[#C96F55]/30'
                               : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-100'
                           }`}
                         >
@@ -683,7 +683,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAddRel(!showAddRel)}
-                      className="px-3 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                      className="px-3 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>{showAddRel ? 'Cancel' : 'Link CI'}</span>
@@ -762,7 +762,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       <button
                         type="submit"
                         disabled={isLinkingRel || !relTargetId}
-                        className="px-4 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white rounded-xl font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-xl font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         {isLinkingRel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                         <span>Establish Link</span>
@@ -927,7 +927,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       )}&ciName=${encodeURIComponent(currentCi.name)}`
                     );
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#eb6a47] hover:bg-[#db5936] text-white font-bold text-xs cursor-pointer shadow-2xs transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold text-xs cursor-pointer shadow-2xs transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create Change Request</span>

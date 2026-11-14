@@ -118,7 +118,7 @@
 }
 
 .portal-search-input:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
   box-shadow: 0 0 0 4px rgba(235, 106, 71, 0.2);
 }
 
@@ -212,7 +212,7 @@
 }
 
 .portal-tab-btn.active {
-  color: #eb6a47;
+  color: #C96F55;
   background-color: #fff7ed;
 }
 
@@ -229,7 +229,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -242,7 +242,7 @@
 }
 
 .portal-new-ticket-btn:hover {
-  background-color: #db5936;
+  background-color: #b55f46;
   box-shadow: 0 4px 8px rgba(235, 106, 71, 0.35);
 }
 
@@ -334,7 +334,7 @@
 
 .portal-faq-card:hover {
   background-color: #ffffff;
-  border-color: #eb6a47;
+  border-color: #C96F55;
   box-shadow: 0 4px 12px rgba(235, 106, 71, 0.08);
   transform: translateY(-2px);
 }
@@ -344,7 +344,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #eb6a47;
+  color: #C96F55;
   background-color: #fff7ed;
   padding: 2px 8px;
   border-radius: 6px;

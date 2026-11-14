@@ -229,7 +229,7 @@ export const OrganisationsScreen: React.FC = () => {
           <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Managed Contacts</span>
-              <p className="text-xl font-bold text-[#eb6a47] mt-0.5">{totalContacts}</p>
+              <p className="text-xl font-bold text-[#C96F55] mt-0.5">{totalContacts}</p>
             </div>
             <span className="text-2xl">👥</span>
           </div>
@@ -321,7 +321,7 @@ export const OrganisationsScreen: React.FC = () => {
                       </div>
                     </td>
                     <td>
-                      <span className="text-[#0284c7] font-medium font-mono text-xs hover:underline cursor-pointer">
+                      <span className="text-[#C96F55] font-medium font-mono text-xs hover:underline cursor-pointer">
                         {org.domain}
                       </span>
                     </td>
@@ -348,7 +348,7 @@ export const OrganisationsScreen: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/contacts?organisation=${encodeURIComponent(org.name)}`)}
-                        className="text-[#eb6a47] font-bold text-xs hover:underline cursor-pointer flex items-center gap-1"
+                        className="text-[#C96F55] font-bold text-xs hover:underline cursor-pointer flex items-center gap-1"
                         title={`View ${org.contactCount} contacts for ${org.name}`}
                       >
                         <span>{org.contactCount} Contacts</span>

@@ -232,7 +232,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                 placeholder="Search Major Incidents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1c0f0c]/20 hover:bg-[#1c0f0c]/25 focus:bg-white text-xs text-[#1c0f0c] focus:text-gray-900 placeholder-[#542d25]/80 focus:placeholder-gray-400 pl-3 pr-8 py-1.5 rounded-full outline-none transition-all border border-black/10 focus:border-[#eb6a47] shadow-inner font-medium"
+                className="w-full bg-[#1c0f0c]/20 hover:bg-[#1c0f0c]/25 focus:bg-white text-xs text-[#1c0f0c] focus:text-gray-900 placeholder-[#542d25]/80 focus:placeholder-gray-400 pl-3 pr-8 py-1.5 rounded-full outline-none transition-all border border-black/10 focus:border-[#C96F55] shadow-inner font-medium"
               />
               {searchQuery ? (
                 <button

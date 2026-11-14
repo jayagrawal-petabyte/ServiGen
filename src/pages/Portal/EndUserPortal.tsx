@@ -285,17 +285,17 @@ export const EndUserPortal: React.FC = () => {
                 onClick={() => navigate('/services-catalogue')}
                 className="portal-action-card group cursor-pointer"
               >
-                <div className="portal-card-icon-wrap bg-orange-100 text-[#eb6a47] group-hover:scale-110 transition-transform">
+                <div className="portal-card-icon-wrap bg-orange-100 text-[#C96F55] group-hover:scale-110 transition-transform">
                   <Laptop className="w-6 h-6" />
                 </div>
-                <h3 className="portal-card-title group-hover:text-[#eb6a47] transition-colors">
+                <h3 className="portal-card-title group-hover:text-[#C96F55] transition-colors">
                   Request Equipment &amp; Software
                 </h3>
                 <p className="portal-card-desc">
                   Browse standard laptops, monitors, accessories, Adobe licenses, and cloud IDE subscriptions.
                 </p>
                 <div className="portal-card-footer">
-                  <span className="text-xs font-bold text-[#eb6a47] flex items-center gap-1">
+                  <span className="text-xs font-bold text-[#C96F55] flex items-center gap-1">
                     Open Service Catalog <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
@@ -357,7 +357,7 @@ export const EndUserPortal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('kb')}
-                  className="text-xs font-bold text-[#eb6a47] hover:underline"
+                  className="text-xs font-bold text-[#C96F55] hover:underline"
                 >
                   View All Guides →
                 </button>
@@ -374,7 +374,7 @@ export const EndUserPortal: React.FC = () => {
                       <span className="portal-faq-category">{faq.category}</span>
                       <span className="portal-faq-time">{faq.readTime}</span>
                     </div>
-                    <h4 className="portal-faq-title group-hover:text-[#eb6a47] transition-colors">
+                    <h4 className="portal-faq-title group-hover:text-[#C96F55] transition-colors">
                       {faq.title}
                     </h4>
                     <p className="portal-faq-snippet">{faq.snippet}</p>
@@ -417,7 +417,7 @@ export const EndUserPortal: React.FC = () => {
                   <tbody>
                     {myTickets.slice(0, 3).map((t) => (
                       <tr key={t.id} onClick={() => setSelectedTicket(t)} className="cursor-pointer">
-                        <td className="font-bold text-[#eb6a47]">{t.id}</td>
+                        <td className="font-bold text-[#C96F55]">{t.id}</td>
                         <td className="font-medium text-slate-800">{t.summary}</td>
                         <td className="text-xs text-slate-600">{t.category}</td>
                         <td>
@@ -471,7 +471,7 @@ export const EndUserPortal: React.FC = () => {
                 <tbody>
                   {myTickets.map((t) => (
                     <tr key={t.id} onClick={() => setSelectedTicket(t)} className="cursor-pointer">
-                      <td className="font-bold text-[#eb6a47]">{t.id}</td>
+                      <td className="font-bold text-[#C96F55]">{t.id}</td>
                       <td className="font-semibold text-slate-800">{t.summary}</td>
                       <td className="text-xs text-slate-600">{t.category}</td>
                       <td>
@@ -518,7 +518,7 @@ export const EndUserPortal: React.FC = () => {
                     <span className="portal-faq-category">{faq.category}</span>
                     <span className="portal-faq-time">{faq.readTime}</span>
                   </div>
-                  <h4 className="portal-faq-title group-hover:text-[#eb6a47] transition-colors">
+                  <h4 className="portal-faq-title group-hover:text-[#C96F55] transition-colors">
                     {faq.title}
                   </h4>
                   <p className="portal-faq-snippet">{faq.snippet}</p>
@@ -587,7 +587,7 @@ export const EndUserPortal: React.FC = () => {
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
               <div>
-                <span className="text-xs font-mono font-bold text-[#eb6a47]">{selectedTicket.id}</span>
+                <span className="text-xs font-mono font-bold text-[#C96F55]">{selectedTicket.id}</span>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">{selectedTicket.summary}</h3>
               </div>
               <button onClick={() => setSelectedTicket(null)} className="portal-modal-close">✕</button>
@@ -651,7 +651,7 @@ export const EndUserPortal: React.FC = () => {
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-orange-100 text-[#eb6a47] rounded-lg">
+                <span className="p-1.5 bg-orange-100 text-[#C96F55] rounded-lg">
                   <PlusCircle className="w-4 h-4" />
                 </span>
                 <h3 className="text-base font-bold text-slate-900">Raise IT Support Request</h3>
@@ -667,7 +667,7 @@ export const EndUserPortal: React.FC = () => {
                   value={ticketTitle}
                   onChange={(e) => setTicketTitle(e.target.value)}
                   placeholder="e.g. Cannot connect to corporate VPN after password update"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
                   required
                 />
               </div>
@@ -678,7 +678,7 @@ export const EndUserPortal: React.FC = () => {
                   <select
                     value={ticketCategory}
                     onChange={(e) => setTicketCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47]"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
                   >
                     <option value="General Support">General Support</option>
                     <option value="Hardware Request">Hardware Request</option>
@@ -693,7 +693,7 @@ export const EndUserPortal: React.FC = () => {
                   <select
                     value={ticketPriority}
                     onChange={(e) => setTicketPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47]"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
                   >
                     <option value="Low">Low (General Inquiry)</option>
                     <option value="Medium">Medium (Standard Work Impact)</option>
@@ -709,7 +709,7 @@ export const EndUserPortal: React.FC = () => {
                   value={ticketDescription}
                   onChange={(e) => setTicketDescription(e.target.value)}
                   placeholder="Please describe the symptoms, error messages, and steps already tried..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#eb6a47] text-slate-800"
+                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#C96F55] text-slate-800"
                   required
                 />
               </div>
@@ -725,7 +725,7 @@ export const EndUserPortal: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !ticketTitle.trim() || !ticketDescription.trim()}
-                  className="px-5 py-2 bg-[#eb6a47] hover:bg-[#db5936] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+                  className="px-5 py-2 bg-[#C96F55] hover:bg-[#b55f46] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Support Request'}
                 </button>

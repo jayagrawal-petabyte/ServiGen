@@ -229,7 +229,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
       {/* Top Controls Toolbar */}
       <div className="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#eb6a47]/20 border border-[#eb6a47]/40 flex items-center justify-center text-[#eb6a47]">
+          <div className="w-7 h-7 rounded-lg bg-[#C96F55]/20 border border-[#C96F55]/40 flex items-center justify-center text-[#C96F55]">
             <GitBranch className="w-4 h-4" />
           </div>
           <div>
@@ -237,7 +237,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               <span className="font-extrabold text-sm text-white tracking-tight">
                 Visual Dependency Tree
               </span>
-              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-[#eb6a47] text-white">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-[#C96F55] text-white">
                 {rootCi.tag}
               </span>
             </div>
@@ -255,7 +255,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               onClick={() => setSelectedDirectionFilter('all')}
               className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                 selectedDirectionFilter === 'all'
-                  ? 'bg-[#eb6a47] text-white shadow-xs'
+                  ? 'bg-[#C96F55] text-white shadow-xs'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -327,7 +327,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           {onLinkRelationship && (
             <button
               onClick={() => setShowAddLinkModal(true)}
-              className="px-3 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className="px-3 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Link Dependency</span>
@@ -343,7 +343,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
       >
         {isLoading ? (
           <div className="py-20 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#eb6a47] mb-3" />
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#C96F55] mb-3" />
             <p className="text-sm font-semibold text-slate-300">Traversing dependency graph & topological edges...</p>
           </div>
         ) : (
@@ -426,19 +426,19 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
 
             {/* 2. ROOT CI NODE (Centerpiece) */}
             <div className="relative z-10 w-full max-w-lg">
-              <div className="p-1 rounded-3xl bg-gradient-to-r from-[#eb6a47] via-amber-500 to-[#c4674e] shadow-2xl shadow-[#eb6a47]/20">
+              <div className="p-1 rounded-3xl bg-gradient-to-r from-[#C96F55] via-amber-500 to-[#c4674e] shadow-2xl shadow-[#C96F55]/20">
                 <div className="bg-slate-900 rounded-[22px] p-5 border border-slate-800">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#eb6a47]/20 border border-[#eb6a47]/50 rounded-2xl text-[#eb6a47]">
+                      <div className="p-3 bg-[#C96F55]/20 border border-[#C96F55]/50 rounded-2xl text-[#C96F55]">
                         {getCiIcon(rootCi.type)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-extrabold text-sm text-[#eb6a47]">
+                          <span className="font-mono font-extrabold text-sm text-[#C96F55]">
                             {rootCi.tag}
                           </span>
-                          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#eb6a47] text-white tracking-wider">
+                          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#C96F55] text-white tracking-wider">
                             ROOT FOCAL CI
                           </span>
                         </div>
@@ -622,7 +622,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl text-white space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <Plus className="w-4 h-4 text-[#eb6a47]" />
+                <Plus className="w-4 h-4 text-[#C96F55]" />
                 <h3 className="font-bold text-sm">Link Dependency to {rootCi.tag}</h3>
               </div>
               <button
@@ -641,7 +641,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                   required
                   value={newTargetId}
                   onChange={(e) => setNewTargetId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47] cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55] cursor-pointer"
                 >
                   <option value="">-- Select Target CI --</option>
                   {allCis
@@ -660,7 +660,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                   <select
                     value={newRelType}
                     onChange={(e) => setNewRelType(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47] cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55] cursor-pointer"
                   >
                     <option value="depends_on">depends_on</option>
                     <option value="runs_on">runs_on</option>
@@ -674,7 +674,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                   <select
                     value={newRelDirection}
                     onChange={(e) => setNewRelDirection(e.target.value as 'upstream' | 'downstream')}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47] cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55] cursor-pointer"
                   >
                     <option value="downstream">Downstream (Root depends on target)</option>
                     <option value="upstream">Upstream (Target calls Root)</option>
@@ -693,7 +693,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                 <button
                   type="submit"
                   disabled={!newTargetId || isSubmittingLink}
-                  className="px-4 py-2 bg-[#eb6a47] hover:bg-[#db5936] text-white rounded-xl font-bold cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-xl font-bold cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isSubmittingLink ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   <span>Save Connection</span>

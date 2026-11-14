@@ -37,7 +37,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl bg-[#eb6a47]/10 text-[#eb6a47] flex items-center justify-center font-bold text-sm">
+            <span className="w-8 h-8 rounded-xl bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center font-bold text-sm">
               !
             </span>
             <div>
@@ -66,7 +66,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="e.g. Issues with Teams performance across tenancy"
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/20 text-slate-800"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 text-slate-800"
             />
           </div>
 
@@ -79,7 +79,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe recurring symptoms, affected users, and error patterns..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/20 text-slate-800 resize-none"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 text-slate-800 resize-none"
             />
           </div>
 
@@ -89,7 +89,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as ProblemPriority)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] bg-white text-slate-800"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] bg-white text-slate-800"
               >
                 <option value="Critical">🔴 Critical (P1)</option>
                 <option value="High">🟠 High (P2)</option>
@@ -103,7 +103,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] bg-white text-slate-800"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] bg-white text-slate-800"
               >
                 <option value="Business Applications">Business Applications</option>
                 <option value="Email & Messaging">Email & Messaging</option>
@@ -120,7 +120,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               <select
                 value={team}
                 onChange={(e) => setTeam(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] bg-white text-slate-800"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] bg-white text-slate-800"
               >
                 <option value="Infrastructure">Infrastructure</option>
                 <option value="Cloud Ops">Cloud Ops</option>
@@ -136,7 +136,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
                 type="text"
                 value={agent}
                 onChange={(e) => setAgent(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] text-slate-800"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] text-slate-800"
               />
             </div>
           </div>
@@ -148,7 +148,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
               value={monitoredService}
               onChange={(e) => setMonitoredService(e.target.value)}
               placeholder="e.g. Microsoft Teams"
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] text-slate-800"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] text-slate-800"
             />
           </div>
 
@@ -164,7 +164,7 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
             <button
               type="submit"
               disabled={!summary.trim()}
-              className="px-5 py-2 rounded-xl bg-[#eb6a47] hover:bg-[#d65736] text-white font-bold transition-all disabled:opacity-50 shadow-sm"
+              className="px-5 py-2 rounded-xl bg-[#C96F55] hover:bg-[#d65736] text-white font-bold transition-all disabled:opacity-50 shadow-sm"
             >
               Create Problem
             </button>

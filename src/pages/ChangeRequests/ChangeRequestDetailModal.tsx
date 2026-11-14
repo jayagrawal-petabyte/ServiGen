@@ -195,7 +195,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-3xl">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="text-sm font-extrabold text-[#eb6a47] font-mono">{changeRequest.id}</span>
+              <span className="text-sm font-extrabold text-[#C96F55] font-mono">{changeRequest.id}</span>
               <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
                 changeRequest.type === 'Emergency'
                   ? 'bg-rose-100 text-rose-800 border border-rose-300'
@@ -258,7 +258,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   stage.completed
                     ? 'bg-emerald-600 text-white'
                     : stage.active
-                    ? 'bg-[#eb6a47] text-white ring-2 ring-[#eb6a47]/30'
+                    ? 'bg-[#C96F55] text-white ring-2 ring-[#C96F55]/30'
                     : 'bg-slate-300 text-slate-600'
                 }`}
               >
@@ -266,7 +266,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               </div>
               <span
                 className={`font-semibold ${
-                  stage.active ? 'text-[#eb6a47] font-bold' : stage.completed ? 'text-slate-700' : 'text-slate-400'
+                  stage.active ? 'text-[#C96F55] font-bold' : stage.completed ? 'text-slate-700' : 'text-slate-400'
                 }`}
               >
                 {stage.label}
@@ -298,11 +298,11 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-[#eb6a47] h-full rounded-full transition-all duration-300"
+                  className="bg-[#C96F55] h-full rounded-full transition-all duration-300"
                   style={{ width: `${changeRequest.completionPercent}%` }}
                 />
               </div>
-              <span className="font-extrabold text-[#eb6a47]">{changeRequest.completionPercent}%</span>
+              <span className="font-extrabold text-[#C96F55]">{changeRequest.completionPercent}%</span>
             </div>
           </div>
           <div>
@@ -321,7 +321,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('overview')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer ${
               activeTab === 'overview'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -332,7 +332,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('risk')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'risk'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -344,7 +344,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('cab')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'cab'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -356,7 +356,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('implementation')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'implementation'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -368,7 +368,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('rollback')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'rollback'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -380,7 +380,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
             onClick={() => setActiveTab('pir')}
             className={`pb-2.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'pir'
-                ? 'border-[#eb6a47] text-[#eb6a47]'
+                ? 'border-[#C96F55] text-[#C96F55]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -493,7 +493,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                         <button
                           type="button"
                           onClick={() => onChangeStatus('In Progress')}
-                          className="px-3 py-1.5 rounded-xl bg-[#eb6a47] hover:bg-[#db5936] text-white font-bold text-xs cursor-pointer shadow-2xs"
+                          className="px-3 py-1.5 rounded-xl bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold text-xs cursor-pointer shadow-2xs"
                         >
                           Start Implementation →
                         </button>
@@ -846,7 +846,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                         value={cabNote}
                         onChange={(e) => setCabNote(e.target.value)}
                         placeholder="State technical justification, verification of rollback test, or reason for rejection..."
-                        className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#eb6a47] bg-white resize-none"
+                        className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96F55] bg-white resize-none"
                       />
                     </div>
 
@@ -929,7 +929,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   <h3 className="font-bold text-sm text-slate-900">Implementation Plan</h3>
                   <p className="text-slate-500 text-xs">Tasks to be completed during the maintenance window.</p>
                 </div>
-                <span className="text-xs font-bold text-[#eb6a47]">
+                <span className="text-xs font-bold text-[#C96F55]">
                   {changeRequest.subtasks.filter((s) => s.completed).length} / {changeRequest.subtasks.length} Completed
                 </span>
               </div>
@@ -940,7 +940,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                     key={task.id}
                     onClick={() => onToggleSubtask && onToggleSubtask(task.id)}
                     className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                      onToggleSubtask ? 'cursor-pointer hover:border-[#eb6a47]' : ''
+                      onToggleSubtask ? 'cursor-pointer hover:border-[#C96F55]' : ''
                     } ${
                       task.completed
                         ? 'bg-slate-50 border-slate-200 text-slate-400'
@@ -951,7 +951,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                       type="checkbox"
                       checked={task.completed}
                       onChange={() => onToggleSubtask && onToggleSubtask(task.id)}
-                      className="w-4 h-4 text-[#eb6a47] rounded focus:ring-[#eb6a47] cursor-pointer"
+                      className="w-4 h-4 text-[#C96F55] rounded focus:ring-[#C96F55] cursor-pointer"
                     />
                     <span className={`font-medium flex-1 ${task.completed ? 'line-through text-slate-400' : ''}`}>
                       {task.title}
@@ -1034,7 +1034,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   <textarea
                     rows={3}
                     placeholder="Document implementation findings or follow-up action items..."
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#eb6a47] bg-white"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#C96F55] bg-white"
                   />
                 </div>
               </div>

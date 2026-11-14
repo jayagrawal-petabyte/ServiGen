@@ -54,7 +54,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   color: #64748b;
   cursor: pointer;
 }
-.bc-item:hover { color: #0ea5e9; }
+.bc-item:hover { color: #C96F55; }
 
 .bc-sep {
   font-size: 14px;
@@ -83,7 +83,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   cursor: pointer;
   line-height: 1;
 }
-.tab-plus:hover { color: #0ea5e9; }
+.tab-plus:hover { color: #C96F55; }
 
 .topnav-right {
   display: flex;
@@ -351,7 +351,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 .ticket-id-link {
-  color: #0ea5e9;
+  color: #C96F55;
   cursor: pointer;
   font-weight: 500;
 }
@@ -379,7 +379,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 
 .org-link {
-  color: #0ea5e9;
+  color: #C96F55;
   cursor: pointer;
   font-size: 11.5px;
   display: block;
@@ -413,7 +413,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 .status-cyan { 
   background: #e0f2fe; 
-  color: #0284c7; 
+  color: #C96F55; 
   border: 1px solid #bae6fd;
 }
 .status-teal { 
@@ -536,13 +536,13 @@ input[type="checkbox"] {
 }
 
 .btn-retry {
-  background: #0ea5e9;
+  background: #C96F55;
   color: white;
-  border-color: #0ea5e9;
+  border-color: #C96F55;
 }
 .btn-retry:hover {
-  background: #0284c7;
-  border-color: #0284c7;
+  background: #C96F55;
+  border-color: #C96F55;
 }
 
 /* --- New Ticket Modal --- */
@@ -732,7 +732,7 @@ input[type="checkbox"] {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -928,7 +928,7 @@ input[type="checkbox"] {
 }
 
 .major-incident-group-row td {
-  background: #eb6a47 !important;
+  background: #C96F55 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   font-size: 13px !important;
@@ -937,7 +937,7 @@ input[type="checkbox"] {
 }
 
 .major-incident-group-row:hover td {
-  background: #db5936 !important;
+  background: #b55f46 !important;
 }
 
 .major-incident-ticket-row td {

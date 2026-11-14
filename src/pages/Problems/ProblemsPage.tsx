@@ -223,7 +223,7 @@ export const ProblemsPage: React.FC = () => {
                   placeholder="Filter records..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-44 text-xs px-3 py-1.5 border border-slate-200 rounded-full focus:outline-none focus:border-[#eb6a47] text-slate-800"
+                  className="w-44 text-xs px-3 py-1.5 border border-slate-200 rounded-full focus:outline-none focus:border-[#C96F55] text-slate-800"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export const ProblemsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowNewModal(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95 leading-none"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95 leading-none"
               >
                 <Plus size={14} strokeWidth={2.5} className="shrink-0" />
                 <span>New</span>
@@ -343,7 +343,7 @@ export const ProblemsPage: React.FC = () => {
                   <div
                     key={p.id}
                     onClick={() => setSelectedProblemId(p.id)}
-                    className="p-4 rounded-xl border border-slate-200 hover:border-[#eb6a47] bg-white hover:shadow-md transition-all cursor-pointer space-y-2"
+                    className="p-4 rounded-xl border border-slate-200 hover:border-[#C96F55] bg-white hover:shadow-md transition-all cursor-pointer space-y-2"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-400">[{p.prefixId}]</span>
@@ -376,7 +376,7 @@ export const ProblemsPage: React.FC = () => {
                           <div
                             key={p.id}
                             onClick={() => setSelectedProblemId(p.id)}
-                            className="p-3 bg-white rounded-lg border border-slate-200 hover:border-[#eb6a47] shadow-2xs cursor-pointer text-xs space-y-1.5"
+                            className="p-3 bg-white rounded-lg border border-slate-200 hover:border-[#C96F55] shadow-2xs cursor-pointer text-xs space-y-1.5"
                           >
                             <span className="text-[10px] font-bold text-slate-400 block">{p.prefixId}</span>
                             <p className="font-bold text-slate-800 line-clamp-2">{p.summary}</p>
@@ -397,7 +397,7 @@ export const ProblemsPage: React.FC = () => {
                         type="checkbox"
                         checked={selectedRows.length === pagedProblems.length && pagedProblems.length > 0}
                         onChange={handleSelectAllRows}
-                        className="rounded border-slate-300 text-[#eb6a47] focus:ring-[#eb6a47]"
+                        className="rounded border-slate-300 text-[#C96F55] focus:ring-[#C96F55]"
                       />
                     </th>
                     <th className="py-3 px-4">ID</th>
@@ -432,7 +432,7 @@ export const ProblemsPage: React.FC = () => {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleToggleRow(item.id)}
-                              className="rounded border-slate-300 text-[#eb6a47] focus:ring-[#eb6a47]"
+                              className="rounded border-slate-300 text-[#C96F55] focus:ring-[#C96F55]"
                             />
                           </td>
                           <td className="py-3 px-4 font-mono font-medium text-slate-600">{item.id}</td>
@@ -449,7 +449,7 @@ export const ProblemsPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setSelectedProblemId(item.id)}
-                              className="text-left font-semibold text-[#0284c7] hover:text-[#0369a1] hover:underline cursor-pointer leading-relaxed"
+                              className="text-left font-semibold text-[#C96F55] hover:text-[#0369a1] hover:underline cursor-pointer leading-relaxed"
                             >
                               {item.summary}
                             </button>

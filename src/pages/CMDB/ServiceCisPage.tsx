@@ -80,7 +80,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
             CMDB
           </button>
           <span>/</span>
-          <span className="text-[#eb6a47] font-extrabold">Service CIs & SLA</span>
+          <span className="text-[#C96F55] font-extrabold">Service CIs & SLA</span>
         </div>
         <GlobalNavbarActions />
       </header>
@@ -101,7 +101,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
               onClick={() => navigate('/cmdb')}
               className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
             >
-              <Server className="w-4 h-4 text-[#eb6a47]" />
+              <Server className="w-4 h-4 text-[#C96F55]" />
               <span>Asset Inventory</span>
             </button>
 

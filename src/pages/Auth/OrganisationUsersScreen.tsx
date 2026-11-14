@@ -328,7 +328,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
                     <td>{user.defaultOrganisation}</td>
                     <td>{user.defaultSite}</td>
                     <td>
-                      <span className="text-[#0284c7] font-medium hover:underline cursor-pointer">
+                      <span className="text-[#C96F55] font-medium hover:underline cursor-pointer">
                         {user.email}
                       </span>
                     </td>

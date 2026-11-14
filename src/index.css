@@ -141,7 +141,7 @@ select:not(.select-native):hover {
 
 select:not(.select-native):focus {
   outline: none;
-  border-color: #eb6a47;
+  border-color: #C96F55;
   box-shadow: 0 0 0 1px #f8c5b1;
 }
 

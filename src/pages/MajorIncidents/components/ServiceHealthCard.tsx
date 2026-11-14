@@ -200,7 +200,7 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
           <button
             type="button"
             onClick={() => setShowTopology((prev) => !prev)}
-            className="text-[11px] font-bold text-[#eb6a47] hover:text-[#d35432] flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
+            className="text-[11px] font-bold text-[#C96F55] hover:text-[#b55f46] flex items-center gap-1 cursor-pointer border-none bg-transparent p-0"
           >
             <span>{showTopology ? '▾ Hide' : '▸ View'} Dependent Infrastructure ({topology.length} CIs)</span>
           </button>

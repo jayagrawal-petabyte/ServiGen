@@ -169,7 +169,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           onClick={() => setActiveTab('overview')}
           className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'overview'
-              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              ? 'border-[#C96F55] text-[#C96F55] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
               : 'border-transparent text-gray-500 hover:text-gray-800'
           }`}
         >
@@ -181,7 +181,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           onClick={() => setActiveTab('lifecycle')}
           className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'lifecycle'
-              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              ? 'border-[#C96F55] text-[#C96F55] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
               : 'border-transparent text-gray-500 hover:text-gray-800'
           }`}
         >
@@ -196,13 +196,13 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           onClick={() => setActiveTab('timeline')}
           className={`py-2 px-3 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'timeline'
-              ? 'border-[#eb6a47] text-[#eb6a47] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
+              ? 'border-[#C96F55] text-[#C96F55] font-bold bg-white -mb-px rounded-t-md shadow-2xs'
               : 'border-transparent text-gray-500 hover:text-gray-800'
           }`}
         >
           <span>Timeline & Notes</span>
           {incident.updates && incident.updates.length > 0 && (
-            <span className="text-[10px] bg-[#fdede7] text-[#eb6a47] px-1.5 py-0.2 rounded-full font-bold">
+            <span className="text-[10px] bg-[#fdede7] text-[#C96F55] px-1.5 py-0.2 rounded-full font-bold">
               {incident.updates.length}
             </span>
           )}

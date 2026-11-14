@@ -1069,7 +1069,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                     className="global-notif-icon"
                     style={{
                       background: item.isSla ? '#fee2e2' : '#e0f2fe',
-                      color: item.isSla ? '#ef4444' : '#0284c7',
+                      color: item.isSla ? '#ef4444' : '#C96F55',
                     }}
                   >
                     {item.isSla ? '⏰' : '🔔'}
@@ -1513,7 +1513,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                   </button>
                   <button
                     type="submit"
-                    style={{ padding: '7px 20px', borderRadius: '8px', border: 'none', background: '#00c0f3', color: '#ffffff', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0, 192, 243, 0.4)' }}
+                    style={{ padding: '7px 20px', borderRadius: '8px', border: 'none', background: '#F4A58A', color: '#ffffff', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0, 192, 243, 0.4)' }}
                   >
                     Create Ticket
                   </button>

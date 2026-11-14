@@ -633,7 +633,7 @@
 }
 
 .users-btn-primary:hover {
-  background-color: #2563EB;
+  background-color: #C96F55;
 }
 
 .region-tab-bar {
@@ -794,7 +794,7 @@
 
 .region-badge {
   font-size: 0.8rem;
-  color: #2563EB;
+  color: #C96F55;
   font-weight: 600;
 }
 
@@ -887,7 +887,7 @@
   align-items: center;
   gap: 4px;
   background-color: #E0F2FE;
-  color: #0284C7;
+  color: #C96F55;
   border: 1px solid #BAE6FD;
   padding: 0.2rem 0.6rem;
   border-radius: 9999px;

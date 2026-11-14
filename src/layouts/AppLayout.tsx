@@ -175,7 +175,7 @@ export const AppLayout: React.FC = () => {
                     <p className="text-[11px] text-slate-500 truncate">
                       {user?.email || ''}
                     </p>
-                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#fff5f2] text-[#eb6a47] border border-[#f7c9bc]">
+                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
                       {user?.role || 'Administrator'}
                     </span>
                   </div>
@@ -312,7 +312,7 @@ export const AppLayout: React.FC = () => {
                 fallback={
                   <div className="flex h-full min-h-[300px] w-full items-center justify-center bg-transparent py-16">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-3 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-8 h-8 border-3 border-[#C96F55] border-t-transparent rounded-full animate-spin" />
                       <span className="text-xs font-semibold text-slate-500">Loading view...</span>
                     </div>
                   </div>

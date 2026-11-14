@@ -245,7 +245,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         body: kbContent.trim(),
         category: problem.category || 'General',
         priority: problem.priority || 'High',
-        priorityColor: '#eb6a47',
+        priorityColor: '#C96F55',
         status: 'Draft',
         type: 'Article Draft',
         date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
@@ -363,7 +363,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           <button
             type="button"
             onClick={handleOpenLinkModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#C96F55] text-white hover:bg-[#d65736] transition-all cursor-pointer shadow-2xs"
             title="Link Incident to this Problem investigation"
           >
             <span>🔗</span>
@@ -373,7 +373,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           <button
             type="button"
             onClick={() => setShowEmailModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-[#eb6a47] transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-[#C96F55] transition-all cursor-pointer"
           >
             <span>✉</span>
             <span>Email User</span>
@@ -385,7 +385,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               setActiveTab('progress');
               setTimeout(() => noteInputRef.current?.focus(), 50);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-[#eb6a47] transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-[#C96F55] transition-all cursor-pointer"
           >
             <span>📝</span>
             <span>Add Note</span>
@@ -458,7 +458,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                   onClick={() => handleStageClick(stg)}
                   className={`flex-1 min-w-[130px] flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                     isCurrent
-                      ? 'bg-[#eb6a47] text-white border-[#d65736] shadow-sm'
+                      ? 'bg-[#C96F55] text-white border-[#d65736] shadow-sm'
                       : isPast
                       ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/80'
                       : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 hover:bg-slate-50'
@@ -498,7 +498,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`pb-3 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'border-[#eb6a47] text-[#eb6a47]'
+                        ? 'border-[#C96F55] text-[#C96F55]'
                         : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                   >
@@ -585,7 +585,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       value={newNote}
                       onChange={(e) => setNewNote(e.target.value)}
                       placeholder="Post a diagnostic update, root cause insight, or permanent fix notes..."
-                      className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/20 resize-none text-slate-800"
+                      className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 resize-none text-slate-800"
                     />
                     <div className="flex items-center justify-between gap-2">
                       <button
@@ -601,7 +601,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       <button
                         type="submit"
                         disabled={!newNote.trim()}
-                        className="px-4 py-2 bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
+                        className="px-4 py-2 bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
                       >
                         Post Note
                       </button>
@@ -622,7 +622,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     <button
                       type="button"
                       onClick={handleOpenLinkModal}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C96F55] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
                     >
                       <span>+ Link Incident</span>
                     </button>
@@ -637,7 +637,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={handleOpenLinkModal}
-                        className="mt-2 px-3 py-1.5 text-xs font-bold text-[#eb6a47] bg-white border border-[#eb6a47]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
+                        className="mt-2 px-3 py-1.5 text-xs font-bold text-[#C96F55] bg-white border border-[#C96F55]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
                       >
                         + Search &amp; Link Incidents
                       </button>
@@ -707,7 +707,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowPirModal(true)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C96F55] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
                     >
                       <span>📝</span>
                       <span>{problem.pirData ? 'Edit PIR' : 'Conduct PIR'}</span>
@@ -723,7 +723,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowPirModal(true)}
-                        className="mt-2 px-3.5 py-1.5 text-xs font-bold text-[#eb6a47] bg-white border border-[#eb6a47]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
+                        className="mt-2 px-3.5 py-1.5 text-xs font-bold text-[#C96F55] bg-white border border-[#C96F55]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
                       >
                         + Document Post-Incident Review
                       </button>
@@ -846,12 +846,12 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
 
               <div>
                 <span className="text-slate-400 text-[11px] block">Ticket Type</span>
-                <span className="font-semibold text-[#eb6a47]">{problem.type}</span>
+                <span className="font-semibold text-[#C96F55]">{problem.type}</span>
               </div>
 
               <div>
                 <span className="text-slate-400 text-[11px] block">Workflow</span>
-                <span className="font-semibold text-[#eb6a47]">{problem.workflow}</span>
+                <span className="font-semibold text-[#C96F55]">{problem.workflow}</span>
               </div>
 
               <div>
@@ -983,7 +983,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     <span className="text-[11px] text-slate-700 group-hover:text-slate-900 font-semibold truncate mr-2">
                       {art.title}
                     </span>
-                    <span className="text-[9px] bg-[#eb6a47]/10 text-[#eb6a47] border border-[#eb6a47]/20 px-1.5 py-0.5 rounded font-bold">
+                    <span className="text-[9px] bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 px-1.5 py-0.5 rounded font-bold">
                       {art.tag}
                     </span>
                   </div>
@@ -1048,7 +1048,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 <button
                   type="submit"
                   disabled={!emailBody.trim()}
-                  className="px-4 py-2 bg-[#eb6a47] text-white font-bold rounded-xl hover:bg-[#d65736] disabled:opacity-50"
+                  className="px-4 py-2 bg-[#C96F55] text-white font-bold rounded-xl hover:bg-[#d65736] disabled:opacity-50"
                 >
                   Send Update
                 </button>
@@ -1065,7 +1065,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#eb6a47] flex items-center justify-center font-bold text-sm">
+                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#C96F55] flex items-center justify-center font-bold text-sm">
                   🔗
                 </div>
                 <div>
@@ -1093,7 +1093,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                   value={incidentSearch}
                   onChange={(e) => setIncidentSearch(e.target.value)}
                   placeholder="Search incidents by ID (#1024) or summary keyword..."
-                  className="w-full pl-9 pr-8 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/30 text-slate-800 placeholder-slate-400"
+                  className="w-full pl-9 pr-8 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/30 text-slate-800 placeholder-slate-400"
                   autoFocus
                 />
                 {incidentSearch && (
@@ -1117,7 +1117,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     onClick={() => setPriorityFilter(p)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                       priorityFilter === p
-                        ? 'bg-[#eb6a47] text-white shadow-2xs'
+                        ? 'bg-[#C96F55] text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                     }`}
                   >
@@ -1183,7 +1183,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleLinkIncident(inc)}
-                            className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#eb6a47] hover:bg-[#d65736] text-white transition-all cursor-pointer shadow-2xs"
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#C96F55] hover:bg-[#d65736] text-white transition-all cursor-pointer shadow-2xs"
                           >
                             + Link
                           </button>
@@ -1243,7 +1243,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 <select
                   value={pirCategory}
                   onChange={(e) => setPirCategory(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55] cursor-pointer"
                 >
                   <option value="Software Defect / Application Bug">Software Defect / Application Bug</option>
                   <option value="Infrastructure Hardware Failure">Infrastructure Hardware Failure</option>
@@ -1262,7 +1262,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                   value={pirSummary}
                   onChange={(e) => setPirSummary(e.target.value)}
                   placeholder="Detail the technical trigger, sequence of failures, and why the incident occurred..."
-                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55] resize-none"
                 />
               </div>
 
@@ -1273,7 +1273,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                   value={pirPreventive}
                   onChange={(e) => setPirPreventive(e.target.value)}
                   placeholder="Engineering tasks, architectural fixes, or policy updates to permanently eliminate root cause..."
-                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55] resize-none"
                 />
               </div>
 
@@ -1284,7 +1284,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                   value={pirLessons}
                   onChange={(e) => setPirLessons(e.target.value)}
                   placeholder="Monitoring gaps, alerting improvements, or runbook updates identified during triage..."
-                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55] resize-none"
                 />
               </div>
 
@@ -1295,7 +1295,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     type="date"
                     value={pirTargetDate}
                     onChange={(e) => setPirTargetDate(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
 
@@ -1305,7 +1305,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     type="text"
                     value={pirInvestigator}
                     onChange={(e) => setPirInvestigator(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
               </div>
@@ -1320,7 +1320,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#eb6a47] hover:bg-[#d65736] text-white font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+                  className="px-5 py-2 bg-[#C96F55] hover:bg-[#d65736] text-white font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
                 >
                   Document &amp; Save PIR
                 </button>

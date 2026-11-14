@@ -261,7 +261,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 rounded-t-3xl sticky top-0 z-20 backdrop-blur-xs">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-[#eb6a47]/10 text-[#eb6a47] rounded-xl border border-[#eb6a47]/20">
+            <div className="p-2 bg-[#C96F55]/10 text-[#C96F55] rounded-xl border border-[#C96F55]/20">
               <Server className="w-5 h-5" />
             </div>
             <div>
@@ -302,11 +302,11 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                     onClick={() => setType(opt.type)}
                     className={`px-3 py-2.5 rounded-xl border font-bold flex items-center gap-2 transition-all cursor-pointer text-left ${
                       isSelected
-                        ? 'bg-[#eb6a47] text-white border-[#eb6a47] shadow-sm'
+                        ? 'bg-[#C96F55] text-white border-[#C96F55] shadow-sm'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                     }`}
                   >
-                    <span className={isSelected ? 'text-white' : 'text-[#eb6a47]'}>
+                    <span className={isSelected ? 'text-white' : 'text-[#C96F55]'}>
                       {opt.icon}
                     </span>
                     <span className="truncate text-xs">{opt.label}</span>
@@ -341,7 +341,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       ? 'e.g. Core Backbone Switch Lon-01'
                       : 'e.g. Production Database Cluster'
                   }
-                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
                   placeholder="Auto-generated"
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 />
               </div>
             </div>
@@ -364,7 +364,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                   type="text"
                   value={site}
                   onChange={(e) => setSite(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 />
               </div>
 
@@ -373,7 +373,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                 <select
                   value={environment}
                   onChange={(e) => setEnvironment(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 >
                   <option value="Production">Production</option>
                   <option value="Staging">Staging</option>
@@ -387,7 +387,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                 <select
                   value={lifecycleState}
                   onChange={(e) => setLifecycleState(e.target.value as CiLifecycleState)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 >
                   <option value="Deployed">Deployed (Active)</option>
                   <option value="In Stock">In Stock (Staged)</option>
@@ -405,7 +405,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                   type="text"
                   value={businessOwner}
                   onChange={(e) => setBusinessOwner(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 />
               </div>
 
@@ -415,7 +415,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                   type="text"
                   value={technicalContact}
                   onChange={(e) => setTechnicalContact(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 />
               </div>
 
@@ -424,7 +424,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                 <select
                   value={criticality}
                   onChange={(e) => setCriticality(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                 >
                   <option value="Tier 1 - Mission Critical">Tier 1 - Mission Critical</option>
                   <option value="Tier 2 - Business Operational">Tier 2 - Business Operational</option>
@@ -443,7 +443,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                 type="date"
                 value={warrantyExpiry}
                 onChange={(e) => setWarrantyExpiry(e.target.value)}
-                className="w-full sm:w-1/2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                className="w-full sm:w-1/2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
               />
             </div>
           </div>
@@ -451,7 +451,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
           {/* 3. DYNAMIC TYPE-SPECIFIC SPECIFICATIONS */}
           <div className="p-4 bg-orange-50/40 rounded-2xl border border-orange-200/60 space-y-3.5">
             <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-[#eb6a47]" />
+              <Cpu className="w-4 h-4 text-[#C96F55]" />
               <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">
                 3. Dynamic Specifications ({type})
               </span>
@@ -468,7 +468,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverOs}
                       onChange={(e) => setServerOs(e.target.value)}
                       placeholder="e.g. Ubuntu Linux 22.04 LTS"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -478,7 +478,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverModel}
                       onChange={(e) => setServerModel(e.target.value)}
                       placeholder="e.g. Dell PowerEdge R750 2U"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverCpu}
                       onChange={(e) => setServerCpu(e.target.value)}
                       placeholder="e.g. 16 vCPU (2x Xeon)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -501,7 +501,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverRam}
                       onChange={(e) => setServerRam(e.target.value)}
                       placeholder="e.g. 64 GB DDR4 ECC"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -511,7 +511,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverStorage}
                       onChange={(e) => setServerStorage(e.target.value)}
                       placeholder="e.g. 2 TB NVMe RAID 10"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -524,7 +524,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverIp}
                       onChange={(e) => setServerIp(e.target.value)}
                       placeholder="10.240.14.88"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -534,7 +534,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverMac}
                       onChange={(e) => setServerMac(e.target.value)}
                       placeholder="00:1A:2B:3C:4D:5E"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -544,7 +544,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={serverRack}
                       onChange={(e) => setServerRack(e.target.value)}
                       placeholder="Rack B-14, U18-U20"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -562,7 +562,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appVersion}
                       onChange={(e) => setAppVersion(e.target.value)}
                       placeholder="e.g. v2.4.1 (Stable)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -572,7 +572,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appRuntime}
                       onChange={(e) => setAppRuntime(e.target.value)}
                       placeholder="e.g. Node.js 20 LTS / Java 17"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -582,7 +582,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appPort}
                       onChange={(e) => setAppPort(e.target.value)}
                       placeholder="e.g. 443 / HTTPS, 8080"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -595,7 +595,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appHostServer}
                       onChange={(e) => setAppHostServer(e.target.value)}
                       placeholder="e.g. PAY-001 (Server)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -605,7 +605,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appUrl}
                       onChange={(e) => setAppUrl(e.target.value)}
                       placeholder="https://app.servigen.com/health"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -618,7 +618,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={appLicenseKey}
                       onChange={(e) => setAppLicenseKey(e.target.value)}
                       placeholder="e.g. LIC-ENT-2026-X94B"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -627,7 +627,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       type="date"
                       value={appLicenseExpiry}
                       onChange={(e) => setAppLicenseExpiry(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -643,7 +643,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                     <select
                       value={netCategory}
                       onChange={(e) => setNetCategory(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     >
                       <option value="Core Router">Core Router</option>
                       <option value="Distribution Switch">Distribution Switch</option>
@@ -659,7 +659,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={netFirmware}
                       onChange={(e) => setNetFirmware(e.target.value)}
                       placeholder="e.g. Cisco IOS XR 7.5.2"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -669,7 +669,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={netPorts}
                       onChange={(e) => setNetPorts(e.target.value)}
                       placeholder="48x 10GbE + 4x 100GbE"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -682,7 +682,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={netIp}
                       onChange={(e) => setNetIp(e.target.value)}
                       placeholder="10.240.0.1"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -692,7 +692,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={netVlan}
                       onChange={(e) => setNetVlan(e.target.value)}
                       placeholder="VLAN 100 (Core Infra)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -702,7 +702,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={netRack}
                       onChange={(e) => setNetRack(e.target.value)}
                       placeholder="Rack A-01, U40-U42"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -718,7 +718,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                     <select
                       value={dbEngine}
                       onChange={(e) => setDbEngine(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     >
                       <option value="PostgreSQL">PostgreSQL</option>
                       <option value="MySQL">MySQL Enterprise</option>
@@ -735,7 +735,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={dbVersion}
                       onChange={(e) => setDbVersion(e.target.value)}
                       placeholder="e.g. 16.2"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -745,7 +745,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={dbPort}
                       onChange={(e) => setDbPort(e.target.value)}
                       placeholder="e.g. 5432"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -758,7 +758,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={dbRole}
                       onChange={(e) => setDbRole(e.target.value)}
                       placeholder="e.g. Primary High-Availability Cluster"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -768,7 +768,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={dbStorage}
                       onChange={(e) => setDbStorage(e.target.value)}
                       placeholder="e.g. 1.5 TB NVMe"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -784,7 +784,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                     <select
                       value={cloudProvider}
                       onChange={(e) => setCloudProvider(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     >
                       <option value="AWS">Amazon Web Services (AWS)</option>
                       <option value="Azure">Microsoft Azure</option>
@@ -798,7 +798,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={cloudRegion}
                       onChange={(e) => setCloudRegion(e.target.value)}
                       placeholder="e.g. eu-west-1 (Ireland)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -808,7 +808,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={cloudServiceOffering}
                       onChange={(e) => setCloudServiceOffering(e.target.value)}
                       placeholder="e.g. Kubernetes EKS"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -821,7 +821,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={cloudPool}
                       onChange={(e) => setCloudPool(e.target.value)}
                       placeholder="e.g. m6i.4xlarge (4 instances)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -831,7 +831,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={cloudCidr}
                       onChange={(e) => setCloudCidr(e.target.value)}
                       placeholder="e.g. 52.214.0.0/16"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -849,7 +849,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={secCategory}
                       onChange={(e) => setSecCategory(e.target.value)}
                       placeholder="e.g. Web Application Firewall (WAF)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -859,7 +859,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={secVendor}
                       onChange={(e) => setSecVendor(e.target.value)}
                       placeholder="e.g. Cloudflare / Palo Alto"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                   <div>
@@ -869,7 +869,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
                       value={secIp}
                       onChange={(e) => setSecIp(e.target.value)}
                       placeholder="198.51.100.4"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#eb6a47]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
                     />
                   </div>
                 </div>
@@ -890,7 +890,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-[#eb6a47] hover:bg-[#db5936] text-white font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

@@ -837,7 +837,7 @@ export default function IncidentsDashboard() {
                 <button
                   type="submit"
                   disabled={isSubmittingTicket}
-                  style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#0284c7', color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#C96F55', color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
                 >
                   {isSubmittingTicket ? 'Creating...' : 'Create Ticket'}
                 </button>

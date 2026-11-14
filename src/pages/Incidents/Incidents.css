@@ -177,7 +177,7 @@
 .header-flyout-action {
   font-size: 11px;
   font-weight: 600;
-  color: #0284c7;
+  color: #C96F55;
   background: none;
   border: none;
   cursor: pointer;
@@ -779,7 +779,7 @@
 }
 
 .ticket-id-link:hover {
-  color: #0284c7;
+  color: #C96F55;
   text-decoration: underline;
 }
 
@@ -814,7 +814,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -839,7 +839,7 @@
 }
 
 .bulk-btn-assign {
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
 }
 
@@ -882,7 +882,7 @@
 }
 
 .bulk-select:hover {
-  border-color: #0284c7;
+  border-color: #C96F55;
 }
 
 .ticket-agent {
@@ -1562,7 +1562,7 @@
 }
 
 .ticket-summary-link {
-  color: #0284c7;
+  color: #C96F55;
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;

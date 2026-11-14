@@ -284,7 +284,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       <div
         key={ci.id}
         onClick={() => setSelectedCiForModal(ci)}
-        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#eb6a47]/50 transition-all duration-200 flex flex-col justify-between cursor-pointer group"
+        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#C96F55]/50 transition-all duration-200 flex flex-col justify-between cursor-pointer group"
         title="Click to view full specifications, topology and dependencies"
       >
         <div>
@@ -295,7 +295,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-mono font-extrabold text-[#eb6a47] tracking-wide block">
+                  <span className="text-[11px] font-mono font-extrabold text-[#C96F55] tracking-wide block">
                     {ci.tag}
                   </span>
                   <span className="text-[10px] font-bold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
@@ -310,7 +310,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm leading-tight mt-0.5 group-hover:text-[#eb6a47] transition-colors">
+                <h3 className="font-bold text-slate-900 text-sm leading-tight mt-0.5 group-hover:text-[#C96F55] transition-colors">
                   {ci.name}
                 </h3>
               </div>
@@ -371,7 +371,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             Service Desk
           </button>
           <span>/</span>
-          <span className="text-[#eb6a47] font-extrabold">Configuration Management (CMDB)</span>
+          <span className="text-[#C96F55] font-extrabold">Configuration Management (CMDB)</span>
         </div>
         <GlobalNavbarActions />
       </header>
@@ -393,13 +393,13 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               onClick={() => navigate('/cmdb/services')}
               className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-[#eb6a47]" />
+              <Layers className="w-4 h-4 text-[#C96F55]" />
               <span>Service CIs & SLA</span>
             </button>
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 bg-[#eb6a47] hover:bg-[#db5936] text-white font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Register CI</span>
@@ -427,7 +427,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search tag, name, IP, site, OS..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#eb6a47]/50"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C96F55]/50"
               />
             </div>
 
@@ -467,7 +467,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
               {/* Warranty filter */}
               <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#eb6a47]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C96F55]" />
                 <span>Warranty:</span>
                 <select
                   value={selectedWarranty}
@@ -509,7 +509,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                   onClick={() => setViewGrouping('topology')}
                   className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                     viewGrouping === 'topology'
-                      ? 'bg-white text-[#eb6a47] shadow-2xs'
+                      ? 'bg-white text-[#C96F55] shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -663,7 +663,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                   onClick={() => setSelectedCiForModal(selectedTopologyRootCi)}
                   className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  <ExternalLink className="w-3.5 h-3.5 text-[#eb6a47]" />
+                  <ExternalLink className="w-3.5 h-3.5 text-[#C96F55]" />
                   <span>Open {selectedTopologyRootCi.tag} Specifications</span>
                 </button>
               )}
@@ -720,7 +720,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 setSelectedWarranty('ALL');
                 setSearchQuery('');
               }}
-              className="mt-3 text-xs text-[#eb6a47] font-bold hover:underline cursor-pointer"
+              className="mt-3 text-xs text-[#C96F55] font-bold hover:underline cursor-pointer"
             >
               Clear filters
             </button>

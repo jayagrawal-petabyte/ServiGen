@@ -61,7 +61,7 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
                 placeholder="Search Problems..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-100 focus:bg-white text-xs text-slate-800 placeholder-slate-400 pl-3 pr-8 py-1.5 rounded-full outline-none transition-all border border-slate-200 focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/30 shadow-inner font-medium"
+                className="w-full bg-slate-100 focus:bg-white text-xs text-slate-800 placeholder-slate-400 pl-3 pr-8 py-1.5 rounded-full outline-none transition-all border border-slate-200 focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/30 shadow-inner font-medium"
               />
               {searchQuery ? (
                 <button
@@ -91,11 +91,11 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
           <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
             <div className="min-w-0">
               <div
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#eb6a47] cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#C96F55] cursor-pointer transition-colors"
                 onClick={() => onSelectList('open-problems')}
                 title="Reset to Open Problems"
               >
-                <span className="w-5 h-5 rounded-full bg-[#eb6a47]/10 text-[#eb6a47] flex items-center justify-center text-[10px] shrink-0 font-black">
+                <span className="w-5 h-5 rounded-full bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center text-[10px] shrink-0 font-black">
                   !
                 </span>
                 <span className="truncate">Problems by Type</span>
@@ -125,7 +125,7 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
                           else if (opt === 'Resolved') onSelectList('resolved');
                         }}
                         className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium ${
-                          typeFilter === opt ? 'text-[#eb6a47] font-bold bg-[#eb6a47]/5' : 'text-slate-700'
+                          typeFilter === opt ? 'text-[#C96F55] font-bold bg-[#C96F55]/5' : 'text-slate-700'
                         }`}
                       >
                         {opt}
@@ -163,14 +163,14 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
                   onClick={() => onSelectList(item.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#eb6a47] text-white font-bold shadow-xs'
+                      ? 'bg-[#C96F55] text-white font-bold shadow-xs'
                       : 'text-slate-700 hover:bg-slate-100/80 font-medium'
                   }`}
                 >
                   <span className="truncate">{item.label}</span>
                   <span
                     className={`ml-2 shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-white text-[#eb6a47]' : 'bg-slate-100 text-slate-600'
+                      isActive ? 'bg-white text-[#C96F55]' : 'bg-slate-100 text-slate-600'
                     }`}
                   >
                     {count}

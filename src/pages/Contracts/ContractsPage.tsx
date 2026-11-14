@@ -210,7 +210,7 @@ export const ContractsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2.5">
-              <FileText className="w-6 h-6 text-[#eb6a47]" />
+              <FileText className="w-6 h-6 text-[#C96F55]" />
               Contracts &amp; Supplier Agreements
             </h1>
             <p className="text-xs text-slate-500 mt-1">
@@ -230,7 +230,7 @@ export const ContractsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>New Contract</span>
@@ -276,7 +276,7 @@ export const ContractsPage: React.FC = () => {
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   statusFilter === st
-                    ? 'bg-[#eb6a47] text-white shadow-2xs'
+                    ? 'bg-[#C96F55] text-white shadow-2xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                 }`}
               >
@@ -298,14 +298,14 @@ export const ContractsPage: React.FC = () => {
                 placeholder="Search vendor or agreement..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/20 w-52 text-slate-800"
+                className="pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 w-52 text-slate-800"
               />
             </div>
 
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+              className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#C96F55] cursor-pointer"
             >
               <option value="All">All Types</option>
               {CONTRACT_TYPES.map((t) => (
@@ -338,7 +338,7 @@ export const ContractsPage: React.FC = () => {
                 <div
                   key={c.id}
                   onClick={() => setSelectedContract(c)}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md hover:border-[#eb6a47]/40 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md hover:border-[#C96F55]/40 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
@@ -355,7 +355,7 @@ export const ContractsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#eb6a47] transition-colors line-clamp-2">
+                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#C96F55] transition-colors line-clamp-2">
                       {c.title}
                     </h3>
 
@@ -521,7 +521,7 @@ export const ContractsPage: React.FC = () => {
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#eb6a47]" />
+                <FileText className="w-5 h-5 text-[#C96F55]" />
                 Register New Agreement / Contract
               </h2>
               <button
@@ -542,7 +542,7 @@ export const ContractsPage: React.FC = () => {
                   placeholder="e.g. Cisco SmartNet 24x7 Core Switching"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                 />
               </div>
 
@@ -555,7 +555,7 @@ export const ContractsPage: React.FC = () => {
                     placeholder="e.g. Cisco Systems"
                     value={newVendorName}
                     onChange={(e) => setNewVendorName(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
 
@@ -566,7 +566,7 @@ export const ContractsPage: React.FC = () => {
                     placeholder="support@vendor.com"
                     value={newVendorEmail}
                     onChange={(e) => setNewVendorEmail(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
               </div>
@@ -577,7 +577,7 @@ export const ContractsPage: React.FC = () => {
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value as ContractType)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#C96F55] cursor-pointer"
                   >
                     {CONTRACT_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -590,7 +590,7 @@ export const ContractsPage: React.FC = () => {
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as ContractStatus)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#C96F55] cursor-pointer"
                   >
                     {CONTRACT_STATUSES.map((s) => (
                       <option key={s} value={s}>{s}</option>
@@ -608,7 +608,7 @@ export const ContractsPage: React.FC = () => {
                     placeholder="0"
                     value={newValue}
                     onChange={(e) => setNewValue(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
 
@@ -617,7 +617,7 @@ export const ContractsPage: React.FC = () => {
                   <select
                     value={newCurrency}
                     onChange={(e) => setNewCurrency(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#C96F55] cursor-pointer"
                   >
                     <option value="GBP">GBP (£)</option>
                     <option value="USD">USD ($)</option>
@@ -633,7 +633,7 @@ export const ContractsPage: React.FC = () => {
                     type="date"
                     value={newStartDate}
                     onChange={(e) => setNewStartDate(e.target.value)}
-                    className="w-full p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
 
@@ -643,7 +643,7 @@ export const ContractsPage: React.FC = () => {
                     type="date"
                     value={newEndDate}
                     onChange={(e) => setNewEndDate(e.target.value)}
-                    className="w-full p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55]"
                   />
                 </div>
               </div>
@@ -654,7 +654,7 @@ export const ContractsPage: React.FC = () => {
                   id="autoRenewCheck"
                   checked={newAutoRenew}
                   onChange={(e) => setNewAutoRenew(e.target.checked)}
-                  className="rounded border-slate-300 text-[#eb6a47] focus:ring-[#eb6a47]"
+                  className="rounded border-slate-300 text-[#C96F55] focus:ring-[#C96F55]"
                 />
                 <label htmlFor="autoRenewCheck" className="text-slate-700 font-medium">
                   Auto-Renew contract at period expiration
@@ -668,7 +668,7 @@ export const ContractsPage: React.FC = () => {
                   placeholder="Detail 4-hour response SLAs, warranty numbers, serial scopes, or renewal contacts..."
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#eb6a47] resize-none"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55] resize-none"
                 />
               </div>
 
@@ -683,7 +683,7 @@ export const ContractsPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#eb6a47] hover:bg-[#d65736] rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#C96F55] hover:bg-[#d65736] rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : 'Create Contract'}
                 </button>

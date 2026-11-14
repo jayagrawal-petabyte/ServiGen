@@ -154,7 +154,7 @@ export const AdminSettingsPage: React.FC = () => {
       {/* Page Title & Subtitle */}
       <div className="admin-title-area">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-[#eb6a47]/10 text-[#eb6a47] rounded-xl">
+          <div className="p-2.5 bg-[#C96F55]/10 text-[#C96F55] rounded-xl">
             <Settings className="w-6 h-6" />
           </div>
           <div>
@@ -254,7 +254,7 @@ export const AdminSettingsPage: React.FC = () => {
                         type="checkbox"
                         checked={rule.businessHoursOnly}
                         onChange={(e) => handleUpdateSla(rule.priority, 'businessHoursOnly', e.target.checked)}
-                        className="rounded text-[#eb6a47]"
+                        className="rounded text-[#C96F55]"
                       />
                       <span>Business Hours Only (9-5)</span>
                     </label>
@@ -466,7 +466,7 @@ export const AdminSettingsPage: React.FC = () => {
                     type="checkbox"
                     checked={(workflowGuards as any)[item.key]}
                     onChange={(e) => setWorkflowGuards((prev) => ({ ...prev, [item.key]: e.target.checked }))}
-                    className="w-4 h-4 rounded text-[#eb6a47] focus:ring-0 cursor-pointer mt-1"
+                    className="w-4 h-4 rounded text-[#C96F55] focus:ring-0 cursor-pointer mt-1"
                   />
                 </div>
               ))}

@@ -52,7 +52,7 @@
 }
 
 .breadcrumb-link:hover {
-  color: #0284c7;
+  color: #C96F55;
   text-decoration: underline;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .requests-get-started-btn {
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
@@ -91,7 +91,7 @@
 }
 
 .requests-new-ticket-btn {
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -148,7 +148,7 @@
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -554,7 +554,7 @@
 
 .view-dropdown-item.selected {
   font-weight: 700;
-  color: #0284c7;
+  color: #C96F55;
 }
 
 .toolbar-right-actions {
@@ -619,11 +619,11 @@
 
 .toolbar-refresh-btn:hover {
   background-color: #f1f5f9;
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 .requests-create-btn {
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -639,7 +639,7 @@
 }
 
 .requests-create-btn:hover {
-  background-color: #db5936;
+  background-color: #b55f46;
 }
 
 .toolbar-more-btn {
@@ -726,7 +726,7 @@
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  background-color: #eb6a47;
+  background-color: #C96F55;
   color: #ffffff;
   font-size: 8px;
   font-weight: 700;
@@ -763,7 +763,7 @@
 }
 
 .request-summary-link {
-  color: #eb6a47;
+  color: #C96F55;
   text-decoration: none;
   cursor: pointer;
   display: block;
@@ -806,7 +806,7 @@
 }
 
 .status-in-progress {
-  background-color: #0284c7;
+  background-color: #C96F55;
   color: #ffffff;
 }
 
@@ -924,7 +924,7 @@
 }
 
 .tree-team-dropdown-item.selected {
-  color: #eb6a47;
+  color: #C96F55;
   font-weight: 700;
 }
 

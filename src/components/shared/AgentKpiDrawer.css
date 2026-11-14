@@ -173,7 +173,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 600;
@@ -211,7 +211,7 @@
 }
 
 .agent-kpi-dot.is-active {
-  background: #eb6a47;
+  background: #C96F55;
 }
 
 .agent-kpi-caret-btn {
@@ -378,7 +378,7 @@
 }
 
 .mini-bar.peak {
-  background: #0284c7;
+  background: #C96F55;
 }
 
 /* Queue Tabs */
@@ -595,7 +595,7 @@
   border: none;
   font-size: 12px;
   font-weight: 700;
-  color: #0284c7;
+  color: #C96F55;
   cursor: pointer;
   padding: 0;
 }

@@ -408,7 +408,7 @@ export default function CreateArticleDraftModal({
                 type="checkbox"
                 checked={submitAsAwaiting}
                 onChange={(e) => setSubmitAsAwaiting(e.target.checked)}
-                style={{ accentColor: '#eb6a47', width: '16px', height: '16px', cursor: 'pointer' }}
+                style={{ accentColor: '#C96F55', width: '16px', height: '16px', cursor: 'pointer' }}
               />
               <label
                 htmlFor="submit-as-awaiting"
@@ -432,7 +432,7 @@ export default function CreateArticleDraftModal({
               type="submit"
               disabled={isSubmitting}
               style={{
-                backgroundColor: '#eb6a47',
+                backgroundColor: '#C96F55',
                 color: 'white',
                 padding: '8px 20px',
                 borderRadius: '999px',

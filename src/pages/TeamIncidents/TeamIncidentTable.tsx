@@ -1165,7 +1165,7 @@ function TeamIncidentTable({
                     } catch {}
                     setCurrentPage(1);
                   }}
-                  className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#eb6a47]"
+                  className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
                   title="Rows per page"
                 >
                   <option value={15}>15</option>
@@ -1438,7 +1438,7 @@ function TeamIncidentTable({
                   <tr>
                     <td colSpan={11} className="empty-state text-center py-12 text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <span className="inline-block w-6 h-6 border-2 border-[#eb6a47] border-t-transparent rounded-full animate-spin" />
+                        <span className="inline-block w-6 h-6 border-2 border-[#C96F55] border-t-transparent rounded-full animate-spin" />
                         <span className="text-sm font-medium text-slate-600">Loading live support incidents from backend...</span>
                       </div>
                     </td>

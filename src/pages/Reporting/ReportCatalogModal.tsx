@@ -103,7 +103,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search report titles, descriptions, metrics..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-[#ebdcd3] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#eb6a47] focus:bg-white text-slate-800"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-[#ebdcd3] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C96F55] focus:bg-white text-slate-800"
               />
               {searchQuery && (
                 <button

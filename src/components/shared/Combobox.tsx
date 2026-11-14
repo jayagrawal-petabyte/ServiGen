@@ -114,7 +114,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
           }}
           onFocus={() => { setOpen(true); setQuery(''); }}
           onKeyDown={onKeyDown}
-          className="w-full text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-2 outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400 disabled:opacity-60"
+          className="w-full text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-2 outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 placeholder-gray-400 disabled:opacity-60"
         />
         <button
           type="button"

@@ -1162,7 +1162,7 @@ export const RequestsPage: React.FC = () => {
                 onClick={handleRefresh}
               >
                 <svg
-                  className={`w-3.5 h-3.5 text-[#eb6a47] ${isRefreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 text-[#C96F55] ${isRefreshing ? 'animate-spin' : ''}`}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1273,7 +1273,7 @@ export const RequestsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleResetFilters}
-                          className="text-xs text-[#eb6a47] font-bold hover:underline cursor-pointer bg-transparent border-none"
+                          className="text-xs text-[#C96F55] font-bold hover:underline cursor-pointer bg-transparent border-none"
                         >
                           Reset Filters to Show All Requests
                         </button>
@@ -1363,7 +1363,7 @@ export const RequestsPage: React.FC = () => {
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   placeholder="e.g. Request dual monitor setup for trading desk..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   required
                   autoFocus
                 />
@@ -1377,7 +1377,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   >
                     <option value="Hardware>Laptop">Hardware &gt; Laptop</option>
                     <option value="Hardware>Monitor">Hardware &gt; Monitor</option>
@@ -1396,7 +1396,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -1414,7 +1414,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newTeam}
                     onChange={(e) => setNewTeam(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   >
                     <option value="1st Line Support">1st Line Support</option>
                     <option value="2nd Line Support">2nd Line Support</option>
@@ -1429,7 +1429,7 @@ export const RequestsPage: React.FC = () => {
                   <select
                     value={newAgent}
                     onChange={(e) => setNewAgent(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   >
                     <option value="Unassigned">Unassigned</option>
                     <option value="Adam Admin">Adam Admin</option>
@@ -1447,7 +1447,7 @@ export const RequestsPage: React.FC = () => {
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Provide technical requirements, business reason, or preferred delivery bay..."
-                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                 />
               </div>
 
@@ -1461,7 +1461,7 @@ export const RequestsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-[#C96F55] hover:bg-[#b55f46] text-white font-semibold text-xs shadow-sm cursor-pointer"
                 >
                   Create Request
                 </button>
@@ -1499,7 +1499,7 @@ export const RequestsPage: React.FC = () => {
                   value={newViewName}
                   onChange={(e) => setNewViewName(e.target.value)}
                   placeholder="e.g. Critical Hardware Requests"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                   required
                   autoFocus
                 />
@@ -1512,7 +1512,7 @@ export const RequestsPage: React.FC = () => {
                 <select
                   value={newViewStatus}
                   onChange={(e) => setNewViewStatus(e.target.value as any)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                 >
                   <option value="Open Requests">Open Requests</option>
                   <option value="In Progress">In Progress</option>
@@ -1528,7 +1528,7 @@ export const RequestsPage: React.FC = () => {
                 <select
                   value={newViewTeam}
                   onChange={(e) => setNewViewTeam(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                 >
                   <option value="All Teams">All Teams</option>
                   <option value="1st Line Support">1st Line Support</option>
@@ -1544,7 +1544,7 @@ export const RequestsPage: React.FC = () => {
                 <select
                   value={newViewPriority}
                   onChange={(e) => setNewViewPriority(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#eb6a47]"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-[#C96F55]"
                 >
                   <option value="All">All Priorities</option>
                   <option value="Critical">Critical</option>
@@ -1564,7 +1564,7 @@ export const RequestsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#eb6a47] hover:bg-[#db5936] text-white font-semibold text-xs shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-[#C96F55] hover:bg-[#b55f46] text-white font-semibold text-xs shadow-sm cursor-pointer"
                 >
                   Save View
                 </button>

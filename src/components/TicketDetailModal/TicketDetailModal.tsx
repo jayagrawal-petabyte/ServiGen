@@ -299,7 +299,7 @@ function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?
                     <a
                       href={att.url}
                       download={att.name}
-                      style={{ fontSize: 10, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}
+                      style={{ fontSize: 10, color: '#C96F55', textDecoration: 'none', fontWeight: 600 }}
                     >
                       Download Screenshot
                     </a>
@@ -417,7 +417,7 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
                 </div>
                 {assigning === agent.id && <Loader2 style={{ width: 14, height: 14, color: '#6b7280' }} className="animate-spin" />}
                 {isSelected && <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>Assigned ✓</span>}
-                {!isSelected && isCurrent && <span style={{ fontSize: 10, color: '#2563eb', fontWeight: 600 }}>Current</span>}
+                {!isSelected && isCurrent && <span style={{ fontSize: 10, color: '#C96F55', fontWeight: 600 }}>Current</span>}
               </button>
             );
           })}
@@ -579,7 +579,7 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
       <div style={{ background: '#fff', borderRadius: 10, width: 520, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail style={{ width: 16, height: 16, color: '#2563eb' }} />
+            <Mail style={{ width: 16, height: 16, color: '#C96F55' }} />
             <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Email Requester</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', display: 'flex' }}><X style={{ width: 16, height: 16 }} /></button>
@@ -648,7 +648,7 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '7px 18px', fontSize: 13, border: 'none', borderRadius: 6,
-                background: '#2563eb', color: '#fff', cursor: sending ? 'not-allowed' : 'pointer',
+                background: '#C96F55', color: '#fff', cursor: sending ? 'not-allowed' : 'pointer',
                 fontWeight: 600, opacity: sending ? 0.7 : 1,
               }}
             >
@@ -1043,7 +1043,7 @@ function ArticlePreviewModal({
                 height: 32,
                 borderRadius: 8,
                 background: '#e0f2fe',
-                color: '#0284c7',
+                color: '#C96F55',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1217,7 +1217,7 @@ function ArticlePreviewModal({
                 fontSize: 12,
                 fontWeight: 700,
                 color: '#fff',
-                background: '#2563eb',
+                background: '#C96F55',
                 border: 'none',
                 borderRadius: 6,
                 cursor: 'pointer',
@@ -1955,7 +1955,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             onClick={() => fileInputRef.current?.click()}
                             style={{ padding: '4px 6px', borderRadius: 4, background: '#fff', border: '1px solid #d1d5db', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#374151' }}
                           >
-                            <ImageIcon style={{ width: 12, height: 12, color: '#2563eb' }} />
+                            <ImageIcon style={{ width: 12, height: 12, color: '#C96F55' }} />
                             <span>Attach</span>
                           </button>
                         </div>
@@ -2025,7 +2025,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             disabled={!noteText.trim() && pastedAttachments.length === 0}
                             style={{
                               padding: '6px 14px', fontSize: 12, border: 'none', borderRadius: 6,
-                              background: '#2563eb', color: '#fff', cursor: 'pointer', fontWeight: 600,
+                              background: '#C96F55', color: '#fff', cursor: 'pointer', fontWeight: 600,
                               opacity: (!noteText.trim() && pastedAttachments.length === 0) ? 0.5 : 1,
                             }}
                           >
@@ -2193,7 +2193,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                           <div style={{
                             width: 38, height: 38, borderRadius: '50%',
-                            background: '#0284c7', color: '#fff',
+                            background: '#C96F55', color: '#fff',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 13, fontWeight: 700, flexShrink: 0,
                           }}>
@@ -2201,13 +2201,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           </div>
                           <div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{ticket.requester || 'Unknown Requester'}</div>
-                            <div style={{ fontSize: 11, color: '#0284c7' }}>{ticket.email || '—'}</div>
+                            <div style={{ fontSize: 11, color: '#C96F55' }}>{ticket.email || '—'}</div>
                           </div>
                         </div>
 
                         <div className="halo-sidebar-field">
                           <div className="halo-sidebar-field-label">Organisation</div>
-                          <div className="halo-sidebar-field-value" style={{ color: '#2563eb' }}>{ticket.organisationName || '—'}</div>
+                          <div className="halo-sidebar-field-value" style={{ color: '#C96F55' }}>{ticket.organisationName || '—'}</div>
                         </div>
 
                         <div className="halo-sidebar-field">
@@ -2217,7 +2217,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
                         <div className="halo-sidebar-field">
                           <div className="halo-sidebar-field-label">Email Address</div>
-                          <div className="halo-sidebar-field-value" style={{ color: '#2563eb', wordBreak: 'break-all' }}>{ticket.email || '—'}</div>
+                          <div className="halo-sidebar-field-value" style={{ color: '#C96F55', wordBreak: 'break-all' }}>{ticket.email || '—'}</div>
                         </div>
 
                         {/* Microsoft Teams Communication Buttons */}
@@ -2232,7 +2232,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             }}
                             style={{
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                              padding: '7px 12px', background: '#0284c7', color: '#fff',
+                              padding: '7px 12px', background: '#C96F55', color: '#fff',
                               borderRadius: 20, fontSize: 11.5, fontWeight: 600, textDecoration: 'none',
                               opacity: ticket.email ? 1 : 0.6,
                               cursor: ticket.email ? 'pointer' : 'not-allowed',
@@ -2302,7 +2302,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               <div style={{ fontSize: 12, color: '#374151' }}>
                                 <span style={{ color: '#9ca3af' }}>{t.id}</span>
                                 {' – '}
-                                <span style={{ color: '#2563eb', cursor: 'pointer' }}>{titleStr}</span>
+                                <span style={{ color: '#C96F55', cursor: 'pointer' }}>{titleStr}</span>
                               </div>
                             </div>
                             <span style={{
@@ -2323,13 +2323,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
                     <div className="halo-sidebar-field">
                       <div className="halo-sidebar-field-label">Ticket Type</div>
-                      <div className="halo-sidebar-field-value" style={{ color: '#2563eb' }}>{ticket.type || 'Service Request'}</div>
+                      <div className="halo-sidebar-field-value" style={{ color: '#C96F55' }}>{ticket.type || 'Service Request'}</div>
                     </div>
 
                     {(ticket as any).workflowName && (
                       <div className="halo-sidebar-field">
                         <div className="halo-sidebar-field-label">Workflow</div>
-                        <div className="halo-sidebar-field-value" style={{ color: '#2563eb' }}>{(ticket as any).workflowName}</div>
+                        <div className="halo-sidebar-field-value" style={{ color: '#C96F55' }}>{(ticket as any).workflowName}</div>
                       </div>
                     )}
 
@@ -2380,7 +2380,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           onClick={() => setShowAgentPicker(p => !p)}
                           style={{
                             background: 'none', border: 'none', cursor: 'pointer',
-                            fontSize: 11, fontWeight: 700, color: '#eb6a47',
+                            fontSize: 11, fontWeight: 700, color: '#C96F55',
                             display: 'flex', alignItems: 'center', gap: 3, padding: '2px 4px',
                             borderRadius: 4,
                           }}
@@ -2417,7 +2417,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             >
                               <span style={{
                                 width: 14, height: 14, borderRadius: '50%',
-                                background: '#0284c7', color: '#fff',
+                                background: '#C96F55', color: '#fff',
                                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: 9, fontWeight: 700,
                               }}>
@@ -2431,7 +2431,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                   handleToggleAdditionalAgent(agentName);
                                 }}
                                 style={{
-                                  border: 'none', background: 'none', color: '#0284c7',
+                                  border: 'none', background: 'none', color: '#C96F55',
                                   cursor: 'pointer', padding: 0, fontSize: 11, marginLeft: 2,
                                   lineHeight: 1,
                                 }}
@@ -2527,7 +2527,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             <Sparkles style={{ width: 12, height: 12, color: '#f59e0b' }} /> AI Suggested Articles
                           </div>
                           {kbArticles.length > 0 && (
-                            <span style={{ fontSize: 10, color: '#0284c7', fontWeight: 600 }}>{kbArticles.length} found</span>
+                            <span style={{ fontSize: 10, color: '#C96F55', fontWeight: 600 }}>{kbArticles.length} found</span>
                           )}
                         </div>
                         {kbArticles.length > 0 ? (
@@ -2550,7 +2550,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                 }}
                                 title="Click to read full article"
                               >
-                                <BookOpen style={{ width: 12, height: 12, color: '#0284c7' }} />
+                                <BookOpen style={{ width: 12, height: 12, color: '#C96F55' }} />
                               </div>
                               <div
                                 onClick={() => setSelectedArticlePreview(article)}
@@ -2581,7 +2581,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                 }}
                                 style={{
                                   padding: '2px 7px', fontSize: 10, fontWeight: 700,
-                                  color: '#0284c7', background: '#e0f2fe', border: '1px solid #bae6fd',
+                                  color: '#C96F55', background: '#e0f2fe', border: '1px solid #bae6fd',
                                   borderRadius: 4, cursor: 'pointer', flexShrink: 0,
                                   transition: 'all 0.15s ease',
                                 }}
