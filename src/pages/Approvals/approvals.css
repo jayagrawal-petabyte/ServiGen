@@ -109,14 +109,14 @@
 .approvals-title-group h1 {
   font-size: 26px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-main, #332B28);
   letter-spacing: -0.02em;
   margin: 0 0 4px 0;
 }
 
 .approvals-title-group p {
   font-size: 13.5px;
-  color: #6b7280;
+  color: var(--text-secondary, #615551);
   margin: 0;
   font-weight: 400;
 }
@@ -215,14 +215,14 @@
 }
 
 .approval-avatar.ai {
-  background-color: #f95a00;
+  background-color: var(--accent-terracotta, #C96F55);
   color: #ffffff;
   font-weight: 700;
   font-size: 16px;
 }
 
 .approval-avatar.user {
-  background-color: #0284c7;
+  background-color: var(--navy-contrast, #263B5E);
   color: #ffffff;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .card-blue-link {
-  color: #0070f3;
+  color: var(--accent-terracotta, #C96F55);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -257,7 +257,7 @@
 
 .card-blue-link:hover {
   text-decoration: underline;
-  color: #0051b3;
+  color: var(--primary-peach, #F4A58A);
 }
 
 .behalf-separator {
@@ -295,19 +295,19 @@
 /* --- Ticket Details Box --- */
 .approval-ticket-details {
   margin-top: 14px;
-  border: 1px solid #bfe2f7;
+  border: 1px solid var(--border-subtle, #ebdcd3);
   border-radius: 8px;
   overflow: hidden;
   background-color: #ffffff;
 }
 
 .approval-details-header {
-  background-color: #dff0fa;
+  background-color: rgba(247, 196, 179, 0.25);
   padding: 8px 16px;
   font-size: 13.5px;
   font-weight: 700;
-  color: #111827;
-  border-bottom: 1px solid #bfe2f7;
+  color: var(--text-main, #332B28);
+  border-bottom: 1px solid var(--border-subtle, #ebdcd3);
 }
 
 .approval-details-table {
@@ -345,7 +345,7 @@
 }
 
 .detail-row-val .ticket-id-blue-link {
-  color: #0284c7;
+  color: var(--accent-terracotta, #C96F55);
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
@@ -356,7 +356,7 @@
 }
 
 .ticket-type-badge {
-  background-color: #0284c7;
+  background-color: var(--navy-contrast, #263B5E);
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 600;
@@ -680,7 +680,8 @@
 
 .approval-tabs {
   display: inline-flex;
-  background-color: #f1f5f9;
+  background-color: rgba(247, 196, 179, 0.2);
+  border: 1px solid rgba(244, 165, 138, 0.3);
   padding: 4px;
   border-radius: 10px;
   gap: 4px;
@@ -725,7 +726,7 @@
 }
 
 .approval-tab.active .approval-tab-badge {
-  background-color: #f97316;
+  background-color: var(--accent-terracotta, #C96F55);
   color: #ffffff;
 }
 
@@ -758,8 +759,8 @@
 }
 
 .approvals-search-input:focus {
-  border-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+  border-color: var(--accent-terracotta, #C96F55);
+  box-shadow: 0 0 0 3px rgba(201, 111, 85, 0.15);
 }
 
 .approvals-search-clear {
