@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar } from '../../components/shared';
+import { SegmentedTabs, FilterToolbar, RefreshButton, Button } from '../../components/shared';
 import {
   contractsService,
   ContractItem,
@@ -220,22 +220,17 @@ export const ContractsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              type="button"
+            <RefreshButton
               onClick={loadContracts}
-              className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
               title="Refresh Contracts"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
+            />
+            <Button
+              variant="primary"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer active:scale-95"
+              icon={<Plus className="w-4 h-4 shrink-0" />}
             >
-              <Plus className="w-4 h-4" />
-              <span>New Contract</span>
-            </button>
+              New Contract
+            </Button>
           </div>
         </div>
 

@@ -7,6 +7,7 @@ import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions
 import { ModalShell } from '../../components/shared/ModalShell';
 import { MetricCard } from '../../components/shared/MetricCard';
 import { SegmentedTabs, type SegmentedTab } from '../../components/shared/SegmentedTabs';
+import { RefreshButton } from '../../components/shared/RefreshButton';
 import { api } from '../../services/apiClient';
 import { ReportCatalogModal } from './ReportCatalogModal';
 import { QueryBuilderModal, type CustomQueryConfig } from './QueryBuilderModal';
@@ -810,9 +811,8 @@ export default function IncidentsByCategoryReport() {
               </Popover.Portal>
             </Popover.Root>
 
-            <button
-              type="button"
-              className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            <RefreshButton
+              size="sm"
               onClick={() => {
                 setIsRefreshing(true);
                 setStatusMessage('Refreshed report metrics');
@@ -821,11 +821,9 @@ export default function IncidentsByCategoryReport() {
                   setTimeout(() => setStatusMessage(null), 2000);
                 }, 600);
               }}
+              isLoading={isRefreshing}
               title="Refresh report data"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#C96F55]' : 'text-gray-500'}`} />
-              <span>Refresh</span>
-            </button>
+            />
 
             <button
               type="button"

@@ -22,7 +22,7 @@ import {
   ListFilter,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar } from '../../components/shared';
+import { SegmentedTabs, FilterToolbar, RefreshButton } from '../../components/shared';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
@@ -164,25 +164,20 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
           <div className="flex items-center gap-2.5">
             {/* Refresh button */}
-            <button
-              type="button"
+            <RefreshButton
               onClick={() => loadData()}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+              isLoading={isLoading}
               title="Fetch latest from backend API"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#C96F55]' : ''}`} />
-              <span>Refresh</span>
-            </button>
+            />
 
             {/* New Change Request Button */}
             <Button
               variant="primary"
               onClick={onOpenCreateModal}
-              className="shadow-md shadow-[#C96F55]/20 whitespace-nowrap"
+              icon={<Plus className="w-4 h-4 shrink-0" />}
+              className="shadow-sm shadow-[#C96F55]/20"
             >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>New Change Request</span>
+              New Change Request
             </Button>
           </div>
         </div>

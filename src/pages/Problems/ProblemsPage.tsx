@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { Button, RefreshButton } from '../../components/shared';
 import { ProblemsSidebar } from './components/ProblemsSidebar';
 import { NewProblemModal } from './components/NewProblemModal';
 import { ProblemDetailView } from './ProblemDetailView';
@@ -147,7 +148,7 @@ export const ProblemsPage: React.FC = () => {
           <GlobalNavbarActions
             onGetStarted={() => {}}
             onNewTicket={() => setShowNewModal(true)}
-            onOpenTicket={(id) => setSelectedProblemId(id)}
+            onOpenTicket={(id: string) => setSelectedProblemId(id)}
           />
         </header>
 
@@ -181,7 +182,7 @@ export const ProblemsPage: React.FC = () => {
         <GlobalNavbarActions
           onGetStarted={() => {}}
           onNewTicket={() => setShowNewModal(true)}
-          onOpenTicket={(id) => setSelectedProblemId(id)}
+          onOpenTicket={(id: string) => setSelectedProblemId(id)}
         />
       </header>
 
@@ -252,27 +253,25 @@ export const ProblemsPage: React.FC = () => {
               </div>
 
               {/* Refresh Button */}
-              <button
-                type="button"
+              <RefreshButton
+                iconOnly
+                size="sm"
                 onClick={() => {
                   setSearchQuery('');
                   setProblems(problemsService.getProblems());
                 }}
-                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 cursor-pointer"
                 title="Refresh list"
-              >
-                ↻
-              </button>
+              />
 
               {/* + New Button */}
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setShowNewModal(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95 leading-none"
+                icon={<Plus size={14} strokeWidth={2.5} className="shrink-0" />}
               >
-                <Plus size={14} strokeWidth={2.5} className="shrink-0" />
-                <span>New</span>
-              </button>
+                New
+              </Button>
 
               {/* More Actions Menu Button (···) */}
               <div className="relative">

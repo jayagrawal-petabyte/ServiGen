@@ -10,6 +10,7 @@ import {
   updateSubtask,
 } from "./projectsApi";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
+import { RefreshButton } from "../../components/shared/RefreshButton";
 import "./projects.css";
 
 type View = "active" | "board" | "task-calendar" | "gantt" | "my-tasks" | "my-calendar" | "overdue";
@@ -706,6 +707,13 @@ export default function ProjectsPage() {
                 </button>
               </>
             )}
+            <RefreshButton
+              iconOnly
+              size="sm"
+              onClick={() => load()}
+              isLoading={loading}
+              title="Refresh projects from backend"
+            />
             <button className="pj-new" onClick={openNewModal}>
               <Plus size={14} strokeWidth={2.5} className="shrink-0" />
               <span>New</span>

@@ -3,7 +3,7 @@ import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar } from '../../components/shared';
+import { SegmentedTabs, FilterToolbar, RefreshButton } from '../../components/shared';
 import './approvals.css';
 
 interface Toast {
@@ -311,30 +311,11 @@ export default function ApprovalsPage() {
               <span>Reject All</span>
             </button>
 
-            <button
-              className="btn-approval-action refresh"
-              type="button"
-              disabled={isLoading}
+            <RefreshButton
               onClick={handleRefresh}
+              isLoading={isLoading}
               title="Refresh requests list"
-            >
-              <svg
-                className={isLoading ? 'spinning' : ''}
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#4b5563"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-              <span>Refresh</span>
-            </button>
+            />
           </div>
         </div>
 

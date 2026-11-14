@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { RefreshButton } from '../../components/shared/RefreshButton';
 import { api } from '../../services/apiClient';
 import { fetchActiveChangeRequests } from '../../services/changeRequestsService';
 import './RequestsPage.css';
@@ -1155,22 +1156,13 @@ export const RequestsPage: React.FC = () => {
                 </button>
               </div>
 
-              <button
-                type="button"
-                className="toolbar-refresh-btn"
+              <RefreshButton
+                iconOnly
+                size="sm"
                 title="Refresh Requests"
                 onClick={handleRefresh}
-              >
-                <svg
-                  className={`w-3.5 h-3.5 text-[#C96F55] ${isRefreshing ? 'animate-spin' : ''}`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>
-              </button>
+                isLoading={isRefreshing}
+              />
 
               {selectedRequestIds.length > 0 && (
                 <button

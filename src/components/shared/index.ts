@@ -2,6 +2,7 @@ export * from './ModalShell';
 export * from './MetricCard';
 export * from './SegmentedTabs';
 export * from './FilterToolbar';
+export * from './RefreshButton';
 export * from './Button';
 export * from './Card';
 export * from './StatusBadge';

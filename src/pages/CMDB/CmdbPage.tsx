@@ -40,7 +40,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar } from '../../components/shared';
+import { SegmentedTabs, FilterToolbar, RefreshButton, Button } from '../../components/shared';
 
 interface CmdbPageProps {
   configurationItems?: ConfigurationItem[];
@@ -398,22 +398,19 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               <span>Service CIs & SLA</span>
             </button>
 
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Register CI</span>
-            </button>
-
-            <button
+            <RefreshButton
               onClick={loadData}
-              disabled={isLoading}
-              className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+              isLoading={isLoading}
               title="Refresh CMDB from Backend"
+            />
+
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus className="w-4 h-4 shrink-0" />}
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
+              Register CI
+            </Button>
           </div>
         </div>
 
