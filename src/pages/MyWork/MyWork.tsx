@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import InlineErrorBanner from '../../components/shared/InlineErrorBanner';
 import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../Auth/AuthContext";
@@ -10,6 +11,7 @@ import {
   type TicketStatus,
   type MyWorkTicket,
 } from "../../services/myWorkService";
+import { MOCK_MY_WORK_TICKETS } from "../../services/fallback/mockData";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 import { StatusPill } from "../../components/shared/StatusBadge";
@@ -139,6 +141,7 @@ const VIEW_OPTIONS: ViewOption[] = [
 
 export default function MyWork() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<string>("My List");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [query, setQuery] = useState("");
@@ -270,6 +273,57 @@ export default function MyWork() {
     }
   };
 
+  const handleBackToWork = () => {
+    setSelectedTicket(null);
+    if (searchParams.get('id') || searchParams.get('ticketId')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('id');
+      next.delete('ticketId');
+      setSearchParams(next, { replace: true });
+    }
+  };
+
+  // Handle tab deep linking (e.g. /my-work?tab=Active)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && STATUS_TABS.includes(tabParam as TicketStatus)) {
+      setActiveTab(tabParam as TicketStatus);
+    }
+  }, [searchParams]);
+
+  // Handle direct ticket deep-linking (e.g. /my-work?id=MYW-101)
+  useEffect(() => {
+    const targetId = searchParams.get('id') || searchParams.get('ticketId');
+    if (!targetId) return;
+
+    if (selectedTicket && selectedTicket.id.toLowerCase() === targetId.toLowerCase()) {
+      return;
+    }
+
+    const clean = targetId.toLowerCase().replace(/^#?myw-?/i, '').trim();
+
+    const match = allTickets.find(
+      (t) =>
+        t.id.toLowerCase() === targetId.toLowerCase() ||
+        t.id.toLowerCase().replace(/^#?myw-?/i, '') === clean ||
+        t.id.replace(/\D/g, '') === clean
+    );
+
+    if (match) {
+      setSelectedTicket(match);
+    } else if (!isFetchingTickets) {
+      const fallbackMatch = MOCK_MY_WORK_TICKETS.find(
+        (t) =>
+          t.id.toLowerCase() === targetId.toLowerCase() ||
+          t.id.toLowerCase().replace(/^#?myw-?/i, '') === clean ||
+          t.id.replace(/\D/g, '') === clean
+      );
+      if (fallbackMatch) {
+        setSelectedTicket(fallbackMatch as Ticket);
+      }
+    }
+  }, [searchParams, allTickets, selectedTicket, isFetchingTickets]);
+
   if (selectedTicket) {
     const logs = timeLogs[selectedTicket.id] || [];
 
@@ -278,9 +332,9 @@ export default function MyWork() {
         {/* Top Navbar */}
         <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <span className="hover:text-gray-800 cursor-pointer" onClick={() => setSelectedTicket(null)}>Service Desk</span>
+            <span className="hover:text-gray-800 cursor-pointer" onClick={handleBackToWork}>Service Desk</span>
             <span>/</span>
-            <span className="hover:text-gray-800 cursor-pointer" onClick={() => setSelectedTicket(null)}>My Work</span>
+            <span className="hover:text-gray-800 cursor-pointer" onClick={handleBackToWork}>My Work</span>
             <span>/</span>
             <span className="text-gray-900">{selectedTicket.id}</span>
           </div>
@@ -296,7 +350,7 @@ export default function MyWork() {
           <div className="mx-auto max-w-6xl">
             <button
               type="button"
-              onClick={() => setSelectedTicket(null)}
+              onClick={handleBackToWork}
               className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
               ← Back to My Work

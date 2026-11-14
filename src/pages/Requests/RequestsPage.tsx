@@ -5,6 +5,9 @@ import { useAuth } from '../Auth/AuthContext';
 import { TicketDetailModal, type FullTicket } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { RefreshButton } from '../../components/shared/RefreshButton';
+import { Button } from '../../components/shared/Button';
+import { Pagination } from '../../components/shared/Pagination';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { api } from '../../services/apiClient';
 import { fetchActiveChangeRequests } from '../../services/changeRequestsService';
 import './RequestsPage.css';
@@ -793,28 +796,28 @@ export const RequestsPage: React.FC = () => {
 
           {/* Section Header (Halo AI Style) */}
           <div className="requests-tree-header">
-            <div className="tree-header-left">
-              <div className="tree-group-icon">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4.5 3.75A2.25 2.25 0 002.25 6v9a2.25 2.25 0 002.25 2.25h1.5v3.75l4.5-3.75h9.75A2.25 2.25 0 0022.5 15V6a2.25 2.25 0 00-2.25-2.25H4.5z" />
-                </svg>
-              </div>
-              {!isTreeCollapsed && (
+            {!isTreeCollapsed && (
+              <div className="tree-header-left">
+                <div className="tree-group-icon">
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4.5 3.75A2.25 2.25 0 002.25 6v9a2.25 2.25 0 002.25 2.25h1.5v3.75l4.5-3.75h9.75A2.25 2.25 0 0022.5 15V6a2.25 2.25 0 00-2.25-2.25H4.5z" />
+                  </svg>
+                </div>
                 <div className="tree-title-block">
                   <span className="tree-title">Requests by Team</span>
                   <span className="tree-subtitle">
                     {selectedTeam === 'All Teams' ? 'All Teams' : selectedTeam}
                   </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             <button
               type="button"
               className="tree-collapse-btn"
               title={isTreeCollapsed ? 'Expand Team Tree' : 'Collapse Team Tree'}
               onClick={() => setIsTreeCollapsed(!isTreeCollapsed)}
             >
-              {isTreeCollapsed ? '>>' : '<<'}
+              {isTreeCollapsed ? '»' : '«'}
             </button>
           </div>
 
@@ -1043,7 +1046,7 @@ export const RequestsPage: React.FC = () => {
         <main className="requests-main-viewport">
           {/* Main Table Toolbar */}
           <div className="requests-table-toolbar">
-            <div className="toolbar-left-view-selector relative" ref={filterDropdownRef}>
+            <div className="toolbar-left-view-selector relative flex items-center gap-1.5" ref={filterDropdownRef}>
               <button
                 type="button"
                 className="view-selector-btn"
@@ -1060,6 +1063,7 @@ export const RequestsPage: React.FC = () => {
                 type="button"
                 className="add-view-btn"
                 title="Create custom view"
+                aria-label="Create custom view"
                 onClick={() => {
                   setNewViewName('');
                   setNewViewStatus(activeCustomView ? activeCustomView.status : statusFilter);
@@ -1068,7 +1072,7 @@ export const RequestsPage: React.FC = () => {
                   setIsCreateViewModalOpen(true);
                 }}
               >
-                +
+                <Plus className="w-3 h-3" />
               </button>
 
               {isFilterDropdownOpen && (
@@ -1124,37 +1128,42 @@ export const RequestsPage: React.FC = () => {
                       ))}
                     </>
                   )}
+
+                  <div className="border-t border-gray-100 my-1 pt-1">
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-1.5 text-[11px] font-semibold text-[#C96F55] hover:bg-[#FFF9F5] flex items-center gap-1.5 cursor-pointer border-none bg-transparent transition-colors"
+                      onClick={() => {
+                        setNewViewName('');
+                        setNewViewStatus(activeCustomView ? activeCustomView.status : statusFilter);
+                        setNewViewTeam(activeCustomView?.team || (selectedTeam !== 'All Teams' ? selectedTeam : 'All Teams'));
+                        setNewViewPriority(activeCustomView?.priority || 'All');
+                        setIsFilterDropdownOpen(false);
+                        setIsCreateViewModalOpen(true);
+                      }}
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Create Custom View...</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="toolbar-right-actions">
+            <div className="toolbar-right-actions flex items-center gap-2">
               <span className="requests-count-text">
                 {filteredRequests.length > 0
                   ? `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, filteredRequests.length)} of ${filteredRequests.length}`
                   : '0 of 0'}
               </span>
 
-              <div className="pagination-arrows">
-                <button
-                  type="button"
-                  className={`pag-btn ${currentPage <= 1 ? 'disabled' : ''}`}
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  title="Previous Page"
-                >
-                  &lt;
-                </button>
-                <button
-                  type="button"
-                  className={`pag-btn ${currentPage >= totalPages ? 'disabled' : ''}`}
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  title="Next Page"
-                >
-                  &gt;
-                </button>
-              </div>
+              <Pagination
+                currentRange=""
+                hasPrevious={currentPage > 1}
+                hasNext={currentPage < totalPages}
+                onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              />
 
               <RefreshButton
                 iconOnly
@@ -1165,9 +1174,9 @@ export const RequestsPage: React.FC = () => {
               />
 
               {selectedRequestIds.length > 0 && (
-                <button
-                  type="button"
-                  className="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     const firstReq = requestsList.find((r) => r.id === selectedRequestIds[0]);
                     if (firstReq) {
@@ -1177,30 +1186,31 @@ export const RequestsPage: React.FC = () => {
                     }
                   }}
                   title="Create Change Request from selected Service Request"
+                  icon={<span className="text-amber-300">⚡</span>}
                 >
-                  <span>⚡</span>
-                  <span>Create Change ({selectedRequestIds.length})</span>
-                </button>
+                  Create Change ({selectedRequestIds.length})
+                </Button>
               )}
 
-              <button
-                type="button"
-                className="requests-create-btn"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setIsNewRequestModalOpen(true)}
                 title="Create New Service Request"
+                icon={<Plus className="w-3.5 h-3.5" />}
               >
-                <span>+</span>
-                <span>New</span>
-              </button>
+                New
+              </Button>
 
-              <div className="relative" ref={moreMenuRef}>
+              <div className="relative flex items-center" ref={moreMenuRef}>
                 <button
                   type="button"
                   className="toolbar-more-btn"
                   title="More actions & export"
+                  aria-label="More actions & export"
                   onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                 >
-                  ···
+                  <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
 
                 {isMoreMenuOpen && (
@@ -1306,7 +1316,14 @@ export const RequestsPage: React.FC = () => {
           }}
           variant="incident"
           currentUser={currentUserName}
-          onClose={() => setSelectedTicketForModal(null)}
+          onClose={() => {
+            setSelectedTicketForModal(null);
+            if (searchParams.get('id')) {
+              const next = new URLSearchParams(searchParams);
+              next.delete('id');
+              setSearchParams(next, { replace: true });
+            }
+          }}
           onUpdateTicket={(updated: FullTicket) => {
             setRequestsList((prev) =>
               prev.map((r) =>

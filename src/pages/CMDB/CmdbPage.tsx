@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import type { ConfigurationItem, CiType, GroupedConfigurationItems } from '../../types/cmdb';
 import {
   fetchConfigurationItems,
@@ -17,6 +17,7 @@ import { getCiStatusVariant } from '../../utils/statusUtils';
 import { CiDetailModal } from './CiDetailModal';
 import { CreateCiModal } from './CreateCiModal';
 import { CiVisualTopologyTree } from './CiVisualTopologyTree';
+import { ServiceCisView } from './ServiceCisView';
 import {
   Server,
   Database,
@@ -38,10 +39,10 @@ import {
   Filter,
   Check,
   ExternalLink,
+  Clock,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import {
-  SegmentedTabs,
   RefreshButton,
   Button,
   ModuleSidebar,
@@ -51,6 +52,7 @@ import {
 interface CmdbPageProps {
   configurationItems?: ConfigurationItem[];
   searchQuery?: string;
+  initialView?: 'all' | 'grouped' | 'topology' | 'services';
 }
 
 export function getWarrantyTag(dateStr?: string) {
@@ -90,15 +92,21 @@ export function getWarrantyTag(dateStr?: string) {
 export const CmdbPage: React.FC<CmdbPageProps> = ({
   configurationItems: initialItems,
   searchQuery: externalSearch = '',
+  initialView,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get('search') || '';
+
+  const isServiceRoute = location.pathname.startsWith('/cmdb/services') || searchParams.get('view') === 'services';
+  const resolvedDefaultView = initialView || (isServiceRoute ? 'services' : 'all');
+  const resolvedDefaultViewId = resolvedDefaultView === 'services' ? 'service-cis' : 'all-cis';
 
   // Direct backend state
   const [items, setItems] = useState<ConfigurationItem[]>(initialItems || []);
   const [groupedItems, setGroupedItems] = useState<GroupedConfigurationItems | null>(null);
-  const [viewGrouping, setViewGrouping] = useState<'all' | 'grouped' | 'topology'>('all');
+  const [viewGrouping, setViewGrouping] = useState<'all' | 'grouped' | 'topology' | 'services'>(resolvedDefaultView);
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedLifecycle, setSelectedLifecycle] = useState<string>('ALL');
@@ -109,7 +117,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
   // Sidebar navigation state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
-  const [selectedViewId, setSelectedViewId] = useState<string>('all-cis');
+  const [selectedViewId, setSelectedViewId] = useState<string>(resolvedDefaultViewId);
 
   // Topology Tree state
   const [selectedTopologyCiId, setSelectedTopologyCiId] = useState<string>('');
@@ -200,11 +208,46 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     return counts;
   }, [items]);
 
-  const activeCount = useMemo(() => items.filter((ci) => ci.status === 'Active').length, [items]);
-  const maintenanceCount = useMemo(
+  // Status counts (from All Statuses filter)
+  const statusActiveCount = useMemo(() => items.filter((ci) => ci.status === 'Active').length, [items]);
+  const statusMaintenanceCount = useMemo(
     () => items.filter((ci) => ci.status === 'Maintenance').length,
     [items]
   );
+  const statusDeprecatedCount = useMemo(
+    () => items.filter((ci) => ci.status === 'Deprecated').length,
+    [items]
+  );
+
+  // Lifecycle counts (from All Lifecycle filter)
+  const lifecycleDeployedCount = useMemo(
+    () => items.filter((ci) => ci.lifecycleState === 'Deployed' || (!ci.lifecycleState && ci.status === 'Active')).length,
+    [items]
+  );
+  const lifecycleInStockCount = useMemo(
+    () => items.filter((ci) => ci.lifecycleState === 'In Stock').length,
+    [items]
+  );
+  const lifecycleOrderedCount = useMemo(
+    () => items.filter((ci) => ci.lifecycleState === 'Ordered').length,
+    [items]
+  );
+  const lifecycleMaintenanceCount = useMemo(
+    () => items.filter((ci) => ci.lifecycleState === 'Maintenance').length,
+    [items]
+  );
+  const lifecycleRetiredCount = useMemo(
+    () => items.filter((ci) => ci.lifecycleState === 'Retired').length,
+    [items]
+  );
+
+  // Warranty counts (from All Warranties filter)
+  const warrantyActiveCount = useMemo(() => {
+    return items.filter((ci) => {
+      const w = getWarrantyTag(ci.warrantyExpiry || ci.specifications?.warrantyExpiry);
+      return w?.status === 'active';
+    }).length;
+  }, [items]);
   const warrantyExpiringCount = useMemo(() => {
     return items.filter((ci) => {
       const w = getWarrantyTag(ci.warrantyExpiry || ci.specifications?.warrantyExpiry);
@@ -227,26 +270,25 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         items: [
           {
             id: 'all-cis',
-            label: 'All Configuration Items',
+            label: 'Flat View',
             icon: <LayoutGrid className="w-3.5 h-3.5 text-slate-600" />,
             count: items.length,
           },
           {
             id: 'category-view',
-            label: 'Category Breakdown',
+            label: 'Category View',
             icon: <Layers className="w-3.5 h-3.5 text-slate-600" />,
             count: items.length,
           },
           {
             id: 'topology-tree',
-            label: 'Dependency Topology',
+            label: 'Dependency Tree',
             icon: <GitBranch className="w-3.5 h-3.5 text-slate-600" />,
           },
           {
             id: 'service-cis',
             label: 'Service CIs & SLA',
             icon: <ShieldCheck className="w-3.5 h-3.5 text-[#C96F55]" />,
-            onClick: () => navigate('/cmdb/services'),
           },
         ],
       },
@@ -293,31 +335,85 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         ],
       },
       {
-        id: 'lifecycle',
-        title: 'Lifecycle & Warranty',
+        id: 'ci-statuses',
+        title: 'Operational Status',
         items: [
           {
-            id: 'active',
-            label: 'Active in Production',
+            id: 'status-active',
+            label: 'Active',
             icon: <Check className="w-3.5 h-3.5 text-emerald-600" />,
-            count: activeCount,
+            count: statusActiveCount,
           },
           {
-            id: 'maintenance',
-            label: 'Maintenance Mode',
+            id: 'status-maintenance',
+            label: 'Maintenance',
             icon: <AlertCircle className="w-3.5 h-3.5 text-amber-600" />,
-            count: maintenanceCount,
+            count: statusMaintenanceCount,
+          },
+          {
+            id: 'status-deprecated',
+            label: 'Deprecated',
+            icon: <Shield className="w-3.5 h-3.5 text-slate-400" />,
+            count: statusDeprecatedCount,
+          },
+        ],
+      },
+      {
+        id: 'ci-lifecycle',
+        title: 'Lifecycle State',
+        items: [
+          {
+            id: 'lifecycle-deployed',
+            label: 'Deployed',
+            icon: <Check className="w-3.5 h-3.5 text-teal-600" />,
+            count: lifecycleDeployedCount,
+          },
+          {
+            id: 'lifecycle-in-stock',
+            label: 'In Stock',
+            icon: <Server className="w-3.5 h-3.5 text-blue-500" />,
+            count: lifecycleInStockCount,
+          },
+          {
+            id: 'lifecycle-ordered',
+            label: 'Ordered',
+            icon: <Clock className="w-3.5 h-3.5 text-indigo-500" />,
+            count: lifecycleOrderedCount,
+          },
+          {
+            id: 'lifecycle-maintenance',
+            label: 'Under Maintenance',
+            icon: <AlertCircle className="w-3.5 h-3.5 text-amber-500" />,
+            count: lifecycleMaintenanceCount,
+          },
+          {
+            id: 'lifecycle-retired',
+            label: 'Retired',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />,
+            count: lifecycleRetiredCount,
+          },
+        ],
+      },
+      {
+        id: 'ci-warranty',
+        title: 'Warranty Health',
+        items: [
+          {
+            id: 'warranty-active',
+            label: 'Active Warranty',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />,
+            count: warrantyActiveCount,
           },
           {
             id: 'warranty-expiring',
-            label: 'Warranty Expiring (≤90d)',
+            label: 'Expiring Soon (≤90d)',
             icon: <Calendar className="w-3.5 h-3.5 text-amber-600" />,
             count: warrantyExpiringCount,
           },
           {
             id: 'warranty-expired',
             label: 'Warranty Expired',
-            icon: <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />,
+            icon: <AlertCircle className="w-3.5 h-3.5 text-rose-600" />,
             count: warrantyExpiredCount,
           },
         ],
@@ -326,16 +422,25 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     [
       items.length,
       typeCounts,
-      activeCount,
-      maintenanceCount,
+      statusActiveCount,
+      statusMaintenanceCount,
+      statusDeprecatedCount,
+      lifecycleDeployedCount,
+      lifecycleInStockCount,
+      lifecycleOrderedCount,
+      lifecycleMaintenanceCount,
+      lifecycleRetiredCount,
+      warrantyActiveCount,
       warrantyExpiringCount,
       warrantyExpiredCount,
-      navigate,
     ]
   );
 
   const handleSelectSidebarView = (viewId: string) => {
     setSelectedViewId(viewId);
+    if (viewId !== 'service-cis' && location.pathname !== '/cmdb') {
+      navigate('/cmdb', { replace: true });
+    }
     switch (viewId) {
       case 'all-cis':
         setViewGrouping('all');
@@ -347,55 +452,135 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       case 'category-view':
         setViewGrouping('grouped');
         setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'topology-tree':
         setViewGrouping('topology');
         break;
       case 'service-cis':
-        navigate('/cmdb/services');
+        setViewGrouping('services');
         break;
       case 'type-server':
         setViewGrouping('all');
         setSelectedType('Server');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'type-application':
         setViewGrouping('all');
         setSelectedType('Application');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'type-database':
         setViewGrouping('all');
         setSelectedType('Database');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'type-network':
         setViewGrouping('all');
         setSelectedType('Network');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'type-cloud':
         setViewGrouping('all');
         setSelectedType('Cloud Service');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'type-security':
         setViewGrouping('all');
         setSelectedType('Security');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'active':
+      case 'status-active':
         setViewGrouping('all');
         setSelectedType('ALL');
         setSelectedStatus('Active');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
         break;
       case 'maintenance':
+      case 'status-maintenance':
         setViewGrouping('all');
         setSelectedType('ALL');
         setSelectedStatus('Maintenance');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
+        break;
+      case 'status-deprecated':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('Deprecated');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
+        break;
+      case 'lifecycle-deployed':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('Deployed');
+        setSelectedWarranty('ALL');
+        break;
+      case 'lifecycle-in-stock':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('In Stock');
+        setSelectedWarranty('ALL');
+        break;
+      case 'lifecycle-ordered':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('Ordered');
+        setSelectedWarranty('ALL');
+        break;
+      case 'lifecycle-maintenance':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('Maintenance');
+        setSelectedWarranty('ALL');
+        break;
+      case 'lifecycle-retired':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('Retired');
+        setSelectedWarranty('ALL');
+        break;
+      case 'warranty-active':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('active');
         break;
       case 'warranty-expiring':
         setViewGrouping('all');
         setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
         setSelectedWarranty('warning');
         break;
       case 'warranty-expired':
         setViewGrouping('all');
         setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
         setSelectedWarranty('expired');
         break;
       default:
@@ -642,87 +827,35 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <span>{currentViewLabel}</span>
-                <span className="text-xs font-normal text-slate-500">
-                  ({filteredCis.length} {filteredCis.length === 1 ? 'record' : 'records'})
-                </span>
+                {viewGrouping !== 'services' ? (
+                  <span className="text-xs font-normal text-slate-500">
+                    ({filteredCis.length} {filteredCis.length === 1 ? 'record' : 'records'})
+                  </span>
+                ) : (
+                  <span className="text-xs font-normal text-slate-500">
+                    (Business Services &amp; Reliability Targets)
+                  </span>
+                )}
               </h2>
+              {(selectedType !== 'ALL' ||
+                selectedStatus !== 'ALL' ||
+                selectedLifecycle !== 'ALL' ||
+                selectedWarranty !== 'ALL' ||
+                selectedViewId !== 'all-cis') &&
+                viewGrouping !== 'services' && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSidebarView('all-cis')}
+                    className="text-[11px] font-semibold text-[#C96F55] hover:text-[#B55F46] bg-[#FFF9F5] border border-[#ebdcd3] px-2.5 py-0.5 rounded-full cursor-pointer transition-colors flex items-center gap-1 shadow-2xs"
+                    title="Clear active filter and return to all configuration items"
+                  >
+                    <span>Clear Filter</span>
+                    <span>✕</span>
+                  </button>
+                )}
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
-              {/* View Switcher: Flat / Category / Topology */}
-              <SegmentedTabs<'all' | 'grouped' | 'topology'>
-                variant="boxed"
-                theme="navy"
-                size="sm"
-                tabs={[
-                  { id: 'all', label: 'Flat View', icon: <LayoutGrid className="w-3.5 h-3.5" /> },
-                  { id: 'grouped', label: 'Category View', icon: <Layers className="w-3.5 h-3.5" /> },
-                  { id: 'topology', label: 'Dependency Tree', icon: <GitBranch className="w-3.5 h-3.5" /> },
-                ]}
-                activeTab={viewGrouping}
-                onChange={(view) => {
-                  setViewGrouping(view);
-                  if (view === 'grouped') setSelectedViewId('category-view');
-                  else if (view === 'topology') setSelectedViewId('topology-tree');
-                  else if (
-                    selectedViewId === 'category-view' ||
-                    selectedViewId === 'topology-tree'
-                  )
-                    setSelectedViewId('all-cis');
-                }}
-              />
-
-              {/* Status filter */}
-              <select
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                  if (e.target.value === 'Active') setSelectedViewId('active');
-                  else if (e.target.value === 'Maintenance') setSelectedViewId('maintenance');
-                  else setSelectedViewId('all-cis');
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                title="Filter by Status"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Deprecated">Deprecated</option>
-              </select>
-
-              {/* Lifecycle filter */}
-              <select
-                value={selectedLifecycle}
-                onChange={(e) => setSelectedLifecycle(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                title="Filter by Lifecycle"
-              >
-                <option value="ALL">All Lifecycle</option>
-                <option value="Deployed">Deployed</option>
-                <option value="In Stock">In Stock</option>
-                <option value="Ordered">Ordered</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Retired">Retired</option>
-              </select>
-
-              {/* Warranty filter */}
-              <select
-                value={selectedWarranty}
-                onChange={(e) => {
-                  setSelectedWarranty(e.target.value);
-                  if (e.target.value === 'warning') setSelectedViewId('warranty-expiring');
-                  else if (e.target.value === 'expired') setSelectedViewId('warranty-expired');
-                  else setSelectedViewId('all-cis');
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                title="Filter by Warranty"
-              >
-                <option value="ALL">All Warranties</option>
-                <option value="active">Active Only</option>
-                <option value="warning">Expiring Soon (≤90d)</option>
-                <option value="expired">Expired Only</option>
-              </select>
-
               <RefreshButton
                 onClick={loadData}
                 isLoading={isLoading}
@@ -740,8 +873,13 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               </div>
             )}
 
-            {/* VIEW 1: Visual Dependency Tree View */}
-            {viewGrouping === 'topology' ? (
+            {/* VIEW 0: Service CIs & SLA View */}
+            {viewGrouping === 'services' ? (
+              <ServiceCisView
+                searchFilter={searchQuery}
+                onNavigateToInventory={() => handleSelectSidebarView('all-cis')}
+              />
+            ) : viewGrouping === 'topology' ? (
               <div className="space-y-4">
                 {/* Top Root CI Selector bar */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">

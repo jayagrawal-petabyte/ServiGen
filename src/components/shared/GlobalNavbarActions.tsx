@@ -17,6 +17,7 @@ export interface GlobalNavbarActionsProps {
   onGetStarted?: () => void;
   onNewTicket?: () => void;
   hidePills?: boolean;
+  newTicketLabel?: string;
 }
 
 interface QuickSearchItem {
@@ -51,6 +52,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   onGetStarted,
   onNewTicket,
   hidePills = false,
+  newTicketLabel,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -625,10 +627,10 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 setShowQuickTicketModal(true);
               }
             }}
-            title="Create New Ticket"
+            title={newTicketLabel || "Create New Ticket"}
           >
             <Plus size={14} strokeWidth={2.5} className="shrink-0" />
-            <span>New Ticket</span>
+            <span>{newTicketLabel || "New Ticket"}</span>
           </button>
         </div>
       )}

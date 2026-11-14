@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Laptop,
@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../Auth/AuthContext';
 import { Button } from '../../components/shared/Button';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { BrandLogo } from '../../components/shared/BrandLogo';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './EndUserPortal.css';
 
 interface PortalTicket {
@@ -117,27 +117,41 @@ const POPULAR_FAQS: FaqArticle[] = [
 
 export const EndUserPortal: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'home' | 'tickets' | 'kb'>('home');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTabState] = useState<'home' | 'tickets' | 'kb'>(() => {
+    if (tabParam === 'tickets' || tabParam === 'kb') return tabParam;
+    return 'home';
+  });
+
+  const setActiveTab = (tab: 'home' | 'tickets' | 'kb') => {
+    setActiveTabState(tab);
+    if (tab === 'home') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('tab');
+      setSearchParams(next, { replace: true });
+    } else {
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', tab);
+      setSearchParams(next, { replace: true });
+    }
+  };
+
+  useEffect(() => {
+    if (tabParam === 'tickets' || tabParam === 'kb' || tabParam === 'home') {
+      setActiveTabState(tabParam as any);
+    } else if (!tabParam) {
+      setActiveTabState('home');
+    }
+  }, [tabParam]);
   const [selectedArticle, setSelectedArticle] = useState<FaqArticle | null>(null);
   const [myTickets, setMyTickets] = useState<PortalTicket[]>(DEFAULT_USER_TICKETS);
   const [selectedTicket, setSelectedTicket] = useState<PortalTicket | null>(null);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const isAgentUser = user?.role !== 'End User';
-  const isAdminUser = user?.role === 'Administrator' || user?.role === 'System Manager';
-
-  const initials = user?.fullName
-    ? user.fullName
-        .split(' ')
-        .filter(Boolean)
-        .map((p) => p[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
-    : 'SU';
 
   // New Ticket Quick Form State
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
@@ -202,212 +216,77 @@ export const EndUserPortal: React.FC = () => {
         </div>
       )}
 
-      {/* ── Top Navigation Bar (Integrated Brand Navigation) ── */}
-      <header className="portal-top-bar">
-        <div className="portal-top-container">
-          {/* Brand & Portal Identity */}
-          <div className="flex items-center gap-3 shrink-0">
-            <BrandLogo size={28} />
-            <div className="flex items-baseline gap-2">
-              <span className="font-extrabold text-sm text-slate-900 tracking-tight">ServiGen</span>
-              <span className="text-[11px] font-semibold text-slate-500 hidden sm:inline">
-                Self-Service Portal
-              </span>
-            </div>
-          </div>
+      {/* ── Standard Application Top Header (Shared Architecture) ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 min-h-[50px] sticky top-0 z-30">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-[#C96F55] transition-colors cursor-pointer"
+          >
+            Service Desk
+          </button>
+          <span>/</span>
+          <span className="text-gray-900 font-extrabold">Self-Service</span>
+        </div>
 
-          {/* Central Navigation Tabs */}
-          <nav className="portal-tabs" aria-label="Portal Navigation">
+        <GlobalNavbarActions
+          newTicketLabel="Raise IT Ticket"
+          onNewTicket={() => setShowNewTicketModal(true)}
+          onGetStarted={() => setActiveTab('kb')}
+          onOpenTicket={(id) => {
+            const found = myTickets.find((t) => t.id === id);
+            if (found) setSelectedTicket(found);
+          }}
+        />
+      </header>
+
+      {/* ── Secondary Navigation Row (Below Application Header) ── */}
+      <nav className="portal-subnav-bar" aria-label="Self-Service Portal Navigation">
+        <div className="portal-subnav-container">
+          <div className="portal-subnav-links">
             <button
               type="button"
               onClick={() => setActiveTab('home')}
-              className={`portal-tab-btn ${activeTab === 'home' ? 'active' : ''}`}
+              className={`portal-subnav-item ${activeTab === 'home' ? 'active' : ''}`}
+              aria-current={activeTab === 'home' ? 'page' : undefined}
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Self-Service Hub</span>
             </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('tickets')}
-              className={`portal-tab-btn ${activeTab === 'tickets' ? 'active' : ''}`}
+              className={`portal-subnav-item ${activeTab === 'tickets' ? 'active' : ''}`}
+              aria-current={activeTab === 'tickets' ? 'page' : undefined}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>My Support Tickets</span>
-              <span className="portal-count-badge">{myTickets.length}</span>
+              {myTickets.length > 0 && (
+                <span className="portal-subnav-badge" aria-label={`${myTickets.length} open tickets`}>
+                  {myTickets.length}
+                </span>
+              )}
             </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('kb')}
-              className={`portal-tab-btn ${activeTab === 'kb' ? 'active' : ''}`}
+              className={`portal-subnav-item ${activeTab === 'kb' ? 'active' : ''}`}
+              aria-current={activeTab === 'kb' ? 'page' : undefined}
             >
-              <BookOpen className="w-4 h-4" />
+              <BookOpen className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Knowledge Base &amp; Guides</span>
             </button>
-          </nav>
-
-          {/* Action Area & Account Controls */}
-          <div className="portal-nav-actions">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowNewTicketModal(true)}
-              icon={<Plus className="w-3.5 h-3.5 shrink-0" />}
-            >
-              Raise IT Ticket
-            </Button>
-
-            {/* Profile & Workspace Return Menu */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setProfileDropdownOpen((prev) => !prev)}
-                className="w-8 h-8 rounded-full bg-[#263B5E] hover:bg-[#1d2d48] text-white font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs transition-all cursor-pointer"
-                title={`Signed in as ${user?.fullName || 'User'} (${user?.role || 'End User'})`}
-                aria-label="User Account & Workspaces"
-              >
-                {initials}
-              </button>
-
-              {profileDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    aria-hidden="true"
-                  />
-                  <div
-                    className="absolute right-0 top-10 z-50 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 text-slate-800 p-3 flex flex-col gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
-                      <span className="text-xs font-bold text-slate-800">My account</span>
-                      <button
-                        type="button"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="text-xs text-slate-400 hover:text-slate-700 font-bold p-1 cursor-pointer"
-                        title="Close"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* User Card */}
-                    <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
-                      <div className="font-bold text-slate-900 truncate">{user?.fullName || 'Sam User'}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{user?.email || 'sam.user@servigen.io'}</div>
-                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
-                        {user?.role || 'End User'}
-                      </span>
-                    </div>
-
-                    {/* Workspaces */}
-                    <div className="flex flex-col gap-1 pt-1 text-xs">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
-                        Workspaces
-                      </span>
-
-                      {isAgentUser && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProfileDropdownOpen(false);
-                            navigate('/dashboard');
-                          }}
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>📊</span>
-                            <span>Agent Console</span>
-                          </div>
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileDropdownOpen(false);
-                          setActiveTab('home');
-                        }}
-                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] font-bold cursor-pointer text-left"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>🌐</span>
-                          <span>Switch to End-User Portal</span>
-                        </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white text-[#C96F55] border border-[#f7c9bc]">
-                          Current
-                        </span>
-                      </button>
-
-                      {isAdminUser && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProfileDropdownOpen(false);
-                            navigate('/admin');
-                          }}
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>⚙️</span>
-                            <span>Administration</span>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Account Actions */}
-                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
-                        Account Actions
-                      </span>
-                      {isAgentUser && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProfileDropdownOpen(false);
-                            navigate('/my-work');
-                          }}
-                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                        >
-                          <span>📋</span>
-                          <span>My Work &amp; Tasks</span>
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileDropdownOpen(false);
-                          if (logout) logout();
-                          navigate('/auth');
-                        }}
-                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 font-bold transition-colors cursor-pointer text-left"
-                      >
-                        <span>🚪</span>
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* ── Main Content Viewport (Desktop Max 1240px, Centered) ── */}
       <main className="portal-main-container">
         {/* Support Introduction Section (Warm light surface, no dark navy hero) */}
         <section className="portal-intro-section" aria-label="Support Introduction">
-          <div className="portal-user-badge">
-            <span className="portal-status-dot" />
-            <span>
-              IT Self-Service Portal · Logged in as{' '}
-              <strong>{user?.fullName || user?.firstName || 'Sam User'}</strong>
-            </span>
-          </div>
-
           <h1 className="portal-intro-title">
             How can we help you today?
           </h1>

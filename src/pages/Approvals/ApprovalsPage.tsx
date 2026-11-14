@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Check, X } from 'lucide-react';
 import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar, RefreshButton } from '../../components/shared';
+import { SegmentedTabs, SearchInput, RefreshButton, Button } from '../../components/shared';
 import './approvals.css';
 
 interface Toast {
@@ -14,6 +16,7 @@ interface Toast {
 type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
 export default function ApprovalsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -244,11 +247,57 @@ export default function ApprovalsPage() {
     }
   };
 
+  // Handle tab deep linking (e.g. /approvals?tab=pending)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['pending', 'approved', 'rejected', 'all'].includes(tabParam.toLowerCase())) {
+      setCurrentTab(tabParam.toLowerCase() as TabType);
+    }
+  }, [searchParams]);
+
+  // Handle direct approval deep linking (e.g. /approvals?id=APP-201 or /approvals?id=1)
+  useEffect(() => {
+    const targetId =
+      searchParams.get('id') ||
+      searchParams.get('approvalId') ||
+      searchParams.get('requestId');
+    if (!targetId) return;
+
+    if (
+      selectedApproval &&
+      (selectedApproval.id.toLowerCase() === targetId.toLowerCase() ||
+        selectedApproval.ticketNumber.toLowerCase() === targetId.toLowerCase())
+    ) {
+      return;
+    }
+
+    const clean = targetId.toLowerCase().replace(/^(#|req0*|app-?)/i, '').trim();
+
+    const match = approvals.find(
+      (a) =>
+        a.id.toLowerCase() === targetId.toLowerCase() ||
+        a.ticketNumber.toLowerCase() === targetId.toLowerCase() ||
+        a.ticketNumber.toLowerCase().replace(/^(#|req0*|app-?)/i, '') === clean ||
+        a.id.replace(/\D/g, '') === clean
+    );
+
+    if (match) {
+      handleOpenDetails(match);
+    } else if (!isLoading) {
+      approvalsApi
+        .getApprovalById(targetId)
+        .then((fresh) => {
+          if (fresh) setSelectedApproval(fresh);
+        })
+        .catch(() => {});
+    }
+  }, [searchParams, approvals, isLoading, selectedApproval]);
+
   return (
     <div className="approvals-page-wrapper">
       {/* Top Application Navbar matching UI/UX design */}
       <header className="approvals-top-navbar">
-        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0">
           <span>Service Desk</span>
           <span>/</span>
           <span className="text-gray-900">Approvals</span>
@@ -266,50 +315,30 @@ export default function ApprovalsPage() {
           </div>
 
           <div className="approvals-actions">
-            <button
-              className="btn-approval-action accept-all"
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
               onClick={handleAcceptAll}
+              isLoading={isBatchLoading}
+              icon={<Check className="w-3.5 h-3.5 text-emerald-600" />}
+              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 font-semibold"
               title="Accept all pending approval requests"
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
               <span>{isBatchLoading ? 'Processing...' : 'Accept All'}</span>
-            </button>
+            </Button>
 
-            <button
-              className="btn-approval-action reject-all"
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
               onClick={handleRejectAll}
+              icon={<X className="w-3.5 h-3.5 text-rose-600" />}
+              className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 font-semibold"
               title="Reject all pending approval requests"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
               <span>Reject All</span>
-            </button>
+            </Button>
 
             <RefreshButton
               onClick={handleRefresh}
@@ -350,12 +379,12 @@ export default function ApprovalsPage() {
             onChange={(tab) => setCurrentTab(tab)}
           />
 
-          <FilterToolbar
-            className="!p-0 !bg-transparent !border-0 !shadow-none !rounded-none"
-            search={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search by ticket #, requester, title..."
-            searchClassName="!w-full sm:!w-72"
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by ticket #, requester, title..."
+            className="w-full sm:w-72 md:w-80"
+            onClear={() => setSearchQuery('')}
           />
         </div>
 
@@ -457,6 +486,17 @@ export default function ApprovalsPage() {
             onClose={() => {
               setSelectedApproval(null);
               setModalRejectMode(false);
+              if (
+                searchParams.get('id') ||
+                searchParams.get('approvalId') ||
+                searchParams.get('requestId')
+              ) {
+                const next = new URLSearchParams(searchParams);
+                next.delete('id');
+                next.delete('approvalId');
+                next.delete('requestId');
+                setSearchParams(next, { replace: true });
+              }
             }}
             onApprove={handleApprove}
             onReject={handleReject}

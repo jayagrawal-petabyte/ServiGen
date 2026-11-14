@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SearchInput } from './SearchInput';
 
 export interface ModuleSidebarItem {
@@ -73,7 +73,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
   children,
   className = '',
   width = 'w-[250px] min-w-[250px]',
-  collapsedWidth = 'w-[44px] min-w-[44px]',
+  collapsedWidth = 'w-[48px] min-w-[48px]',
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -83,6 +83,14 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
     });
     return initial;
   });
+
+  const allNavItems = useMemo(() => {
+    if (items && items.length > 0) return items;
+    if (groups && groups.length > 0) {
+      return groups.flatMap((g) => g.items);
+    }
+    return [];
+  }, [items, groups]);
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) => ({
@@ -114,18 +122,45 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
     >
       {/* ── Collapsed Mode ── */}
       {isCollapsed ? (
-        <div className="flex flex-col h-full items-center py-3">
+        <div className="flex flex-col h-full items-center py-2.5 gap-1.5 overflow-y-auto overflow-x-hidden">
           {onToggleCollapse && (
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold transition-all cursor-pointer text-base select-none"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold transition-all cursor-pointer text-base select-none shrink-0 mb-1"
               title="Expand sidebar (»)"
               aria-label="Expand sidebar"
             >
               »
             </button>
           )}
+
+          {allNavItems.map((item) => {
+            const isActive = item.id === selectedId;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  item.onClick?.();
+                  onSelectId?.(item.id);
+                }}
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'bg-[#C96F55] text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+                title={item.label}
+                aria-label={item.label}
+              >
+                {item.icon ? (
+                  <span className="shrink-0">{item.icon}</span>
+                ) : (
+                  <span className="text-xs font-bold">{item.label.slice(0, 1)}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       ) : (
         /* ── Expanded Normal Mode ── */

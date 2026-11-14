@@ -24,6 +24,7 @@ interface RecentTicketRow {
   status: 'Open' | 'In Progress' | 'On Hold' | 'Resolved';
   priority: 'High' | 'Medium' | 'Low';
   date: string;
+  type?: string;
 }
 
 interface ApprovalRow {
@@ -40,6 +41,7 @@ interface TaskRow {
   description: string;
   priority: 'High' | 'Medium' | 'Low';
   dueDate: string;
+  ticketType?: string;
 }
 
 function getGreeting(): string {
@@ -192,11 +194,12 @@ export default function Dashboard() {
 
           return {
             id: String(t.id),
-            ticketNumber: `#TK-${String(t.id).replace(/\D/g, '').slice(-4) || 1024 - index}`,
+            ticketNumber: t.ticketNumber || `#TK-${String(t.id).replace(/\D/g, '').slice(-4) || 1024 - index}`,
             subject: t.summary || t.title || 'Support ticket',
             status: normStatus,
             priority: normPrio,
             date: dateStr,
+            type: t.ticketType || t.type || (String(t.id).startsWith('CR') ? 'Change' : String(t.id).startsWith('REQ') || String(t.id).startsWith('SR') ? 'Request' : 'Incident'),
           };
         });
 
@@ -213,10 +216,10 @@ export default function Dashboard() {
         const appData = rawAppData.length > 0 ? rawAppData : MOCK_APPROVALS;
 
         const mappedApp: ApprovalRow[] = appData.slice(0, 5).map((a: any, idx: number) => ({
-          id: String(a.id || idx),
-          requestId: `REQ000${231 - idx}`,
+          id: String(a.id || `app-${idx}`),
+          requestId: a.ticketNumber || (a.id ? `#${String(a.id).replace(/^#/, '')}` : `REQ000${231 - idx}`),
           item: a.title || a.service || 'Service Request',
-          requestedBy: a.requester || 'Team Member',
+          requestedBy: a.requester || a.authorName || 'Team Member',
           date: a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '09 Sep 2026',
         }));
         setApprovals(mappedApp);
@@ -241,6 +244,7 @@ export default function Dashboard() {
               : 'Medium'
           ) as TaskRow['priority'],
           dueDate: t.slaFormatted ? `SLA: ${t.slaFormatted}` : 'Active',
+          ticketType: t.ticketType || t.type || 'Task',
         }));
         setTasks(mappedTasks);
       } catch (err) {
@@ -373,6 +377,40 @@ export default function Dashboard() {
         t.priority.toLowerCase().includes(q)
     );
   }, [recentTickets, deferredSearchQuery]);
+
+  // Record-specific deep-linking handlers
+  const handleRecentTicketClick = (ticket: RecentTicketRow) => {
+    const type = (ticket.type || '').toLowerCase();
+    if (
+      type.includes('request') ||
+      ticket.ticketNumber.startsWith('#REQ') ||
+      ticket.id.startsWith('REQ') ||
+      ticket.id.startsWith('SR-')
+    ) {
+      navigate(`/requests?id=${encodeURIComponent(ticket.id)}`);
+    } else if (
+      type.includes('change') ||
+      ticket.ticketNumber.startsWith('#CR') ||
+      ticket.id.startsWith('CR')
+    ) {
+      navigate(`/change-requests?id=${encodeURIComponent(ticket.id)}`);
+    } else {
+      navigate(`/incidents?id=${encodeURIComponent(ticket.id)}`);
+    }
+  };
+
+  const handleApprovalClick = (app: ApprovalRow) => {
+    navigate(`/approvals?id=${encodeURIComponent(app.id)}`);
+  };
+
+  const handleTaskClick = (task: TaskRow) => {
+    const type = (task.ticketType || '').toLowerCase();
+    if (type.includes('change') || task.id.startsWith('CR')) {
+      navigate(`/change-requests?id=${encodeURIComponent(task.id)}`);
+    } else {
+      navigate(`/my-work?id=${encodeURIComponent(task.id)}`);
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#FFF9F5] text-gray-800 pb-16 font-sans">
@@ -508,7 +546,7 @@ export default function Dashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             layout="horizontal"
-            onClick={() => navigate('/incidents')}
+            onClick={() => navigate('/incidents?status=open')}
             iconContainerClassName="!rounded-full bg-[#E0F2FE] text-[#C96F55]"
             icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -522,7 +560,7 @@ export default function Dashboard() {
 
           <MetricCard
             layout="horizontal"
-            onClick={() => navigate('/incidents')}
+            onClick={() => navigate('/incidents?status=resolved')}
             iconContainerClassName="!rounded-full bg-[#DCFCE7] text-[#16A34A]"
             icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -536,7 +574,7 @@ export default function Dashboard() {
 
           <MetricCard
             layout="horizontal"
-            onClick={() => navigate('/approvals')}
+            onClick={() => navigate('/approvals?tab=pending')}
             iconContainerClassName="!rounded-full bg-[#FFEDD5] text-[#EA580C]"
             icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -550,7 +588,7 @@ export default function Dashboard() {
 
           <MetricCard
             layout="horizontal"
-            onClick={() => navigate('/my-work')}
+            onClick={() => navigate('/my-work?tab=Active')}
             iconContainerClassName="!rounded-full bg-[#F3E8FF] text-[#9333EA]"
             icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -639,7 +677,11 @@ export default function Dashboard() {
 
               {/* Legend List */}
               <div className="flex flex-col gap-2.5 min-w-[140px]">
-                <div className="flex items-center justify-between text-xs">
+                <div
+                  className="flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
+                  onClick={() => navigate('/incidents?status=open')}
+                  title="Filter incidents by Open status"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#34D399]" />
                     <span className="text-gray-600 font-medium">Open</span>
@@ -647,7 +689,11 @@ export default function Dashboard() {
                   <span className="text-gray-900 font-semibold">{statusCounts.open}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs">
+                <div
+                  className="flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
+                  onClick={() => navigate('/incidents?status=in-progress')}
+                  title="Filter incidents by In Progress status"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8]" />
                     <span className="text-gray-600 font-medium">In Progress</span>
@@ -655,7 +701,11 @@ export default function Dashboard() {
                   <span className="text-gray-900 font-semibold">{statusCounts.inProgress}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs">
+                <div
+                  className="flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
+                  onClick={() => navigate('/on-hold')}
+                  title="View On Hold tickets"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#FBBF24]" />
                     <span className="text-gray-600 font-medium">On Hold</span>
@@ -663,7 +713,11 @@ export default function Dashboard() {
                   <span className="text-gray-900 font-semibold">{statusCounts.onHold}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs">
+                <div
+                  className="flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
+                  onClick={() => navigate('/incidents?status=resolved')}
+                  title="Filter incidents by Resolved status"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#F87171]" />
                     <span className="text-gray-600 font-medium">Resolved</span>
@@ -709,11 +763,13 @@ export default function Dashboard() {
                   filteredRecentTickets.map((t) => (
                     <tr
                       key={t.id}
-                      onClick={() => navigate('/incidents')}
-                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                      onClick={() => handleRecentTicketClick(t)}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors group"
                     >
-                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{t.ticketNumber}</td>
-                      <td className="py-2.5 text-gray-900 max-w-[180px] truncate pr-2" title={t.subject}>
+                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap group-hover:text-[#C96F55] font-mono transition-colors">
+                        {t.ticketNumber}
+                      </td>
+                      <td className="py-2.5 text-gray-900 max-w-[180px] truncate pr-2 group-hover:text-[#C96F55] transition-colors" title={t.subject}>
                         {t.subject}
                       </td>
                       <td className="py-2.5">
@@ -797,11 +853,13 @@ export default function Dashboard() {
                   approvals.map((app) => (
                     <tr
                       key={app.id}
-                      onClick={() => navigate('/approvals')}
-                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                      onClick={() => handleApprovalClick(app)}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors group"
                     >
-                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap">{app.requestId}</td>
-                      <td className="py-2.5 text-gray-900 max-w-[160px] truncate pr-2" title={app.item}>
+                      <td className="py-2.5 font-medium text-gray-700 whitespace-nowrap group-hover:text-[#C96F55] font-mono transition-colors">
+                        {app.requestId}
+                      </td>
+                      <td className="py-2.5 text-gray-900 max-w-[160px] truncate pr-2 group-hover:text-[#C96F55] transition-colors" title={app.item}>
                         {app.item}
                       </td>
                       <td className="py-2.5 text-gray-600 whitespace-nowrap">{app.requestedBy}</td>
@@ -846,10 +904,12 @@ export default function Dashboard() {
                   tasks.map((task) => (
                     <tr
                       key={task.id}
-                      onClick={() => navigate('/my-work')}
-                      className="hover:bg-gray-50/80 cursor-pointer transition-colors"
+                      onClick={() => handleTaskClick(task)}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-colors group"
                     >
-                      <td className="py-2.5 font-medium text-gray-900 whitespace-nowrap">{task.task}</td>
+                      <td className="py-2.5 font-medium text-gray-900 whitespace-nowrap group-hover:text-[#C96F55] transition-colors">
+                        {task.task}
+                      </td>
                       <td className="py-2.5 text-gray-600 max-w-[180px] truncate pr-2" title={task.description}>
                         {task.description}
                       </td>

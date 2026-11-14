@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
 import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { ModalShell } from '../../components/shared/ModalShell';
 import { MetricCard } from '../../components/shared/MetricCard';
-import { SegmentedTabs, type SegmentedTab } from '../../components/shared/SegmentedTabs';
+import { ModuleSidebar, type ModuleSidebarItem } from '../../components/shared/ModuleSidebar';
 import { RefreshButton } from '../../components/shared/RefreshButton';
 import { api } from '../../services/apiClient';
 import { ReportCatalogModal } from './ReportCatalogModal';
@@ -218,8 +218,44 @@ const DEFAULT_REPORT_TICKETS: ReportTicketRow[] = [
 export default function IncidentsByCategoryReport() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeReport, setActiveReport] = useState<ReportType>('category');
+  const reportParam = (searchParams.get('report') || searchParams.get('tab')) as ReportType;
+  const [activeReport, setActiveReport] = useState<ReportType>(() => {
+    if (reportParam && ['category', 'sla', 'agents', 'fcr', 'changes', 'assets', 'custom'].includes(reportParam)) {
+      return reportParam;
+    }
+    return 'category';
+  });
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return true;
+    return false;
+  });
+
+  useEffect(() => {
+    const r = (searchParams.get('report') || searchParams.get('tab')) as ReportType;
+    if (r && ['category', 'sla', 'agents', 'fcr', 'changes', 'assets', 'custom'].includes(r)) {
+      setActiveReport(r);
+    } else if (!r) {
+      setActiveReport('category');
+    }
+  }, [searchParams]);
+
+  const handleSelectReport = (report: ReportType) => {
+    setActiveReport(report);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (report === 'category') {
+        next.delete('report');
+        next.delete('tab');
+      } else {
+        next.set('report', report);
+      }
+      return next;
+    });
+  };
+
   const [slaFilterMode, setSlaFilterMode] = useState<'all' | 'breached' | 'met'>('all');
 
   const [dateField, setDateField] = useState('Date Created');
@@ -239,15 +275,33 @@ export default function IncidentsByCategoryReport() {
   const [customQueryConfig, setCustomQueryConfig] = useState<CustomQueryConfig | null>(null);
   const [activeCatalogReport, setActiveCatalogReport] = useState<PreBuiltReportItem | null>(null);
 
+  const reportingSidebarItems: ModuleSidebarItem[] = useMemo(() => [
+    { id: 'category', label: 'Incidents by Category', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+    { id: 'sla', label: 'SLA Compliance', icon: <Clock className="w-3.5 h-3.5" /> },
+    { id: 'agents', label: 'Agent Performance', icon: <Users className="w-3.5 h-3.5" /> },
+    { id: 'fcr', label: 'FCR Rate', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+    { id: 'changes', label: 'Changes & CAB', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
+    { id: 'assets', label: 'CMDB & Assets', icon: <Database className="w-3.5 h-3.5" /> },
+    ...(customQueryConfig
+      ? [
+          {
+            id: 'custom',
+            label: `Custom: ${customQueryConfig.title.slice(0, 18)}...`,
+            icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
+          },
+        ]
+      : []),
+  ], [customQueryConfig]);
+
   const handleSelectCatalogReport = (report: PreBuiltReportItem) => {
     setActiveCatalogReport(report);
-    setActiveReport(report.targetView);
+    handleSelectReport(report.targetView);
     setStatusMessage(`Loaded pre-built report: ${report.title} (${report.id})`);
   };
 
   const handleExecuteCustomQuery = (config: CustomQueryConfig) => {
     setCustomQueryConfig(config);
-    setActiveReport('custom');
+    handleSelectReport('custom');
     setStatusMessage(`Executed custom query: "${config.title}"`);
   };
 
@@ -676,41 +730,25 @@ export default function IncidentsByCategoryReport() {
         </div>
       </header>
 
-      {/* ── Main Reporting Canvas ── */}
-      <div className="reporting-main-canvas max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col gap-6">
+      {/* ── Two-Column Layout (ModuleSidebar + Main Workspace) ── */}
+      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden p-3.5 sm:p-5 gap-3.5 sm:gap-5 box-border">
+        {/* Left Module Sidebar */}
+        <ModuleSidebar
+          title="Reporting & Analytics"
+          icon={<BarChart3 className="w-3.5 h-3.5 text-[#C96F55]" />}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          items={reportingSidebarItems}
+          selectedId={activeReport}
+          onSelectId={(id) => handleSelectReport(id as ReportType)}
+          onResetTitle={() => handleSelectReport('category')}
+          resetTitleTooltip="Reset to Incidents by Category"
+        />
 
-        {/* ── Level 1: Report Switcher Navigation Tabs ── */}
-        <div className="flex items-center justify-between gap-4 flex-wrap pb-1">
-          <div className="p-1 bg-white border border-[#ebdcd3] rounded-full shadow-xs">
-            <SegmentedTabs
-              tabs={[
-                { id: 'category', label: 'Incidents by Category', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-                { id: 'sla', label: 'SLA Compliance', icon: <Clock className="w-3.5 h-3.5" /> },
-                { id: 'agents', label: 'Agent Performance', icon: <Users className="w-3.5 h-3.5" /> },
-                { id: 'fcr', label: 'FCR Rate', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-                { id: 'changes', label: 'Changes & CAB', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
-                { id: 'assets', label: 'CMDB & Assets', icon: <Database className="w-3.5 h-3.5" /> },
-                ...(customQueryConfig
-                  ? [
-                      {
-                        id: 'custom' as ReportType,
-                        label: `Custom: ${customQueryConfig.title.slice(0, 20)}...`,
-                        icon: <Sparkles className="w-3.5 h-3.5 text-amber-300" />,
-                      },
-                    ]
-                  : []),
-              ]}
-              activeTab={activeReport}
-              onChange={(id) => setActiveReport(id as ReportType)}
-              variant="pill"
-              theme="navy"
-              ariaLabel="Report Switcher Navigation"
-            />
-          </div>
-        </div>
-
-        {/* ── Level 2: Active Report Header Card & Unified Action Toolbar ── */}
-        <div className="bg-white border border-[#ebdcd3] rounded-2xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Right Main Workspace */}
+        <main className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-transparent gap-5 pr-1">
+          {/* ── Level 2: Active Report Header Card & Unified Action Toolbar ── */}
+          <div className="bg-white border border-[#ebdcd3] rounded-2xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl font-bold text-[#332B28] tracking-tight m-0">
@@ -1682,9 +1720,10 @@ export default function IncidentsByCategoryReport() {
             </div>
           </div>
         )}
+        </main>
       </div>
 
-{/* ── Ticket Detail Modal Popup ── */}
+      {/* ── Ticket Detail Modal Popup ── */}
       {selectedTicket && (
         <TicketDetailModal
           ticket={{

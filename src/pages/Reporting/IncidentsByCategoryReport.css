@@ -3,7 +3,9 @@
 .reporting-page-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background: var(--bg-canvas, #FFF9F5);
   box-sizing: border-box;
   font-family: inherit;
@@ -41,7 +43,9 @@
   width: 100%;
   flex-shrink: 0;
   gap: 12px;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+  z-index: 40;
 }
 
 .reporting-tabs-group {

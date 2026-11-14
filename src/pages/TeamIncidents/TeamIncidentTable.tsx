@@ -11,8 +11,10 @@ import "./TeamIncidents.css";
 import {
   fetchAllTeamIncidents,
   updateSupportIncidentStatus,
+  normalizeSupportIncident,
   type SupportAgent,
 } from "../../services/teamIncidentsService";
+import { MOCK_TICKETS } from "../../services/fallback/mockData";
 
 import type { TeamIncident } from "./teamIncidents.types";
 import { SlaBadge } from "../../components/shared/SlaBadge";
@@ -385,6 +387,83 @@ function TeamIncidentTable({
     } catch {}
     return 'available';
   });
+
+  // Handle status filter deep linking (e.g., /incidents?status=open or /incidents?status=resolved)
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (!statusParam) return;
+    const s = statusParam.toLowerCase();
+    if (s === 'open') {
+      setStatusFilter('Open incidents');
+    } else if (s === 'resolved' || s === 'closed') {
+      setStatusFilter('Resolved / Closed');
+    } else if (s === 'in-progress' || s === 'inprogress' || s === 'active') {
+      setStatusFilter('In Progress');
+    } else if (s === 'new' || s === 'unassigned') {
+      setStatusFilter('New / Unassigned');
+    } else if (s === 'breach' || s === 'breaching') {
+      setStatusFilter('Breaching SLA');
+    } else if (s === 'all') {
+      setStatusFilter('All incidents');
+    }
+  }, [searchParams]);
+
+  // Handle direct ticket deep-linking (e.g. /incidents?id=1024 or /incidents?ticketId=TK-1024)
+  useEffect(() => {
+    const targetId = searchParams.get('id') || searchParams.get('ticketId');
+    if (!targetId) return;
+
+    if (
+      selectedIncident &&
+      (selectedIncident.id === targetId ||
+        selectedIncident.id.replace(/\D/g, '') === targetId.replace(/\D/g, ''))
+    ) {
+      return;
+    }
+
+    const clean = targetId.toLowerCase().replace(/^#?tk-?/i, '').trim();
+
+    // 1. Try to find in loaded incidents
+    const match = incidents.find(
+      (inc) =>
+        inc.id.toLowerCase() === targetId.toLowerCase() ||
+        inc.id.toLowerCase() === `#${targetId.toLowerCase()}` ||
+        inc.id.toLowerCase().replace(/^#?tk-?/i, '') === clean ||
+        inc.id.replace(/\D/g, '') === clean
+    );
+
+    if (match) {
+      setSelectedIncident(match);
+      return;
+    }
+
+    // 2. If not found in current loaded list, fetch from API or fallback
+    let mounted = true;
+    api
+      .get(`/api/incidents/${encodeURIComponent(clean || targetId)}`)
+      .then((res: any) => {
+        if (!mounted) return;
+        const d = res?.data || res;
+        if (d && (d.id || d.ticketId)) {
+          setSelectedIncident(normalizeSupportIncident(d, '1st Line Support'));
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        const fallback = MOCK_TICKETS.find(
+          (t: any) =>
+            String(t.id).toLowerCase() === targetId.toLowerCase() ||
+            String(t.id).replace(/\D/g, '') === clean
+        );
+        if (fallback) {
+          setSelectedIncident(normalizeSupportIncident(fallback, '1st Line Support'));
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams, incidents, selectedIncident]);
 
   useEffect(() => {
     const handlePresenceEvent = (e: any) => {
@@ -762,82 +841,86 @@ function TeamIncidentTable({
         {/* Left Sidebar: Incidents by Team */}
         <aside className={`team-sidebar-panel ${isSidebarCollapsed ? "collapsed" : ""}`}>
           {/* Search */}
-          <div className="team-sidebar-search">
-            <input
-              id="team-sidebar-search-input"
-              type="text"
-              placeholder="Search incident records..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search ? (
-              <button
-                type="button"
-                className="clear-search-btn"
-                onClick={() => setSearch("")}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            ) : (
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94a3b8" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            )}
-          </div>
+          {!isSidebarCollapsed && (
+            <div className="team-sidebar-search">
+              <input
+                id="team-sidebar-search-input"
+                type="text"
+                placeholder="Search incident records..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search ? (
+                <button
+                  type="button"
+                  className="clear-search-btn"
+                  onClick={() => setSearch("")}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              ) : (
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94a3b8" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              )}
+            </div>
+          )}
 
           {/* Heading */}
           <div className="team-sidebar-header-row">
-            <div className="team-sidebar-title-wrap">
-              <div
-                className="team-sidebar-title cursor-pointer hover:text-[#1c0f0c] transition-colors"
-                onClick={() => {
-                  setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
-                  setStatusFilter("Open incidents");
-                }}
-                title="Reset to team open incidents"
-              >
-                <span style={{ fontSize: 15 }}>👥</span>
-                <span>Incidents by Team</span>
-              </div>
-              <div className="team-status-menu-container" ref={statusMenuRef}>
-                <button
-                  type="button"
-                  className="team-sidebar-subtitle-btn"
-                  onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                  title="Click to filter by status"
+            {!isSidebarCollapsed && (
+              <div className="team-sidebar-title-wrap">
+                <div
+                  className="team-sidebar-title cursor-pointer hover:text-[#1c0f0c] transition-colors"
+                  onClick={() => {
+                    setSelectedView({ kind: "team", team: isSecondLine ? "2nd Line Support" : "1st Line Support" });
+                    setStatusFilter("Open incidents");
+                  }}
+                  title="Reset to team open incidents"
                 >
-                  <span className="dropdown-caret">{isStatusMenuOpen ? "▴" : "▾"}</span>
-                  <span className="subtitle-text">{statusFilter}</span>
-                </button>
-                {isStatusMenuOpen && (
-                  <div className="team-status-dropdown-menu animate-fadeIn">
-                    {[
-                      "Open incidents",
-                      "All incidents",
-                      "In Progress",
-                      "New / Unassigned",
-                      "Breaching SLA",
-                      "Resolved / Closed",
-                    ].map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        className={`team-status-dropdown-item ${statusFilter === opt ? "active" : ""}`}
-                        onClick={() => {
-                          setStatusFilter(opt);
-                          setIsStatusMenuOpen(false);
-                        }}
-                      >
-                        <span className="dropdown-check">{statusFilter === opt ? "✓" : ""}</span>
-                        <span>{opt}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  <span style={{ fontSize: 15 }}>👥</span>
+                  <span>Incidents by Team</span>
+                </div>
+                <div className="team-status-menu-container" ref={statusMenuRef}>
+                  <button
+                    type="button"
+                    className="team-sidebar-subtitle-btn"
+                    onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                    title="Click to filter by status"
+                  >
+                    <span className="dropdown-caret">{isStatusMenuOpen ? "▴" : "▾"}</span>
+                    <span className="subtitle-text">{statusFilter}</span>
+                  </button>
+                  {isStatusMenuOpen && (
+                    <div className="team-status-dropdown-menu animate-fadeIn">
+                      {[
+                        "Open incidents",
+                        "All incidents",
+                        "In Progress",
+                        "New / Unassigned",
+                        "Breaching SLA",
+                        "Resolved / Closed",
+                      ].map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={`team-status-dropdown-item ${statusFilter === opt ? "active" : ""}`}
+                          onClick={() => {
+                            setStatusFilter(opt);
+                            setIsStatusMenuOpen(false);
+                          }}
+                        >
+                          <span className="dropdown-check">{statusFilter === opt ? "✓" : ""}</span>
+                          <span>{opt}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             <button
               type="button"
               className="collapse-arrow cursor-pointer select-none text-gray-500 hover:text-black font-bold p-1 rounded hover:bg-slate-100 transition-colors border-0 bg-transparent"
@@ -850,7 +933,8 @@ function TeamIncidentTable({
           </div>
 
           {/* Teams Navigation Tree */}
-          <div className="team-sidebar-scroll">
+          {!isSidebarCollapsed && (
+            <div className="team-sidebar-scroll">
             {/* 1st Line Support Group */}
             <div className="team-sidebar-section">
               <button
@@ -1137,6 +1221,7 @@ function TeamIncidentTable({
               </button>
             </div>
           </div>
+          )}
         </aside>
 
         {/* Right Main Table Content */}
@@ -1386,7 +1471,7 @@ function TeamIncidentTable({
                     SLA Time Left {sortColumn === 'sla' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
                   </th>
                   <th
-                    style={{ minWidth: 280, cursor: "pointer", userSelect: "none" }}
+                    style={{ width: 320, minWidth: 280, cursor: "pointer", userSelect: "none" }}
                     onClick={() => handleSort('summary')}
                     title="Click to sort by Summary"
                   >
@@ -1488,7 +1573,15 @@ function TeamIncidentTable({
           onEscalateToTier2={() => handleEscalateToTier2(selectedIncident)}
           isEscalating={escalatingId === selectedIncident.id}
           isEscalated={selectedIncident.escalatedToTier2 || selectedIncident.team === "2nd Line Support"}
-          onClose={() => setSelectedIncident(null)}
+          onClose={() => {
+            setSelectedIncident(null);
+            if (searchParams.get('id') || searchParams.get('ticketId')) {
+              const next = new URLSearchParams(searchParams);
+              next.delete('id');
+              next.delete('ticketId');
+              setSearchParams(next, { replace: true });
+            }
+          }}
           onUpdateTicket={(updated) => {
             setIncidents((prev) =>
               prev.map((i) =>

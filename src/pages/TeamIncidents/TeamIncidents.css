@@ -318,8 +318,9 @@
 
 .incident-table {
   width: 100%;
+  min-width: 1350px;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: auto !important;
 }
 
 .incident-table th {
@@ -1040,43 +1041,47 @@
 
 /* Sidebar Collapsed State */
 .team-sidebar-panel.collapsed {
-  width: 52px;
-  min-width: 52px;
+  width: 48px;
+  min-width: 48px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
 }
 
 .team-sidebar-panel.collapsed .team-sidebar-search,
 .team-sidebar-panel.collapsed .team-sidebar-title-wrap,
-.team-sidebar-panel.collapsed .team-sidebar-badge,
-.team-sidebar-panel.collapsed .team-section-pill-label,
-.team-sidebar-panel.collapsed .team-subitems-tree,
-.team-sidebar-panel.collapsed .team-sidebar-group-header span:not(:first-child),
-.team-sidebar-panel.collapsed .team-sidebar-breaching-sla span:not(:first-child) {
+.team-sidebar-panel.collapsed .team-sidebar-scroll {
   display: none !important;
 }
 
 .team-sidebar-panel.collapsed .team-sidebar-header-row {
   justify-content: center;
-  padding: 10px 4px;
+  padding: 6px 0;
+  border-bottom: none;
+  width: 100%;
 }
 
 .team-sidebar-panel.collapsed .collapse-arrow {
-  font-size: 16px;
   margin: 0 auto;
-}
-
-.team-sidebar-panel.collapsed .team-sidebar-scroll {
-  padding: 8px 4px;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: all 0.15s ease;
 }
 
-.team-sidebar-panel.collapsed .team-sidebar-group-header,
-.team-sidebar-panel.collapsed .team-subitem-btn,
-.team-sidebar-panel.collapsed .team-sidebar-breaching-sla {
-  justify-content: center;
-  padding: 8px;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+.team-sidebar-panel.collapsed .collapse-arrow:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 /* Table More Options Menu */

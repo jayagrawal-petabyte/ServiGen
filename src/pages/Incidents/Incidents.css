@@ -649,19 +649,19 @@
   overflow-x: auto;
 }
 
-.incident-table {
+.recent-card .incident-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.incident-table thead {
+.recent-card .incident-table thead {
   background: #fbfcfe;
   border-top: 1px solid #e8edf3;
   border-bottom: 1px solid #e5ebf2;
 }
 
-.incident-table th {
+.recent-card .incident-table th {
   padding: 12px 8px;
   color: #5a6778;
   text-align: left;
@@ -671,7 +671,7 @@
   white-space: nowrap;
 }
 
-.incident-table td {
+.recent-card .incident-table td {
   padding: 12px 8px;
   border-bottom: 1px solid #eef1f5;
   color: #354154;
@@ -680,7 +680,7 @@
   vertical-align: middle;
 }
 
-.incident-table tbody tr:last-child td {
+.recent-card .incident-table tbody tr:last-child td {
   border-bottom: none;
 }
 
@@ -692,28 +692,28 @@
   background: #f8fbfd;
 }
 
-.incident-table th:nth-child(1),
-.incident-table td:nth-child(1) {
+.recent-card .incident-table th:nth-child(1),
+.recent-card .incident-table td:nth-child(1) {
   width: 20%;
 }
 
-.incident-table th:nth-child(2),
-.incident-table td:nth-child(2) {
+.recent-card .incident-table th:nth-child(2),
+.recent-card .incident-table td:nth-child(2) {
   width: 33%;
 }
 
-.incident-table th:nth-child(3),
-.incident-table td:nth-child(3) {
+.recent-card .incident-table th:nth-child(3),
+.recent-card .incident-table td:nth-child(3) {
   width: 15%;
 }
 
-.incident-table th:nth-child(4),
-.incident-table td:nth-child(4) {
+.recent-card .incident-table th:nth-child(4),
+.recent-card .incident-table td:nth-child(4) {
   width: 17%;
 }
 
-.incident-table th:nth-child(5),
-.incident-table td:nth-child(5) {
+.recent-card .incident-table th:nth-child(5),
+.recent-card .incident-table td:nth-child(5) {
   width: 15%;
 }
 

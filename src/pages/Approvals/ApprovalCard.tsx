@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ModalShell } from '../../components/shared';
+import { Check, X, Clock, User, CheckCircle2, XCircle, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Button, ModalShell } from '../../components/shared';
 
 export interface TicketDetails {
   ticketId: string;
@@ -68,124 +69,144 @@ export default function ApprovalCard({
         {/* Left: Avatar */}
         <div className="approval-card-avatar-wrapper">
           {approval.authorType === 'ai' ? (
-            <div className="approval-avatar ai" title="Dispatch Agent (AI)">
+            <div
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C96F55] to-[#B55F46] text-white font-bold text-sm flex items-center justify-center shadow-xs select-none shrink-0"
+              title="Dispatch Agent (AI)"
+            >
               {approval.authorInitials || 'DA'}
             </div>
           ) : (
-            <div className="approval-avatar user" title={approval.authorName}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
+            <div
+              className="w-10 h-10 rounded-full bg-[#263B5E] text-white flex items-center justify-center shadow-xs select-none font-bold text-xs shrink-0"
+              title={approval.authorName}
+            >
+              {approval.authorInitials ? (
+                approval.authorInitials
+              ) : (
+                <User className="w-5 h-5 text-white/90" />
+              )}
             </div>
           )}
         </div>
 
         {/* Right: Content Column */}
         <div className="approval-card-content-column">
-          {/* Line 1: Author & On Behalf Of (left), timeAgo (right) */}
+          {/* Line 1: Author, On Behalf Of, Category, and Timestamp */}
           <div className="approval-card-author-row">
             <div className="approval-card-author-left">
-              <span
-                className="card-blue-link"
+              <button
+                type="button"
                 onClick={() => onOpenDetails?.(approval, false)}
+                className="font-semibold text-slate-900 hover:text-[#C96F55] transition-colors cursor-pointer text-left"
                 title="Click to view details"
               >
                 {approval.authorName}
-              </span>
+              </button>
 
               {approval.onBehalfOf && (
                 <>
-                  <span className="behalf-separator">- On behalf of:</span>
-                  <span
-                    className="card-blue-link"
+                  <span className="text-slate-400 font-normal">on behalf of</span>
+                  <button
+                    type="button"
                     onClick={() => onOpenDetails?.(approval, false)}
+                    className="font-medium text-slate-700 hover:text-[#C96F55] transition-colors cursor-pointer text-left"
                     title="Click to view details"
                   >
                     {approval.onBehalfOf}
-                  </span>
+                  </button>
                 </>
+              )}
+
+              {approval.category && (
+                <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60">
+                  {approval.category}
+                </span>
               )}
             </div>
 
-            <span className="approval-card-time">{approval.timeAgo}</span>
+            <div className="flex items-center gap-1 text-xs text-slate-400 font-medium shrink-0 ml-auto">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span>{approval.timeAgo}</span>
+            </div>
           </div>
 
           {/* Line 2: Ticket Number & Title */}
           <div className="approval-card-title-row">
-            <span
-              className="card-blue-link font-semibold"
+            <button
+              type="button"
               onClick={() => onOpenDetails?.(approval, false)}
-              title="Click to view details"
+              className="text-[#C96F55] font-bold text-sm tracking-tight hover:text-[#B55F46] hover:underline cursor-pointer inline-flex items-center gap-0.5"
+              title="Click to view ticket details"
             >
-              {approval.ticketNumber}
+              <span>{approval.ticketNumber}</span>
+            </button>
+            <span className="text-slate-300 font-light">•</span>
+            <span
+              onClick={() => onOpenDetails?.(approval, false)}
+              className="text-sm sm:text-base font-bold text-slate-900 cursor-pointer hover:text-slate-700 transition-colors"
+            >
+              {approval.title}
             </span>
-            <span className="approval-card-title-text"> - {approval.title}</span>
           </div>
 
           {/* Line 3: Description if present */}
           {approval.description && approval.description.trim().length > 0 && (
-            <div className="approval-card-body">
+            <p className="approval-card-body">
               {approval.description}
-            </div>
+            </p>
           )}
 
-          {/* Line 4: Nested Ticket Details Table if present */}
+          {/* Line 4: Clean Metadata Strip for Ticket Details */}
           {approval.ticketDetails && (
-            <div className="approval-ticket-details">
-              <div className="approval-details-header">
-                Ticket Details
+            <div className="mt-3.5 bg-[#FFF9F5]/80 border border-[#ebdcd3] rounded-xl p-3.5">
+              <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#ebdcd3]/70">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Ticket Details
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onOpenDetails?.(approval, false)}
+                  className="text-[11px] font-semibold text-[#C96F55] hover:text-[#B55F46] hover:underline cursor-pointer inline-flex items-center gap-1"
+                >
+                  <span>View Details</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </button>
               </div>
 
-              <div className="approval-details-table">
-                <div className="detail-table-row">
-                  <div className="detail-row-key">Ticket ID</div>
-                  <div className="detail-row-val">
-                    <a
-                      href="#details"
-                      className="ticket-id-blue-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onOpenDetails?.(approval, false);
-                      }}
-                    >
-                      {approval.ticketDetails.ticketId}
-                    </a>
-                  </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <span className="text-[11px] text-slate-400 block font-medium mb-0.5">Ticket ID</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenDetails?.(approval, false)}
+                    className="font-mono font-bold text-[#C96F55] hover:underline cursor-pointer"
+                  >
+                    {approval.ticketDetails.ticketId}
+                  </button>
                 </div>
 
-                <div className="detail-table-row">
-                  <div className="detail-row-key">Ticket Type</div>
-                  <div className="detail-row-val">
-                    <span className="ticket-type-badge">
-                      {approval.ticketDetails.ticketType}
+                <div>
+                  <span className="text-[11px] text-slate-400 block font-medium mb-0.5">Ticket Type</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#263B5E] text-white">
+                    {approval.ticketDetails.ticketType}
+                  </span>
+                </div>
+
+                {(approval.ticketDetails.fullName || approval.ticketDetails.username) && (
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium mb-0.5">Target User</span>
+                    <span className="font-semibold text-slate-800">
+                      {approval.ticketDetails.fullName || approval.ticketDetails.username}
                     </span>
-                  </div>
-                </div>
-
-                {approval.ticketDetails.username && (
-                  <div className="detail-table-row">
-                    <div className="detail-row-key">Username</div>
-                    <div className="detail-row-val">
-                      {approval.ticketDetails.username}
-                    </div>
-                  </div>
-                )}
-
-                {approval.ticketDetails.fullName && (
-                  <div className="detail-table-row">
-                    <div className="detail-row-key">Full Name</div>
-                    <div className="detail-row-val">
-                      {approval.ticketDetails.fullName}
-                    </div>
                   </div>
                 )}
 
                 {approval.ticketDetails.department && (
-                  <div className="detail-table-row">
-                    <div className="detail-row-key">Department</div>
-                    <div className="detail-row-val">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-medium mb-0.5">Department</span>
+                    <span className="font-semibold text-slate-800">
                       {approval.ticketDetails.department}
-                    </div>
+                    </span>
                   </div>
                 )}
               </div>
@@ -194,61 +215,43 @@ export default function ApprovalCard({
         </div>
       </div>
 
-      {/* Footer: Centered Thumbs Up / Down */}
+      {/* Footer: Standardized Action Controls */}
       {isPending ? (
         <div className="approval-card-footer">
-          <button
-            className="btn-thumb approve"
-            title="Approve Request"
-            type="button"
-            disabled={isActionLoading}
-            onClick={() => onApprove(approval.id)}
-            style={{ opacity: isActionLoading ? 0.6 : 1 }}
-          >
-            {isActionLoading ? (
-              <span className="spinner-mini" />
-            ) : (
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 10v12" />
-                <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" />
-              </svg>
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 font-medium">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span>Pending your review</span>
+          </div>
 
-          <button
-            className="btn-thumb reject"
-            title="Reject Request (Requires Reason)"
-            type="button"
-            disabled={isActionLoading}
-            onClick={() => {
-              setErrorText(null);
-              setIsRejectDialogOpen(true);
-            }}
-            style={{ opacity: isActionLoading ? 0.6 : 1 }}
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isActionLoading}
+              onClick={() => {
+                setErrorText(null);
+                setIsRejectDialogOpen(true);
+              }}
+              className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 font-semibold"
+              icon={<X className="w-3.5 h-3.5 text-rose-600" />}
+              title="Reject Request (Requires Reason)"
             >
-              <path d="M17 14V2" />
-              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z" />
-            </svg>
-          </button>
+              Reject
+            </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isActionLoading}
+              isLoading={isActionLoading}
+              onClick={() => onApprove(approval.id)}
+              className="!bg-emerald-600 hover:!bg-emerald-700 !text-white font-bold shadow-xs"
+              icon={<Check className="w-3.5 h-3.5" />}
+              title="Approve Request"
+            >
+              Approve
+            </Button>
+          </div>
 
           {/* Mandatory Rejection Reason Dialog */}
           <ModalShell
@@ -286,34 +289,48 @@ export default function ApprovalCard({
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setIsRejectDialogOpen(false)}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="danger"
+                  size="sm"
                   disabled={isActionLoading}
-                  className="px-4 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm cursor-pointer transition-all disabled:opacity-50"
                 >
                   Confirm Rejection
-                </button>
+                </Button>
               </div>
             </form>
           </ModalShell>
         </div>
+      ) : approval.status === 'approved' ? (
+        <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/60">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Approved by you</span>
+          </div>
+          <span className="text-xs text-slate-400 font-medium">{approval.timeAgo}</span>
+        </div>
       ) : (
-        <div className="approval-card-completed">
-          Action completed. Request marked as{' '}
-          <strong style={{ textTransform: 'capitalize' }}>
-            {approval.status}
-          </strong>
+        <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200/60">
+              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>Rejected by you</span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{approval.timeAgo}</span>
+          </div>
           {approval.rejectReason && (
-            <span className="reject-reason-note">
-              Reason: {approval.rejectReason}
-            </span>
+            <div className="text-xs text-slate-700 bg-rose-50/60 px-3 py-2 rounded-lg border border-rose-100">
+              <span className="font-semibold text-rose-800">Rejection Reason:</span>{' '}
+              <span className="text-slate-700">{approval.rejectReason}</span>
+            </div>
           )}
         </div>
       )}

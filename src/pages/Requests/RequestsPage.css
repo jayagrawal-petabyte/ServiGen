@@ -512,23 +512,25 @@
 }
 
 .add-view-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 9999px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .add-view-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #94a3b8;
+  background-color: var(--bg-canvas, #FFF9F5);
+  border-color: rgba(201, 111, 85, 0.4);
+  color: var(--accent-terracotta, #C96F55);
 }
 
 .view-dropdown-menu {
@@ -633,12 +635,12 @@
 }
 
 .requests-create-btn {
-  background-color: #C96F55;
+  background-color: var(--accent-terracotta, #C96F55);
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 12px;
-  border-radius: 4px;
+  border-radius: 9999px;
   border: none;
   display: flex;
   align-items: center;
@@ -653,11 +655,11 @@
 }
 
 .toolbar-more-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  border-radius: 4px;
+  border-radius: 9999px;
   font-size: 14px;
   font-weight: 700;
   color: #64748b;
@@ -665,10 +667,14 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .toolbar-more-btn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--bg-canvas, #FFF9F5);
+  border-color: rgba(201, 111, 85, 0.4);
+  color: var(--accent-terracotta, #C96F55);
 }
 
 /* ── Table Card ── */
@@ -827,20 +833,47 @@
 
 /* Collapsed Tree Sidebar */
 .requests-tree-sidebar.collapsed {
-  width: 52px;
-  min-width: 52px;
+  width: 48px;
+  min-width: 48px;
   padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   overflow: hidden;
 }
 
-.requests-tree-sidebar.collapsed .tree-header-left {
+.requests-tree-sidebar.collapsed .requests-tree-header {
   justify-content: center;
+  padding: 6px 0;
+  border-bottom: none;
   width: 100%;
 }
 
+.requests-tree-sidebar.collapsed .tree-header-left,
+.requests-tree-sidebar.collapsed .tree-group-icon {
+  display: none !important;
+}
+
 .requests-tree-sidebar.collapsed .tree-collapse-btn {
-  margin-top: 8px;
+  margin: 0 auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #64748b;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.requests-tree-sidebar.collapsed .tree-collapse-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 /* More Actions Dropdown */
