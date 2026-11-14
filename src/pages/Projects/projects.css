@@ -1,4 +1,5 @@
-
+/* Projects page – peach / navy theme. Everything is scoped under .projects-page
+   so it does not leak into other teams' pages. */
 
 .projects-page {
   --pj-bg: #fff7f3;
@@ -244,6 +245,42 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.pj-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fff;
+  border: 1px solid #e2e5ea;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.pj-refresh:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.pj-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes pj-spin-anim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.pj-spin {
+  display: inline-block;
+  animation: pj-spin-anim 1s linear infinite;
 }
 
 .pj-range {
