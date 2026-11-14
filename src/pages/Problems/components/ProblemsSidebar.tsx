@@ -23,8 +23,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
   const [internalSearch, setInternalSearch] = useState('');
   const currentSearch = onSearchChange !== undefined ? searchValue : internalSearch;
   const handleSearchChange = onSearchChange || setInternalSearch;
-  const [isTypeMenuOpen, setIsTypeMenuOpen] = useState(false);
-  const [typeFilter, setTypeFilter] = useState('Open Problems');
 
   const navItems = [
     { id: 'all-problems', label: 'All Problems', countKey: 'all' },
@@ -67,7 +65,7 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
             />
           </div>
 
-          {/* Heading Row: Title & Subtitle Filter */}
+          {/* Heading Row: Title & Collapse Button */}
           <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
             <div className="min-w-0">
               <div
@@ -79,40 +77,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
                   !
                 </span>
                 <span className="truncate">Problems by Type</span>
-              </div>
-              {/* Filter dropdown subtitle */}
-              <div className="relative mt-0.5">
-                <button
-                  type="button"
-                  onClick={() => setIsTypeMenuOpen(!isTypeMenuOpen)}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-700 cursor-pointer"
-                >
-                  <span>{isTypeMenuOpen ? '▲' : '▼'}</span>
-                  <span>{typeFilter}</span>
-                </button>
-                {isTypeMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 text-xs">
-                    {['Open Problems', 'All Problems', 'Known Errors', 'Resolved'].map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => {
-                          setTypeFilter(opt);
-                          setIsTypeMenuOpen(false);
-                          if (opt === 'Open Problems') onSelectList('open-problems');
-                          else if (opt === 'All Problems') onSelectList('all-problems');
-                          else if (opt === 'Known Errors') onSelectList('known-error');
-                          else if (opt === 'Resolved') onSelectList('resolved');
-                        }}
-                        className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium ${
-                          typeFilter === opt ? 'text-[#C96F55] font-bold bg-[#C96F55]/10' : 'text-slate-700'
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
