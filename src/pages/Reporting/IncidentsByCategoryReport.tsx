@@ -260,7 +260,12 @@ export default function IncidentsByCategoryReport() {
 
   const [dateField, setDateField] = useState('Date Created');
   const [period, setPeriod] = useState('All');
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(() => {
+    try {
+      return localStorage.getItem('servigen_reporting_favorite') === 'true';
+    } catch {}
+    return false;
+  });
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [activeCategoryTag, setActiveCategoryTag] = useState<string | null>(
     (location.state as any)?.category || null
@@ -297,13 +302,23 @@ export default function IncidentsByCategoryReport() {
   const handleSelectCatalogReport = (report: PreBuiltReportItem) => {
     setActiveCatalogReport(report);
     handleSelectReport(report.targetView);
+    if (report.category === 'incidents' || report.category === 'requests') {
+      if (report.title.toLowerCase().includes('hardware')) setActiveCategoryTag('Hardware');
+      else if (report.title.toLowerCase().includes('network') || report.title.toLowerCase().includes('vpn')) setActiveCategoryTag('Network');
+      else if (report.title.toLowerCase().includes('software') || report.title.toLowerCase().includes('teams') || report.title.toLowerCase().includes('mfa')) setActiveCategoryTag('Office Applications');
+      else setActiveCategoryTag(null);
+    } else {
+      setActiveCategoryTag(null);
+    }
     setStatusMessage(`Loaded pre-built report: ${report.title} (${report.id})`);
+    setTimeout(() => setStatusMessage(null), 2500);
   };
 
   const handleExecuteCustomQuery = (config: CustomQueryConfig) => {
     setCustomQueryConfig(config);
     handleSelectReport('custom');
     setStatusMessage(`Executed custom query: "${config.title}"`);
+    setTimeout(() => setStatusMessage(null), 2500);
   };
 
   // Scheduled export state
@@ -311,19 +326,32 @@ export default function IncidentsByCategoryReport() {
   const [scheduleFreq, setScheduleFreq] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
   const [scheduleFormat, setScheduleFormat] = useState<'CSV' | 'PDF'>('CSV');
   const [scheduleEmail, setScheduleEmail] = useState('');
-  const [savedSchedule, setSavedSchedule] = useState<{ freq: string; email: string; format: string } | null>(null);
+  const [savedSchedule, setSavedSchedule] = useState<{ freq: string; email: string; format: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_reporting_saved_schedule');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
 
   // Custom column visibility builder
-  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
-    id: true,
-    summary: true,
-    priority: true,
-    category: true,
-    agent: true,
-    targetSla: true,
-    status: true,
-    slaMet: true,
-    breachDuration: true,
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_reporting_visible_columns');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      category: true,
+      id: true,
+      summary: true,
+      createdAt: true,
+      site: true,
+      team: true,
+      priority: true,
+      agent: true,
+      status: true,
+      slaMet: true,
+    };
   });
 
   React.useEffect(() => {
@@ -426,6 +454,10 @@ export default function IncidentsByCategoryReport() {
     );
   };
 
+  const handleFilterValueChange = (rowId: string, val: string) => {
+    setFilters((prev) => prev.map((r) => (r.id === rowId ? { ...r, value: val } : r)));
+  };
+
   const handleAddFilterRow = () => {
     const newId = `f-${Date.now()}`;
     setFilters((prev) => [
@@ -444,8 +476,23 @@ export default function IncidentsByCategoryReport() {
   // Dynamically filtered tickets
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
+      // Check Period Filter
+      if (period !== 'All') {
+        const ticketDateStr = t.createdAt; // e.g. "13/11/2026"
+        const parts = ticketDateStr.split('/');
+        if (parts.length === 3) {
+          const tDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          const now = new Date();
+          const diffDays = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (period === 'Today' && diffDays > 1) return false;
+          if (period === 'This Week' && diffDays > 7) return false;
+          if (period === 'This Month' && diffDays > 30) return false;
+          if (period === 'This Quarter' && diffDays > 90) return false;
+        }
+      }
       if (activeCategoryTag && !t.category.toLowerCase().includes(activeCategoryTag.toLowerCase().split('>')[0])) {
         // Soft match if category tag is active
+        return false;
       }
       if (activeReport === 'sla') {
         if (slaFilterMode === 'breached' && t.slaResolutionMet !== 0) return false;
@@ -477,7 +524,7 @@ export default function IncidentsByCategoryReport() {
       }
       return true;
     });
-  }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters]);
+  }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters, period]);
 
   // Sorting state for report table
   type SortField = 'category' | 'id' | 'summary' | 'createdAt' | 'site' | 'team' | 'priority' | 'agent' | 'status' | 'slaResolutionMet';
@@ -696,8 +743,12 @@ export default function IncidentsByCategoryReport() {
   };
 
   const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    setStatusMessage(isFavorite ? 'Removed from My Reports' : 'Added to My Reports ⭐');
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      localStorage.setItem('servigen_reporting_favorite', String(next));
+    } catch {}
+    setStatusMessage(next ? 'Added to My Reports ⭐' : 'Removed from My Reports');
     setTimeout(() => setStatusMessage(null), 2500);
   };
 
@@ -835,15 +886,32 @@ export default function IncidentsByCategoryReport() {
                   sideOffset={6}
                 >
                   <span className="font-bold text-[#332B28] pb-1 border-b border-[#ebdcd3]">Toggle Columns</span>
-                  {Object.keys(visibleColumns).map((colKey) => (
-                    <label key={colKey} className="flex items-center gap-2 cursor-pointer hover:bg-[#FFF9F5] p-1 rounded">
+                  {[
+                    { key: 'category', label: 'Category' },
+                    { key: 'id', label: 'Ticket ID' },
+                    { key: 'summary', label: 'Summary' },
+                    { key: 'createdAt', label: 'Date Created' },
+                    { key: 'site', label: 'Site' },
+                    { key: 'team', label: 'Team' },
+                    { key: 'priority', label: 'Priority' },
+                    { key: 'agent', label: 'Assigned Agent' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'slaMet', label: 'SLA Met' },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer hover:bg-[#FFF9F5] p-1 rounded">
                       <input
                         type="checkbox"
-                        checked={visibleColumns[colKey]}
-                        onChange={(e) => setVisibleColumns((prev) => ({ ...prev, [colKey]: e.target.checked }))}
+                        checked={visibleColumns[key] !== false}
+                        onChange={(e) => {
+                          const updated = { ...visibleColumns, [key]: e.target.checked };
+                          setVisibleColumns(updated);
+                          try {
+                            localStorage.setItem('servigen_reporting_visible_columns', JSON.stringify(updated));
+                          } catch {}
+                        }}
                         className="rounded text-[#C96F55] focus:ring-[#C96F55]"
                       />
-                      <span className="capitalize">{colKey.replace(/([A-Z])/g, ' $1')}</span>
+                      <span>{label}</span>
                     </label>
                   ))}
                 </Popover.Content>
@@ -980,15 +1048,49 @@ export default function IncidentsByCategoryReport() {
                         <option value="Does Not Equal">Does Not Equal</option>
                       </select>
                       <div className="flex-1 min-w-[200px] flex items-center gap-1.5 bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1">
-                        {filter.tags && filter.tags.length > 0 ? (
-                          filter.tags.map((tag) => (
-                            <span key={tag.id} className="inline-flex items-center gap-1 bg-white border border-[#ebdcd3] text-[#332B28] text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                              {tag.label}
-                              <button type="button" onClick={() => handleFilterTagRemove(filter.id, tag.id)} className="text-rose-500 font-bold hover:text-rose-700">✕</button>
-                            </span>
-                          ))
+                        {filter.field === 'Priority' ? (
+                          <select
+                            value={filter.value || 'Critical'}
+                            onChange={(e) => handleFilterValueChange(filter.id, e.target.value)}
+                            className="w-full bg-transparent border-none text-xs text-[#332B28] font-semibold outline-none cursor-pointer"
+                          >
+                            <option value="Critical">Critical</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                          </select>
+                        ) : filter.field === 'Status' ? (
+                          <select
+                            value={filter.value || 'Active'}
+                            onChange={(e) => handleFilterValueChange(filter.id, e.target.value)}
+                            className="w-full bg-transparent border-none text-xs text-[#332B28] font-semibold outline-none cursor-pointer"
+                          >
+                            <option value="Active">Active</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Closed">Closed</option>
+                            <option value="On Hold">On Hold</option>
+                          </select>
+                        ) : filter.field === 'Category' ? (
+                          <select
+                            value={filter.value || 'Network'}
+                            onChange={(e) => handleFilterValueChange(filter.id, e.target.value)}
+                            className="w-full bg-transparent border-none text-xs text-[#332B28] font-semibold outline-none cursor-pointer"
+                          >
+                            <option value="Network">Network</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Office Applications">Office Applications</option>
+                            <option value="Business Applications">Business Applications</option>
+                            <option value="Cloud">Cloud</option>
+                          </select>
                         ) : (
-                          <span className="text-xs text-slate-400">Condition active</span>
+                          <input
+                            type="text"
+                            value={filter.value || ''}
+                            onChange={(e) => handleFilterValueChange(filter.id, e.target.value)}
+                            placeholder="Enter filter value..."
+                            className="w-full bg-transparent border-none text-xs text-[#332B28] font-semibold outline-none"
+                          />
                         )}
                       </div>
                       <button
@@ -1021,27 +1123,29 @@ export default function IncidentsByCategoryReport() {
               <table className="report-data-table w-full">
                 <thead>
                   <tr>
-                    <th
-                      className="sortable-th cursor-pointer select-none hover:bg-[#FFF9F5] transition-colors"
-                      onClick={() => handleSort('category')}
-                      title="Click to toggle sort order by Category"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span>Category</span>
-                        <span className="text-[11px] font-bold text-[#C96F55]">
-                          {sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '▲'}
-                        </span>
-                      </div>
-                    </th>
-                    <th>Ticket ID</th>
-                    <th>Summary</th>
-                    <th>Date Created</th>
-                    <th>Site</th>
-                    <th>Team</th>
-                    <th>Priority</th>
-                    <th>Assigned Agent</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'center' }}>SLA Resolution Met</th>
+                    {visibleColumns.category !== false && (
+                      <th
+                        className="sortable-th cursor-pointer select-none hover:bg-[#FFF9F5] transition-colors"
+                        onClick={() => handleSort('category')}
+                        title="Click to toggle sort order by Category"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Category</span>
+                          <span className="text-[11px] font-bold text-[#C96F55]">
+                            {sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '▲'}
+                          </span>
+                        </div>
+                      </th>
+                    )}
+                    {visibleColumns.id !== false && <th>Ticket ID</th>}
+                    {visibleColumns.summary !== false && <th>Summary</th>}
+                    {visibleColumns.createdAt !== false && <th>Date Created</th>}
+                    {visibleColumns.site !== false && <th>Site</th>}
+                    {visibleColumns.team !== false && <th>Team</th>}
+                    {visibleColumns.priority !== false && <th>Priority</th>}
+                    {visibleColumns.agent !== false && <th>Assigned Agent</th>}
+                    {visibleColumns.status !== false && <th>Status</th>}
+                    {visibleColumns.slaMet !== false && <th style={{ textAlign: 'center' }}>SLA Resolution Met</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -1052,49 +1156,69 @@ export default function IncidentsByCategoryReport() {
                       className="hover:bg-[#FFF9F5] cursor-pointer transition-colors"
                       title={`View ticket #${t.id} details`}
                     >
-                      <td className="font-semibold text-[#332B28]">
-                        {sortField === 'category'
-                          ? idx === 0 || t.category !== sortedTickets[idx - 1]?.category
-                            ? t.category
-                            : ''
-                          : t.category}
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="font-bold text-[#C96F55] hover:underline cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTicket(t);
-                          }}
-                        >
-                          {t.id}
-                        </button>
-                      </td>
-                      <td className="max-w-[320px] text-[#332B28] font-medium">{t.summary}</td>
-                      <td className="whitespace-nowrap text-[#332B28]/70 text-xs">{t.createdAt}</td>
-                      <td className="text-xs text-[#332B28]">{t.site}</td>
-                      <td className="whitespace-nowrap text-xs text-[#332B28]">{t.team}</td>
-                      <td>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          t.priority === 'Critical' ? 'bg-rose-100 text-rose-700' : t.priority === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {t.priority}
-                        </span>
-                      </td>
-                      <td className="text-xs font-medium text-[#332B28]">{t.agent}</td>
-                      <td>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28]">
-                          {t.status}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          t.slaResolutionMet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                        }`}>
-                          {t.slaResolutionMet ? '✓ Met' : '⚠️ Breached'}
-                        </span>
-                      </td>
+                      {visibleColumns.category !== false && (
+                        <td className="font-semibold text-[#332B28]">
+                          {sortField === 'category'
+                            ? idx === 0 || t.category !== sortedTickets[idx - 1]?.category
+                              ? t.category
+                              : ''
+                            : t.category}
+                        </td>
+                      )}
+                      {visibleColumns.id !== false && (
+                        <td>
+                          <button
+                            type="button"
+                            className="font-bold text-[#C96F55] hover:underline cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTicket(t);
+                            }}
+                          >
+                            {t.id}
+                          </button>
+                        </td>
+                      )}
+                      {visibleColumns.summary !== false && (
+                        <td className="max-w-[320px] text-[#332B28] font-medium">{t.summary}</td>
+                      )}
+                      {visibleColumns.createdAt !== false && (
+                        <td className="whitespace-nowrap text-[#332B28]/70 text-xs">{t.createdAt}</td>
+                      )}
+                      {visibleColumns.site !== false && (
+                        <td className="text-xs text-[#332B28]">{t.site}</td>
+                      )}
+                      {visibleColumns.team !== false && (
+                        <td className="whitespace-nowrap text-xs text-[#332B28]">{t.team}</td>
+                      )}
+                      {visibleColumns.priority !== false && (
+                        <td>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            t.priority === 'Critical' ? 'bg-rose-100 text-rose-700' : t.priority === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {t.priority}
+                          </span>
+                        </td>
+                      )}
+                      {visibleColumns.agent !== false && (
+                        <td className="text-xs font-medium text-[#332B28]">{t.agent}</td>
+                      )}
+                      {visibleColumns.status !== false && (
+                        <td>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28]">
+                            {t.status}
+                          </span>
+                        </td>
+                      )}
+                      {visibleColumns.slaMet !== false && (
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            t.slaResolutionMet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {t.slaResolutionMet ? '✓ Met' : '⚠️ Breached'}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -1759,11 +1883,15 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => {
-                setSavedSchedule({
+                const s = {
                   freq: scheduleFreq,
                   format: scheduleFormat,
                   email: scheduleEmail || 'current_user@servigen.io',
-                });
+                };
+                setSavedSchedule(s);
+                try {
+                  localStorage.setItem('servigen_reporting_saved_schedule', JSON.stringify(s));
+                } catch {}
                 setIsScheduleOpen(false);
                 setStatusMessage(`Export schedule configured: ${scheduleFreq} ${scheduleFormat} to ${scheduleEmail || 'your email'}.`);
               }}
