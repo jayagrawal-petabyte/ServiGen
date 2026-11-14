@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { SegmentedTabs } from '../../components/shared/SegmentedTabs';
 import './CustomLists.css';
 import {
   saveCustomList,
@@ -149,9 +150,18 @@ const CustomLists: React.FC = () => {
           <h2>New List</h2>
         </div>
 
-        <div className="cl-tabs">
-          <div className={`cl-tab ${activeModalTab === 'Details' ? 'active' : ''}`} onClick={() => setActiveModalTab('Details')}>Details</div>
-          <div className={`cl-tab ${activeModalTab === 'Filters' ? 'active' : ''}`} onClick={() => setActiveModalTab('Filters')}>Filters</div>
+        <div className="px-6 py-2 bg-slate-50 border-b border-slate-200">
+          <SegmentedTabs
+            tabs={[
+              { id: 'Details', label: 'Details' },
+              { id: 'Filters', label: 'Filters' },
+            ]}
+            activeTab={activeModalTab}
+            onChange={(tabId) => setActiveModalTab(tabId as 'Details' | 'Filters')}
+            variant="boxed"
+            theme="terracotta"
+            ariaLabel="Custom list configuration tabs"
+          />
         </div>
 
         <div className="cl-form-body">

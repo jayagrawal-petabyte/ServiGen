@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import type { MajorIncident, Priority } from '../types/majorIncident.types';
 import { api } from '../../../services/apiClient';
 import Combobox from '../../../components/shared/Combobox';
+import { ModalShell } from '../../../components/shared/ModalShell';
 
 interface NewIncidentModalProps {
   onClose: () => void;
@@ -114,37 +114,15 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
   };
 
   return (
-    /* Backdrop */
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
-      onClick={(e: React.MouseEvent) => { if (e.target === e.currentTarget) onClose(); }}
+    <ModalShell
+      isOpen={true}
+      onClose={onClose}
+      size="sm"
+      icon={<span className="w-3 h-3 bg-red-500 rounded-sm" />}
+      title="New Major Incident"
     >
-      <motion.div 
-        initial={{ scale: 0.95, opacity: 0, y: 10 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-500 rounded-sm" />
-            <h2 className="text-sm font-semibold text-gray-800">New Major Incident</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Close"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
           {/* Title */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -233,8 +211,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
             </button>
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+    </ModalShell>
   );
 };
 

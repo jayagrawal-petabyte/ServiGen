@@ -22,6 +22,7 @@ import {
   ListFilter,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { SegmentedTabs, FilterToolbar } from '../../components/shared';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
@@ -203,104 +204,92 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
       )}
 
       {/* Filter and View Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-        {/* Left: Active vs All tabs (corresponds to backend /api/change-requests/active) */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
-            <button
-              onClick={() => {
-                setFilterMode('all');
+      <FilterToolbar
+        className="mb-6"
+        filters={
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedTabs<'all' | 'active'>
+              variant="boxed"
+              theme="terracotta"
+              size="sm"
+              tabs={[
+                { id: 'all', label: 'All Changes', icon: <ListFilter className="w-3.5 h-3.5" /> },
+                { id: 'active', label: 'Active Only', icon: <Flame className="w-3.5 h-3.5" /> },
+              ]}
+              activeTab={filterMode}
+              onChange={(mode) => {
+                setFilterMode(mode);
                 setCurrentPage(1);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterMode === 'all'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ListFilter className="w-3.5 h-3.5" /> All Changes
-            </button>
-            <button
-              onClick={() => {
-                setFilterMode('active');
+            />
+
+            <div className="h-6 w-px bg-slate-200 hidden md:block mx-1" />
+
+            {/* Type filter */}
+            <select
+              value={selectedType}
+              onChange={(e) => {
+                setSelectedType(e.target.value);
                 setCurrentPage(1);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterMode === 'active'
-                  ? 'bg-[#C96F55] text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
             >
-              <Flame className="w-3.5 h-3.5" /> Active Only
-            </button>
+              <option value="ALL">All Change Types</option>
+              <option value="Normal">Normal</option>
+              <option value="Standard">Standard</option>
+              <option value="Emergency">Emergency</option>
+            </select>
+
+            {/* Status filter */}
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Pending Approval">Pending Approval</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+            </select>
           </div>
-
-          <div className="h-6 w-px bg-slate-200 hidden md:block mx-1" />
-
-          {/* Type filter */}
-          <select
-            value={selectedType}
-            onChange={(e) => {
-              setSelectedType(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
-          >
-            <option value="ALL">All Change Types</option>
-            <option value="Normal">Normal</option>
-            <option value="Standard">Standard</option>
-            <option value="Emergency">Emergency</option>
-          </select>
-
-          {/* Status filter */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="In Progress">In Progress</option>
-            <option value="On Hold">On Hold</option>
-            <option value="Pending Approval">Pending Approval</option>
-            <option value="Scheduled">Scheduled</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-
-        {/* Right: View Mode Toggle */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-[#C96F55] shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Grid view"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white text-[#C96F55] shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Table view"
-            >
-              <Table className="w-4 h-4" />
-            </button>
+        }
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-[#C96F55] shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Grid view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white text-[#C96F55] shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Table view"
+              >
+                <Table className="w-4 h-4" />
+              </button>
+            </div>
+            <span className="text-xs text-slate-400 font-semibold">
+              {filteredRequests.length} results
+            </span>
           </div>
-          <span className="text-xs text-slate-400 font-semibold">
-            {filteredRequests.length} results
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Grid View */}
       {viewMode === 'grid' && (

@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import * as Dialog from '@radix-ui/react-dialog';
 import * as Popover from '@radix-ui/react-popover';
 import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { ModalShell } from '../../components/shared/ModalShell';
+import { MetricCard } from '../../components/shared/MetricCard';
+import { SegmentedTabs, type SegmentedTab } from '../../components/shared/SegmentedTabs';
 import { api } from '../../services/apiClient';
 import { ReportCatalogModal } from './ReportCatalogModal';
 import { QueryBuilderModal, type CustomQueryConfig } from './QueryBuilderModal';
@@ -678,93 +680,31 @@ export default function IncidentsByCategoryReport() {
 
         {/* ── Level 1: Report Switcher Navigation Tabs ── */}
         <div className="flex items-center justify-between gap-4 flex-wrap pb-1">
-          <div className="inline-flex items-center gap-1.5 p-1.5 bg-white border border-[#ebdcd3] rounded-full shadow-xs flex-wrap">
-            <button
-              type="button"
-              onClick={() => setActiveReport('category')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'category'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Incidents by Category</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveReport('sla')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'sla'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>SLA Compliance</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveReport('agents')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'agents'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Agent Performance</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveReport('fcr')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'fcr'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>FCR Rate</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveReport('changes')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'changes'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Changes &amp; CAB</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveReport('assets')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeReport === 'assets'
-                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
-                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>CMDB &amp; Assets</span>
-            </button>
-            {customQueryConfig && (
-              <button
-                type="button"
-                onClick={() => setActiveReport('custom')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                  activeReport === 'custom'
-                    ? 'bg-[#C96F55] text-white shadow-xs font-bold'
-                    : 'text-[#C96F55] hover:bg-[#FFF9F5] border border-[#C96F55]/30'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Custom: {customQueryConfig.title.slice(0, 20)}...</span>
-              </button>
-            )}
+          <div className="p-1 bg-white border border-[#ebdcd3] rounded-full shadow-xs">
+            <SegmentedTabs
+              tabs={[
+                { id: 'category', label: 'Incidents by Category', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+                { id: 'sla', label: 'SLA Compliance', icon: <Clock className="w-3.5 h-3.5" /> },
+                { id: 'agents', label: 'Agent Performance', icon: <Users className="w-3.5 h-3.5" /> },
+                { id: 'fcr', label: 'FCR Rate', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+                { id: 'changes', label: 'Changes & CAB', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
+                { id: 'assets', label: 'CMDB & Assets', icon: <Database className="w-3.5 h-3.5" /> },
+                ...(customQueryConfig
+                  ? [
+                      {
+                        id: 'custom' as ReportType,
+                        label: `Custom: ${customQueryConfig.title.slice(0, 20)}...`,
+                        icon: <Sparkles className="w-3.5 h-3.5 text-amber-300" />,
+                      },
+                    ]
+                  : []),
+              ]}
+              activeTab={activeReport}
+              onChange={(id) => setActiveReport(id as ReportType)}
+              variant="pill"
+              theme="navy"
+              ariaLabel="Report Switcher Navigation"
+            />
           </div>
         </div>
 
@@ -910,29 +850,30 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Active Incidents</span>
-                <span className="text-2xl font-black text-[#332B28] mt-2">{tickets.length}</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Across 1st &amp; 2nd line support</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Critical &amp; High Priority</span>
-                <span className="text-2xl font-black text-rose-600 mt-2">{tickets.filter(t => t.priority === 'Critical' || t.priority === 'High').length}</span>
-                <span className="text-[11px] text-rose-600 font-semibold mt-1">Expedited queue handling</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Met Compliance</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-2xl font-black text-emerald-600">{slaMetrics.metPercent}%</span>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target 95%</span>
-                </div>
-                <span className="text-[11px] text-emerald-600 mt-1">✓ Met contractual SLA</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Category Clusters</span>
-                <span className="text-2xl font-black text-[#263B5E] mt-2">6</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Hardware, Network, Software...</span>
-              </div>
+              <MetricCard
+                label="Total Active Incidents"
+                value={tickets.length}
+                subtitle="Across 1st & 2nd line support"
+              />
+              <MetricCard
+                label="Critical & High Priority"
+                value={tickets.filter((t) => t.priority === 'Critical' || t.priority === 'High').length}
+                valueClassName="text-rose-600"
+                subtitle={<span className="text-rose-600 font-semibold">Expedited queue handling</span>}
+              />
+              <MetricCard
+                label="SLA Met Compliance"
+                value={`${slaMetrics.metPercent}%`}
+                valueClassName="text-emerald-600"
+                trend={<span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target 95%</span>}
+                subtitle="✓ Met contractual SLA"
+              />
+              <MetricCard
+                label="Active Category Clusters"
+                value="6"
+                valueClassName="text-[#263B5E]"
+                subtitle="Hardware, Network, Software..."
+              />
             </div>
 
             {/* Contextual Incident Filter Strip */}
@@ -1133,38 +1074,33 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* SLA KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Met Compliance</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-3xl font-extrabold text-emerald-600">{slaMetrics.metPercent}%</span>
-                  <span className="text-xs font-bold text-slate-500">Target 95.0%</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1">↑ +1.4% improvement vs previous period</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Met Within Target SLA</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-3xl font-extrabold text-[#332B28]">{slaMetrics.met}</span>
-                  <span className="text-xs font-semibold text-emerald-600">✓ On-Track</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1">Tickets resolved inside contractual SLA</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Breached Tickets</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-3xl font-extrabold text-rose-600">{slaMetrics.breached}</span>
-                  <span className="text-xs font-semibold text-rose-600">⚠️ Critical Review</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1">Requiring post-incident SLA breach audit</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Breach Overrun</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-3xl font-extrabold text-amber-600">+24m</span>
-                  <span className="text-xs font-semibold text-slate-500">Mean time</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1">Average excess time past breach threshold</span>
-              </div>
+              <MetricCard
+                label="SLA Met Compliance"
+                value={`${slaMetrics.metPercent}%`}
+                valueClassName="text-emerald-600"
+                trend={<span className="text-xs font-bold text-slate-500">Target 95.0%</span>}
+                subtitle="↑ +1.4% improvement vs previous period"
+              />
+              <MetricCard
+                label="Met Within Target SLA"
+                value={slaMetrics.met}
+                trend={<span className="text-xs font-semibold text-emerald-600">✓ On-Track</span>}
+                subtitle="Tickets resolved inside contractual SLA"
+              />
+              <MetricCard
+                label="SLA Breached Tickets"
+                value={slaMetrics.breached}
+                valueClassName="text-rose-600"
+                trend={<span className="text-xs font-semibold text-rose-600">⚠️ Critical Review</span>}
+                subtitle="Requiring post-incident SLA breach audit"
+              />
+              <MetricCard
+                label="Avg Breach Overrun"
+                value="+24m"
+                valueClassName="text-amber-600"
+                trend={<span className="text-xs font-semibold text-slate-500">Mean time</span>}
+                subtitle="Average excess time past breach threshold"
+              />
             </div>
 
             {/* SLA Filter Slices */}
@@ -1273,26 +1209,29 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* Agent KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Responders</span>
-                <div className="text-3xl font-extrabold text-[#332B28] mt-2">4 Agents</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Across 1st Line &amp; 2nd Line Support</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Tickets Resolved Today</span>
-                <div className="text-3xl font-extrabold text-[#C96F55] mt-2">42 Tickets</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">High throughput support sprint</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Resolution Time</span>
-                <div className="text-3xl font-extrabold text-emerald-600 mt-2">1h 48m</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Down from 2h 15m last quarter</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Team SLA Adherence</span>
-                <div className="text-3xl font-extrabold text-emerald-600 mt-2">96.4%</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Exceeds corporate 95.0% SLA KPI</span>
-              </div>
+              <MetricCard
+                label="Active Responders"
+                value="4 Agents"
+                subtitle="Across 1st Line & 2nd Line Support"
+              />
+              <MetricCard
+                label="Tickets Resolved Today"
+                value="42 Tickets"
+                valueClassName="text-[#C96F55]"
+                subtitle="High throughput support sprint"
+              />
+              <MetricCard
+                label="Avg Resolution Time"
+                value="1h 48m"
+                valueClassName="text-emerald-600"
+                subtitle="Down from 2h 15m last quarter"
+              />
+              <MetricCard
+                label="Team SLA Adherence"
+                value="96.4%"
+                valueClassName="text-emerald-600"
+                subtitle="Exceeds corporate 95.0% SLA KPI"
+              />
             </div>
 
             {/* Agent Performance Table */}
@@ -1344,26 +1283,29 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* FCR KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">First Contact Resolution</span>
-                <div className="text-3xl font-extrabold text-emerald-600 mt-2">78.4%</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Industry Benchmark: 70.0% – 75.0%</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">1st Touch Resolved</span>
-                <div className="text-3xl font-extrabold text-[#332B28] mt-2">69 Tickets</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">No escalations or handoffs required</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Escalated Handoffs</span>
-                <div className="text-3xl font-extrabold text-amber-600 mt-2">19 Tickets</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Transferred to Tier 2 engineering</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Ticket Reopen Rate</span>
-                <div className="text-3xl font-extrabold text-emerald-600 mt-2">2.1%</div>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Below target ceiling of 5.0%</span>
-              </div>
+              <MetricCard
+                label="First Contact Resolution"
+                value="78.4%"
+                valueClassName="text-emerald-600"
+                subtitle="Industry Benchmark: 70.0% – 75.0%"
+              />
+              <MetricCard
+                label="1st Touch Resolved"
+                value="69 Tickets"
+                subtitle="No escalations or handoffs required"
+              />
+              <MetricCard
+                label="Escalated Handoffs"
+                value="19 Tickets"
+                valueClassName="text-amber-600"
+                subtitle="Transferred to Tier 2 engineering"
+              />
+              <MetricCard
+                label="Ticket Reopen Rate"
+                value="2.1%"
+                valueClassName="text-emerald-600"
+                subtitle="Below target ceiling of 5.0%"
+              />
             </div>
 
             {/* FCR Breakdown Table */}
@@ -1404,29 +1346,30 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* Changes KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Production RFCs</span>
-                <span className="text-2xl font-black text-[#332B28] mt-2">24</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">18 Normal · 4 Standard · 2 Emergency</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Change Success Rate</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-2xl font-black text-emerald-600">95.8%</span>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target &gt;95%</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1">23 Succeeded · 1 Rollback Triggered</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">CAB Approval Velocity</span>
-                <span className="text-2xl font-black text-[#263B5E] mt-2">18.4h</span>
-                <span className="text-[11px] text-slate-400 mt-1">Avg review turnaround time</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Emergency / Blackout</span>
-                <span className="text-2xl font-black text-amber-600 mt-2">2</span>
-                <span className="text-[11px] text-slate-400 mt-1">Requires post-implementation audit</span>
-              </div>
+              <MetricCard
+                label="Total Production RFCs"
+                value="24"
+                subtitle="18 Normal · 4 Standard · 2 Emergency"
+              />
+              <MetricCard
+                label="Change Success Rate"
+                value="95.8%"
+                valueClassName="text-emerald-600"
+                trend={<span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target &gt;95%</span>}
+                subtitle="23 Succeeded · 1 Rollback Triggered"
+              />
+              <MetricCard
+                label="CAB Approval Velocity"
+                value="18.4h"
+                valueClassName="text-[#263B5E]"
+                subtitle="Avg review turnaround time"
+              />
+              <MetricCard
+                label="Emergency / Blackout"
+                value="2"
+                valueClassName="text-amber-600"
+                subtitle="Requires post-implementation audit"
+              />
             </div>
 
             {/* Risk Profile Breakdown Bar */}
@@ -1534,26 +1477,29 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* Asset KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total CMDB Assets</span>
-                <span className="text-2xl font-black text-[#332B28] mt-2">42</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Servers, Appliances &amp; Software</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Deployed Assets</span>
-                <span className="text-2xl font-black text-emerald-600 mt-2">31</span>
-                <span className="text-[11px] text-emerald-600 font-semibold mt-1">73.8% in live production</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Ready In Stock</span>
-                <span className="text-2xl font-black text-[#263B5E] mt-2">6</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Pre-provisioned reserve inventory</span>
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Expiring Warranty (&lt;60d)</span>
-                <span className="text-2xl font-black text-rose-600 mt-2">5</span>
-                <span className="text-[11px] text-rose-600 font-semibold mt-1">Requires renewal negotiation</span>
-              </div>
+              <MetricCard
+                label="Total CMDB Assets"
+                value="42"
+                subtitle="Servers, Appliances & Software"
+              />
+              <MetricCard
+                label="Active Deployed Assets"
+                value="31"
+                valueClassName="text-emerald-600"
+                subtitle={<span className="text-emerald-600 font-semibold">73.8% in live production</span>}
+              />
+              <MetricCard
+                label="Ready In Stock"
+                value="6"
+                valueClassName="text-[#263B5E]"
+                subtitle="Pre-provisioned reserve inventory"
+              />
+              <MetricCard
+                label="Expiring Warranty (<60d)"
+                value="5"
+                valueClassName="text-rose-600"
+                subtitle={<span className="text-rose-600 font-semibold">Requires renewal negotiation</span>}
+              />
             </div>
 
             {/* Asset Lifecycle Progression Bar */}
@@ -1661,21 +1607,23 @@ export default function IncidentsByCategoryReport() {
           <div className="flex flex-col gap-6">
             {/* Custom KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Evaluated Records</span>
-                <span className="text-2xl font-black text-[#332B28] block mt-2">128</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Across all active teams</span>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Group Dimensions</span>
-                <span className="text-2xl font-black text-[#263B5E] block mt-2">5 Groups</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Aggregated by {customQueryConfig.groupBy}</span>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
-                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Value / Group</span>
-                <span className="text-2xl font-black text-emerald-600 block mt-2">25.6</span>
-                <span className="text-[11px] text-[#332B28]/50 mt-1">Computed live</span>
-              </div>
+              <MetricCard
+                label="Total Evaluated Records"
+                value="128"
+                subtitle="Across all active teams"
+              />
+              <MetricCard
+                label="Group Dimensions"
+                value="5 Groups"
+                valueClassName="text-[#263B5E]"
+                subtitle={`Aggregated by ${customQueryConfig.groupBy}`}
+              />
+              <MetricCard
+                label="Avg Value / Group"
+                value="25.6"
+                valueClassName="text-emerald-600"
+                subtitle="Computed live"
+              />
             </div>
 
             {/* Custom Query Header Banner */}
@@ -1758,100 +1706,92 @@ export default function IncidentsByCategoryReport() {
       )}
 
       {/* ── Schedule Automated Export Dialog ── */}
-      <Dialog.Root open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-          <Dialog.Content className="fixed inset-0 m-auto bg-white rounded-2xl shadow-2xl border border-[#ebdcd3] p-6 w-full max-w-md h-fit max-h-[90vh] z-50 flex flex-col gap-4 overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#ebdcd3] pb-3">
-              <Dialog.Title className="text-base font-bold text-[#332B28] flex items-center gap-2">
-                <span>⏰ Schedule Automated Export</span>
-              </Dialog.Title>
-              <Dialog.Close className="text-[#332B28]/50 hover:text-[#332B28] text-lg cursor-pointer transition-colors">✕</Dialog.Close>
+      <ModalShell
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        size="sm"
+        title="⏰ Schedule Automated Export"
+        description="Configure recurring delivery of this report directly to your team's email inboxes."
+        footer={
+          <div className="flex justify-end gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setIsScheduleOpen(false)}
+              className="px-4 py-2 text-xs font-semibold text-[#332B28] hover:bg-[#FFF9F5] border border-[#ebdcd3] rounded-full cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSavedSchedule({
+                  freq: scheduleFreq,
+                  format: scheduleFormat,
+                  email: scheduleEmail || 'current_user@servigen.io',
+                });
+                setIsScheduleOpen(false);
+                setStatusMessage(`Export schedule configured: ${scheduleFreq} ${scheduleFormat} to ${scheduleEmail || 'your email'}.`);
+              }}
+              className="px-5 py-2 text-xs font-bold bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-full shadow-sm cursor-pointer transition-all"
+            >
+              Save Schedule
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6 flex flex-col gap-3.5 text-xs text-[#332B28]">
+          <div>
+            <label className="font-semibold block mb-1.5 text-[#332B28]">Export Frequency</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['Daily', 'Weekly', 'Monthly'] as const).map((freq) => (
+                <button
+                  key={freq}
+                  type="button"
+                  onClick={() => setScheduleFreq(freq)}
+                  className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
+                    scheduleFreq === freq
+                      ? 'bg-[#263B5E] text-white border-[#263B5E] shadow-xs'
+                      : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
+                  }`}
+                >
+                  {freq}
+                </button>
+              ))}
             </div>
-            <Dialog.Description className="text-xs text-[#332B28]/70">
-              Configure recurring delivery of this report directly to your team's email inboxes.
-            </Dialog.Description>
+          </div>
 
-            <div className="flex flex-col gap-3.5 text-xs text-[#332B28]">
-              <div>
-                <label className="font-semibold block mb-1.5 text-[#332B28]">Export Frequency</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['Daily', 'Weekly', 'Monthly'] as const).map((freq) => (
-                    <button
-                      key={freq}
-                      type="button"
-                      onClick={() => setScheduleFreq(freq)}
-                      className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
-                        scheduleFreq === freq
-                          ? 'bg-[#263B5E] text-white border-[#263B5E] shadow-xs'
-                          : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
-                      }`}
-                    >
-                      {freq}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1.5 text-[#332B28]">Report File Format</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['CSV', 'PDF'] as const).map((fmt) => (
-                    <button
-                      key={fmt}
-                      type="button"
-                      onClick={() => setScheduleFormat(fmt)}
-                      className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
-                        scheduleFormat === fmt
-                          ? 'bg-[#C96F55] text-white border-[#C96F55] shadow-xs'
-                          : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
-                      }`}
-                    >
-                      {fmt === 'CSV' ? '📊 CSV Spreadsheet' : '📄 PDF Document'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1 text-[#332B28]">Recipient Email(s)</label>
-                <input
-                  type="email"
-                  value={scheduleEmail}
-                  onChange={(e) => setScheduleEmail(e.target.value)}
-                  placeholder="e.g. operations@servigen.io, team@halo.ai"
-                  className="w-full px-3.5 py-2.5 border border-[#ebdcd3] rounded-xl text-xs text-[#332B28] bg-white placeholder-[#332B28]/40 focus:outline-none focus:ring-2 focus:ring-[#C96F55] focus:border-[#C96F55] transition-all"
-                />
-              </div>
+          <div>
+            <label className="font-semibold block mb-1.5 text-[#332B28]">Report File Format</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['CSV', 'PDF'] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setScheduleFormat(fmt)}
+                  className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
+                    scheduleFormat === fmt
+                      ? 'bg-[#C96F55] text-white border-[#C96F55] shadow-xs'
+                      : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
+                  }`}
+                >
+                  {fmt === 'CSV' ? '📊 CSV Spreadsheet' : '📄 PDF Document'}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#ebdcd3]">
-              <button
-                type="button"
-                onClick={() => setIsScheduleOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-[#332B28] hover:bg-[#FFF9F5] border border-[#ebdcd3] rounded-full cursor-pointer transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSavedSchedule({
-                    freq: scheduleFreq,
-                    format: scheduleFormat,
-                    email: scheduleEmail || 'current_user@servigen.io',
-                  });
-                  setIsScheduleOpen(false);
-                  setStatusMessage(`Export schedule configured: ${scheduleFreq} ${scheduleFormat} to ${scheduleEmail || 'your email'}.`);
-                }}
-                className="px-5 py-2 text-xs font-bold bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-full shadow-sm cursor-pointer transition-all"
-              >
-                Save Schedule
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          <div>
+            <label className="font-semibold block mb-1 text-[#332B28]">Recipient Email(s)</label>
+            <input
+              type="email"
+              value={scheduleEmail}
+              onChange={(e) => setScheduleEmail(e.target.value)}
+              placeholder="e.g. operations@servigen.io, team@halo.ai"
+              className="w-full px-3.5 py-2.5 border border-[#ebdcd3] rounded-xl text-xs text-[#332B28] bg-white placeholder-[#332B28]/40 focus:outline-none focus:ring-2 focus:ring-[#C96F55] focus:border-[#C96F55] transition-all"
+            />
+          </div>
+        </div>
+      </ModalShell>
 
       {/* ── Pre-Built Report Catalog Modal ── */}
       <ReportCatalogModal

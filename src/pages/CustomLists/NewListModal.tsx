@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, Save, Share2 } from 'lucide-react';
+import { Save, Share2 } from 'lucide-react';
+import { ModalShell } from '../../components/shared/ModalShell';
+import { SegmentedTabs } from '../../components/shared/SegmentedTabs';
 
 interface NewListModalProps {
   isOpen: boolean;
@@ -44,64 +46,49 @@ export const NewListModal: React.FC<NewListModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-fade-in">
-      <div className="bg-[#F4F6FA] rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-slate-200 shadow-2xl flex flex-col">
-        <div className="bg-white px-6 py-3 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSubmit}
-              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md border border-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5 text-slate-600" />
-              <span>Save</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-slate-400">
-            <button className="p-1 hover:text-slate-600 transition-colors cursor-pointer" title="Share">
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button onClick={onClose} className="p-1 hover:text-slate-600 transition-colors cursor-pointer" title="Close">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
+      icon={<span className="font-bold text-base">≡</span>}
+      title="New List"
+      description="Configure custom query, display format, and visibility preferences"
+      headerActions={
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b85e44] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Save</span>
+          </button>
+          <button
+            type="button"
+            className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer rounded-lg hover:bg-slate-100"
+            title="Share"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+      }
+    >
+      <div>
+        <div className="px-6 pt-3 pb-0 border-b border-slate-200 bg-white">
+          <SegmentedTabs
+            tabs={[
+              { id: 'details', label: 'Details' },
+              { id: 'filters', label: 'Filters' },
+            ]}
+            activeTab={activeTab}
+            onChange={(tabId) => setActiveTab(tabId as 'details' | 'filters')}
+            variant="underline"
+            theme="terracotta"
+            ariaLabel="List view tabs"
+          />
         </div>
 
-        <div className="bg-white px-6 pt-3 pb-0 border-b border-slate-200 shrink-0">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold">
-              ≡
-            </div>
-            <h2 className="text-xl font-bold text-slate-900">New List</h2>
-          </div>
-
-          <div className="flex items-center gap-6 border-b border-slate-200">
-            <button
-              onClick={() => setActiveTab('details')}
-              className={`pb-2.5 text-xs font-bold transition-colors relative cursor-pointer ${
-                activeTab === 'details' ? 'text-sky-600' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Details
-              {activeTab === 'details' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('filters')}
-              className={`pb-2.5 text-xs font-bold transition-colors relative cursor-pointer ${
-                activeTab === 'filters' ? 'text-sky-600' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Filters
-              {activeTab === 'filters' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-600 rounded-full" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 overflow-y-auto flex-1 bg-white space-y-5 text-xs text-slate-700">
+        <div className="p-6 bg-white space-y-5 text-xs text-slate-700">
           {activeTab === 'details' ? (
             <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
               <div>
@@ -243,6 +230,6 @@ export const NewListModal: React.FC<NewListModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 };

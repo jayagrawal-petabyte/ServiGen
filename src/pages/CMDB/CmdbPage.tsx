@@ -40,6 +40,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { SegmentedTabs, FilterToolbar } from '../../components/shared';
 
 interface CmdbPageProps {
   configurationItems?: ConfigurationItem[];
@@ -417,21 +418,12 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         </div>
 
         {/* Search, Filter Toolbar & View Switcher */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col gap-3">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-            {/* Live Search input */}
-            <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tag, name, IP, site, OS..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C96F55]/50"
-              />
-            </div>
-
-            {/* Quick dropdown filters */}
+        <FilterToolbar
+          search={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search tag, name, IP, site, OS..."
+          searchClassName="!w-full md:!w-80"
+          filters={
             <div className="flex items-center gap-3 w-full md:w-auto flex-wrap justify-between md:justify-end">
               {/* Status filter */}
               <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
@@ -480,48 +472,25 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                   <option value="expired">Expired Only</option>
                 </select>
               </div>
-
-              {/* View Switcher: Flat View | Category View | Dependency Tree */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                <button
-                  onClick={() => setViewGrouping('all')}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                    viewGrouping === 'all'
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Flat View</span>
-                </button>
-                <button
-                  onClick={() => setViewGrouping('grouped')}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                    viewGrouping === 'grouped'
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Category View</span>
-                </button>
-                <button
-                  onClick={() => setViewGrouping('topology')}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                    viewGrouping === 'topology'
-                      ? 'bg-white text-[#C96F55] shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <GitBranch className="w-3.5 h-3.5" />
-                  <span>Dependency Tree</span>
-                </button>
-              </div>
             </div>
-          </div>
-
+          }
+          actions={
+            <SegmentedTabs<'all' | 'grouped' | 'topology'>
+              variant="boxed"
+              theme="navy"
+              size="sm"
+              tabs={[
+                { id: 'all', label: 'Flat View', icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+                { id: 'grouped', label: 'Category View', icon: <Layers className="w-3.5 h-3.5" /> },
+                { id: 'topology', label: 'Dependency Tree', icon: <GitBranch className="w-3.5 h-3.5" /> },
+              ]}
+              activeTab={viewGrouping}
+              onChange={(view) => setViewGrouping(view)}
+            />
+          }
+        >
           {/* Interactive Type Filter Pills with Live Item Counts */}
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto text-xs pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto text-xs pb-1">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
               <Filter className="w-3 h-3" /> Filter Type:
             </span>
@@ -629,7 +598,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               </span>
             </button>
           </div>
-        </div>
+        </FilterToolbar>
 
         {error && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs">

@@ -3,6 +3,7 @@ import { approvalsApi } from './services/approvalsApi';
 import ApprovalCard, { type Approval } from './ApprovalCard';
 import ApprovalDetailsModal from './ApprovalDetailsModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { SegmentedTabs, FilterToolbar } from '../../components/shared';
 import './approvals.css';
 
 interface Toast {
@@ -356,86 +357,25 @@ export default function ApprovalsPage() {
 
         {/* Filter Subbar (Tabs & Search) */}
         <div className="approvals-subbar">
-          <div className="approval-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === 'pending'}
-              className={`approval-tab ${currentTab === 'pending' ? 'active' : ''}`}
-              onClick={() => setCurrentTab('pending')}
-            >
-              <span>Pending</span>
-              <span className="approval-tab-badge">{counts.pending}</span>
-            </button>
+          <SegmentedTabs<TabType>
+            variant="boxed"
+            tabs={[
+              { id: 'pending', label: 'Pending', count: counts.pending },
+              { id: 'approved', label: 'Approved', count: counts.approved },
+              { id: 'rejected', label: 'Rejected', count: counts.rejected },
+              { id: 'all', label: 'All History', count: counts.all },
+            ]}
+            activeTab={currentTab}
+            onChange={(tab) => setCurrentTab(tab)}
+          />
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === 'approved'}
-              className={`approval-tab ${currentTab === 'approved' ? 'active' : ''}`}
-              onClick={() => setCurrentTab('approved')}
-            >
-              <span>Approved</span>
-              <span className="approval-tab-badge">{counts.approved}</span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === 'rejected'}
-              className={`approval-tab ${currentTab === 'rejected' ? 'active' : ''}`}
-              onClick={() => setCurrentTab('rejected')}
-            >
-              <span>Rejected</span>
-              <span className="approval-tab-badge">{counts.rejected}</span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={currentTab === 'all'}
-              className={`approval-tab ${currentTab === 'all' ? 'active' : ''}`}
-              onClick={() => setCurrentTab('all')}
-            >
-              <span>All History</span>
-              <span className="approval-tab-badge">{counts.all}</span>
-            </button>
-          </div>
-
-          <div className="approvals-search-box">
-            <svg
-              className="approvals-search-icon"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              className="approvals-search-input"
-              placeholder="Search by ticket #, requester, title..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="approvals-search-clear"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
-          </div>
+          <FilterToolbar
+            className="!p-0 !bg-transparent !border-0 !shadow-none !rounded-none"
+            search={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search by ticket #, requester, title..."
+            searchClassName="!w-full sm:!w-72"
+          />
         </div>
 
         {/* Loading Skeletons */}

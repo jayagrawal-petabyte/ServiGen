@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import type {
   ConfigurationItem,
   CiRelationship,
@@ -8,6 +7,7 @@ import type {
   CiLifecycleState,
 } from '../../types/cmdb';
 import { StatusBadge } from '../../components/shared/StatusBadge';
+import { ModalShell } from '../../components/shared/ModalShell';
 import { getCiStatusVariant } from '../../utils/statusUtils';
 import {
   updateConfigurationItem,
@@ -284,62 +284,57 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none"
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col"
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70 rounded-t-3xl">
-          <div className="flex items-center gap-3.5">
-            <div className="p-3 bg-white border border-slate-200 rounded-2xl shadow-xs">
-              {getCiIcon(currentCi.type)}
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-xs font-mono font-extrabold text-[#C96F55]">{currentCi.tag}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
-                  {currentCi.type}
+    <ModalShell
+      isOpen={Boolean(ci)}
+      onClose={onClose}
+      size="xl"
+      icon={getCiIcon(currentCi.type)}
+      title={
+        <div>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-xs font-mono font-extrabold text-[#C96F55]">{currentCi.tag}</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+              {currentCi.type}
+            </span>
+            <StatusBadge label={currentCi.status} variant={getCiStatusVariant(currentCi.status)} />
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFF9F5] text-[#263B5E] border border-[#ebdcd3]">
+              {currentCi.lifecycleState || 'Deployed'}
+            </span>
+            {currentCi.criticality && (
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                {currentCi.criticality}
+              </span>
+            )}
+            {(() => {
+              const wInfo = getWarrantyInfo(currentCi.warrantyExpiry || currentCi.specifications?.warrantyExpiry);
+              if (!wInfo) return null;
+              return (
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold border flex items-center gap-1 ${wInfo.badgeClass}`}>
+                  <ShieldCheck className="w-3 h-3" />
+                  {wInfo.label}
                 </span>
-                <StatusBadge label={currentCi.status} variant={getCiStatusVariant(currentCi.status)} />
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFF9F5] text-[#263B5E] border border-[#ebdcd3]">
-                  {currentCi.lifecycleState || 'Deployed'}
-                </span>
-                {currentCi.criticality && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                    {currentCi.criticality}
-                  </span>
-                )}
-                {(() => {
-                  const wInfo = getWarrantyInfo(currentCi.warrantyExpiry || currentCi.specifications?.warrantyExpiry);
-                  if (!wInfo) return null;
-                  return (
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold border flex items-center gap-1 ${wInfo.badgeClass}`}>
-                      <ShieldCheck className="w-3 h-3" />
-                      {wInfo.label}
-                    </span>
-                  );
-                })()}
-              </div>
-              <h2 className="text-xl font-bold text-slate-900 leading-tight">{currentCi.name}</h2>
-            </div>
+              );
+            })()}
           </div>
+          <div className="text-xl font-bold text-slate-900 leading-tight">{currentCi.name}</div>
+        </div>
+      }
+      footer={
+        <div className="w-full flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Asset Tag: <strong className="font-mono text-slate-800">{currentCi.tag}</strong>
+          </span>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
+            className="px-4 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 font-bold text-slate-700 cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            Close
           </button>
         </div>
-
+      }
+    >
+      <div>
         {/* Feedback message banner */}
         {actionMessage && (
           <div
@@ -984,21 +979,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             </div>
           )}
         </div>
-
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-3xl text-xs text-slate-500">
-          <span>
-            Asset Tag: <strong className="font-mono text-slate-800">{currentCi.tag}</strong>
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 font-bold text-slate-700 cursor-pointer"
-          >
-            Close
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </ModalShell>
   );
 };

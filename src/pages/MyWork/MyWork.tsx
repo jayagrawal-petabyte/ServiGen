@@ -13,6 +13,7 @@ import {
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 import { StatusPill } from "../../components/shared/StatusBadge";
+import { SegmentedTabs, FilterToolbar } from "../../components/shared";
 
 export type Ticket = MyWorkTicket;
 
@@ -607,63 +608,39 @@ export default function MyWork() {
               </div>
             </header>
 
-            <div className="mb-4 border-b border-slate-200">
-              <div className="flex gap-6">
-              {STATUS_TABS.map((status) => {
-                const count = allTickets.filter(
-                  (ticket) => ticket.status === status
-                ).length;
-
-                const isActive = activeTab === status;
-
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => setActiveTab(status)}
-                    className={
-                      "border-b-2 px-1 pb-3 text-sm font-medium transition " +
-                      (isActive
-                        ? "border-slate-900 text-slate-900"
-                        : "border-transparent text-slate-500 hover:text-slate-800")
-                    }
-                  >
-                    {status}
-
-                    <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={query}
-                onChange={handleSearchChange}
-                placeholder="Search by ticket ID, organisation, or summary"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            <div className="mb-4">
+              <SegmentedTabs<TicketStatus>
+                variant="underline"
+                tabs={STATUS_TABS.map((status) => ({
+                  id: status,
+                  label: status,
+                  count: allTickets.filter((ticket) => ticket.status === status).length,
+                }))}
+                activeTab={activeTab}
+                onChange={(status) => setActiveTab(status)}
               />
             </div>
 
-            <select
-              value={priorityFilter}
-              onChange={handlePriorityChange}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="All">All priorities</option>
-
-              {PRIORITY_ORDER.map((priority) => (
-                <option key={priority} value={priority}>
-                  {priority}
-                </option>
-              ))}
-            </select>
-          </div>
+            <FilterToolbar
+              className="mb-4"
+              search={query}
+              onSearchChange={setQuery}
+              searchPlaceholder="Search by ticket ID, organisation, or summary"
+              filters={
+                <select
+                  value={priorityFilter}
+                  onChange={handlePriorityChange}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                >
+                  <option value="All">All priorities</option>
+                  {PRIORITY_ORDER.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {priority}
+                    </option>
+                  ))}
+                </select>
+              }
+            />
 
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="min-w-full divide-y divide-slate-200 text-sm">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { Sliders, Play, X, BarChart3, PieChart, Table as TableIcon, Sparkles } from 'lucide-react';
+import { Sliders, Play, BarChart3, PieChart, Table as TableIcon, Sparkles } from 'lucide-react';
+import { ModalShell } from '../../components/shared/ModalShell';
 
 export interface CustomQueryConfig {
   title: string;
@@ -43,35 +43,16 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed inset-0 m-auto bg-white rounded-2xl shadow-2xl border border-[#ebdcd3] w-[95vw] max-w-2xl h-fit max-h-[90vh] z-50 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="bg-[#FAF7F5] px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-lg">
-                <Sliders className="w-4 h-4" />
-              </span>
-              <div>
-                <Dialog.Title className="text-base font-bold text-slate-900">
-                  No-Code Custom Report &amp; Query Builder
-                </Dialog.Title>
-                <Dialog.Description className="text-xs text-slate-500">
-                  Build custom ad-hoc cross-cutting reports across ITIL modules without writing SQL.
-                </Dialog.Description>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleRun} className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700">
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      icon={<Sliders className="w-4 h-4" />}
+      title="No-Code Custom Report & Query Builder"
+      description="Build custom ad-hoc cross-cutting reports across ITIL modules without writing SQL."
+    >
+      {/* Form */}
+      <form onSubmit={handleRun} className="p-6 space-y-5 text-xs text-slate-700">
             {/* Report Title */}
             <div>
               <label className="block text-slate-700 font-bold mb-1">Report Name *</label>
@@ -208,9 +189,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               </button>
             </div>
           </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </ModalShell>
   );
 };
 

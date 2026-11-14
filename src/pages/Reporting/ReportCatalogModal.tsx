@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { Search, Sparkles, Clock, ArrowRight, BarChart3, CheckCircle2, ShieldAlert, Database, Layers, X } from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, BarChart3, CheckCircle2, ShieldAlert, Database, Layers } from 'lucide-react';
 import { PRE_BUILT_REPORTS, PreBuiltReportItem } from './reportCatalog.data';
+import { ModalShell } from '../../components/shared/ModalShell';
+import { FilterToolbar } from '../../components/shared/FilterToolbar';
+import { SegmentedTabs } from '../../components/shared/SegmentedTabs';
 
 interface ReportCatalogModalProps {
   isOpen: boolean;
@@ -63,102 +65,69 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed inset-0 m-auto bg-[#FFF9F5] rounded-2xl shadow-2xl border border-[#ebdcd3] w-[95vw] max-w-4xl h-fit max-h-[88vh] z-50 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="bg-white px-6 py-4 border-b border-[#ebdcd3] flex items-center justify-between shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-lg">
-                  <Sparkles className="w-4 h-4" />
-                </span>
-                <Dialog.Title className="text-base font-bold text-slate-900">
-                  ITIL Pre-Built Reports Catalog
-                </Dialog.Title>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                  {PRE_BUILT_REPORTS.length} Templates
-                </span>
-              </div>
-              <Dialog.Description className="text-xs text-slate-500 mt-1">
-                Browse standardized Halo-compliant ITIL reports across Incidents, SLAs, Agents, Changes, and CMDB.
-              </Dialog.Description>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
+      icon={<Sparkles className="w-4 h-4" />}
+      title="ITIL Pre-Built Reports Catalog"
+      description="Browse standardized Halo-compliant ITIL reports across Incidents, SLAs, Agents, Changes, and CMDB."
+      headerActions={
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+          {PRE_BUILT_REPORTS.length} Templates
+        </span>
+      }
+      footer={
+        <div className="w-full flex items-center justify-between text-xs text-slate-500">
+          <span>
+            💡 <em>Select any report to load its live dataset, KPI cards, and exportable grid.</em>
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Close Catalog
+          </button>
+        </div>
+      }
+    >
+      <div>
+        {/* Search & Category Filter Bar */}
+        <div className="px-6 py-3 border-b border-[#ebdcd3] bg-white">
+          <FilterToolbar
+            search={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search report titles, descriptions, metrics..."
+            resultCount={filteredReports.length}
+            totalCount={PRE_BUILT_REPORTS.length}
+            countLabel={`Showing ${filteredReports.length} of ${PRE_BUILT_REPORTS.length} reports`}
+            className="border-0 p-0 shadow-none"
+          />
+        </div>
 
-          {/* Search & Category Filter Bar */}
-          <div className="bg-white px-6 py-3 border-b border-[#ebdcd3] shrink-0 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search report titles, descriptions, metrics..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-[#ebdcd3] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C96F55] focus:bg-white text-slate-800"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+        {/* Category Pills Bar */}
+        <div className="px-6 py-2.5 bg-slate-100/70 border-b border-[#ebdcd3]">
+          <SegmentedTabs
+            tabs={[
+              { id: 'all', label: 'All Reports', count: categoryCounts['all'] },
+              { id: 'incidents', label: 'Incidents', count: categoryCounts['incidents'] },
+              { id: 'sla', label: 'SLA & OLA', count: categoryCounts['sla'] },
+              { id: 'agents', label: 'Agents & Workload', count: categoryCounts['agents'] },
+              { id: 'changes', label: 'Changes & CAB', count: categoryCounts['changes'] },
+              { id: 'cmdb', label: 'CMDB & Assets', count: categoryCounts['cmdb'] },
+              { id: 'requests', label: 'Service Catalog', count: categoryCounts['requests'] },
+            ]}
+            activeTab={selectedCategory}
+            onChange={(tabId) => setSelectedCategory(tabId as CategoryTab)}
+            variant="pill"
+            theme="terracotta"
+            ariaLabel="Report categories"
+          />
+        </div>
 
-            {/* Quick Count Badge */}
-            <span className="text-xs text-slate-500 self-center">
-              Showing <strong>{filteredReports.length}</strong> of {PRE_BUILT_REPORTS.length} reports
-            </span>
-          </div>
-
-          {/* Category Pills Bar */}
-          <div className="px-6 py-2.5 bg-slate-100/70 border-b border-[#ebdcd3] flex items-center gap-1.5 overflow-x-auto shrink-0">
-            {[
-              { id: 'all', label: 'All Reports' },
-              { id: 'incidents', label: 'Incidents' },
-              { id: 'sla', label: 'SLA & OLA' },
-              { id: 'agents', label: 'Agents & Workload' },
-              { id: 'changes', label: 'Changes & CAB' },
-              { id: 'cmdb', label: 'CMDB & Assets' },
-              { id: 'requests', label: 'Service Catalog' },
-            ].map((tab) => {
-              const isSelected = selectedCategory === tab.id;
-              const count = categoryCounts[tab.id] || 0;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedCategory(tab.id as CategoryTab)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#C96F55] text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-200/80 border border-[#ebdcd3]/60'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Report Cards Grid */}
-          <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Report Cards Grid */}
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredReports.length === 0 ? (
               <div className="col-span-full py-16 text-center text-slate-400">
                 <BarChart3 className="w-10 h-10 mx-auto text-slate-300 mb-2" />
@@ -231,22 +200,8 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
               })
             )}
           </div>
-
-          {/* Modal Footer */}
-          <div className="bg-white px-6 py-3 border-t border-[#ebdcd3] flex items-center justify-between text-xs text-slate-500 shrink-0">
-            <span>
-              💡 <em>Select any report to load its live dataset, KPI cards, and exportable grid.</em>
-            </span>
-            <button
-              onClick={onClose}
-              className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors cursor-pointer"
-            >
-              Close Catalog
-            </button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </div>
+    </ModalShell>
   );
 };
 

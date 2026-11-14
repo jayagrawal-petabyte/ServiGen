@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import type { ChangeRequest, ChangeType, RiskLevel, ImpactLevel } from '../../types/cmdb';
-import { X, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../Auth/AuthContext';
+import { ModalShell } from '../../components/shared/ModalShell';
 
 interface CreateChangeModalProps {
   isOpen: boolean;
@@ -122,36 +122,15 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none"
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      icon={<Plus className="w-5 h-5" />}
+      title="Create Change Request"
+      description="Plan and submit a change request for review and scheduling."
     >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col"
-      >
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-3xl">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#C96F55]/10 flex items-center justify-center text-[#C96F55]">
-              <Plus className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Create Change Request</h2>
-              <p className="text-xs text-slate-500">Plan and submit a change request for review and scheduling.</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="p-6">
 
         {validationError && (
           <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs">
@@ -393,7 +372,7 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
             </button>
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </ModalShell>
   );
 };

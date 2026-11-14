@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ModalShell } from '../../components/shared';
 import type { Approval } from './ApprovalCard';
 
 interface ApprovalDetailsModalProps {
@@ -72,88 +73,98 @@ export default function ApprovalDetailsModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div
-        className="modal-content"
-        style={{
-          width: '92%',
-          maxWidth: '680px',
-          maxHeight: 'calc(100vh - 40px)',
-          backgroundColor: '#ffffff',
-          borderRadius: '18px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #f0ede8',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Sticky Modal Header (Bug 3 Requirement 6) */}
-        <div
-          className="modal-header"
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #f1f5f9',
-            flexShrink: 0,
-            padding: '20px 28px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Approval Request Details
-            </span>
-
-            <h2 style={{ marginTop: '2px', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-              {approval.ticketNumber} - {approval.title}
-            </h2>
-          </div>
-
+    <ModalShell
+      isOpen={Boolean(approval)}
+      onClose={onClose}
+      size="lg"
+      description="Approval Request Details"
+      title={`${approval.ticketNumber} - ${approval.title}`}
+      footer={
+        <div className="flex items-center justify-end gap-3 w-full">
           <button
-            className="btn-close-modal"
-            onClick={onClose}
             type="button"
-            aria-label="Close details"
+            className="btn-approval-action"
+            onClick={onClose}
+            disabled={isSubmitting}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            Cancel
           </button>
-        </div>
 
-        {/* Vertically Scrollable Modal Body (Bug 3 Requirements 4 & 5) */}
-        <div
-          className="modal-body"
-          style={{
-            flex: '1 1 auto',
-            minHeight: 0,
-            overflowY: 'auto',
-            padding: '24px 28px',
-          }}
-        >
+          {approval.status === 'pending' && (
+            <>
+              {showRejectInput ? (
+                <button
+                  type="button"
+                  onClick={handleConfirmReject}
+                  disabled={isSubmitting || !isReasonValid}
+                  title={
+                    !isReasonValid
+                      ? 'Please enter a valid rejection reason (min 5 characters) to enable rejection'
+                      : 'Confirm and reject request'
+                  }
+                  style={{
+                    backgroundColor: !isReasonValid ? '#f87171' : '#dc2626',
+                    color: 'white',
+                    padding: '8px 18px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    border: 'none',
+                    opacity: isSubmitting || !isReasonValid ? 0.6 : 1,
+                    cursor: !isReasonValid || isSubmitting ? 'not-allowed' : 'pointer',
+                    boxShadow: isReasonValid ? '0 2px 6px rgba(220, 38, 38, 0.3)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectInput(true);
+                    setTouched(true);
+                  }}
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    padding: '8px 16px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Reject Request
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleConfirmApprove}
+                disabled={isSubmitting}
+                style={{
+                  backgroundColor: '#16a34a',
+                  color: 'white',
+                  padding: '8px 18px',
+                  borderRadius: '999px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  border: 'none',
+                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
+              >
+                {isSubmitting ? 'Approving...' : 'Approve Request'}
+              </button>
+            </>
+          )}
+        </div>
+      }
+    >
           {/* Status Badge Row */}
           <div
             style={{
@@ -559,108 +570,6 @@ export default function ApprovalDetailsModal({
               )}
             </div>
           )}
-        </div>
-
-        {/* Sticky Modal Footer (Bug 3 Requirements 6 & 7) */}
-        <div
-          className="modal-footer"
-          style={{
-            position: 'sticky',
-            bottom: 0,
-            zIndex: 10,
-            backgroundColor: '#fbf9f6',
-            borderTop: '1px solid #f1f5f9',
-            flexShrink: 0,
-            padding: '16px 28px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
-          <button
-            type="button"
-            className="btn-approval-action"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
-
-          {approval.status === 'pending' && (
-            <>
-              {showRejectInput ? (
-                <button
-                  type="button"
-                  onClick={handleConfirmReject}
-                  disabled={isSubmitting || !isReasonValid}
-                  title={
-                    !isReasonValid
-                      ? 'Please enter a valid rejection reason (min 5 characters) to enable rejection'
-                      : 'Confirm and reject request'
-                  }
-                  style={{
-                    backgroundColor: !isReasonValid ? '#f87171' : '#dc2626',
-                    color: 'white',
-                    padding: '8px 18px',
-                    borderRadius: '999px',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    border: 'none',
-                    opacity: isSubmitting || !isReasonValid ? 0.6 : 1,
-                    cursor: !isReasonValid || isSubmitting ? 'not-allowed' : 'pointer',
-                    boxShadow: isReasonValid ? '0 2px 6px rgba(220, 38, 38, 0.3)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowRejectInput(true);
-                    setTouched(true);
-                  }}
-                  disabled={isSubmitting}
-                  style={{
-                    backgroundColor: '#fef2f2',
-                    color: '#dc2626',
-                    border: '1px solid #fecaca',
-                    padding: '8px 16px',
-                    borderRadius: '999px',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  Reject Request
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleConfirmApprove}
-                disabled={isSubmitting}
-                style={{
-                  backgroundColor: '#16a34a',
-                  color: 'white',
-                  padding: '8px 18px',
-                  borderRadius: '999px',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  border: 'none',
-                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  opacity: isSubmitting ? 0.7 : 1,
-                }}
-              >
-                {isSubmitting ? 'Approving...' : 'Approve Request'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

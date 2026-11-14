@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { SegmentedTabs, FilterToolbar } from '../../components/shared';
 import {
   contractsService,
   ContractItem,
@@ -266,54 +267,40 @@ export const ContractsPage: React.FC = () => {
         )}
 
         {/* Filters & Search Toolbar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Quick status tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-            {['All', 'Active', 'Pending Renewal', 'Expired'].map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  statusFilter === st
-                    ? 'bg-[#C96F55] text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                }`}
-              >
-                {st}
-                {st === 'All' && ` (${contracts.length})`}
-                {st === 'Active' && ` (${contracts.filter((c) => c.status === 'Active').length})`}
-                {st === 'Pending Renewal' && ` (${contracts.filter((c) => c.status === 'Pending Renewal').length})`}
-                {st === 'Expired' && ` (${contracts.filter((c) => c.status === 'Expired').length})`}
-              </button>
-            ))}
-          </div>
-
-          {/* Search & Type filter */}
-          <div className="flex items-center gap-2.5">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search vendor or agreement..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 w-52 text-slate-800"
+        <FilterToolbar
+          search={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search vendor or agreement..."
+          searchClassName="!w-52"
+          filters={
+            <div className="flex flex-wrap items-center gap-2.5">
+              <SegmentedTabs
+                variant="boxed"
+                theme="terracotta"
+                size="sm"
+                tabs={[
+                  { id: 'All', label: 'All', count: contracts.length },
+                  { id: 'Active', label: 'Active', count: contracts.filter((c) => c.status === 'Active').length },
+                  { id: 'Pending Renewal', label: 'Pending Renewal', count: contracts.filter((c) => c.status === 'Pending Renewal').length },
+                  { id: 'Expired', label: 'Expired', count: contracts.filter((c) => c.status === 'Expired').length },
+                ]}
+                activeTab={statusFilter}
+                onChange={(st) => setStatusFilter(st)}
               />
-            </div>
 
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#C96F55] cursor-pointer"
-            >
-              <option value="All">All Types</option>
-              {CONTRACT_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#C96F55] cursor-pointer"
+              >
+                <option value="All">All Types</option>
+                {CONTRACT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          }
+        />
 
         {/* Contracts Grid / Cards */}
         {isLoading ? (

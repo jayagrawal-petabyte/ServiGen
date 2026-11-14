@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import type { ConfigurationItem, CiType, CiStatus, CiLifecycleState } from '../../types/cmdb';
+import { ModalShell } from '../../components/shared/ModalShell';
 import {
   X,
   Plus,
@@ -245,40 +245,15 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none overflow-y-auto"
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      icon={<Server className="w-5 h-5" />}
+      title="Register Configuration Item (CI)"
+      description="Form dynamically adapts specifications according to selected CI category"
     >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 shadow-2xl flex flex-col my-auto"
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 rounded-t-3xl sticky top-0 z-20 backdrop-blur-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-[#C96F55]/10 text-[#C96F55] rounded-xl border border-[#C96F55]/20">
-              <Server className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Register Configuration Item (CI)</h2>
-              <p className="text-xs text-slate-500">
-                Form dynamically adapts specifications according to selected CI category
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
+      <div>
         {validationError && (
           <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -906,7 +881,7 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
             </button>
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+      </div>
+    </ModalShell>
   );
 };

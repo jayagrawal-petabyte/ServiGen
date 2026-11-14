@@ -15,6 +15,7 @@ import {
   MOCK_MY_WORK_TICKETS,
 } from '../../services/fallback/mockData';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { MetricCard } from '../../components/shared';
 
 interface RecentTicketRow {
   id: string;
@@ -505,83 +506,63 @@ export default function Dashboard() {
 
         {/* 3. 4 KPI STAT TILES */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Tile 1: Open Tickets */}
-          <div
+          <MetricCard
+            layout="horizontal"
             onClick={() => navigate('/incidents')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center text-[#C96F55] flex-shrink-0">
+            iconContainerClassName="!rounded-full bg-[#E0F2FE] text-[#C96F55]"
+            icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-6l-2 3h-4l-2-3H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7Z" />
                 <path d="M5.45 5.11 2 12v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
               </svg>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.openIncidents != null ? kpis.openIncidents : (summary?.tickets?.active != null ? summary.tickets.active : (kpisError ? '—' : statusCounts.open))}
-              </div>
-              <div className="text-xs text-gray-500 font-medium mt-1.5">Open Tickets</div>
-            </div>
-          </div>
+            }
+            value={kpis?.openIncidents != null ? kpis.openIncidents : (summary?.tickets?.active != null ? summary.tickets.active : (kpisError ? '—' : statusCounts.open))}
+            label="Open Tickets"
+          />
 
-          {/* Tile 2: Resolved Tickets */}
-          <div
+          <MetricCard
+            layout="horizontal"
             onClick={() => navigate('/incidents')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[#16A34A] flex-shrink-0">
+            iconContainerClassName="!rounded-full bg-[#DCFCE7] text-[#16A34A]"
+            icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.resolvedIncidents != null ? kpis.resolvedIncidents : (summary?.tickets?.actioned != null ? summary.tickets.actioned : (kpisError ? '—' : statusCounts.resolved))}
-              </div>
-              <div className="text-xs text-gray-500 font-medium mt-1.5">Resolved Tickets</div>
-            </div>
-          </div>
+            }
+            value={kpis?.resolvedIncidents != null ? kpis.resolvedIncidents : (summary?.tickets?.actioned != null ? summary.tickets.actioned : (kpisError ? '—' : statusCounts.resolved))}
+            label="Resolved Tickets"
+          />
 
-          {/* Tile 3: Pending Approvals */}
-          <div
+          <MetricCard
+            layout="horizontal"
             onClick={() => navigate('/approvals')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#FFEDD5] flex items-center justify-center text-[#EA580C] flex-shrink-0">
+            iconContainerClassName="!rounded-full bg-[#FFEDD5] text-[#EA580C]"
+            icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.pendingApprovals != null ? kpis.pendingApprovals : (pendingApprovalsCount != null ? pendingApprovalsCount : (summary?.approvals?.pending != null ? summary.approvals.pending : (kpisError ? '—' : '—')))}
-              </div>
-              <div className="text-xs text-gray-500 font-medium mt-1.5">Pending Approvals</div>
-            </div>
-          </div>
+            }
+            value={kpis?.pendingApprovals != null ? kpis.pendingApprovals : (pendingApprovalsCount != null ? pendingApprovalsCount : (summary?.approvals?.pending != null ? summary.approvals.pending : (kpisError ? '—' : '—')))}
+            label="Pending Approvals"
+          />
 
-          {/* Tile 4: My Assignments */}
-          <div
+          <MetricCard
+            layout="horizontal"
             onClick={() => navigate('/my-work')}
-            className="bg-white border border-[#EFEAE4] rounded-xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9333EA] flex-shrink-0">
+            iconContainerClassName="!rounded-full bg-[#F3E8FF] text-[#9333EA]"
+            icon={
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 leading-none">
-                {kpis?.myAssignments != null ? kpis.myAssignments : (myAssignmentsCount != null ? myAssignmentsCount : (summary?.assignments?.total != null ? summary.assignments.total : (kpisError ? '—' : '—')))}
-              </div>
-              <div className="text-xs text-gray-500 font-medium mt-1.5">My Assignments</div>
-            </div>
-          </div>
+            }
+            value={kpis?.myAssignments != null ? kpis.myAssignments : (myAssignmentsCount != null ? myAssignmentsCount : (summary?.assignments?.total != null ? summary.assignments.total : (kpisError ? '—' : '—')))}
+            label="My Assignments"
+          />
         </section>
 
         {/* 4. MIDDLE ROW: TICKETS BY STATUS + RECENT TICKETS */}

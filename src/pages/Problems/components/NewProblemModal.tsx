@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ProblemItem, ProblemPriority } from '../types/problem.types';
+import { ModalShell } from '../../../components/shared/ModalShell';
 
 interface NewProblemModalProps {
   onClose: () => void;
@@ -32,30 +33,15 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center font-bold text-sm">
-              !
-            </span>
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">Log New Problem Ticket</h2>
-              <p className="text-[11px] text-slate-500">Create a root cause investigation record</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+    <ModalShell
+      isOpen={true}
+      onClose={onClose}
+      size="md"
+      icon={<span className="font-bold text-sm">!</span>}
+      title="Log New Problem Ticket"
+      description="Create a root cause investigation record"
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           <div>
             <label className="block font-semibold text-slate-700 mb-1">
               Summary / Title <span className="text-red-500">*</span>
@@ -170,7 +156,6 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
