@@ -118,7 +118,18 @@ const CmdbIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 13. Contracts: Document agreement icon with folded corner and signature lines
+// 13. Contacts: ID badge / contact notebook with spiral pins at top and person inside
+const ContactsIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5" />
+    <circle cx="12" cy="11.5" r="2.8" />
+    <path d="M7.5 21v-1.8a2.2 2.2 0 0 1 2.2-2.2h4.6a2.2 2.2 0 0 1 2.2 2.2V21" />
+    <line x1="8" y1="2" x2="8" y2="4.5" />
+    <line x1="16" y1="2" x2="16" y2="4.5" />
+  </svg>
+);
+
+// 14. Contracts: Document agreement icon with folded corner and signature lines
 const ContractsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -277,6 +288,13 @@ const NAV_ITEMS: NavItemConfig[] = [
     roles: ['Administrator', 'System Manager'],
   },
   {
+    to: '/contacts',
+    label: 'Contacts',
+    icon: ContactsIcon,
+    matchActive: (path) => path.startsWith('/contacts'),
+    roles: ['Administrator', 'System Manager'],
+  },
+  {
     to: '/cmdb',
     label: 'CMDB',
     icon: CmdbIcon,
@@ -287,7 +305,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     to: '/contracts',
     label: 'Contracts',
     icon: ContractsIcon,
-    matchActive: (path) => path.startsWith('/contracts') || path.startsWith('/contacts'),
+    matchActive: (path) => path.startsWith('/contracts'),
   },
   {
     to: '/approvals',
@@ -337,7 +355,7 @@ const PREFETCH_MAP: Record<string, () => Promise<any>> = {
   '/calendar': () => import('../../pages/Calendar/CalendarPage'),
   '/organisations': () => import('../../pages/Auth'),
   '/cmdb': () => import('../../pages/CMDB/CmdbPage'),
-  '/contracts': () => import('../../pages/Auth'),
+  '/contracts': () => import('../../pages/Contracts/ContractsPage'),
   '/contacts': () => import('../../pages/Auth'),
   '/approvals': () => import('../../pages/Approvals/ApprovalsPage'),
   '/reporting': () => import('../../pages/Reporting/IncidentsByCategoryReport'),
