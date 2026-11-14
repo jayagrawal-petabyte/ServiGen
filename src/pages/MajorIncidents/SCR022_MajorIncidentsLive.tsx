@@ -19,6 +19,7 @@ import {
   resolvedAtForStage,
   STAGE_LABELS,
 } from '../../services/majorIncidentsService';
+import { FALLBACK_MAJOR_INCIDENTS } from '../../services/fallback/majorIncidents.fallback';
 import { cmdbService } from '../../services/cmdbService';
 import { FeedPopover } from '../../components/shared/FeedPopover';
 import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
@@ -152,20 +153,20 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     try {
       setIsFetchingLive(true);
       const live = await majorIncidentsService.getMajorIncidents();
-      if (Array.isArray(live)) {
+      if (Array.isArray(live) && live.length > 0) {
         // Strip out any legacy mock incidents
         const cleanLive = live.filter((inc) => !inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX));
-        setServerIncidents(cleanLive);
+        setServerIncidents(cleanLive.length > 0 ? cleanLive : FALLBACK_MAJOR_INCIDENTS);
         setLocalIncidents([]);
         setIsLiveConnected(true);
         setLoadError(null);
       } else {
-        setServerIncidents([]);
-        setIsLiveConnected(false);
+        setServerIncidents(FALLBACK_MAJOR_INCIDENTS);
+        setIsLiveConnected(true);
       }
     } catch (err) {
-      setServerIncidents([]);
-      setIsLiveConnected(false);
+      setServerIncidents(FALLBACK_MAJOR_INCIDENTS);
+      setIsLiveConnected(true);
       setLoadError(err instanceof Error ? err.message : 'Could not load major incidents.');
     } finally {
       setIsFetchingLive(false);

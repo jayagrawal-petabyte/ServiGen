@@ -25,6 +25,8 @@ import {
   MOCK_ACTIVE_TICKETS,
   MOCK_CLOSED_TICKETS,
   MOCK_CUSTOM_LISTS,
+  MOCK_CONTRACTS,
+  MOCK_PROBLEMS,
 } from './mockData';
 import { STAGE_LABELS, StageLabel } from '../majorIncidents.lifecycle';
 import type { MajorIncident } from '../../pages/MajorIncidents/types/majorIncident.types';
@@ -40,6 +42,9 @@ let mutableActiveTickets: any[] = JSON.parse(JSON.stringify(MOCK_ACTIVE_TICKETS)
 let mutableClosedTickets: any[] = JSON.parse(JSON.stringify(MOCK_CLOSED_TICKETS));
 let mutableCustomLists: any[] = JSON.parse(JSON.stringify(MOCK_CUSTOM_LISTS));
 let mutableConfigItems: any[] = JSON.parse(JSON.stringify(MOCK_CONFIG_ITEMS));
+let mutableProjects: any[] = JSON.parse(JSON.stringify(MOCK_PROJECTS));
+let mutableContracts: any[] = JSON.parse(JSON.stringify(MOCK_CONTRACTS));
+let mutableProblems: any[] = JSON.parse(JSON.stringify(MOCK_PROBLEMS));
 let currentAgentMood = 'Good';
 let currentAgentPresence = 'available';
 
@@ -523,7 +528,86 @@ export function handleOfflineRequest(
 
   // 10. Projects
   if (path === '/api/projects' || path === '/api/projects/active') {
-    return { success: true, data: MOCK_PROJECTS };
+    if (upperMethod === 'POST') {
+      const generatedId = `PRJ-${Math.floor(100 + Math.random() * 900)}`;
+      const newProj = {
+        id: generatedId,
+        projectId: generatedId,
+        name: parsedBody?.name || parsedBody?.title || 'New Project',
+        title: parsedBody?.name || parsedBody?.title || 'New Project',
+        description: parsedBody?.description || '',
+        owner: parsedBody?.owner || 'Alex Rivera',
+        status: parsedBody?.status || 'Active',
+        statusLabel: parsedBody?.status || 'Active',
+        priority: parsedBody?.priority || 'Medium',
+        startDate: parsedBody?.startDate || new Date().toISOString().slice(0, 10),
+        targetDate: parsedBody?.targetDate || parsedBody?.targetEndDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        targetEndDate: parsedBody?.targetDate || parsedBody?.targetEndDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        hoursSpent: 0,
+        hoursBudget: parsedBody?.hoursBudget || 100,
+        completionPercent: 0,
+        tasks: [],
+        subtasks: [],
+      };
+      mutableProjects = [newProj, ...mutableProjects];
+      return { success: true, data: newProj };
+    }
+    return { success: true, data: mutableProjects };
+  }
+
+  const projSubtaskItemMatch = path.match(/^\/api\/projects\/([^/]+)\/subtasks\/([^/]+)$/);
+  if (projSubtaskItemMatch) {
+    const pId = decodeURIComponent(projSubtaskItemMatch[1]);
+    const tId = decodeURIComponent(projSubtaskItemMatch[2]);
+    const p = mutableProjects.find((x: any) => x.id === pId);
+    if (p) {
+      p.tasks = p.tasks || [];
+      const tIdx = p.tasks.findIndex((t: any) => t.id === tId);
+      if (tIdx !== -1) {
+        p.tasks[tIdx] = { ...p.tasks[tIdx], ...parsedBody };
+        return { success: true, data: p.tasks[tIdx] };
+      }
+    }
+    return { success: true, data: { id: tId, ...parsedBody } };
+  }
+
+  const projSubtasksMatch = path.match(/^\/api\/projects\/([^/]+)\/subtasks$/);
+  if (projSubtasksMatch) {
+    const pId = decodeURIComponent(projSubtasksMatch[1]);
+    const p = mutableProjects.find((x: any) => x.id === pId);
+    if (upperMethod === 'POST') {
+      const newTask = {
+        id: `TSK-${Date.now()}`,
+        title: parsedBody?.title || 'New Subtask',
+        assignee: parsedBody?.assignee || 'Unassigned',
+        dueDate: parsedBody?.dueDate || new Date().toISOString().slice(0, 10),
+        done: Boolean(parsedBody?.done),
+      };
+      if (p) {
+        p.tasks = p.tasks || [];
+        p.tasks.push(newTask);
+      }
+      return { success: true, data: newTask };
+    }
+    return { success: true, data: p?.tasks || [] };
+  }
+
+  const singleProjMatch = path.match(/^\/api\/projects\/([^/]+)$/);
+  if (singleProjMatch) {
+    const pId = decodeURIComponent(singleProjMatch[1]);
+    const pIdx = mutableProjects.findIndex((x: any) => x.id === pId);
+    if (upperMethod === 'PATCH') {
+      if (pIdx !== -1) {
+        mutableProjects[pIdx] = {
+          ...mutableProjects[pIdx],
+          ...parsedBody,
+          ...(parsedBody?.name ? { title: parsedBody.name } : {}),
+        };
+        return { success: true, data: mutableProjects[pIdx] };
+      }
+      return { success: true, data: { id: pId, ...parsedBody } };
+    }
+    return { success: true, data: pIdx !== -1 ? mutableProjects[pIdx] : mutableProjects[0] };
   }
 
   // 11. Change Requests
@@ -713,6 +797,343 @@ export function handleOfflineRequest(
       lists: mutableCustomLists,
       items: mutableCustomLists,
     };
+  }
+
+  // 16. Contracts
+  if (path === '/api/contracts' || path === '/api/contracts/expiring-soon') {
+    if (upperMethod === 'POST') {
+      const newContract = {
+        id: `CON-${Math.floor(1000 + Math.random() * 9000)}`,
+        contractNumber: `CON-${Math.floor(1000 + Math.random() * 9000)}`,
+        title: parsedBody?.title || 'New Contract Agreement',
+        vendorName: parsedBody?.vendorName || 'Vendor Solutions',
+        vendorEmail: parsedBody?.vendorEmail || null,
+        type: parsedBody?.type || parsedBody?.contractType || 'SLA',
+        contractType: parsedBody?.type || parsedBody?.contractType || 'SLA',
+        status: parsedBody?.status || 'Draft',
+        startDate: parsedBody?.startDate || new Date().toISOString(),
+        endDate: parsedBody?.endDate || null,
+        renewalDate: parsedBody?.renewalDate || null,
+        autoRenew: Boolean(parsedBody?.autoRenew),
+        value: Number(parsedBody?.contractValue ?? parsedBody?.value ?? 0),
+        contractValue: Number(parsedBody?.contractValue ?? parsedBody?.value ?? 0),
+        currency: parsedBody?.currency || 'USD',
+        notes: parsedBody?.notes || null,
+        organisationId: 'org-001',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        linkedCiIds: Array.isArray(parsedBody?.ciIds) ? parsedBody.ciIds : [],
+      };
+      mutableContracts = [newContract, ...mutableContracts];
+      return { success: true, data: newContract };
+    }
+    return {
+      success: true,
+      data: mutableContracts,
+      contracts: mutableContracts,
+    };
+  }
+
+  const contractLinkedCiDelMatch = path.match(/^\/api\/contracts\/([^/]+)\/linked-cis\/([^/]+)$/);
+  if (contractLinkedCiDelMatch && upperMethod === 'DELETE') {
+    const cId = decodeURIComponent(contractLinkedCiDelMatch[1]);
+    const ciId = decodeURIComponent(contractLinkedCiDelMatch[2]);
+    const c = mutableContracts.find((x: any) => x.id === cId || x.contractNumber === cId);
+    if (c) {
+      c.linkedCiIds = (c.linkedCiIds || []).filter((id: string) => id !== ciId);
+    }
+    return { success: true, message: 'CI unlinked successfully' };
+  }
+
+  const contractLinkedCisMatch = path.match(/^\/api\/contracts\/([^/]+)\/linked-cis$/);
+  if (contractLinkedCisMatch) {
+    const cId = decodeURIComponent(contractLinkedCisMatch[1]);
+    const c = mutableContracts.find((x: any) => x.id === cId || x.contractNumber === cId);
+    if (upperMethod === 'POST') {
+      const ciId = parsedBody?.ciId;
+      if (c && ciId) {
+        c.linkedCiIds = c.linkedCiIds || [];
+        if (!c.linkedCiIds.includes(ciId)) c.linkedCiIds.push(ciId);
+      }
+      return { success: true, data: { ciId, notes: parsedBody?.notes, linkedAt: new Date().toISOString() } };
+    }
+    const ciItems = (c?.linkedCiIds || []).map((id: string) => {
+      const ciMatch = mutableConfigItems.find((x: any) => x.id === id || x.tag === id);
+      return {
+        ciId: id,
+        name: ciMatch?.name || id,
+        category: ciMatch?.type || 'CI',
+        status: ciMatch?.status || 'Active',
+        notes: '',
+        linkedAt: new Date().toISOString(),
+      };
+    });
+    return { success: true, data: ciItems };
+  }
+
+  const singleContractMatch = path.match(/^\/api\/contracts\/([^/]+)$/);
+  if (singleContractMatch) {
+    const cId = decodeURIComponent(singleContractMatch[1]);
+    const cIdx = mutableContracts.findIndex((x: any) => x.id === cId || x.contractNumber === cId);
+    if (upperMethod === 'DELETE') {
+      if (cIdx !== -1) mutableContracts.splice(cIdx, 1);
+      return { success: true, message: 'Contract deleted' };
+    }
+    if (upperMethod === 'PATCH') {
+      if (cIdx !== -1) {
+        mutableContracts[cIdx] = {
+          ...mutableContracts[cIdx],
+          ...parsedBody,
+          updatedAt: new Date().toISOString(),
+        };
+        return { success: true, data: mutableContracts[cIdx] };
+      }
+      return { success: true, data: { id: cId, ...parsedBody } };
+    }
+    return { success: true, data: cIdx !== -1 ? mutableContracts[cIdx] : mutableContracts[0] };
+  }
+
+  // 17. Problems
+  if (path === '/api/problems') {
+    if (upperMethod === 'POST') {
+      const rawNum = Math.floor(1000 + Math.random() * 9000);
+      const generatedId = `PRB-${rawNum}`;
+      const prefixId = `PR-${String(rawNum).padStart(7, '0')}`;
+      const newProb = {
+        id: generatedId,
+        problemNumber: prefixId,
+        prefixId,
+        summary: parsedBody?.summary || 'New Problem',
+        description: parsedBody?.description || '',
+        category: parsedBody?.category || 'General',
+        priority: parsedBody?.priority || 'Medium',
+        urgency: parsedBody?.urgency || 'Medium',
+        impact: parsedBody?.impact || 'Medium',
+        status: parsedBody?.status || 'Open',
+        stage: parsedBody?.stage || 'Investigation',
+        currentStage: parsedBody?.stage || 'Investigation',
+        team: parsedBody?.team || 'Infrastructure',
+        agent: 'Ken Yang',
+        agentInitials: 'KY',
+        causeStatus: parsedBody?.causeStatus || 'Under Investigation',
+        rootCause: parsedBody?.rootCause || null,
+        rootCauseDescription: parsedBody?.rootCause || '',
+        workaround: parsedBody?.workaround || null,
+        workaroundDescription: parsedBody?.workaround || '',
+        knownError: Boolean(parsedBody?.knownError),
+        assignedAgentId: parsedBody?.assignedAgentId || 'agent-001',
+        organisationId: 'org-001',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        linkedIncidentIds: Array.isArray(parsedBody?.incidentIds) ? parsedBody.incidentIds : [],
+        linkedCiIds: Array.isArray(parsedBody?.ciIds) ? parsedBody.ciIds : [],
+        childCis: [],
+        linkedIncidents: [],
+        logs: [
+          {
+            id: `LOG-${Date.now()}`,
+            author: 'System',
+            timestamp: new Date().toLocaleString('en-GB'),
+            type: 'initial',
+            content: parsedBody?.description || 'Problem created',
+          },
+        ],
+        endUser: {
+          name: 'General User',
+          initials: 'GU',
+          organisation: 'consultancy.trial.usehalo.com',
+          site: 'London HQ',
+          phoneNumber: '4644354',
+          preferredNumber: '01449 833111',
+          address: 'Not set',
+        },
+      };
+      mutableProblems = [newProb, ...mutableProblems];
+      return { success: true, data: newProb };
+    }
+    return { success: true, data: mutableProblems, problems: mutableProblems };
+  }
+
+  const probStageMatch = path.match(/^\/api\/problems\/([^/]+)\/stage$/);
+  if (probStageMatch && upperMethod === 'PATCH') {
+    const pId = decodeURIComponent(probStageMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.stage = parsedBody?.stage || p.stage;
+      p.currentStage = parsedBody?.stage || p.currentStage;
+      p.updatedAt = new Date().toISOString();
+      return { success: true, data: p };
+    }
+    return { success: true, data: { id: pId, stage: parsedBody?.stage } };
+  }
+
+  const probReassignMatch = path.match(/^\/api\/problems\/([^/]+)\/reassign$/);
+  if (probReassignMatch && upperMethod === 'PATCH') {
+    const pId = decodeURIComponent(probReassignMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      if (parsedBody?.team) p.team = parsedBody.team;
+      if (parsedBody?.assignedAgentId) p.assignedAgentId = parsedBody.assignedAgentId;
+      p.updatedAt = new Date().toISOString();
+      return { success: true, data: p };
+    }
+    return { success: true, data: { id: pId, ...parsedBody } };
+  }
+
+  const probWorkaroundMatch = path.match(/^\/api\/problems\/([^/]+)\/workaround$/);
+  if (probWorkaroundMatch && upperMethod === 'POST') {
+    const pId = decodeURIComponent(probWorkaroundMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.workaround = parsedBody?.workaround || '';
+      p.workaroundDescription = parsedBody?.workaround || '';
+      p.updatedAt = new Date().toISOString();
+      return { success: true, data: p };
+    }
+    return { success: true, data: { id: pId, workaround: parsedBody?.workaround } };
+  }
+
+  const probCauseMatch = path.match(/^\/api\/problems\/([^/]+)\/cause$/);
+  if (probCauseMatch && upperMethod === 'POST') {
+    const pId = decodeURIComponent(probCauseMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.rootCause = parsedBody?.rootCause || '';
+      p.rootCauseDescription = parsedBody?.rootCause || '';
+      p.causeStatus = parsedBody?.causeStatus || (p.rootCause ? 'Identified' : 'Under Investigation');
+      p.updatedAt = new Date().toISOString();
+      return { success: true, data: p };
+    }
+    return { success: true, data: { id: pId, ...parsedBody } };
+  }
+
+  const probBulkResolveMatch = path.match(/^\/api\/problems\/([^/]+)\/incidents\/bulk-resolve$/);
+  if (probBulkResolveMatch && upperMethod === 'POST') {
+    const pId = decodeURIComponent(probBulkResolveMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    const resolvedIds = p?.linkedIncidentIds || [];
+    return {
+      success: true,
+      problemId: pId,
+      resolvedIncidentCount: resolvedIds.length,
+      resolvedIncidentIds: resolvedIds,
+      resolutionNote: parsedBody?.resolutionNote || 'Resolved via problem',
+    };
+  }
+
+  const probIncidentDelMatch = path.match(/^\/api\/problems\/([^/]+)\/incidents\/([^/]+)$/);
+  if (probIncidentDelMatch && upperMethod === 'DELETE') {
+    const pId = decodeURIComponent(probIncidentDelMatch[1]);
+    const incId = decodeURIComponent(probIncidentDelMatch[2]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.linkedIncidentIds = (p.linkedIncidentIds || []).filter((id: string) => id !== incId);
+      p.linkedIncidents = (p.linkedIncidents || []).filter((inc: any) => inc.id !== incId);
+    }
+    return { success: true, message: 'Incident unlinked' };
+  }
+
+  const probIncidentsMatch = path.match(/^\/api\/problems\/([^/]+)\/incidents$/);
+  if (probIncidentsMatch) {
+    const pId = decodeURIComponent(probIncidentsMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (upperMethod === 'POST') {
+      const incId = parsedBody?.incidentId || (Array.isArray(parsedBody?.incidentIds) ? parsedBody.incidentIds[0] : null);
+      if (p && incId) {
+        p.linkedIncidentIds = p.linkedIncidentIds || [];
+        if (!p.linkedIncidentIds.includes(incId)) p.linkedIncidentIds.push(incId);
+      }
+      return { success: true, data: p?.linkedIncidentIds || [] };
+    }
+    return { success: true, data: p?.linkedIncidentIds || [] };
+  }
+
+  const probCiDelMatch = path.match(/^\/api\/problems\/([^/]+)\/cis\/([^/]+)$/);
+  if (probCiDelMatch && upperMethod === 'DELETE') {
+    const pId = decodeURIComponent(probCiDelMatch[1]);
+    const ciId = decodeURIComponent(probCiDelMatch[2]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.linkedCiIds = (p.linkedCiIds || []).filter((id: string) => id !== ciId);
+      p.childCis = (p.childCis || []).filter((c: any) => c.id !== ciId);
+    }
+    return { success: true, message: 'CI unlinked' };
+  }
+
+  const probCisMatch = path.match(/^\/api\/problems\/([^/]+)\/cis$/);
+  if (probCisMatch) {
+    const pId = decodeURIComponent(probCisMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (upperMethod === 'POST') {
+      const ciId = parsedBody?.ciId;
+      if (p && ciId) {
+        p.linkedCiIds = p.linkedCiIds || [];
+        if (!p.linkedCiIds.includes(ciId)) p.linkedCiIds.push(ciId);
+      }
+      return { success: true, data: p?.linkedCiIds || [] };
+    }
+    return { success: true, data: p?.childCis || (p?.linkedCiIds || []).map((id: string) => ({ id, name: id, type: 'CI', status: 'Active' })) };
+  }
+
+  const probLogsMatch = path.match(/^\/api\/problems\/([^/]+)\/logs$/);
+  if (probLogsMatch) {
+    const pId = decodeURIComponent(probLogsMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (upperMethod === 'POST') {
+      const newEntry = {
+        id: `LOG-${Date.now()}`,
+        author: parsedBody?.author || 'Ken Yang',
+        content: parsedBody?.content || '',
+        type: parsedBody?.type || 'note',
+        timestamp: new Date().toLocaleString('en-GB'),
+        createdAt: new Date().toISOString(),
+      };
+      if (p) {
+        p.logs = p.logs || [];
+        p.logs.push(newEntry);
+      }
+      return { success: true, data: newEntry };
+    }
+    return { success: true, data: p?.logs || [] };
+  }
+
+  const probEmailMatch = path.match(/^\/api\/problems\/([^/]+)\/email$/);
+  if (probEmailMatch && upperMethod === 'POST') {
+    const pId = decodeURIComponent(probEmailMatch[1]);
+    const p = mutableProblems.find((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (p) {
+      p.logs = p.logs || [];
+      p.logs.push({
+        id: `LOG-${Date.now()}`,
+        author: 'Ken Yang',
+        type: 'note',
+        content: `Email sent to ${parsedBody?.to || 'user'}: "${parsedBody?.subject}" - ${parsedBody?.body}`,
+        timestamp: new Date().toLocaleString('en-GB'),
+      });
+    }
+    return { success: true, message: 'Email update sent to user' };
+  }
+
+  const singleProblemMatch = path.match(/^\/api\/problems\/([^/]+)$/);
+  if (singleProblemMatch) {
+    const pId = decodeURIComponent(singleProblemMatch[1]);
+    const pIdx = mutableProblems.findIndex((x: any) => x.id === pId || x.prefixId === pId || x.problemNumber === pId);
+    if (upperMethod === 'DELETE') {
+      if (pIdx !== -1) mutableProblems.splice(pIdx, 1);
+      return { success: true, message: 'Problem deleted' };
+    }
+    if (upperMethod === 'PATCH') {
+      if (pIdx !== -1) {
+        mutableProblems[pIdx] = {
+          ...mutableProblems[pIdx],
+          ...parsedBody,
+          updatedAt: new Date().toISOString(),
+        };
+        return { success: true, data: mutableProblems[pIdx] };
+      }
+      return { success: true, data: { id: pId, ...parsedBody } };
+    }
+    return { success: true, data: pIdx !== -1 ? mutableProblems[pIdx] : mutableProblems[0] };
   }
 
   return undefined;

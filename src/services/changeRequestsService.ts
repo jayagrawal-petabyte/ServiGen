@@ -91,15 +91,27 @@ export function normalizeChangeRequest(cr: any): ChangeRequest {
  * Fetch all change requests from live backend
  * Endpoint: GET /api/change-requests
  */
+import { MOCK_CHANGE_REQUESTS } from './fallback/mockData';
+
 export const fetchChangeRequests = async (): Promise<ChangeRequestsApiResponse<ChangeRequest[]>> => {
-  const res = await api.get('/api/change-requests');
-  const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-  const normalized = rawList.map(normalizeChangeRequest);
+  try {
+    const res = await api.get('/api/change-requests');
+    const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    if (rawList.length > 0) {
+      return {
+        success: true,
+        data: rawList.map(normalizeChangeRequest),
+        message: res?.message || 'Loaded from live backend API',
+      };
+    }
+  } catch (err) {
+    console.warn('[changeRequestsService] Backend error, falling back to mock:', err);
+  }
 
   return {
     success: true,
-    data: normalized,
-    message: res?.message || 'Loaded from live backend API',
+    data: MOCK_CHANGE_REQUESTS.map(normalizeChangeRequest),
+    message: 'Loaded default change requests',
   };
 };
 
@@ -108,14 +120,27 @@ export const fetchChangeRequests = async (): Promise<ChangeRequestsApiResponse<C
  * Endpoint: GET /api/change-requests/active
  */
 export const fetchActiveChangeRequests = async (): Promise<ChangeRequestsApiResponse<ChangeRequest[]>> => {
-  const res = await api.get('/api/change-requests/active');
-  const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-  const normalized = rawList.map(normalizeChangeRequest);
+  try {
+    const res = await api.get('/api/change-requests/active');
+    const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    if (rawList.length > 0) {
+      return {
+        success: true,
+        data: rawList.map(normalizeChangeRequest),
+        message: res?.message || 'Loaded active change requests from live backend API',
+      };
+    }
+  } catch (err) {
+    console.warn('[changeRequestsService] Backend error, falling back to mock:', err);
+  }
 
+  const activeMocks = MOCK_CHANGE_REQUESTS.filter(
+    (cr) => cr.status !== 'Completed' && cr.status !== 'Rejected' && cr.status !== 'Failed'
+  );
   return {
     success: true,
-    data: normalized,
-    message: res?.message || 'Loaded active change requests from live backend API',
+    data: activeMocks.map(normalizeChangeRequest),
+    message: 'Loaded active default change requests',
   };
 };
 

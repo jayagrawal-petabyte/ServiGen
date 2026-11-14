@@ -115,6 +115,54 @@ function layoutDay(events: CalendarEvent[]) {
 
 type Draft = Omit<CalendarEvent, "id">;
 
+const generateDefaultCalendarEvents = (baseDate: Date): CalendarEvent[] => {
+  const dKey = toDateKey(baseDate);
+  const tomorrowKey = toDateKey(addDays(baseDate, 1));
+  const yesterdayKey = toDateKey(addDays(baseDate, -1));
+  return [
+    {
+      id: "ev-mock-1",
+      title: "P1 Major Incident Debrief Bridge",
+      date: dKey,
+      start: "10:00",
+      end: "11:30",
+      type: "meeting",
+      agent: "Alex Rivera",
+      description: "Post-incident review with network and database engineering leads.",
+    },
+    {
+      id: "ev-mock-2",
+      title: "On-Site Core Switch Optical Module Replacement",
+      date: tomorrowKey,
+      start: "14:00",
+      end: "16:00",
+      type: "site-visit",
+      agent: "Sarah Jenkins",
+      description: "Vendor dispatch and hardware module swap in London datacenter rack B4.",
+    },
+    {
+      id: "ev-mock-3",
+      title: "Scheduled Maintenance Window — DB Failover",
+      date: yesterdayKey,
+      start: "08:00",
+      end: "09:30",
+      type: "resource-booking",
+      agent: "Marcus Vance",
+      description: "Canary routing verification and RDS replica snapshot testing.",
+    },
+    {
+      id: "ev-mock-4",
+      title: "Customer Support Escalation Sync",
+      date: dKey,
+      start: "15:00",
+      end: "16:00",
+      type: "phone-call",
+      agent: "David Kim",
+      description: "Priority account review for Petabyte Corp SLA breach mitigation.",
+    },
+  ];
+};
+
 function emptyDraft(date: Date, hour = 9): Draft {
   return {
     title: "",
@@ -204,11 +252,11 @@ export default function CalendarPage() {
           setEvents(mapped);
         } else {
           // If database is unseeded, use default mock calendar events so page is not empty
-          setEvents([]);
+          setEvents(generateDefaultCalendarEvents(anchor));
         }
       } catch (err: any) {
         if (!active) return;
-        setEvents([]);
+        setEvents(generateDefaultCalendarEvents(anchor));
         console.warn("[CalendarPage] Backend fetch error, using fallback events:", err);
       } finally {
         if (active) {
@@ -262,10 +310,10 @@ export default function CalendarPage() {
         });
         setEvents(mapped);
       } else {
-        setEvents([]);
+        setEvents(generateDefaultCalendarEvents(anchor));
       }
     } catch (err: any) {
-      setEvents([]);
+      setEvents(generateDefaultCalendarEvents(anchor));
       console.warn("[CalendarPage] Refresh error:", err);
     } finally {
       setLoading(false);

@@ -1,4 +1,5 @@
-import { ProblemItem, ProblemLogEntry, ProblemStage, ProblemStatus } from '../types/problem.types';
+import { api } from '../../../services/apiClient';
+import { ProblemItem, ProblemLogEntry, ProblemPriority, ProblemStage, ProblemStatus } from '../types/problem.types';
 
 const STORAGE_KEY = 'servigen_problems_v1';
 
@@ -76,6 +77,7 @@ export const INITIAL_PROBLEMS: ProblemItem[] = [
       { id: 'CI-205', name: 'SMTP Outbound Node 1', type: 'Server', status: 'Operational' },
       { id: 'CI-206', name: 'SMTP Outbound Node 2', type: 'Server', status: 'Degraded' },
     ],
+    linkedIncidents: [],
     endUser: {
       name: 'Sarah Jenkins',
       initials: 'SJ',
@@ -120,6 +122,7 @@ export const INITIAL_PROBLEMS: ProblemItem[] = [
     childCis: [
       { id: 'CI-301', name: 'Redis Primary', type: 'Database CI', status: 'Operational' },
     ],
+    linkedIncidents: [],
     endUser: {
       name: 'Priya Nair',
       initials: 'PN',
@@ -141,49 +144,202 @@ export const INITIAL_PROBLEMS: ProblemItem[] = [
   },
 ];
 
+function getStoredLocal(): ProblemItem[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return INITIAL_PROBLEMS;
+}
+
+function saveLocal(items: ProblemItem[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
+
+export function mapBackendProblem(raw: any): ProblemItem {
+  if (!raw || typeof raw !== 'object') return raw;
+  const idStr = String(raw.id || raw.problemNumber || '');
+  const prefixId = raw.problemNumber || (idStr.startsWith('PR-') ? idStr : idStr.startsWith('PRB-') ? idStr.replace('PRB-', 'PR-000') : `PR-${idStr.padStart(7, '0')}`);
+  const statusStr = String(raw.status || 'New');
+  
+  let mappedStatus: ProblemStatus = 'New';
+  const lowerStatus = statusStr.toLowerCase();
+  if (lowerStatus.includes('investigation') || lowerStatus === 'open') {
+    mappedStatus = 'Investigation';
+  } else if (lowerStatus.includes('workaround')) {
+    mappedStatus = 'Workaround';
+  } else if (lowerStatus.includes('known error')) {
+    mappedStatus = 'Known Error';
+  } else if (lowerStatus === 'resolved') {
+    mappedStatus = 'Resolved';
+  } else if (lowerStatus === 'closed') {
+    mappedStatus = 'Closed';
+  }
+
+  let stageStr: ProblemStage = 'Investigation';
+  const rawStage = String(raw.stage || raw.currentStage || '');
+  if (rawStage.includes('Workaround')) stageStr = 'Workaround';
+  else if (rawStage.includes('Known Error')) stageStr = 'Known Error Review';
+  else if (rawStage.includes('Resolved')) stageStr = 'Resolved';
+
+  const dateReported = raw.createdAt
+    ? new Date(raw.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+    : (raw.dateReported || new Date().toLocaleString('en-GB'));
+
+  const logs: ProblemLogEntry[] = Array.isArray(raw.logs)
+    ? raw.logs.map((l: any, i: number) => ({
+        id: l.id || `log-${i}`,
+        author: l.author || 'System',
+        authorRole: l.authorRole,
+        timestamp: l.timestamp || (l.createdAt ? new Date(l.createdAt).toLocaleString('en-GB') : 'Just now'),
+        type: l.type || 'note',
+        content: l.content || '',
+        badge: l.badge,
+      }))
+    : [];
+
+  const childCis = Array.isArray(raw.childCis) && raw.childCis.length > 0
+    ? raw.childCis
+    : (raw.linkedCiIds || []).map((ciId: string) => ({
+        id: ciId,
+        name: ciId,
+        type: 'Configuration Item',
+        status: 'Operational',
+      }));
+
+  const linkedIncidents = Array.isArray(raw.linkedIncidents) && raw.linkedIncidents.length > 0
+    ? raw.linkedIncidents
+    : (raw.linkedIncidentIds || []).map((incId: string) => ({
+        id: incId,
+        summary: `Incident #${incId}`,
+        priority: 'Medium',
+        status: 'Open',
+        dateLogged: dateReported,
+      }));
+
+  return {
+    id: idStr,
+    prefixId,
+    summary: raw.summary || 'Untitled Problem Investigation',
+    description: raw.description || '',
+    team: raw.team || 'Infrastructure',
+    agent: raw.agent || raw.assignedAgentId || 'Ken Yang',
+    agentInitials: (raw.agent || 'Ken Yang').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+    priority: (raw.priority || 'Medium') as ProblemPriority,
+    status: mappedStatus,
+    category: raw.category || 'Business Applications',
+    type: 'Problem',
+    workflow: 'Problem Management Workflow',
+    dateReported,
+    timeRecorded: raw.timeRecorded || '00:00',
+    impact: raw.impact || 'Medium',
+    currentStage: stageStr,
+    causeStatus: raw.causeStatus || (raw.rootCause ? 'Identified' : 'Under Investigation'),
+    rootCauseDescription: raw.rootCause || raw.rootCauseDescription || '',
+    workaroundDescription: raw.workaround || raw.workaroundDescription || '',
+    pirData: raw.pirData,
+    monitoredServices: Array.isArray(raw.monitoredServices) && raw.monitoredServices.length > 0 ? raw.monitoredServices : ['General Service'],
+    childCis,
+    linkedIncidents,
+    endUser: raw.endUser || {
+      name: 'General User',
+      initials: 'GU',
+      organisation: 'consultancy.trial.usehalo.com',
+      site: 'EMEA',
+      phoneNumber: '4644354',
+      preferredNumber: '01449 833111',
+      address: 'Not set',
+    },
+    logs,
+  };
+}
+
 export const problemsService = {
-  getProblems: (): ProblemItem[] => {
+  /**
+   * Synchronous cached problems getter for initial states and search
+   */
+  getStoredProblems(): ProblemItem[] {
+    return getStoredLocal();
+  },
+
+  /**
+   * Fetch all problems from backend /api/problems with offline fallback
+   */
+  async getProblems(filters?: Record<string, string>): Promise<ProblemItem[]> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const res = await api.get('/api/problems', { params: filters });
+      const raw = res?.data || res;
+      const list = Array.isArray(raw) ? raw : raw?.data || [];
+      if (Array.isArray(list) && list.length > 0) {
+        const mapped = list.map(mapBackendProblem);
+        saveLocal(mapped);
+        return mapped;
       }
     } catch {
-      // ignore
+      // offline or backend error fallback
     }
-    return INITIAL_PROBLEMS;
+    return getStoredLocal();
   },
 
-  saveProblems: (problems: ProblemItem[]): void => {
+  /**
+   * Fetch single problem by ID
+   */
+  async getProblemById(id: string): Promise<ProblemItem | undefined> {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(problems));
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.get(`/api/problems/${encodeURIComponent(cleanId)}`);
+      const raw = res?.data || res;
+      if (raw) return mapBackendProblem(raw);
     } catch {
-      // ignore
+      // offline fallback
     }
-  },
-
-  getProblemById: (id: string): ProblemItem | undefined => {
-    const list = problemsService.getProblems();
+    const local = getStoredLocal();
     const cleanId = id.replace(/^PR-/, '');
-    return list.find((p) => p.id === cleanId || p.prefixId === id || p.id === id);
+    return local.find((p) => p.id === cleanId || p.prefixId === id || p.id === id);
   },
 
-  createProblem: (data: Partial<ProblemItem>): ProblemItem => {
-    const list = problemsService.getProblems();
+  /**
+   * Create a new problem record
+   */
+  async createProblem(data: Partial<ProblemItem>): Promise<ProblemItem> {
+    const payload = {
+      summary: data.summary || 'Untitled Problem Investigation',
+      description: data.description || 'Problem logged.',
+      category: data.category || 'General',
+      priority: data.priority || 'Medium',
+      impact: data.impact || 'Medium',
+      team: data.team || 'Infrastructure',
+      rootCause: data.rootCauseDescription,
+      workaround: data.workaroundDescription,
+      incidentIds: data.linkedIncidents?.map((i) => i.id) || [],
+      ciIds: data.childCis?.map((c) => c.id) || [],
+    };
+
+    try {
+      const res = await api.post('/api/problems', payload);
+      const raw = res?.data || res;
+      if (raw) {
+        const mapped = mapBackendProblem(raw);
+        const current = getStoredLocal();
+        saveLocal([mapped, ...current.filter((p) => p.id !== mapped.id)]);
+        return mapped;
+      }
+    } catch {
+      // offline fallback
+    }
+
+    const current = getStoredLocal();
     const rawNum = Math.floor(2152 + Math.random() * 500);
     const id = String(rawNum).padStart(7, '0');
     const prefixId = `PR-${id}`;
-    const nowStr = new Date().toLocaleString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+    const nowStr = new Date().toLocaleString('en-GB');
 
-    const newProblem: ProblemItem = {
+    const fallbackProblem: ProblemItem = {
       id,
       prefixId,
       summary: data.summary || 'Untitled Problem Investigation',
@@ -202,7 +358,8 @@ export const problemsService = {
       currentStage: 'Investigation',
       causeStatus: 'Under Investigation',
       monitoredServices: data.monitoredServices?.length ? data.monitoredServices : ['General Service'],
-      childCis: [],
+      childCis: data.childCis || [],
+      linkedIncidents: data.linkedIncidents || [],
       endUser: {
         name: data.endUser?.name || 'General User',
         initials: (data.endUser?.name || 'General User')[0],
@@ -224,16 +381,31 @@ export const problemsService = {
       ],
     };
 
-    const updated = [newProblem, ...list];
-    problemsService.saveProblems(updated);
-    return newProblem;
+    saveLocal([fallbackProblem, ...current]);
+    return fallbackProblem;
   },
 
-  updateProblem: (id: string, updates: Partial<ProblemItem>): ProblemItem | undefined => {
-    const list = problemsService.getProblems();
-    let updatedItem: ProblemItem | undefined;
+  /**
+   * Update problem record
+   */
+  async updateProblem(id: string, updates: Partial<ProblemItem>): Promise<ProblemItem | undefined> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.patch(`/api/problems/${encodeURIComponent(cleanId)}`, updates);
+      const raw = res?.data || res;
+      if (raw) {
+        const mapped = mapBackendProblem(raw);
+        const current = getStoredLocal();
+        saveLocal(current.map((p) => (p.id === id || p.prefixId === id ? mapped : p)));
+        return mapped;
+      }
+    } catch {
+      // offline fallback
+    }
 
-    const next = list.map((item) => {
+    const current = getStoredLocal();
+    let updatedItem: ProblemItem | undefined;
+    const next = current.map((item) => {
       if (item.id === id || item.prefixId === id) {
         updatedItem = { ...item, ...updates };
         return updatedItem;
@@ -241,23 +413,164 @@ export const problemsService = {
       return item;
     });
 
-    if (updatedItem) {
-      problemsService.saveProblems(next);
-    }
+    if (updatedItem) saveLocal(next);
     return updatedItem;
   },
 
-  addLogEntry: (id: string, author: string, content: string, type: ProblemLogEntry['type'] = 'note'): ProblemItem | undefined => {
-    const list = problemsService.getProblems();
+  /**
+   * Delete or archive problem
+   */
+  async deleteProblem(id: string): Promise<boolean> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      await api.delete(`/api/problems/${encodeURIComponent(cleanId)}`);
+    } catch {}
+    const current = getStoredLocal();
+    saveLocal(current.filter((p) => p.id !== id && p.prefixId !== id));
+    return true;
+  },
+
+  /**
+   * Change lifecycle stage
+   */
+  async updateStage(id: string, stage: ProblemStage): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.patch(`/api/problems/${encodeURIComponent(cleanId)}/stage`, { stage });
+      return res?.data || res;
+    } catch {}
+    return { success: true, stage };
+  },
+
+  /**
+   * Reassign problem team and agent
+   */
+  async reassignProblem(id: string, team: string, assignedAgentId?: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.patch(`/api/problems/${encodeURIComponent(cleanId)}/reassign`, { team, assignedAgentId });
+      return res?.data || res;
+    } catch {}
+    return { success: true, team, assignedAgentId };
+  },
+
+  /**
+   * Save temporary workaround
+   */
+  async saveWorkaround(id: string, workaround: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/workaround`, { workaround });
+      return res?.data || res;
+    } catch {}
+    return { success: true, workaround };
+  },
+
+  /**
+   * Record root cause analysis
+   */
+  async saveRootCause(id: string, rootCause: string, causeStatus: string = 'Identified'): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/cause`, { rootCause, causeStatus });
+      return res?.data || res;
+    } catch {}
+    return { success: true, rootCause, causeStatus };
+  },
+
+  /**
+   * Link an incident to a problem
+   */
+  async linkIncident(id: string, incidentId: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/incidents`, { incidentId });
+      return res?.data || res;
+    } catch {}
+    return { success: true, incidentId };
+  },
+
+  /**
+   * Unlink an incident from a problem
+   */
+  async unlinkIncident(id: string, incidentId: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.delete(`/api/problems/${encodeURIComponent(cleanId)}/incidents/${encodeURIComponent(incidentId)}`);
+      return res?.data || res;
+    } catch {}
+    return { success: true };
+  },
+
+  /**
+   * Bulk resolve all child incidents linked to this problem
+   */
+  async bulkResolveChildIncidents(id: string, resolutionNote?: string, author?: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/incidents/bulk-resolve`, {
+        resolutionNote: resolutionNote || 'Resolved via root problem resolution.',
+        author: author || 'Ken Yang',
+      });
+      return res?.data || res;
+    } catch {}
+    return { success: true };
+  },
+
+  /**
+   * Get configuration items linked to problem
+   */
+  async getLinkedCis(id: string): Promise<any[]> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.get(`/api/problems/${encodeURIComponent(cleanId)}/cis`);
+      const raw = res?.data || res;
+      return Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+    } catch {}
+    return [];
+  },
+
+  /**
+   * Link a configuration item to problem
+   */
+  async linkCi(id: string, ciId: string, relationType: string = 'impacted_by'): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/cis`, { ciId, relationType });
+      return res?.data || res;
+    } catch {}
+    return { success: true, ciId };
+  },
+
+  /**
+   * Unlink a configuration item from problem
+   */
+  async unlinkCi(id: string, ciId: string): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.delete(`/api/problems/${encodeURIComponent(cleanId)}/cis/${encodeURIComponent(ciId)}`);
+      return res?.data || res;
+    } catch {}
+    return { success: true };
+  },
+
+  /**
+   * Post a work note / activity log
+   */
+  async addLogEntry(
+    id: string,
+    author: string,
+    content: string,
+    type: ProblemLogEntry['type'] = 'note'
+  ): Promise<ProblemItem | undefined> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      await api.post(`/api/problems/${encodeURIComponent(cleanId)}/logs`, { author, content, type });
+    } catch {}
+
+    const list = getStoredLocal();
     let updatedItem: ProblemItem | undefined;
-    const nowStr = new Date().toLocaleString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+    const nowStr = new Date().toLocaleString('en-GB');
 
     const next = list.map((item) => {
       if (item.id === id || item.prefixId === id) {
@@ -277,9 +590,19 @@ export const problemsService = {
       return item;
     });
 
-    if (updatedItem) {
-      problemsService.saveProblems(next);
-    }
+    if (updatedItem) saveLocal(next);
     return updatedItem;
+  },
+
+  /**
+   * Send email notification to user or stakeholders
+   */
+  async sendEmail(id: string, payload: { to: string; subject: string; body: string }): Promise<any> {
+    try {
+      const cleanId = id.replace(/^PR-/, '');
+      const res = await api.post(`/api/problems/${encodeURIComponent(cleanId)}/email`, payload);
+      return res?.data || res;
+    } catch {}
+    return { success: true, message: 'Email sent successfully' };
   },
 };

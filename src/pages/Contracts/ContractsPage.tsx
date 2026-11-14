@@ -25,6 +25,7 @@ import {
   ContractItem,
   ContractType,
   ContractStatus,
+  ContractLinkedCi,
 } from '../../services/contractsService';
 
 const CONTRACT_TYPES: ContractType[] = [
@@ -52,6 +53,9 @@ export const ContractsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [typeFilter, setTypeFilter] = useState<string>('All');
   const [selectedContract, setSelectedContract] = useState<ContractItem | null>(null);
+  const [contractLinkedCis, setContractLinkedCis] = useState<ContractLinkedCi[]>([]);
+  const [newCiToLink, setNewCiToLink] = useState('');
+  const [isLinkingCi, setIsLinkingCi] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -356,6 +360,71 @@ export const ContractsPage: React.FC = () => {
       showToast(err.message || 'Failed to create contract.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedContract?.id) {
+      contractsService.getLinkedCis(selectedContract.id).then((cis) => {
+        setContractLinkedCis(cis);
+      }).catch(() => {
+        setContractLinkedCis(
+          (selectedContract.linkedCiIds || []).map((id) => ({
+            ciId: id,
+            name: id,
+            status: 'Active',
+          }))
+        );
+      });
+    } else {
+      setContractLinkedCis([]);
+      setNewCiToLink('');
+    }
+  }, [selectedContract?.id]);
+
+  const handleLinkCiToContract = async () => {
+    if (!selectedContract || !newCiToLink.trim()) return;
+    const ciId = newCiToLink.trim();
+    setIsLinkingCi(true);
+    try {
+      await contractsService.linkCi(selectedContract.id, ciId);
+      const updated = await contractsService.getLinkedCis(selectedContract.id);
+      setContractLinkedCis(updated);
+      setSelectedContract((prev) => prev ? { ...prev, linkedCiIds: [...(prev.linkedCiIds || []), ciId] } : null);
+      setContracts((prev) =>
+        prev.map((c) =>
+          c.id === selectedContract.id
+            ? { ...c, linkedCiIds: [...(c.linkedCiIds || []), ciId] }
+            : c
+        )
+      );
+      setNewCiToLink('');
+      showToast(`✓ Linked CI ${ciId} to contract`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to link CI');
+    } finally {
+      setIsLinkingCi(false);
+    }
+  };
+
+  const handleUnlinkCiFromContract = async (ciId: string) => {
+    if (!selectedContract) return;
+    try {
+      await contractsService.unlinkCi(selectedContract.id, ciId);
+      setContractLinkedCis((prev) => prev.filter((c) => c.ciId !== ciId));
+      setSelectedContract((prev) =>
+        prev ? { ...prev, linkedCiIds: (prev.linkedCiIds || []).filter((id) => id !== ciId) } : null
+      );
+      setContracts((prev) =>
+        prev.map((c) =>
+          c.id === selectedContract.id
+            ? { ...c, linkedCiIds: (c.linkedCiIds || []).filter((id) => id !== ciId) }
+            : c
+        )
+      );
+      showToast(`✓ Unlinked CI ${ciId}`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to unlink CI');
     }
   };
 
@@ -871,6 +940,71 @@ export const ContractsPage: React.FC = () => {
                   </p>
                 </div>
               )}
+
+              {/* Linked Configuration Items Section */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <span className="text-slate-400 text-[10px] uppercase font-bold block">
+                  Linked Configuration Items ({contractLinkedCis.length})
+                </span>
+                {contractLinkedCis.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic bg-slate-50 p-2.5 rounded-xl">
+                    No configuration items linked to this contract yet.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {contractLinkedCis.map((ci) => (
+                      <div
+                        key={ci.ciId}
+                        className="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs"
+                      >
+                        <div>
+                          <span className="font-bold text-slate-800">{ci.name || ci.ciId}</span>
+                          <span className="text-[10px] text-slate-400 block font-mono">
+                            {ci.ciId} {ci.category ? `• ${ci.category}` : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {ci.status || 'Active'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUnlinkCiFromContract(ci.ciId)}
+                            className="text-slate-400 hover:text-rose-600 font-bold px-1 text-xs transition-colors cursor-pointer"
+                            title="Unlink CI"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newCiToLink}
+                    onChange={(e) => setNewCiToLink(e.target.value)}
+                    placeholder="Enter CI ID (e.g. CI-001 or CI-TURN-01)..."
+                    className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#C96F55] text-slate-800"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void handleLinkCiToContract();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLinkCiToContract}
+                    disabled={!newCiToLink.trim() || isLinkingCi}
+                    className="px-3 py-1.5 bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold rounded-xl disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    {isLinkingCi ? 'Linking...' : '+ Link CI'}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">

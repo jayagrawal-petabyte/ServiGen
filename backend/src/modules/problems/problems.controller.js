@@ -33,8 +33,8 @@ const getEffectiveOrgId = (req, res) => {
   }
 
   if (req.user.role === 'Admin') {
-    const override = req.query.organisationId;
-    return typeof override === 'string' && override.trim() ? override.trim() : (req.user.organisationId || null);
+    const override = req.query.organisationId || req.body?.organisationId;
+    return typeof override === 'string' && override.trim() ? override.trim() : (req.user.organisationId || 'org-001');
   }
 
   const orgId = req.user.organisationId;

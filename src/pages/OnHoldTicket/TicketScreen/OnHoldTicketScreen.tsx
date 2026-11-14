@@ -199,7 +199,7 @@ const OnHoldTicketScreen: React.FC = () => {
       }
     } catch (err) {
       console.warn("Failed to fetch tickets from backend:", err);
-      setTickets([]);
+      setTickets(activeView === "My New Tickets" ? NEW_TICKETS_DATA : ALL_TICKETS);
     } finally {
       setIsLoading(false);
     }

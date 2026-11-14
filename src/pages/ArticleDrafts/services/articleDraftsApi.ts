@@ -170,14 +170,20 @@ export const articleDraftsApi = {
         });
 
         const merged = Array.from(mergedMap.values());
-        setStoredDrafts(merged);
-        return merged;
+        const finalDrafts = merged.length > 0 ? merged : MOCK_ARTICLES.map(adaptBackendArticle);
+        setStoredDrafts(finalDrafts);
+        return finalDrafts;
       }
     } catch {
       // Backend offline or route unpopulated, fall through to local storage
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+    if (stored.length === 0) {
+      const seeded = MOCK_ARTICLES.map(adaptBackendArticle);
+      setStoredDrafts(seeded);
+      return seeded;
+    }
     return stored;
   },
 

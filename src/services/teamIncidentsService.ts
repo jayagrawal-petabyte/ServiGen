@@ -299,13 +299,14 @@ export async function fetchAllTeamIncidents(forceRefresh = false): Promise<AllTe
 export async function updateSupportIncidentStatus(
   ticketId: string,
   status: string,
-  holdReason?: string
+  holdReason?: string,
+  assignedTeam?: string
 ): Promise<boolean> {
   try {
-    await api.patch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, {
-      status,
-      holdReason,
-    });
+    const payload: { status: string; holdReason?: string; assignedTeam?: string } = { status };
+    if (holdReason) payload.holdReason = holdReason;
+    if (assignedTeam) payload.assignedTeam = assignedTeam;
+    await api.patch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, payload);
     invalidateTeamIncidentsCache();
     return true;
   } catch (err) {

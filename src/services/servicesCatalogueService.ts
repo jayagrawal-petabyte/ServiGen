@@ -10,6 +10,7 @@
  */
 
 import { api, type ApiResponse } from './apiClient';
+import { MOCK_SERVICES } from './fallback/mockData';
 
 export interface ServiceItem {
   id: string;
@@ -76,7 +77,7 @@ export async function fetchServices(category?: string, search?: string): Promise
     const res = await api.get('/api/services', { params });
     const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
 
-    if (Array.isArray(rawList)) {
+    if (Array.isArray(rawList) && rawList.length > 0) {
       return rawList.map((item: any, idx: number) => ({
         id: String(item.id || `srv-${idx + 1}`),
         name: item.name || 'Unnamed Service',
@@ -91,7 +92,15 @@ export async function fetchServices(category?: string, search?: string): Promise
     console.warn('[servicesCatalogueService] Failed to fetch services from backend:', err);
   }
 
-  return [];
+  return MOCK_SERVICES.map((item: any, idx: number) => ({
+    id: String(item.id || `srv-${idx + 1}`),
+    name: item.name || 'Unnamed Service',
+    description: item.description || 'No description provided.',
+    category: item.category || 'Services',
+    status: 'Active',
+    icon: getServiceIcon(item.name, item.category),
+    requiresApproval: true,
+  }));
 }
 
 /**

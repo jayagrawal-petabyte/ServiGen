@@ -22,6 +22,7 @@ import type {
   CiRelationship,
 } from '../types/cmdb';
 import { api } from './apiClient';
+import { MOCK_CONFIG_ITEMS } from './fallback/mockData';
 
 export interface CmdbApiResponse<T> {
   success: boolean;
@@ -130,14 +131,25 @@ export function groupCisByType(items: ConfigurationItem[]): GroupedConfiguration
  * Endpoint: GET /api/cmdb/configuration-items
  */
 export const fetchConfigurationItems = async (): Promise<CmdbApiResponse<ConfigurationItem[]>> => {
-  const res = await api.get('/api/cmdb/configuration-items');
-  const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-  const normalized = rawList.map(normalizeConfigurationItem);
+  try {
+    const res = await api.get('/api/cmdb/configuration-items');
+    const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    if (rawList.length > 0) {
+      const normalized = rawList.map(normalizeConfigurationItem);
+      return {
+        success: true,
+        data: normalized,
+        message: res?.message || 'Loaded from live backend API',
+      };
+    }
+  } catch (err) {
+    console.warn('[cmdbService] Backend error, falling back to default CIs:', err);
+  }
 
   return {
     success: true,
-    data: normalized,
-    message: res?.message || 'Loaded from live backend API',
+    data: MOCK_CONFIG_ITEMS.map(normalizeConfigurationItem),
+    message: 'Loaded default configuration items',
   };
 };
 
@@ -148,29 +160,41 @@ export const fetchConfigurationItems = async (): Promise<CmdbApiResponse<Configu
 export const fetchConfigurationItemsGroupedByType = async (): Promise<
   CmdbApiResponse<GroupedConfigurationItems>
 > => {
-  const res = await api.get('/api/cmdb/configuration-items/grouped-by-type');
-  const rawMap = res?.data || (typeof res === 'object' && !Array.isArray(res) ? res : {});
+  try {
+    const res = await api.get('/api/cmdb/configuration-items/grouped-by-type');
+    const rawMap = res?.data || (typeof res === 'object' && !Array.isArray(res) ? res : {});
+    const values = Object.values(rawMap).flat();
+    if (values.length > 0) {
+      const normalizedGrouped: GroupedConfigurationItems = {
+        'Cloud Service': [],
+        Database: [],
+        Network: [],
+        Application: [],
+        Server: [],
+        Security: [],
+      };
 
-  const normalizedGrouped: GroupedConfigurationItems = {
-    'Cloud Service': [],
-    Database: [],
-    Network: [],
-    Application: [],
-    Server: [],
-    Security: [],
-  };
+      Object.entries(rawMap).forEach(([typeKey, items]) => {
+        if (Array.isArray(items)) {
+          const list = items.map(normalizeConfigurationItem);
+          normalizedGrouped[typeKey] = list;
+        }
+      });
 
-  Object.entries(rawMap).forEach(([typeKey, items]) => {
-    if (Array.isArray(items)) {
-      const list = items.map(normalizeConfigurationItem);
-      normalizedGrouped[typeKey] = list;
+      return {
+        success: true,
+        data: normalizedGrouped,
+        message: res?.message || 'Loaded from live backend API',
+      };
     }
-  });
+  } catch (err) {
+    console.warn('[cmdbService] Backend error, falling back to default grouped CIs:', err);
+  }
 
   return {
     success: true,
-    data: normalizedGrouped,
-    message: res?.message || 'Loaded from live backend API',
+    data: groupCisByType(MOCK_CONFIG_ITEMS.map(normalizeConfigurationItem)),
+    message: 'Loaded default grouped CIs',
   };
 };
 

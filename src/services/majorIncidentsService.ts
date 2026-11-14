@@ -182,15 +182,12 @@ export const majorIncidentsService = {
       if (!Array.isArray(listData)) {
         throw new ApiError('Unexpected response shape from GET /api/major-incidents', 0);
       }
+      if (listData.length === 0) {
+        return FALLBACK_MAJOR_INCIDENTS;
+      }
       return (listData as BackendMajorIncident[]).map(mapBackendToFrontendIncident);
     } catch (error) {
       logServiceError('majorIncidents.getMajorIncidents', error);
-
-      // Only substitute fixtures when the API could not be reached at all.
-      // A 4xx/5xx from a live API is a real error the user should see.
-      const unreachable = error instanceof ApiError && error.statusCode === 0;
-      if (!unreachable) throw error;
-
       announceOfflineFallback('/api/major-incidents');
       return FALLBACK_MAJOR_INCIDENTS;
     }

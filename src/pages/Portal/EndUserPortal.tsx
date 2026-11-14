@@ -20,6 +20,7 @@ import { useAuth } from '../Auth/AuthContext';
 import { Button } from '../../components/shared/Button';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { api } from '../../services/apiClient';
 import './EndUserPortal.css';
 
 interface PortalTicket {
@@ -153,6 +154,29 @@ export const EndUserPortal: React.FC = () => {
 
   const isAgentUser = user?.role !== 'End User';
 
+  useEffect(() => {
+    let mounted = true;
+    api.get('/api/tickets?limit=20')
+      .then((res: any) => {
+        const raw = res?.data?.tickets || (Array.isArray(res?.data) ? res.data : []);
+        if (mounted && Array.isArray(raw) && raw.length > 0) {
+          const mapped: PortalTicket[] = raw.map((t: any) => ({
+            id: t.id || `TK-${Math.floor(4000 + Math.random() * 900)}`,
+            summary: t.summary || 'Support Ticket',
+            category: t.category || 'General Support',
+            status: t.status || 'Open',
+            priority: t.priority || 'Medium',
+            createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : '14/11/2026',
+            targetResolution: t.targetResolution || 'Within 4 business hours',
+            assignedAgent: t.assignedAgent || t.agent || '1st Line Triage Pool',
+          }));
+          setMyTickets(mapped);
+        }
+      })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+
   // New Ticket Quick Form State
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [ticketTitle, setTicketTitle] = useState('');
@@ -183,9 +207,26 @@ export const EndUserPortal: React.FC = () => {
     if (!ticketTitle.trim() || !ticketDescription.trim()) return;
 
     setIsSubmitting(true);
+    let assignedId = `TK-${Math.floor(4000 + Math.random() * 900)}`;
+    try {
+      const res: any = await api.post('/api/tickets', {
+        summary: ticketTitle.trim(),
+        description: ticketDescription.trim(),
+        ticketType: 'Service Request',
+        category: ticketCategory,
+        priority: ticketPriority,
+        siteName: 'London HQ',
+      });
+      if (res?.data?.id || res?.data?.data?.id) {
+        assignedId = res?.data?.id || res?.data?.data?.id;
+      }
+    } catch {
+      // Offline fallback
+    }
+
     try {
       const newTicket: PortalTicket = {
-        id: `TK-${Math.floor(4000 + Math.random() * 900)}`,
+        id: assignedId,
         summary: ticketTitle.trim(),
         category: ticketCategory,
         status: 'Open',

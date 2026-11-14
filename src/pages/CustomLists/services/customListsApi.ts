@@ -86,6 +86,45 @@ function setCachedLists(lists: BackendCustomList[]): void {
   }
 }
 
+export const DEFAULT_CUSTOM_LISTS: BackendCustomList[] = [
+  {
+    id: 'LIST-001',
+    name: 'All Active VIP Incidents',
+    description: 'High and Critical incidents affecting executive leadership',
+    status: 'Published',
+    fields: ['id', 'summary', 'priority', 'status', 'assignedAgent'],
+    scope: 'Tickets',
+    group: 'Executive Escalations',
+    sequence: 1,
+    columnProfile: 'Standard Support View',
+    displayType: 'Grid View',
+  },
+  {
+    id: 'LIST-002',
+    name: 'Expiring Hardware Warranties (Q4)',
+    description: 'Datacenter switches and server blades with warranties expiring in next 90 days',
+    status: 'Published',
+    fields: ['id', 'name', 'type', 'site', 'status', 'businessOwner'],
+    scope: 'Assets',
+    group: 'Asset Lifecycle',
+    sequence: 2,
+    columnProfile: 'Asset Audit View',
+    displayType: 'Detailed Grid',
+  },
+  {
+    id: 'LIST-003',
+    name: 'Pending CAB Change Requests',
+    description: 'Normal and Emergency changes awaiting change advisory board signoff',
+    status: 'Published',
+    fields: ['id', 'title', 'type', 'risk', 'cab', 'status'],
+    scope: 'Changes',
+    group: 'Change Management',
+    sequence: 3,
+    columnProfile: 'CAB Review View',
+    displayType: 'Kanban View',
+  },
+];
+
 /**
  * Fetch all custom lists from backend /api/list-builder/lists
  */
@@ -98,14 +137,16 @@ export async function fetchCustomLists(): Promise<BackendCustomList[]> {
       ? response
       : null;
 
-    if (lists) {
+    if (lists && lists.length > 0) {
       setCachedLists(lists);
       return lists;
     }
-    return getCachedLists();
+    const cached = getCachedLists();
+    return cached.length > 0 ? cached : DEFAULT_CUSTOM_LISTS;
   } catch (error) {
     console.warn('[CustomListsApi] Live backend fetch unavailable, using cached lists:', error);
-    return getCachedLists();
+    const cached = getCachedLists();
+    return cached.length > 0 ? cached : DEFAULT_CUSTOM_LISTS;
   }
 }
 

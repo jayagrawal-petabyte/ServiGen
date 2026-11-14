@@ -185,7 +185,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   const [userList, setUserList] = useState<any[]>(() => MOCK_USERS || []);
   const [problemList, setProblemList] = useState<any[]>(() => {
     try {
-      return problemsService.getProblems();
+      return problemsService.getStoredProblems();
     } catch {
       return [];
     }

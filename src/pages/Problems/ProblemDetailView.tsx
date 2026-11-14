@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ProblemItem, ProblemLogEntry, ProblemStage, PirData } from './types/problem.types';
 import { api } from '../../services/apiClient';
 import { articleDraftsApi } from '../ArticleDrafts/services/articleDraftsApi';
+import { problemsService } from './services/problemsService';
 
 interface ProblemDetailViewProps {
   problem: ProblemItem;
@@ -134,7 +135,12 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     });
   }, [availableIncidents, incidentSearch, priorityFilter]);
 
-  const handleStageClick = (stage: ProblemStage) => {
+  const [newCiInput, setNewCiInput] = useState('');
+
+  const handleStageClick = async (stage: ProblemStage) => {
+    try {
+      await problemsService.updateStage(problem.id, stage);
+    } catch {}
     const updated: ProblemItem = {
       ...problem,
       currentStage: stage,
@@ -144,7 +150,10 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     onAddLog('Ken Yang', `Problem lifecycle stage advanced to: ${stage}`, 'stage_change');
   };
 
-  const handleCauseIdentified = () => {
+  const handleCauseIdentified = async () => {
+    try {
+      await problemsService.saveRootCause(problem.id, problem.rootCauseDescription || 'Technical RCA confirmed and documented.', 'Identified');
+    } catch {}
     const updated: ProblemItem = {
       ...problem,
       causeStatus: 'Identified',
@@ -153,7 +162,10 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     onAddLog('Ken Yang', 'Root Cause Identified: Technical RCA confirmed and documented.', 'cause_update');
   };
 
-  const handleCauseUnknown = () => {
+  const handleCauseUnknown = async () => {
+    try {
+      await problemsService.saveRootCause(problem.id, '', 'Unknown');
+    } catch {}
     const updated: ProblemItem = {
       ...problem,
       causeStatus: 'Unknown',
@@ -162,7 +174,10 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     onAddLog('Ken Yang', 'Cause Unknown: Ongoing telemetry diagnostics and packet capture in progress.', 'cause_update');
   };
 
-  const handleReassign = (newAgent: string, newTeam: string) => {
+  const handleReassign = async (newAgent: string, newTeam: string) => {
+    try {
+      await problemsService.reassignProblem(problem.id, newTeam, newAgent);
+    } catch {}
     const initials = newAgent.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
     const updated: ProblemItem = {
       ...problem,
@@ -182,12 +197,62 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     setNewNote('');
   };
 
-  const handleSendEmail = (e: React.FormEvent) => {
+  const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailBody.trim()) return;
+    try {
+      await problemsService.sendEmail(problem.id, {
+        to: (problem.endUser as any)?.email || 'user@servigen.local',
+        subject: emailSubject,
+        body: emailBody,
+      });
+    } catch {}
     onAddLog('Ken Yang', `Email sent to ${problem.endUser.name} (${problem.endUser.organisation}): "${emailSubject}" - ${emailBody}`, 'note');
     setEmailBody('');
     setShowEmailModal(false);
+    showToast('✓ Email update dispatched to stakeholders');
+  };
+
+  const handleBulkResolveIncidents = async () => {
+    if (!problem.linkedIncidents || problem.linkedIncidents.length === 0) {
+      showToast('No child incidents to resolve.');
+      return;
+    }
+    try {
+      await problemsService.bulkResolveChildIncidents(problem.id, `Resolved via Problem [${problem.prefixId}]: ${problem.workaroundDescription || problem.summary}`);
+      const updatedLinked = problem.linkedIncidents.map((inc) => ({ ...inc, status: 'Resolved' }));
+      onUpdateProblem({ ...problem, linkedIncidents: updatedLinked });
+      onAddLog('Ken Yang', `Bulk resolved ${updatedLinked.length} child incident(s) via root problem resolution.`, 'note');
+      showToast(`✓ Successfully resolved ${updatedLinked.length} linked child incident(s)!`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to bulk resolve child incidents.');
+    }
+  };
+
+  const handleLinkCi = async () => {
+    if (!newCiInput.trim()) return;
+    const ciId = newCiInput.trim();
+    try {
+      await problemsService.linkCi(problem.id, ciId);
+    } catch {}
+    const newCi = { id: ciId, name: ciId, type: 'Configuration Item', status: 'Operational' };
+    const current = problem.childCis || [];
+    if (!current.some((c) => c.id === ciId)) {
+      onUpdateProblem({ ...problem, childCis: [...current, newCi] });
+      onAddLog('Ken Yang', `Linked CI ${ciId} to problem investigation`, 'note');
+      showToast(`✓ Linked CI ${ciId}`);
+    }
+    setNewCiInput('');
+  };
+
+  const handleUnlinkCi = async (ciId: string) => {
+    try {
+      await problemsService.unlinkCi(problem.id, ciId);
+    } catch {}
+    const current = problem.childCis || [];
+    onUpdateProblem({ ...problem, childCis: current.filter((c) => c.id !== ciId) });
+    onAddLog('Ken Yang', `Unlinked CI ${ciId} from problem investigation`, 'note');
+    showToast(`✓ Unlinked CI ${ciId}`);
   };
 
   const handleSavePir = (e: React.FormEvent) => {
@@ -619,13 +684,26 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                         Incidents associated with this root cause investigation. Resolving this problem can cascade workarounds or resolutions.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleOpenLinkModal}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C96F55] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
-                    >
-                      <span>+ Link Incident</span>
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {problem.linkedIncidents && problem.linkedIncidents.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleBulkResolveIncidents}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+                          title="Resolve all linked incidents and cascade resolution note"
+                        >
+                          <span>✓</span>
+                          <span>Bulk Resolve Child Incidents</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleOpenLinkModal}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C96F55] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>+ Link Incident</span>
+                      </button>
+                    </div>
                   </div>
 
                   {!problem.linkedIncidents || problem.linkedIncidents.length === 0 ? (
@@ -785,29 +863,73 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               )}
 
               {activeTab === 'cis' && (
-                <div className="space-y-2">
-                  <p className="text-xs text-slate-500 mb-3">Linked Configuration Items from CMDB affected by this problem:</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800">Linked Configuration Items ({problem.childCis.length})</h4>
+                      <p className="text-[11px] text-slate-500">CMDB assets associated with and affected by this problem.</p>
+                    </div>
+                  </div>
+
                   {problem.childCis.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No specific CIs linked yet.</p>
+                    <div className="text-center py-6 px-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+                      <p className="text-xs text-slate-400 italic">No specific CIs linked yet.</p>
+                    </div>
                   ) : (
-                    problem.childCis.map((ci) => (
-                      <div key={ci.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-                        <div>
-                          <span className="font-bold text-slate-800">{ci.name}</span>
-                          <span className="text-[11px] text-slate-400 block">{ci.type} ({ci.id})</span>
+                    <div className="space-y-2">
+                      {problem.childCis.map((ci) => (
+                        <div key={ci.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-bold text-slate-800">{ci.name}</span>
+                            <span className="text-[11px] text-slate-400 block">{ci.type} ({ci.id})</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                ci.status === 'Operational'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}
+                            >
+                              {ci.status}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleUnlinkCi(ci.id)}
+                              className="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                              title="Unlink CI"
+                            >
+                              ✕ Unlink
+                            </button>
+                          </div>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            ci.status === 'Operational'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}
-                        >
-                          {ci.status}
-                        </span>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newCiInput}
+                      onChange={(e) => setNewCiInput(e.target.value)}
+                      placeholder="Enter CI ID (e.g. CI-102 or CI-TURN-01) to link..."
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-[#C96F55]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void handleLinkCi();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleLinkCi}
+                      disabled={!newCiInput.trim()}
+                      className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#d65736] text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
+                    >
+                      + Link CI
+                    </button>
+                  </div>
                 </div>
               )}
 

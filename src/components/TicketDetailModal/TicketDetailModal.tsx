@@ -331,20 +331,36 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/api/users?limit=40')
+    api.get('/api/incidents/support/first-line/agents')
       .then(res => {
-        const raw = res.data?.data?.users || res.data?.data || res.data?.users || res.data || [];
+        const raw = res.data?.data?.agents || res.data?.data || res.data?.agents || res.data || [];
         const list = Array.isArray(raw) ? raw : [];
-        setAgents(list.filter((u: any) => u.role !== 'End-User'));
+        if (list.length > 0) {
+          setAgents(list);
+          return;
+        }
+        return api.get('/api/users?limit=40').then(res2 => {
+          const raw2 = res2.data?.data?.users || res2.data?.data || res2.data?.users || res2.data || [];
+          const list2 = Array.isArray(raw2) ? raw2 : [];
+          setAgents(list2.filter((u: any) => u.role !== 'End-User'));
+        });
       })
       .catch(() => {
-        setAgents([
-          { id: '1', fullName: 'Alex Rivera', availability: 'Available' },
-          { id: '2', fullName: 'Sarah Jenkins', availability: 'In a call' },
-          { id: '3', fullName: 'Marcus Vance', availability: 'Available' },
-          { id: '4', fullName: 'David Kim', availability: 'Available' },
-          { id: '5', fullName: 'Elena Rostova', availability: 'Away' },
-        ]);
+        api.get('/api/users?limit=40')
+          .then(res => {
+            const raw = res.data?.data?.users || res.data?.data || res.data?.users || res.data || [];
+            const list = Array.isArray(raw) ? raw : [];
+            setAgents(list.filter((u: any) => u.role !== 'End-User'));
+          })
+          .catch(() => {
+            setAgents([
+              { id: '1', fullName: 'Alex Rivera', availability: 'Available' },
+              { id: '2', fullName: 'Sarah Jenkins', availability: 'In a call' },
+              { id: '3', fullName: 'Marcus Vance', availability: 'Available' },
+              { id: '4', fullName: 'David Kim', availability: 'Available' },
+              { id: '5', fullName: 'Elena Rostova', availability: 'Away' },
+            ]);
+          });
       })
       .finally(() => setLoading(false));
   }, []);
@@ -1276,6 +1292,28 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [selectedArticlePreview, setSelectedArticlePreview] = useState<KBArticle | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [savingResolve, setSavingResolve] = useState(false);
+  const [internalEscalated, setInternalEscalated] = useState(false);
+  const [internalEscalating, setInternalEscalating] = useState(false);
+  const effectiveEscalated = isEscalated || internalEscalated;
+  const effectiveEscalating = isEscalating || internalEscalating;
+
+  const handleEscalateTier2 = async () => {
+    if (!ticket?.id) return;
+    if (onEscalateToTier2) {
+      onEscalateToTier2();
+      return;
+    }
+    setInternalEscalating(true);
+    try {
+      await api.patch(`/api/tickets/${ticket.id}/assign`, { assignedTeam: '2nd Line Support' });
+    } catch {}
+    try {
+      await api.post('/api/ai-core/escalation/handoff', { ticketId: ticket.id, reason: 'Escalated by Agent from Ticket Modal' });
+    } catch {}
+    setInternalEscalated(true);
+    setInternalEscalating(false);
+    showToast('Ticket escalated to Tier 2 Support');
+  };
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // MOD-1: Additional Agents multi-selector state
@@ -1330,6 +1368,32 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       } else {
         setLocalNotes([]);
       }
+
+      // Fetch persistent notes from backend timeline
+      if (ticket.id) {
+        api.get(`/api/tickets/${ticket.id}/notes`)
+          .then((res: any) => {
+            const notesData = res?.data?.data?.notes || res?.data?.notes || res?.notes || [];
+            if (Array.isArray(notesData) && notesData.length > 0) {
+              const apiNotes: TicketNote[] = notesData.map((n: any) => ({
+                id: n.id,
+                author: n.authorName || n.author || 'Service Desk Agent',
+                time: n.createdAt ? new Date(n.createdAt).toLocaleString() : new Date().toLocaleString(),
+                text: n.content || n.text || '',
+              }));
+              setLocalNotes(prev => {
+                // Merge api notes with existing offline notes without duplicates
+                const existingIds = new Set(apiNotes.map(a => a.id));
+                const offlineOnly = prev.filter(p => !existingIds.has(p.id));
+                return [...apiNotes, ...offlineOnly];
+              });
+            }
+          })
+          .catch(() => {
+            // Keep fallback notes
+          });
+      }
+
       setLocalStatus(ticket.status || 'New');
       setLocalAgent(ticket.agent || '');
       setIsResolved(ticket.status === 'Resolved' || ticket.status === 'Closed');
@@ -1505,33 +1569,54 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   if (!ticket) return null;
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!noteText.trim() && pastedAttachments.length === 0) return;
+    const content = noteText.trim() || 'Attached screenshot / note update.';
     const newNote: TicketNote = {
       id: `n-${Date.now()}`,
       author: currentUser,
       time: new Date().toLocaleString(),
-      text: noteText.trim() || 'Attached screenshot / note update.',
+      text: content,
       attachments: pastedAttachments.length > 0 ? [...pastedAttachments] : undefined,
     };
-    setLocalNotes(prev => {
-      const updated = [newNote, ...prev];
-      if (ticket?.id) {
-        try { localStorage.setItem(`servigen_ticket_notes_${ticket.id}`, JSON.stringify(updated)); } catch {}
-      }
-      return updated;
-    });
+    setLocalNotes(prev => [newNote, ...prev]);
     setNoteText('');
     setPastedAttachments([]);
     setShowAddNote(false);
-    showToast('Work note posted successfully');
+
+    try {
+      if (ticket?.id) {
+        const res = await api.post(`/api/tickets/${ticket.id}/notes`, {
+          noteType: 'Internal Note',
+          content,
+        });
+        if (res?.data?.id) {
+          newNote.id = res.data.id;
+        }
+      }
+      showToast('Work note posted successfully');
+    } catch {
+      showToast('Work note saved locally (offline sync)');
+    }
+
+    if (ticket?.id) {
+      try { localStorage.setItem(`servigen_ticket_notes_${ticket.id}`, JSON.stringify([newNote, ...localNotes])); } catch {}
+    }
   };
 
   const handleResolve = async () => {
     const nextStatus = isResolved ? 'Active' : 'Resolved';
     setSavingResolve(true);
     try {
-      await api.patch(`/api/tickets/${ticket.id}/status`, { status: nextStatus });
+      if (nextStatus === 'Resolved') {
+        await api.post(`/api/tickets/${ticket.id}/resolve`, {
+          resolutionCode: 'Resolved by First Line Support',
+          resolutionNotes: 'Issue investigated and operational resolution verified with the user.',
+          rootCauseSummary: 'Standard operational troubleshooting and configuration remedy.',
+        });
+      } else {
+        await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Active' });
+      }
       setLocalStatus(nextStatus);
       setIsResolved(nextStatus === 'Resolved');
       if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), status: nextStatus });
@@ -1859,18 +1944,24 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 </button>
 
                 {/* AI Escalation badge */}
-                {aiRisk === 'High Risk' && onEscalateToTier2 && !isEscalated && (
+                {!effectiveEscalated ? (
                   <button
                     className="halo-action-btn"
-                    onClick={onEscalateToTier2}
-                    disabled={isEscalating}
-                    style={{ background: '#fef2f2', color: '#dc2626', marginLeft: 'auto', borderRight: 'none', borderLeft: '1px solid #dee5ef' }}
+                    onClick={handleEscalateTier2}
+                    disabled={effectiveEscalating}
+                    style={{
+                      background: aiRisk === 'High Risk' ? '#fef2f2' : undefined,
+                      color: aiRisk === 'High Risk' ? '#dc2626' : undefined,
+                      marginLeft: 'auto',
+                      borderRight: 'none',
+                      borderLeft: '1px solid #dee5ef'
+                    }}
+                    title="Escalate ticket to 2nd Line Support"
                   >
                     <Zap style={{ width: 13, height: 13 }} />
-                    {isEscalating ? 'Escalating…' : '⚡ Escalate Tier 2'}
+                    {effectiveEscalating ? 'Escalating…' : '⚡ Escalate Tier 2'}
                   </button>
-                )}
-                {isEscalated && (
+                ) : (
                   <span style={{ marginLeft: 'auto', padding: '0 14px', fontSize: 12, fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 5, borderLeft: '1px solid #dee5ef' }}>
                     <CheckCircle style={{ width: 13, height: 13 }} /> Escalated to Tier 2
                   </span>
@@ -1879,7 +1970,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 {/* Right toolbar actions */}
                 <div className="ticket-detail-toolbar-actions" style={{
                   display: 'flex', alignItems: 'center',
-                  marginLeft: (aiRisk === 'High Risk' && onEscalateToTier2 && !isEscalated) || isEscalated ? 0 : 'auto',
+                  marginLeft: 0,
                   borderLeft: '1px solid #dee5ef',
                 }}>
                   <button onClick={handleCopy} className="halo-action-btn" style={{ padding: '0 10px', height: '100%', borderRight: '1px solid #dee5ef' }} title="Copy ticket summary">

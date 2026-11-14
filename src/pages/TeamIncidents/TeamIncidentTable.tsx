@@ -287,7 +287,7 @@ function TeamIncidentTable({
       return;
     }
 
-    const statusUpdated = await updateSupportIncidentStatus(incident.id, incident.status, "2nd Line Support");
+    const statusUpdated = await updateSupportIncidentStatus(incident.id, incident.status, undefined, "2nd Line Support");
     if (!statusUpdated) {
       setEscalatingId(null);
       setEscalationToast('Tier 2 escalation was not saved because the team handoff failed.');

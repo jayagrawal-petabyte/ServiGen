@@ -52,17 +52,17 @@ const createContract = async (payload = {}, organisationId) => {
     title,
     vendorName,
     vendorEmail,
-    type = 'SLA',
     status = 'Draft',
     startDate,
     endDate,
     renewalDate,
     autoRenew = false,
-    contractValue,
     currency = 'USD',
     notes,
     ciIds = [],
   } = payload;
+  const type = payload.type || payload.contractType || 'SLA';
+  const contractValue = payload.contractValue !== undefined ? payload.contractValue : payload.value;
 
   if (!title || typeof title !== 'string' || !title.trim()) {
     throw new AppError('Title is required', HTTP_STATUS.BAD_REQUEST);
@@ -184,11 +184,12 @@ const updateContract = async (id, organisationId, patch = {}) => {
     cleanPatch.vendorEmail = patch.vendorEmail ? sanitizeText(patch.vendorEmail) : null;
   }
 
-  if (patch.type !== undefined) {
-    if (!VALID_TYPES.includes(patch.type)) {
+  const effectiveType = patch.type !== undefined ? patch.type : patch.contractType;
+  if (effectiveType !== undefined) {
+    if (!VALID_TYPES.includes(effectiveType)) {
       throw new AppError(`Type must be one of: ${VALID_TYPES.join(', ')}`, HTTP_STATUS.BAD_REQUEST);
     }
-    cleanPatch.type = patch.type;
+    cleanPatch.type = effectiveType;
   }
 
   if (patch.status !== undefined) {
@@ -218,8 +219,9 @@ const updateContract = async (id, organisationId, patch = {}) => {
     cleanPatch.autoRenew = Boolean(patch.autoRenew);
   }
 
-  if (patch.contractValue !== undefined) {
-    const num = Number(patch.contractValue);
+  const effectiveValue = patch.contractValue !== undefined ? patch.contractValue : patch.value;
+  if (effectiveValue !== undefined) {
+    const num = Number(effectiveValue);
     if (Number.isNaN(num) || num < 0) {
       throw new AppError('Contract value must be a non-negative number', HTTP_STATUS.BAD_REQUEST);
     }

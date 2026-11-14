@@ -24,11 +24,11 @@ const getEffectiveOrgId = (req, res) => {
   }
 
   if (req.user.role === 'Admin') {
-    const organisationId = req.query.organisationId;
+    const organisationId = req.query.organisationId || req.body?.organisationId;
 
     return typeof organisationId === 'string' && organisationId.trim()
       ? organisationId.trim()
-      : null;
+      : (req.user.organisationId || 'org-001');
   }
 
   const organisationId = req.user.organisationId;

@@ -22,6 +22,7 @@ const timeController = require(
 );
 
 router.get('/', ticketsController.listTickets);
+router.post('/', ticketsController.createTicket);
 
 // Ticket notes and conversation timeline
 router.get(
@@ -63,6 +64,26 @@ router.get('/:id', ticketsController.getTicketById);
 router.patch(
   '/:id/status',
   ticketsController.updateTicketStatus
+);
+
+router.patch(
+  '/:id/assign',
+  ticketsController.assignTicket
+);
+
+router.patch(
+  '/:id',
+  ticketsController.updateTicketStatus
+);
+
+router.post(
+  '/:id/email',
+  ticketsController.sendTicketEmail
+);
+
+router.post(
+  '/:id/supplier',
+  ticketsController.logTicketSupplier
 );
 
 module.exports = router;

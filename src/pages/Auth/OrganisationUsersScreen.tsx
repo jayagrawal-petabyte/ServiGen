@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { User } from './types';
-import { fetchOrganisationUsers, createOrganisationUser } from '../../services/organisationsService';
+import { fetchOrganisationUsers, createOrganisationUser, normalizeOrganisationUser } from '../../services/organisationsService';
+import { MOCK_USERS } from '../../services/fallback/mockData';
 import { usePersistentState } from '../../utils/persistentState';
 import { useAuth } from './AuthContext';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
@@ -19,7 +20,10 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const location = useLocation();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'Administrator' || currentUser?.role === 'System Manager' || (currentUser?.role as any) === 'Admin';
-  const [userList, setUserList] = usePersistentState<User[]>('servigen_org_users_v2', users || []);
+  const [userList, setUserList] = usePersistentState<User[]>(
+    'servigen_org_users_v2',
+    users && users.length > 0 ? users : MOCK_USERS.map(normalizeOrganisationUser)
+  );
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSite, setSelectedSite] = useState<string>('ALL');
   const [selectedOrganisation, setSelectedOrganisation] = useState<string>('ALL');

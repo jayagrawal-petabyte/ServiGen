@@ -22,7 +22,13 @@ export const ProblemsPage: React.FC = () => {
   const PAGE_SIZE = 5;
 
   useEffect(() => {
-    setProblems(problemsService.getProblems());
+    let mounted = true;
+    problemsService.getProblems().then((items) => {
+      if (mounted) setProblems(items);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Filter problems based on sidebar selection and search query
@@ -81,21 +87,24 @@ export const ProblemsPage: React.FC = () => {
     return problems.find((p) => p.id === selectedProblemId || p.prefixId === selectedProblemId) || null;
   }, [problems, selectedProblemId]);
 
-  const handleCreateProblem = (data: Partial<ProblemItem>) => {
-    const created = problemsService.createProblem(data);
-    setProblems(problemsService.getProblems());
+  const handleCreateProblem = async (data: Partial<ProblemItem>) => {
+    const created = await problemsService.createProblem(data);
+    const updatedList = await problemsService.getProblems();
+    setProblems(updatedList);
     setSelectedProblemId(created.id);
   };
 
-  const handleUpdateProblem = (updated: ProblemItem) => {
-    problemsService.updateProblem(updated.id, updated);
-    setProblems(problemsService.getProblems());
+  const handleUpdateProblem = async (updated: ProblemItem) => {
+    await problemsService.updateProblem(updated.id, updated);
+    const updatedList = await problemsService.getProblems();
+    setProblems(updatedList);
   };
 
-  const handleAddLog = (author: string, content: string, type: any = 'note') => {
+  const handleAddLog = async (author: string, content: string, type: any = 'note') => {
     if (!selectedProblemId) return;
-    problemsService.addLogEntry(selectedProblemId, author, content, type);
-    setProblems(problemsService.getProblems());
+    await problemsService.addLogEntry(selectedProblemId, author, content, type);
+    const updatedList = await problemsService.getProblems();
+    setProblems(updatedList);
   };
 
   const handleSelectAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,8 +253,9 @@ export const ProblemsPage: React.FC = () => {
               {/* Refresh Button */}
               <RefreshButton
                 size="sm"
-                onClick={() => {
-                  setProblems(problemsService.getProblems());
+                onClick={async () => {
+                  const updated = await problemsService.getProblems();
+                  setProblems(updated);
                 }}
                 title="Refresh list"
               />
