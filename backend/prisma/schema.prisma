@@ -14,16 +14,31 @@ generator client {
 // ─── Organisation & Multi-Tenancy ──────────────────────────────────────────
 
 model Organisation {
-  id        String   @id @default(uuid())
-  name      String
-  domain    String?  @unique
-  tier      String   @default("Standard")
-  sites     Site[]
-  users     User[]
-  tickets   Ticket[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id                    String                 @id @default(uuid())
+  name                  String
+  domain                String?                @unique
+  tier                  String                 @default("Standard")
+  sites                 Site[]
+  users                 User[]
+  tickets               Ticket[]
+  majorIncidents        MajorIncident[]
+  approvals             Approval[]
+  configurationItems    ConfigurationItem[]
+  changeRequests        ChangeRequest[]
+  projects              Project[]
+  knowledgeArticles     KnowledgeArticle[]
+  serviceCatalogueItems ServiceCatalogueItem[]
+  customLists           CustomList[]
+  teams                 Team[]
+  agentMoods            AgentMood[]
+  calendarEvents        CalendarEvent[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  ticketNotes           TicketNote[]
+  ticketLinks           TicketLink[]
+  ticketTimeEntries TicketTimeEntry[]
+  problems              Problem[]
+  contracts             Contract[]
   @@map("organisations")
 }
 
@@ -69,7 +84,13 @@ model User {
   moodEntries      AgentMood[]
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-
+  authoredTicketNotes TicketNote[]
+  createdTicketLinks TicketLink[] @relation("TicketLinkCreator")
+  resolvedTickets Ticket[] @relation("TicketResolvedBy")
+  loggedTicketTimeEntries TicketTimeEntry[] @relation("TicketTimeEntryAgent")
+  ownedProjects Project[] @relation("ProjectOwner")
+  projectResourceAssignments ProjectResourceAssignment[]
+  assignedProblems Problem[] @relation("ProblemAssignedAgent")
   @@map("users")
 }
 
@@ -94,14 +115,27 @@ model Ticket {
   assignedTeam    String?         // "1st Line Support", "2nd Line Support", "Major Incidents"
   slaTimeLeft     Int?            // Remaining minutes before SLA breach
   timeRecord      Int             @default(0) // Cumulative logged minutes spent
+  reopenCount     Int             @default(0) // Times ticket transitioned from Resolved/Closed back to Active
   holdReason      String?
   holdStartedAt   DateTime?
+  responseTargetAt     DateTime?
+  resolutionTargetAt   DateTime?
+  responseMetAt        DateTime?
   incident        Incident?
   serviceRequest  ServiceRequest?
   approvals       Approval[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
+  notes           TicketNote[]
+  outgoingLinks TicketLink[] @relation("TicketLinkSource")
+  incomingLinks TicketLink[] @relation("TicketLinkTarget")
+  resolutionCode     String?
+  resolutionNotes    String?   @db.Text
+  rootCauseSummary   String?   @db.Text
+  resolvedAt         DateTime?
+  resolvedById       String?
+  resolvedBy         User?     @relation("TicketResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  timeEntries TicketTimeEntry[]
   @@index([assignedAgentId, status])
   @@index([organisationId])
   @@map("tickets")
@@ -125,12 +159,14 @@ model Incident {
 
 model MajorIncident {
   id               String                @id // e.g., "MI-1001"
+  organisationId   String?
+  organisation     Organisation?         @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   incidentId       String?               @unique
   incident         Incident?             @relation(fields: [incidentId], references: [id], onDelete: SetNull)
   title            String
   description      String                @db.Text
   priority         String                // "P1", "P2"
-  status           String                @default("Investigating") // "Investigating", "Identified", "Monitoring", "Resolved"
+  status           String                @default("Started") // "Started", "Escalated", "Diagnosed", "Mitigated", "Resolved", "Closed"
   impact           String
   affectedServices String[]              // List of affected service names
   responseTargetAt DateTime?
@@ -138,12 +174,14 @@ model MajorIncident {
   updateDueAt      DateTime? // Update Required is derived from this deadline
   productTags      String[]              @default([])
   commander        String                @default("Unassigned")
+  version          Int                   @default(1)
   startedAt        DateTime              @default(now())
   resolvedAt       DateTime?
   updates          MajorIncidentUpdate[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 
+  @@index([organisationId, status])
   @@map("major_incidents")
 }
 
@@ -162,6 +200,8 @@ model MajorIncidentUpdate {
 
 model ServiceCatalogueItem {
   id               String           @id @default(uuid())
+  organisationId   String?
+  organisation     Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name             String
   description      String           @db.Text
   category         String           // "Hardware", "Software Access", "Cloud Resources"
@@ -173,6 +213,7 @@ model ServiceCatalogueItem {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@index([organisationId, status])
   @@map("service_catalogue_items")
 }
 
@@ -194,6 +235,8 @@ model ServiceRequest {
 
 model Approval {
   id         String    @id // e.g., "APP-1001"
+  organisationId String?
+  organisation   Organisation?   @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   ticketId   String?
   ticket     Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   entityType String    // "Service Request", "Change Request"
@@ -211,6 +254,7 @@ model Approval {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  @@index([organisationId, status])
   @@index([approverId, status])
   @@map("approvals")
 }
@@ -219,6 +263,8 @@ model Approval {
 
 model ConfigurationItem {
   id             String          @id // e.g., "CI-001"
+  organisationId String?
+  organisation   Organisation?   @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name           String
   type           String          // "Server", "Database", "Application", "Network"
   tag            String          @unique // "PAY-001", "DB-001"
@@ -230,7 +276,9 @@ model ConfigurationItem {
   changeRequests ChangeRequest[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-
+  ticketLinks TicketLink[]
+  contractLinks ContractCiLink[]
+  @@index([organisationId, status])
   @@map("configuration_items")
 }
 
@@ -238,6 +286,8 @@ model ConfigurationItem {
 
 model ChangeRequest {
   id                  String             @id // e.g., "CR-001"
+  organisationId      String?
+  organisation        Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   summary             String
   changeType          String             // "Standard", "Normal", "Emergency"
   status              String             @default("Active") // "Draft", "Pending Approval", "Approved", "Active", "Scheduled", "Completed", "Rejected"
@@ -253,44 +303,94 @@ model ChangeRequest {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
+  @@index([organisationId, status])
   @@map("change_requests")
 }
 
 // ─── Projects & Tasks ──────────────────────────────────────────────────────
 
 model Project {
-  id        String           @id // e.g., "P-001"
-  name      String
-  status    String           @default("ACTIVE") // "ACTIVE", "COMPLETED"
-  startDate DateTime?
-  endDate   DateTime?
-  timeSpent Int              @default(0) // Hours or minutes spent
-  subtasks  ProjectSubtask[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id                 String                    @id // e.g., "P-001"
+  organisationId     String?
+  organisation       Organisation?              @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  name               String
+  description        String?                    @db.Text
+  code               String
+  status             String                    @default("ACTIVE")
+  priority           String?
+  startDate          DateTime?
+  endDate            DateTime?
+  timeSpent          Int                       @default(0)
+  ownerId            String?
+  owner              User?                     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  subtasks           ProjectSubtask[]
+  resourceAssignments ProjectResourceAssignment[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
+  @@unique([organisationId, code])
+  @@index([organisationId, status])
+  @@index([ownerId])
   @@map("projects")
 }
 
 model ProjectSubtask {
-  id        String   @id // e.g., "ST-001"
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title     String
-  status    String   @default("PENDING") // "PENDING", "COMPLETED"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String                      @id // e.g., "ST-001"
+  projectId    String
+  project      Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  status       String                      @default("PENDING")
+  dependencies  ProjectSubtaskDependency[]   @relation("SubtaskDependencies")
+  dependents    ProjectSubtaskDependency[]   @relation("SubtaskDependents")
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
 
   @@map("project_subtasks")
 }
 
+model ProjectSubtaskDependency {
+  id                String        @id @default(uuid())
+  subtaskId         String
+  subtask           ProjectSubtask @relation("SubtaskDependencies", fields: [subtaskId], references: [id], onDelete: Cascade)
+  dependsOnSubtaskId String
+  dependsOnSubtask  ProjectSubtask @relation("SubtaskDependents", fields: [dependsOnSubtaskId], references: [id], onDelete: Cascade)
+  dependencyType    String        @default("FINISH_TO_START")
+  lagTime           Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([subtaskId, dependsOnSubtaskId])
+  @@index([subtaskId])
+  @@index([dependsOnSubtaskId])
+  @@map("project_subtask_dependencies")
+}
+
+model ProjectResourceAssignment {
+  id             String   @id @default(uuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allocatedHours Float
+  capacityHours  Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_resource_assignments")
+}
+
+
 // ─── List Builder (Custom Lists) ───────────────────────────────────────────
 
 model CustomList {
-  id             String   @id // e.g., "LIST-001"
+  id             String        @id // e.g., "LIST-001"
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   name           String
   description    String?
-  status         String   @default("Draft")
+  status         String        @default("Draft")
   fields         String[] // Display column names
   filterCriteria Json?    @default("{}")
   scope          String?
@@ -304,18 +404,22 @@ model CustomList {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@index([organisationId])
   @@map("custom_lists")
 }
 
 // ─── Agent Mood Tracker (Dashboard SCR-014) ────────────────────────────────
 
 model AgentMood {
-  id          String   @id @default(uuid())
-  agentId     String
-  agent       User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  mood        String   // "Great", "Good", "Neutral", "Struggling", "Overwhelmed"
-  submittedAt DateTime @default(now())
+  id             String        @id @default(uuid())
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  agentId        String
+  agent          User          @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mood           String   // "Great", "Good", "Neutral", "Struggling", "Overwhelmed"
+  submittedAt    DateTime @default(now())
 
+  @@index([organisationId, submittedAt])
   @@map("agent_moods")
 }
 
@@ -323,12 +427,16 @@ model AgentMood {
 // The shared permission layer validates them. Multi-role membership and
 // cross-organisation access policy are not inferred from the functional document.
 model Team {
-  id String @id @default(uuid())
-  name String @unique
-  memberships TeamMembership[]
-  tickets Ticket[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(uuid())
+  organisationId String?
+  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  name           String           @unique
+  memberships    TeamMembership[]
+  tickets        Ticket[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organisationId])
   @@map("teams")
 }
 model TeamMembership {
@@ -341,30 +449,192 @@ model TeamMembership {
   @@map("team_memberships")
 }
 model KnowledgeArticle {
-  id String @id @default(uuid())
-  title String
-  content String @db.Text
-  category String?
-  priority String?
-  status String @default("Draft")
-  approvalStatus String @default("Pending")
-  slaDueAt DateTime?
-  authorId String?
-  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String                      @id @default(uuid())
+  organisationId String?
+  organisation   Organisation?               @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  title          String
+  content        String                      @db.Text
+  category       String?
+  priority       String?
+  status         String                      @default("Draft")
+  approvalStatus String                      @default("Pending")
+  slaDueAt       DateTime?
+  authorId       String?
+  author         User?                       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  embedding      Unsupported("vector(384)")?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@index([organisationId, status])
   @@map("knowledge_articles")
 }
 model CalendarEvent {
-  id String @id @default(uuid())
-  title String
+  id              String        @id @default(uuid())
+  organisationId  String?
+  organisation    Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  title           String
   appointmentType String
-  startsAt DateTime
-  endsAt DateTime
-  agentId String
-  agent User @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  startsAt        DateTime
+  endsAt          DateTime
+  agentId         String
+  agent           User          @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organisationId, startsAt])
   @@index([agentId, startsAt])
   @@map("calendar_events")
+}
+model TicketNote {
+  id             String        @id @default(uuid())
+  ticketId       String
+  ticket         Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  organisationId String?
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName     String
+  authorEmail    String?
+
+  noteType       String
+  content        String        @db.Text
+  createdAt      DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([organisationId, createdAt])
+  @@index([authorId])
+  @@map("ticket_notes")
+}
+model TicketLink {
+  id                 String             @id @default(uuid())
+
+  ticketId           String
+  ticket             Ticket             @relation("TicketLinkSource", fields: [ticketId], references: [id], onDelete: Cascade)
+
+  relatedTicketId    String?
+  relatedTicket      Ticket?            @relation("TicketLinkTarget", fields: [relatedTicketId], references: [id], onDelete: Cascade)
+
+  problemId          String?
+  problem            Problem?           @relation("ProblemTicketLinks", fields: [problemId], references: [id], onDelete: Cascade)
+
+  configurationItemId String?
+  configurationItem  ConfigurationItem? @relation(fields: [configurationItemId], references: [id], onDelete: Cascade)
+
+  organisationId     String?
+  organisation       Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  createdById        String?
+  createdBy          User?              @relation("TicketLinkCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  relationType       String
+  createdAt          DateTime           @default(now())
+
+  @@unique([ticketId, relatedTicketId, relationType])
+  @@unique([ticketId, problemId, relationType])
+  @@unique([ticketId, configurationItemId, relationType])
+  @@index([organisationId, createdAt])
+  @@index([relatedTicketId])
+  @@index([configurationItemId])
+  @@map("ticket_links")
+}
+model TicketTimeEntry {
+  id              String        @id @default(uuid())
+
+  ticketId        String
+  ticket          Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  organisationId  String?
+  organisation    Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+
+  agentId         String?
+  agent           User?         @relation("TicketTimeEntryAgent", fields: [agentId], references: [id], onDelete: SetNull)
+
+  agentName       String
+  agentEmail      String?
+
+  durationMinutes Int
+  description     String        @db.Text
+
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([organisationId, createdAt])
+  @@index([agentId, createdAt])
+  @@map("ticket_time_entries")
+}
+
+// ─── Problem Management ───────────────────────────────────────────────────
+
+model Problem {
+  id                 String             @id
+  problemNumber      String?
+  summary            String
+  description        String?            @db.Text
+  category           String             @default("General")
+  priority           String             @default("Medium")
+  urgency            String             @default("Medium")
+  impact             String             @default("Medium")
+  status             String             @default("Open")
+  rootCause          String?            @db.Text
+  workaround         String?            @db.Text
+  knownError         Boolean            @default(false)
+  assignedAgentId    String?
+  assignedAgent      User?              @relation("ProblemAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  organisationId     String?
+  organisation       Organisation?      @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  ticketLinks        TicketLink[]       @relation("ProblemTicketLinks")
+
+  @@index([organisationId, status])
+  @@index([assignedAgentId])
+  @@map("problems")
+}
+
+// ─── Contracts Management ──────────────────────────────────────────────────
+
+model Contract {
+  id             String           @id @default(uuid())
+  contractNumber String?
+  title          String
+  vendorName     String
+  vendorEmail    String?
+  type           String           @default("SLA") // SLA, Maintenance, License, Underpinning, Warranty
+  status         String           @default("Draft") // Active, Expired, Pending Renewal, Draft
+  startDate      DateTime?
+  endDate        DateTime?
+  renewalDate    DateTime?
+  autoRenew      Boolean          @default(false)
+  contractValue  Float?
+  currency       String           @default("USD")
+  notes          String?          @db.Text
+  organisationId String?
+  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  linkedCis      ContractCiLink[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organisationId, status])
+  @@index([vendorName])
+  @@map("contracts")
+}
+
+model ContractCiLink {
+  id                  String             @id @default(uuid())
+  contractId          String
+  contract            Contract           @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  configurationItemId String
+  configurationItem   ConfigurationItem  @relation(fields: [configurationItemId], references: [id], onDelete: Cascade)
+  notes               String?
+  createdAt           DateTime           @default(now())
+
+  @@unique([contractId, configurationItemId])
+  @@index([contractId])
+  @@index([configurationItemId])
+  @@map("contract_ci_links")
 }

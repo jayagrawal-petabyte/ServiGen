@@ -5,58 +5,38 @@ const { handleDbError } = require('../../shared/utils/db-guard');
 
 const mockConfigurationItems = [
   {
-    id: 'CI-1001',
-    name: 'Primary PostgreSQL Database Cluster',
+    id: 'CI-001',
+    name: 'Payment Server',
+    type: 'Server',
+    tag: 'PAY-001',
+    site: 'Chennai',
+    status: 'Active',
+    lifecycleStatus: 'Deployed',
+    businessOwner: 'Finance',
+    environment: 'Production',
+    ipAddress: '192.168.1.10',
+    operatingSystem: 'Ubuntu 22.04 LTS',
+    supportTeam: 'Infrastructure',
+    organisationId: 'org-001',
+    createdAt: '2026-09-01T08:00:00.000Z',
+    updatedAt: '2026-10-01T10:00:00.000Z',
+  },
+  {
+    id: 'CI-002',
+    name: 'Customer Database',
     type: 'Database',
     tag: 'DB-001',
     site: 'London Primary DC (Lon-01)',
     status: 'Active',
-    lifecycleState: 'Deployed',
-    businessOwner: 'Data Platform',
-    technicalContact: 'David Miller',
+    lifecycleStatus: 'Deployed',
+    businessOwner: 'Technology',
     environment: 'Production',
-    activeIncidentsCount: 1,
-    linkedChangesCount: 2,
-    ipAddress: '10.240.12.15',
-    lastUpdated: 'Today at 09:30',
-    criticality: 'Tier 1 - Mission Critical',
-    warrantyExpiry: '2028-06-30',
-    specifications: {
-      os: 'Ubuntu Linux 22.04 LTS',
-      cpu: '32 vCPU',
-      ram: '128 GB ECC',
-      storage: '2 TB NVMe RAID 10',
-      ipAddress: '10.240.12.15',
-      macAddress: '00:1A:2B:3C:4D:5E',
-      model: 'Dell PowerEdge R750',
-      rackLocation: 'Rack B-14, U18-U20',
-    },
-    relationships: [
-      {
-        type: 'runs_on',
-        targetCiId: 'CI-1002',
-        targetCiName: 'Payment Gateway Application Server',
-        targetCiTag: 'PAY-001',
-        direction: 'upstream',
-      },
-      {
-        type: 'backed_up_by',
-        targetCiId: 'CI-1007',
-        targetCiName: 'SAN Backup Storage Vault',
-        targetCiTag: 'SAN-001',
-        direction: 'downstream',
-      },
-    ],
-    softwareLicenses: [
-      {
-        name: 'PostgreSQL Enterprise Support (EDB)',
-        licenseKeyMasked: 'EDB-PROD-****-9821',
-        expiryDate: 'Dec 31, 2027',
-        seatsTotal: 1,
-        seatsAllocated: 1,
-      },
-    ],
+    ipAddress: '192.168.1.20',
+    operatingSystem: 'PostgreSQL 15',
+    supportTeam: 'Database Team',
     organisationId: 'org-001',
+    createdAt: '2026-09-01T08:00:00.000Z',
+    updatedAt: '2026-10-01T10:00:00.000Z',
   },
   {
     id: 'CI-1002',
@@ -198,35 +178,17 @@ const mockConfigurationItems = [
     name: 'Customer Portal Web App',
     type: 'Application',
     tag: 'APP-001',
-    site: 'London Primary DC (Lon-01)',
-    status: 'Active',
-    lifecycleState: 'Deployed',
-    businessOwner: 'Digital Products',
-    technicalContact: 'Priya Sharma',
-    environment: 'Production',
-    activeIncidentsCount: 1,
-    linkedChangesCount: 1,
-    ipAddress: '10.240.16.20',
-    lastUpdated: '16/10/2026',
-    criticality: 'Tier 2 - Business Operational',
-    warrantyExpiry: '2026-11-20',
-    specifications: {
-      os: 'Node.js 20 LTS on Debian 12',
-      cpu: '8 vCPU',
-      ram: '32 GB',
-      ipAddress: '10.240.16.20',
-    },
-    relationships: [
-      {
-        type: 'depends_on',
-        targetCiId: 'CI-1002',
-        targetCiName: 'Payment Gateway Application Server',
-        targetCiTag: 'PAY-001',
-        direction: 'downstream',
-      },
-    ],
-    softwareLicenses: [],
+    site: 'Bangalore',
+    status: 'Inactive',
+    lifecycleStatus: 'Maintenance',
+    businessOwner: 'Human Resources',
+    environment: 'Staging',
+    ipAddress: '10.0.0.15',
+    operatingSystem: 'RHEL 9',
+    supportTeam: 'App Support',
     organisationId: 'org-001',
+    createdAt: '2026-09-15T09:00:00.000Z',
+    updatedAt: '2026-10-05T11:00:00.000Z',
   },
   {
     id: 'CI-1007',
@@ -235,89 +197,75 @@ const mockConfigurationItems = [
     tag: 'SAN-001',
     site: 'London Secondary DC (Lon-02)',
     status: 'Active',
-    lifecycleState: 'Deployed',
-    businessOwner: 'Storage Engineering',
-    technicalContact: 'David Miller',
-    environment: 'Disaster Recovery',
-    activeIncidentsCount: 0,
-    linkedChangesCount: 0,
-    ipAddress: '10.242.8.50',
-    lastUpdated: '01/10/2026',
-    criticality: 'Tier 2 - Business Operational',
-    warrantyExpiry: '2025-08-30',
-    specifications: {
-      model: 'NetApp AFF A400',
-      storage: '50 TB All-Flash NVMe',
-      rackLocation: 'Lon-02, Rack S-05',
-      ipAddress: '10.242.8.50',
-    },
-    relationships: [
-      {
-        type: 'backed_up_by',
-        targetCiId: 'CI-1001',
-        targetCiName: 'Primary PostgreSQL Database Cluster',
-        targetCiTag: 'DB-001',
-        direction: 'upstream',
-      },
-    ],
-    softwareLicenses: [],
+    lifecycleStatus: 'Deployed',
+    businessOwner: 'Technology',
+    environment: 'Production',
+    ipAddress: '192.168.1.30',
+    operatingSystem: 'Alpine Linux',
+    supportTeam: 'Infrastructure',
+    organisationId: 'org-001',
+    createdAt: '2026-09-20T10:00:00.000Z',
+    updatedAt: '2026-10-10T12:00:00.000Z',
+  },
+  {
+    id: 'CI-005',
+    name: 'Core Network Switch',
+    type: 'Network',
+    tag: 'NET-001',
+    site: 'Chennai',
+    status: 'Active',
+    lifecycleStatus: 'Deployed',
+    businessOwner: 'Infrastructure',
+    environment: 'Production',
+    ipAddress: '192.168.1.1',
+    operatingSystem: 'Cisco IOS-XE',
+    supportTeam: 'Network Ops',
+    organisationId: 'org-001',
+    createdAt: '2026-09-25T10:00:00.000Z',
+    updatedAt: '2026-10-12T12:00:00.000Z',
+  },
+];
+
+const mockDependencies = [
+  {
+    id: 'DEP-001',
+    sourceCiId: 'CI-001',
+    targetCiId: 'CI-002',
+    relationType: 'DEPENDS_ON',
+    impactLevel: 'Critical',
     organisationId: 'org-001',
   },
   {
-    id: 'CI-1008',
-    name: 'Redis Session Cache Cluster',
-    type: 'Cloud Service',
-    tag: 'CACHE-001',
-    site: 'London Primary DC (Lon-01)',
-    status: 'Active',
-    lifecycleState: 'Deployed',
-    businessOwner: 'Platform Engineering',
-    technicalContact: 'Sarah Jenkins',
-    environment: 'Production',
-    activeIncidentsCount: 0,
-    linkedChangesCount: 0,
-    ipAddress: '10.240.12.30',
-    lastUpdated: '14/10/2026',
-    criticality: 'Tier 2 - Business Operational',
-    warrantyExpiry: '2028-09-15',
-    specifications: {
-      os: 'Redis Enterprise 7.2',
-      ram: '32 GB In-Memory',
-      ipAddress: '10.240.12.30',
-    },
-    relationships: [
-      {
-        type: 'runs_on',
-        targetCiId: 'CI-1002',
-        targetCiName: 'Payment Gateway Application Server',
-        targetCiTag: 'PAY-001',
-        direction: 'upstream',
-      },
-    ],
-    softwareLicenses: [],
+    id: 'DEP-002',
+    sourceCiId: 'CI-004',
+    targetCiId: 'CI-001',
+    relationType: 'CONNECTS_TO',
+    impactLevel: 'High',
     organisationId: 'org-001',
   },
 ];
 
-const findCiRecord = (idOrTag) => {
-  if (!idOrTag || typeof idOrTag !== 'string') return null;
-  const needle = idOrTag.trim().toLowerCase();
+const ciAttributesStore = new Map();
 
-  // Resolve Prisma-seeded alias IDs to canonical tags/IDs
-  let effectiveNeedle = needle;
-  if (needle === 'ci-001') effectiveNeedle = 'pay-001';
-  else if (needle === 'ci-002') effectiveNeedle = 'db-001';
-  else if (needle === 'ci-003') effectiveNeedle = 'net-001';
-
-  return (
-    mockConfigurationItems.find(
-      (ci) =>
-        (ci.tag && ci.tag.toLowerCase() === effectiveNeedle) ||
-        (ci.id && ci.id.toLowerCase() === effectiveNeedle) ||
-        (ci.tag && ci.tag.toLowerCase() === needle) ||
-        (ci.id && ci.id.toLowerCase() === needle)
-    ) || null
-  );
+const formatCi = (ci) => {
+  const extra = ciAttributesStore.get(ci.id) || {};
+  return {
+    id: ci.id,
+    name: extra.name || ci.name,
+    type: extra.type || ci.type,
+    tag: ci.tag,
+    site: ci.siteName || ci.site || 'Chennai',
+    status: extra.status || ci.status || 'Active',
+    lifecycleStatus: extra.lifecycleStatus || ci.lifecycleStatus || 'Deployed',
+    businessOwner: extra.businessOwner || ci.businessOwner || 'Technology',
+    environment: extra.environment || ci.environment || 'Production',
+    ipAddress: extra.ipAddress !== undefined ? extra.ipAddress : (ci.ipAddress || null),
+    operatingSystem: extra.operatingSystem !== undefined ? extra.operatingSystem : (ci.operatingSystem || null),
+    supportTeam: extra.supportTeam !== undefined ? extra.supportTeam : (ci.supportTeam || null),
+    organisationId: ci.organisationId || (ci.site?.organisationId || null),
+    createdAt: ci.createdAt instanceof Date ? ci.createdAt.toISOString() : (ci.createdAt || new Date().toISOString()),
+    updatedAt: ci.updatedAt instanceof Date ? ci.updatedAt.toISOString() : (ci.updatedAt || new Date().toISOString()),
+  };
 };
 
 const getConfigurationItems = async (options = {}) => {
@@ -332,6 +280,7 @@ const getConfigurationItems = async (options = {}) => {
           },
         },
       });
+      const formatted = records.map(formatCi);
 
       if (records && records.length > 0) {
         // Merge DB records with any rich mock/in-memory attributes
@@ -377,16 +326,18 @@ const getConfigurationItems = async (options = {}) => {
         return formatted;
       }
     } catch (_err) {
-      handleDbError('cmdb.getConfigurationItems', _err);
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
   if (organisationId) {
-    return mockConfigurationItems.filter(
-      (item) => !item.organisationId || item.organisationId === organisationId
-    );
+    return mockConfigurationItems
+      .filter((item) => !item.organisationId || item.organisationId === organisationId)
+      .map(formatCi);
   }
-  return mockConfigurationItems;
+  return mockConfigurationItems.map(formatCi);
 };
 
 const getConfigurationItemsByType = async (organisationId = null) => {
@@ -422,38 +373,16 @@ const getConfigurationItemById = async (id, organisationId = null) => {
       });
 
       if (ci) {
-        const inMem = findCiRecord(ci.id) || findCiRecord(ci.tag);
-        const formatted = {
-          id: ci.id,
-          name: ci.name,
-          type: ci.type,
-          tag: ci.tag,
-          site: ci.siteName || (inMem && inMem.site) || 'London Primary DC (Lon-01)',
-          status: ci.status || (inMem && inMem.status) || 'Active',
-          lifecycleState: (inMem && inMem.lifecycleState) || 'Deployed',
-          businessOwner: ci.businessOwner || (inMem && inMem.businessOwner) || 'Technology',
-          technicalContact: (inMem && inMem.technicalContact) || 'Platform Operations',
-          environment: (inMem && inMem.environment) || 'Production',
-          ipAddress: (inMem && inMem.ipAddress) || null,
-          activeIncidentsCount: (inMem && inMem.activeIncidentsCount) || 0,
-          linkedChangesCount: (inMem && inMem.linkedChangesCount) || 0,
-          criticality: (inMem && inMem.criticality) || 'Tier 2 - Business Operational',
-          warrantyExpiry: (inMem && inMem.warrantyExpiry) || (inMem && inMem.specifications && inMem.specifications.warrantyExpiry) || undefined,
-          specifications: (inMem && inMem.specifications) || {},
-          relationships: (inMem && inMem.relationships) || [],
-          softwareLicenses: (inMem && inMem.softwareLicenses) || [],
-          organisationId: ci.site?.organisationId || (inMem && inMem.organisationId) || null,
-          createdAt: ci.createdAt,
-          updatedAt: ci.updatedAt,
-        };
-
+        const formatted = formatCi(ci);
         if (organisationId && formatted.organisationId && formatted.organisationId !== organisationId) {
           return null;
         }
         return formatted;
       }
     } catch (_err) {
-      handleDbError('cmdb.getConfigurationItemById', _err);
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -462,7 +391,299 @@ const getConfigurationItemById = async (id, organisationId = null) => {
   if (organisationId && item.organisationId && item.organisationId !== organisationId) {
     return null;
   }
-  return item;
+  return formatCi(item);
+};
+
+const createConfigurationItemRecord = async (ciData) => {
+  const id = ciData.id || `CI-${Date.now().toString().slice(-4)}`;
+  const now = new Date().toISOString();
+
+  const newCi = {
+    id,
+    name: ciData.name,
+    type: ciData.type,
+    tag: ciData.tag,
+    site: ciData.site || 'Chennai',
+    siteName: ciData.site || 'Chennai',
+    status: ciData.status || 'Active',
+    lifecycleStatus: ciData.lifecycleStatus || 'Deployed',
+    businessOwner: ciData.businessOwner || 'Technology',
+    environment: ciData.environment || 'Production',
+    ipAddress: ciData.ipAddress || null,
+    operatingSystem: ciData.operatingSystem || null,
+    supportTeam: ciData.supportTeam || null,
+    organisationId: ciData.organisationId || null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const created = await db.configurationItem.create({
+        data: {
+          id: newCi.id,
+          name: newCi.name,
+          type: newCi.type,
+          tag: newCi.tag,
+          siteName: newCi.siteName,
+          status: newCi.status,
+          businessOwner: newCi.businessOwner,
+          organisationId: newCi.organisationId,
+        },
+      });
+      return formatCi({ ...newCi, ...created });
+    } catch (err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw err;
+      }
+    }
+  }
+
+  mockConfigurationItems.unshift(newCi);
+  return formatCi(newCi);
+};
+
+const updateConfigurationItemRecord = async (id, organisationId, patch) => {
+  const now = new Date().toISOString();
+  const currentAttrs = ciAttributesStore.get(id) || {};
+  ciAttributesStore.set(id, { ...currentAttrs, ...patch });
+
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const existing = await db.configurationItem.findFirst({
+        where: {
+          id,
+          ...(organisationId ? { organisationId } : {}),
+        },
+      });
+      if (!existing) return null;
+
+      const updated = await db.configurationItem.update({
+        where: { id },
+        data: {
+          ...(patch.name ? { name: patch.name } : {}),
+          ...(patch.type ? { type: patch.type } : {}),
+          ...(patch.status ? { status: patch.status } : {}),
+          ...(patch.businessOwner ? { businessOwner: patch.businessOwner } : {}),
+          ...(patch.siteName ? { siteName: patch.siteName } : {}),
+        },
+      });
+      return formatCi({ ...existing, ...patch, ...updated });
+    } catch (err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw err;
+      }
+    }
+  }
+
+  const idx = mockConfigurationItems.findIndex((ci) => ci.id === id || ci.tag === id);
+  if (idx === -1) return null;
+  if (organisationId && mockConfigurationItems[idx].organisationId && mockConfigurationItems[idx].organisationId !== organisationId) {
+    return null;
+  }
+
+  mockConfigurationItems[idx] = {
+    ...mockConfigurationItems[idx],
+    ...patch,
+    updatedAt: now,
+  };
+
+  return formatCi(mockConfigurationItems[idx]);
+};
+
+const getCiDependencies = async (ciId, organisationId = null) => {
+  const ci = await getConfigurationItemById(ciId, organisationId);
+  if (!ci) return null;
+
+  const allCis = await getConfigurationItems({ organisationId });
+  const ciMap = new Map(allCis.map((item) => [item.id, item]));
+
+  const orgDeps = mockDependencies.filter(
+    (dep) => !organisationId || !dep.organisationId || dep.organisationId === organisationId
+  );
+
+  const upstream = orgDeps
+    .filter((dep) => dep.sourceCiId === ci.id)
+    .map((dep) => ({
+      dependencyId: dep.id,
+      relationType: dep.relationType,
+      impactLevel: dep.impactLevel,
+      targetCi: ciMap.get(dep.targetCiId) || { id: dep.targetCiId, name: 'Unknown CI' },
+    }));
+
+  const downstream = orgDeps
+    .filter((dep) => dep.targetCiId === ci.id)
+    .map((dep) => ({
+      dependencyId: dep.id,
+      relationType: dep.relationType,
+      impactLevel: dep.impactLevel,
+      dependentCi: ciMap.get(dep.sourceCiId) || { id: dep.sourceCiId, name: 'Unknown CI' },
+    }));
+
+  return {
+    ci,
+    upstream,
+    downstream,
+  };
+};
+
+const createCiDependencyRecord = async (sourceCiId, organisationId, data) => {
+  const { targetCiId, relationType = 'DEPENDS_ON', impactLevel = 'High' } = data;
+  const newDep = {
+    id: `DEP-${Date.now().toString().slice(-4)}`,
+    sourceCiId,
+    targetCiId,
+    relationType,
+    impactLevel,
+    organisationId,
+  };
+
+  mockDependencies.push(newDep);
+  return newDep;
+};
+
+const getCiImpactData = async (ciId, organisationId = null) => {
+  const ci = await getConfigurationItemById(ciId, organisationId);
+  if (!ci) return null;
+
+  const deps = await getCiDependencies(ciId, organisationId);
+
+  // Active tickets linked to this CI
+  let activeIncidents = [];
+  try {
+    const { getIncidents } = require('../incidents/incidents.model');
+    const allIncidents = await getIncidents(organisationId ? { organisationId } : {});
+    activeIncidents = allIncidents.filter(
+      (inc) => ['Active', 'In Progress', 'Assigned'].includes(inc.status) &&
+        (inc.ciId === ci.id || (inc.affectedCis && inc.affectedCis.includes(ci.id)))
+    );
+  } catch (_e) {}
+
+  // Active change requests linked to this CI
+  let ongoingChanges = [];
+  try {
+    const { getChangeRequests } = require('../change-requests/change-requests.model');
+    const allChanges = await getChangeRequests(organisationId ? { organisationId } : {});
+    ongoingChanges = allChanges.filter(
+      (cr) => ['Pending Approval', 'Approved', 'Scheduled', 'Implementation'].includes(cr.status) &&
+        (cr.ciId === ci.id || cr.ciTag === ci.tag)
+    );
+  } catch (_e) {}
+
+  // Calculate overall impact risk
+  let impactScore = 1;
+  if (ci.environment === 'Production') impactScore += 2;
+  if (deps.downstream.length > 0) impactScore += Math.min(deps.downstream.length, 3);
+  if (activeIncidents.length > 0) impactScore += 2;
+  if (ongoingChanges.length > 0) impactScore += 1;
+
+  let riskLevel = 'Low';
+  if (impactScore >= 6) riskLevel = 'Critical';
+  else if (impactScore >= 4) riskLevel = 'High';
+  else if (impactScore >= 3) riskLevel = 'Medium';
+
+  return {
+    ci,
+    downstreamServicesCount: deps.downstream.length,
+    dependentServices: deps.downstream.map((d) => d.dependentCi),
+    activeIncidentsCount: activeIncidents.length,
+    activeIncidents: activeIncidents.map((i) => ({ id: i.id, summary: i.summary, priority: i.priority, status: i.status })),
+    ongoingChangesCount: ongoingChanges.length,
+    ongoingChanges: ongoingChanges.map((c) => ({ id: c.id, summary: c.summary, changeType: c.changeType, status: c.status })),
+    impactScore,
+    riskLevel,
+  };
+};
+
+const deleteCiDependencyRecord = async (sourceCiId, targetCiId, organisationId = null) => {
+  const idx = mockDependencies.findIndex(
+    (dep) =>
+      dep.sourceCiId === sourceCiId &&
+      dep.targetCiId === targetCiId &&
+      (!organisationId || !dep.organisationId || dep.organisationId === organisationId)
+  );
+  if (idx === -1) return null;
+  const removed = mockDependencies.splice(idx, 1)[0];
+  return removed;
+};
+
+const getCiTopology = async (ciId, organisationId = null) => {
+  const rootCi = await getConfigurationItemById(ciId, organisationId);
+  if (!rootCi) return null;
+
+  const allCis = await getConfigurationItems({ organisationId });
+  const ciMap = new Map(allCis.map((c) => [c.id, c]));
+
+  const orgDeps = mockDependencies.filter(
+    (dep) => !organisationId || !dep.organisationId || dep.organisationId === organisationId
+  );
+
+  const nodes = new Map();
+  const edges = [];
+  const visited = new Set();
+
+  const traverse = (currentId, depth = 0) => {
+    if (depth > 10 || visited.has(currentId)) return;
+    visited.add(currentId);
+
+    const ci = ciMap.get(currentId);
+    if (ci && !nodes.has(ci.id)) {
+      nodes.set(ci.id, {
+        id: ci.id,
+        name: ci.name,
+        type: ci.type,
+        tag: ci.tag,
+        status: ci.status,
+        lifecycleStatus: ci.lifecycleStatus,
+        environment: ci.environment,
+      });
+    }
+
+    // Upstream (this CI depends on target)
+    const upstreamDeps = orgDeps.filter((d) => d.sourceCiId === currentId);
+    for (const dep of upstreamDeps) {
+      if (!edges.some((e) => e.source === dep.sourceCiId && e.target === dep.targetCiId)) {
+        edges.push({
+          id: dep.id,
+          source: dep.sourceCiId,
+          target: dep.targetCiId,
+          relationType: dep.relationType,
+          impactLevel: dep.impactLevel,
+          direction: 'upstream',
+        });
+      }
+      traverse(dep.targetCiId, depth + 1);
+    }
+
+    // Downstream (source depends on this CI)
+    const downstreamDeps = orgDeps.filter((d) => d.targetCiId === currentId);
+    for (const dep of downstreamDeps) {
+      if (!edges.some((e) => e.source === dep.sourceCiId && e.target === dep.targetCiId)) {
+        edges.push({
+          id: dep.id,
+          source: dep.sourceCiId,
+          target: dep.targetCiId,
+          relationType: dep.relationType,
+          impactLevel: dep.impactLevel,
+          direction: 'downstream',
+        });
+      }
+      traverse(dep.sourceCiId, depth + 1);
+    }
+  };
+
+  traverse(rootCi.id, 0);
+
+  return {
+    rootCi: {
+      id: rootCi.id,
+      name: rootCi.name,
+      type: rootCi.type,
+      tag: rootCi.tag,
+    },
+    nodes: Array.from(nodes.values()),
+    edges,
+  };
 };
 
 const createConfigurationItem = async (payload, organisationId = null) => {
@@ -823,9 +1044,11 @@ module.exports = {
   getConfigurationItems,
   getConfigurationItemsByType,
   getConfigurationItemById,
-  createConfigurationItem,
-  updateConfigurationItem,
-  addCiRelationship,
-  removeCiRelationship,
+  createConfigurationItemRecord,
+  updateConfigurationItemRecord,
+  getCiDependencies,
+  createCiDependencyRecord,
+  deleteCiDependencyRecord,
   getCiTopology,
+  getCiImpactData,
 };

@@ -1,6 +1,8 @@
 const {
   getOrganisationUsers,
   getUserById,
+  getOrganisationSites,
+  getOrganisationContacts,
 } = require('./organisations.model');
 
 /**
@@ -75,7 +77,33 @@ const getUser = async (organisationId, userId) => {
   };
 };
 
+/**
+ * Get physical sites and regional offices for an organisation.
+ */
+const getSites = async (organisationId) => {
+  if (!organisationId || typeof organisationId !== 'string') {
+    const error = new Error('Organisation ID is required');
+    error.statusCode = 400;
+    throw error;
+  }
+  return getOrganisationSites(organisationId);
+};
+
+/**
+ * Get contacts and user directory for an organisation with VIP designations.
+ */
+const getContacts = async (organisationId) => {
+  if (!organisationId || typeof organisationId !== 'string') {
+    const error = new Error('Organisation ID is required');
+    error.statusCode = 400;
+    throw error;
+  }
+  return getOrganisationContacts(organisationId);
+};
+
 module.exports = {
   getUsers,
   getUser,
+  getSites,
+  getContacts,
 };

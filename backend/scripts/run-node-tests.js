@@ -10,7 +10,12 @@ const folders = [
   'src/config', 'src', 'src/shared', 'src/modules/approvals',
   'src/modules/services-catalogue', 'src/modules/ai-core/response',
   'src/modules/major-incidents', 'src/modules/ai-core/intent',
-  'src/modules/change-requests', 'src/modules/cmdb',
+  'src/modules/change-requests', 'src/modules/ai-core/embedding',
+  'src/modules/ai-core/retrieval', 'src/modules/projects',
+  'src/modules/ai-core/escalation', 'src/modules/problems',
+  'src/modules/reports', 'src/modules/cmdb',
+  'src/modules/organisations', 'src/modules/auth',
+  'src/modules/contracts', 'src/modules/calendar', 'src/modules/search',
 ];
 const files = folders.flatMap(folder => readdirSync(path.join(root, folder))
   .filter(file => file.endsWith('.test.js')).map(file => path.join(root, folder, file)));

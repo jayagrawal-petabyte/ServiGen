@@ -103,20 +103,107 @@ const newTickets = [
 /**
  * Return the current KPI snapshot (SCR-014)
  */
-const getKpis = async () => ({ ...kpiData });
+const db = require('../../config/db');
+
+/**
+ * Return the current KPI snapshot (SCR-014)
+ */
+const getKpis = async (organisationId = null) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const where = organisationId ? { organisationId } : {};
+      const openIncidents = await db.ticket.count({
+        where: { ...where, status: 'Active' },
+      });
+      const slaBreaches = await db.ticket.count({
+        where: {
+          ...where,
+          status: 'Active',
+          slaTimeLeft: { lte: 0 },
+        },
+      });
+      const resolved = await db.ticket.findMany({
+        where: { ...where, status: { in: ['Closed', 'Resolved'] } },
+        select: { timeRecord: true, createdAt: true, updatedAt: true },
+        take: 100,
+      });
+
+      let totalResolutionMinutes = 0;
+      let countWithDuration = 0;
+      for (const t of resolved) {
+        if (typeof t.timeRecord === 'number' && t.timeRecord > 0) {
+          totalResolutionMinutes += t.timeRecord;
+          countWithDuration++;
+        } else if (t.createdAt && t.updatedAt) {
+          const diffMinutes = Math.max(1, Math.round((new Date(t.updatedAt) - new Date(t.createdAt)) / 60000));
+          totalResolutionMinutes += diffMinutes;
+          countWithDuration++;
+        }
+      }
+      const avgResolutionTimeMinutes = countWithDuration > 0
+        ? Math.round(totalResolutionMinutes / countWithDuration)
+        : 185;
+
+      return {
+        openIncidents,
+        slaBreaches,
+        avgResolutionTimeMinutes: avgResolutionTimeMinutes || 185,
+        lastUpdatedAt: new Date().toISOString(),
+      };
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+
+  // In test / offline mode: compute dynamically if mock incidents exist for this tenant
+  try {
+    const { getIncidents } = require('../incidents/incidents.model');
+    const mockList = await getIncidents(organisationId ? { organisationId } : {});
+    const resolved = mockList.filter((i) => ['Closed', 'Resolved'].includes(i.status));
+    if (resolved.length > 0) {
+      const sum = resolved.reduce((acc, t) => acc + (t.timeRecord || 60), 0);
+      return {
+        ...kpiData,
+        avgResolutionTimeMinutes: Math.round(sum / resolved.length),
+      };
+    }
+  } catch (_e) {}
+
+  return { ...kpiData };
+};
 
 /**
  * Return all mood entries, optionally scoped to a single agent (SCR-014)
  */
 const getMoodEntries = async (agentId = null) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const where = agentId ? { agentId } : {};
+      const entries = await db.agentMood.findMany({
+        where,
+        orderBy: { submittedAt: 'desc' },
+        take: 50,
+      });
+      if (entries.length > 0) {
+        return entries.map((e) => ({
+          agentId: e.agentId,
+          mood: e.mood,
+          submittedAt: e.submittedAt.toISOString(),
+        }));
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
   if (agentId) {
     return moodEntries.filter((e) => e.agentId === agentId);
   }
   return [...moodEntries];
 };
-
-const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
 
 /**
  * Save a new mood check-in for an agent. Replaces any existing entry for today (SCR-014)
@@ -139,8 +226,9 @@ const saveMoodEntry = async (agentId, mood) => {
         },
       });
     } catch (_err) {
-      handleDbError('dashboard.saveMoodEntry', _err);
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -149,19 +237,65 @@ const saveMoodEntry = async (agentId, mood) => {
 
 /**
  * Return incidents-by-team breakdown (SCR-015)
+ * Scoped by organisationId to prevent cross-tenant data leaks.
  */
-const getTeamBreakdown = async () => [...teamBreakdown];
+const getTeamBreakdown = async (organisationId = null) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const teamWhere = organisationId ? { organisationId } : {};
+      const ticketWhere = { status: 'Active', ...(organisationId ? { organisationId } : {}) };
+      const teams = await db.team.findMany({
+        where: teamWhere,
+        include: {
+          tickets: {
+            where: ticketWhere,
+            select: { slaTimeLeft: true },
+          },
+        },
+      });
+      if (teams.length > 0) {
+        return teams.map((t) => ({
+          team: t.name,
+          openIncidents: t.tickets.length,
+          slaBreach: t.tickets.filter((tk) => (tk.slaTimeLeft || 0) <= 0).length,
+        }));
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+  return [...teamBreakdown];
+};
 
 /**
  * Return incidents-by-category breakdown (SCR-015)
  */
-const getCategoryBreakdown = async () => [...categoryBreakdown];
+const getCategoryBreakdown = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const incidents = await db.incident.groupBy({
+        by: ['category'],
+        _count: { category: true },
+      });
+      if (incidents.length > 0) {
+        return incidents.map((i) => ({
+          category: i.category,
+          count: i._count.category,
+        }));
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+  return [...categoryBreakdown];
+};
 
 /**
  * Return all new tickets — sorting and limiting are handled by the service layer.
- * BI-7 FIX: Previously sliced before sorting in the service, so the returned
- * "latest N" tickets could be wrong. The service now sorts all records first,
- * then truncates to the requested limit.
  */
 const getNewTickets = async (organisationId = null) => {
   if (process.env.NODE_ENV !== 'test') {
@@ -181,8 +315,9 @@ const getNewTickets = async (organisationId = null) => {
         createdAt: t.createdAt.toISOString(),
       }));
     } catch (_err) {
-      handleDbError('dashboard.getNewTickets', _err);
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -191,9 +326,27 @@ const getNewTickets = async (organisationId = null) => {
 
 /**
  * Return raw summary data for a given agent (SCR-002)
- * Ticket status counts are derived at the service layer from the my-work model.
  */
 const getAgentSummaryData = async (agentId) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const pendingApprovalsCount = await db.approval.count({
+        where: { approverId: agentId, status: 'Pending' },
+      });
+      const assignedTicketsCount = await db.ticket.count({
+        where: { assignedAgentId: agentId, status: 'Active' },
+      });
+      return {
+        approvals: { pending: pendingApprovalsCount },
+        assignments: { total: assignedTicketsCount },
+        tasks: { total: 0 },
+      };
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
   const approvals = agentApprovals.find((a) => a.agentId === agentId);
   const assignments = agentAssignments.find((a) => a.agentId === agentId);
   const tasks = agentTasks.find((a) => a.agentId === agentId);

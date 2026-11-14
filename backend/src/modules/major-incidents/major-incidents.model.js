@@ -1,18 +1,23 @@
 'use strict';
 
 const db = require('../../config/db');
-const { handleDbError } = require('../../shared/utils/db-guard');
+const {
+  handleDbError,
+  recordDbSuccess,
+} = require('../../shared/utils/db-guard');
 
 const mockMajorIncidents = [
   {
     id: 'MI-001',
+    organisationId: 'org-001',
     title: 'Customer portal unavailable',
     description: 'Customers cannot access the self-service portal.',
-    status: 'Investigating',
+    status: 'Started',
     priority: 'P1',
     impact: 'Customer-facing portal is unavailable.',
     affectedServices: ['Customer Portal', 'Authentication API'],
     commander: 'Unassigned',
+    version: 1,
     startedAt: '2026-09-25T08:00:00.000Z',
     resolvedAt: null,
     updates: [
@@ -32,6 +37,7 @@ const getMajorIncidents = async (filters = {}) => {
       const where = {};
       if (filters.status) where.status = filters.status;
       if (filters.priority) where.priority = filters.priority;
+      if (filters.organisationId) where.organisationId = filters.organisationId;
 
       const records = await db.majorIncident.findMany({
         where,
@@ -41,6 +47,7 @@ const getMajorIncidents = async (filters = {}) => {
 
       return records.map((mi) => ({
         id: mi.id,
+        organisationId: mi.organisationId || null,
         title: mi.title,
         description: mi.description,
         status: mi.status,
@@ -48,6 +55,7 @@ const getMajorIncidents = async (filters = {}) => {
         impact: mi.impact,
         affectedServices: mi.affectedServices,
         commander: mi.commander,
+        version: mi.version,
         startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
         resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
         updates: (mi.updates || []).map((u) => ({
@@ -58,16 +66,18 @@ const getMajorIncidents = async (filters = {}) => {
         })),
       }));
     } catch (_err) {
-      handleDbError('major-incidents.getMajorIncidents', _err);
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
   return mockMajorIncidents.filter((incident) => {
     const matchesStatus = !filters.status || incident.status === filters.status;
     const matchesPriority = !filters.priority || incident.priority === filters.priority;
+    const matchesOrg = !filters.organisationId || incident.organisationId === filters.organisationId;
 
-    return matchesStatus && matchesPriority;
+    return matchesStatus && matchesPriority && matchesOrg;
   });
 };
 
@@ -82,6 +92,7 @@ const getMajorIncidentById = async (id) => {
       if (mi) {
         return {
           id: mi.id,
+          organisationId: mi.organisationId || null,
           title: mi.title,
           description: mi.description,
           status: mi.status,
@@ -89,6 +100,7 @@ const getMajorIncidentById = async (id) => {
           impact: mi.impact,
           affectedServices: mi.affectedServices,
           commander: mi.commander,
+          version: mi.version,
           startedAt: mi.startedAt ? mi.startedAt.toISOString() : null,
           resolvedAt: mi.resolvedAt ? mi.resolvedAt.toISOString() : null,
           updates: (mi.updates || []).map((u) => ({
@@ -100,8 +112,9 @@ const getMajorIncidentById = async (id) => {
         };
       }
     } catch (_err) {
-      handleDbError('major-incidents.getMajorIncidentById', _err);
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -114,18 +127,21 @@ const saveMajorIncident = async (incident) => {
       await db.majorIncident.create({
         data: {
           id: incident.id,
+          organisationId: incident.organisationId || null,
           title: incident.title,
           description: incident.description,
-          status: incident.status || 'Investigating',
+          status: incident.status || 'Started',
           priority: incident.priority,
           impact: incident.impact || 'High',
           affectedServices: incident.affectedServices || [],
           commander: incident.commander || 'Unassigned',
+          version: incident.version || 1,
         },
       });
     } catch (_err) {
-      handleDbError('major-incidents.saveMajorIncident', _err);
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -133,32 +149,53 @@ const saveMajorIncident = async (incident) => {
   return incident;
 };
 
-const updateMajorIncident = async (id, changes) => {
+const updateMajorIncident = async (id, changes, expectedVersion) => {
+  let updatedInDatabase = false;
   if (process.env.NODE_ENV !== 'test') {
     try {
-      // Build the Prisma data object — null DateTime fields need { set: null } syntax
-      const dbData = { ...changes };
-      if ('resolvedAt' in dbData) {
-        dbData.resolvedAt = dbData.resolvedAt === null ? null : new Date(dbData.resolvedAt);
+      const data = { ...changes };
+      if ('resolvedAt' in data) {
+        data.resolvedAt = data.resolvedAt ? new Date(data.resolvedAt) : null;
       }
-
-      await db.majorIncident.update({
-        where: { id },
-        data: dbData,
+      data.version = { increment: 1 };
+      const result = await db.majorIncident.updateMany({
+        where: { id, version: expectedVersion },
+        data,
       });
-
-      // Re-fetch from DB to return fully consistent data (includes relations)
-      return getMajorIncidentById(id);
+      if (result.count === 0) {
+        const current = await db.majorIncident.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+        if (!current) return null;
+        const error = new Error('Major incident has been modified; refresh and retry with the latest version');
+        error.statusCode = 409;
+        throw error;
+      }
+      updatedInDatabase = true;
     } catch (_err) {
-      handleDbError('major-incidents.updateMajorIncident', _err);
-      // Database connection fallback — fall through to in-memory mock
+      if (_err.statusCode) throw _err;
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
-  // In-memory mock fallback (test env or DB unavailable)
-  const incident = mockMajorIncidents.find((i) => i.id === id);
+  // The database version was incremented atomically above. Re-read the mapped
+  // record rather than applying the patch to a potentially stale in-memory copy.
+  if (updatedInDatabase) {
+    return getMajorIncidentById(id);
+  }
+
+  const incident = await getMajorIncidentById(id);
   if (!incident) return null;
+  if ((incident.version || 1) !== expectedVersion) {
+    const error = new Error('Major incident has been modified; refresh and retry with the latest version');
+    error.statusCode = 409;
+    throw error;
+  }
   Object.assign(incident, changes);
+  incident.version = (incident.version || 1) + 1;
   return incident;
 };
 
@@ -175,20 +212,24 @@ const addIncidentUpdate = async (id, update) => {
         },
       });
 
-      // Re-fetch from DB to return fully consistent data with all updates
-      return getMajorIncidentById(id);
-    } catch (_err) {
-      handleDbError('major-incidents.addIncidentUpdate', _err);
-      // Database connection fallback — fall through to in-memory mock
+      recordDbSuccess();
+    } catch (err) {
+      handleDbError(
+        'major-incidents.addIncidentUpdate',
+        err,
+        { allowFallback: false },
+      );
     }
   }
 
   // In-memory mock fallback (test env or DB unavailable)
   const incident = mockMajorIncidents.find((i) => i.id === id);
   if (!incident) return null;
+
   if (!incident.updates.some((u) => u.id === update.id)) {
     incident.updates.push(update);
   }
+
   return incident;
 };
 

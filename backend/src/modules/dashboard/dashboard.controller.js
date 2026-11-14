@@ -6,6 +6,7 @@ const {
   getIncidentsByCategory,
   getNewTicketsPanel,
   getAgentSummary,
+  getWorkloadKpis,
 } = require('./dashboard.service');
 
 /**
@@ -36,7 +37,8 @@ const getAgentIdFromReq = (req) => {
  */
 const getKpisHandler = async (req, res) => {
   try {
-    const data = await getDashboardKpis();
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getDashboardKpis(organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard KPIs');
@@ -83,7 +85,8 @@ const submitMoodHandler = async (req, res) => {
  */
 const getIncidentsByTeamHandler = async (req, res) => {
   try {
-    const data = await getIncidentsByTeam();
+    const organisationId = req.user?.role === 'Admin' ? (req.query?.organisationId || null) : req.user?.organisationId;
+    const data = await getIncidentsByTeam(organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch team breakdown');
@@ -130,10 +133,26 @@ const getNewTicketsHandler = async (req, res) => {
 const getSummaryHandler = async (req, res) => {
   try {
     const agentId = getAgentIdFromReq(req);
-    const data = await getAgentSummary(agentId);
+    const organisationId = req.user?.role === 'Admin' ? null : req.user?.organisationId;
+    const data = await getAgentSummary(agentId, organisationId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return respondWithError(res, error, 'Failed to fetch dashboard summary');
+  }
+};
+
+/**
+ * GET /dashboard/workload
+ * Returns workload distribution data: tickets by priority (donut chart),
+ * tickets by team (bar chart), unassigned tickets count, and avg response time.
+ */
+const getWorkloadHandler = async (req, res) => {
+  try {
+    const organisationId = req.user?.role === 'Admin' ? (req.query?.organisationId || null) : req.user?.organisationId;
+    const data = await getWorkloadKpis(organisationId);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch workload metrics');
   }
 };
 
@@ -145,4 +164,5 @@ module.exports = {
   getIncidentsByCategoryHandler,
   getNewTicketsHandler,
   getSummaryHandler,
+  getWorkloadHandler,
 };

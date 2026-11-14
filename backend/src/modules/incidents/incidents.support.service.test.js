@@ -127,6 +127,11 @@ describe('Incidents Support Service', () => {
       expect(result.incidents[0].slaFormatted).toBe('SLA Breached');
       expect(result.incidents[0].slaBreach).toBe(true);
       expect(result.incidents[1].slaFormatted).toBe('2h 30m');
+      expect(result.incidents[1].slaTargetAt).toEqual(
+        new Date('2026-10-10T18:00:00.000Z')
+      );
+      expect(result.incidents[1].slaTimeRemainingSeconds).toBe(0);
+      expect(result.incidents[1].isBreached).toBe(true);
 
       expect(result.pagination).toEqual({
         page: 1,
@@ -293,6 +298,35 @@ describe('Incidents Support Service', () => {
       expect(result.id).toBe('INC-1001');
       expect(result.category).toBe('Network');
       expect(result.slaFormatted).toBe('2h 30m');
+    });
+
+    test('uses persisted SLA deadlines and freezes countdown while On Hold', async () => {
+      const responseTargetAt = new Date('2026-10-10T12:00:00.000Z');
+      const resolutionTargetAt = new Date('2026-10-11T10:00:00.000Z');
+
+      db.ticket.findFirst.mockResolvedValue(
+        createTicket({
+          status: 'On Hold',
+          responseTargetAt,
+          resolutionTargetAt,
+          holdStartedAt: new Date('2026-10-10T10:30:00.000Z'),
+        })
+      );
+
+      const result = await getTeamIncidentById(
+        TEAM_NAMES.FIRST_LINE,
+        'INC-1001',
+        staffUser
+      );
+
+      expect(result.responseTargetAt).toEqual(responseTargetAt);
+      expect(result.resolutionTargetAt).toEqual(resolutionTargetAt);
+      expect(result.slaTargetAt).toEqual(resolutionTargetAt);
+      expect(result.responseTimeRemainingSeconds).toBe(5400);
+      expect(result.slaTimeRemainingSeconds).toBe(84600);
+      expect(result.slaPaused).toBe(true);
+      expect(result.responseBreached).toBe(false);
+      expect(result.isBreached).toBe(false);
     });
 
     test('returns null when the ticket does not match', async () => {

@@ -6,10 +6,18 @@ const {
   getActiveChangeRequestsData,
   createNewChangeRequest,
   updateChangeRequestData,
+  getCalendarOverlayData,
 } = require('./change-requests.service');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the effective organisationId for the authenticated caller.
+ * Admins may supply an explicit ?organisationId=... to scope cross-org queries.
+ * All other roles are restricted to their own organisation from the JWT.
+ */
 const getEffectiveOrgId = (req) => {
   if (req.user?.role === 'Admin' && typeof req.query.organisationId === 'string') {
     const override = req.query.organisationId.trim();
@@ -44,6 +52,28 @@ const getActiveChangeRequestsList = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/change-requests/calendar
+ * Returns scheduled changes and maintenance freeze windows for calendar visualization.
+ */
+const getChangeCalendar = async (req, res, next) => {
+  try {
+    const organisationId = getEffectiveOrgId(req);
+    const { startDate, endDate } = req.query;
+    const data = await getCalendarOverlayData({ startDate, endDate, organisationId });
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * GET /api/change-requests/:id
+ * Returns a single change request by ID, enforcing tenant isolation.
+ */
 const getChangeRequestById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -86,6 +116,11 @@ const createChangeRequest = async (req, res, next) => {
   }
 };
 
+/**
+ * PATCH /api/change-requests/:id
+ * Update a Change Request's status and implementation plan.
+ * Enforces tenant isolation and workflow state transitions before mutating.
+ */
 const updateChangeRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -143,6 +178,7 @@ const updateChangeRequest = async (req, res, next) => {
 module.exports = {
   getChangeRequestsList,
   getActiveChangeRequestsList,
+  getChangeCalendar,
   getChangeRequestById,
   createChangeRequest,
   updateChangeRequest,

@@ -54,6 +54,18 @@ describe('intent.model — analyzeTextIntent', () => {
     const r = await analyzeTextIntent('api server issue');
     assert.equal(typeof r.matchedKeywords, 'number');
   });
+
+  test('Infrastructure matches cloud/docker/kubernetes keywords', async () => {
+    const r = await analyzeTextIntent('Docker container inside Kubernetes cluster fails to deploy on AWS cloud');
+    assert.equal(r.category, 'Infrastructure');
+    assert.equal(r.meetsThreshold, true);
+    assert.ok(r.matchedKeywords >= 3);
+  });
+
+  test('Sanitizes HTML tags before analysis', async () => {
+    const r = await analyzeTextIntent('<script>alert("hack")</script> Docker container failure on AWS');
+    assert.equal(r.category, 'Infrastructure');
+  });
 });
 
 // ─── Intent Service ───────────────────────────────────────────────────────────

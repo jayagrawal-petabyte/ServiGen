@@ -6,6 +6,9 @@ const { approvalScope } = require('./approval-scope.middleware');
 const errorHandler = require('./error-handler.middleware');
 const { validateBody } = require('./validate.middleware');
 const requestLogger = require('./request-logger.middleware');
+const { querySanitizer, sanitizeQueryValue } = require('./query-sanitize.middleware');
+const { createOriginValidator } = require('./origin-validate.middleware');
+const { createLoginLockout, loginLockout } = require('./login-lockout.middleware');
 
 module.exports = {
   approvalScope,
@@ -17,4 +20,9 @@ module.exports = {
   errorHandler,
   validateBody,
   requestLogger,
+  querySanitizer,
+  sanitizeQueryValue,
+  createOriginValidator,
+  createLoginLockout,
+  loginLockout,
 };

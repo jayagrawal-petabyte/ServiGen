@@ -1,14 +1,14 @@
 const {
   getKnowledgeDocuments,
   getKnowledgeDocumentById,
+  searchKnowledgeVector,
 } = require('./retrieval.model');
+const { generateEmbedding } = require('../embedding/embedding.service');
 
 /**
  * Calculate a simple keyword relevance score.
  *
- * Temporary implementation:
- * This will later be replaced by pgvector
- * similarity search.
+ * Used as a fallback when pgvector is unpopulated or offline.
  */
 const calculateRelevance = (document, query) => {
   const normalizedQuery = typeof query === 'string' ? query.trim().slice(0, 500).toLowerCase() : '';
@@ -39,10 +39,7 @@ const calculateRelevance = (document, query) => {
 };
 
 /**
- * Search organisational knowledge.
- *
- * Temporary implementation:
- * Uses keyword matching until pgvector is available.
+ * Search organisational knowledge via pgvector semantic search with keyword fallback.
  */
 const searchKnowledge = async (
   organisationId,
@@ -71,6 +68,24 @@ const searchKnowledge = async (
     throw error;
   }
 
+  // 1. Attempt dense vector search via Supabase pgvector
+  try {
+    const queryVector = await generateEmbedding(query);
+    if (queryVector) {
+      const vectorResults = await searchKnowledgeVector(
+        organisationId,
+        queryVector,
+        limit
+      );
+      if (Array.isArray(vectorResults) && vectorResults.length > 0) {
+        return vectorResults;
+      }
+    }
+  } catch (_vecErr) {
+    // Vector search failed or unpopulated, fallback to keyword search
+  }
+
+  // 2. Deterministic keyword matching fallback
   const documents = await getKnowledgeDocuments(
     organisationId
   );

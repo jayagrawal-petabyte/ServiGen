@@ -4,6 +4,8 @@ const { analyzeIntent } = require('./intent.controller');
 
 const router = express.Router();
 
+router.post('/', analyzeIntent);
 router.post('/analyze', analyzeIntent);
+router.post('/classify', analyzeIntent);
 
 module.exports = router;

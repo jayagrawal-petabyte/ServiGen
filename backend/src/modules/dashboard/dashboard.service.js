@@ -14,6 +14,7 @@ const {
   getCategoryBreakdown,
   getNewTickets,
   getAgentSummaryData,
+  getWorkloadBreakdown,
 } = require('./dashboard.model');
 
 const { getTickets } = require('../my-work/my-work.model');
@@ -26,8 +27,8 @@ const VALID_MOODS = ['Great', 'Good', 'Neutral', 'Struggling', 'Overwhelmed'];
  * Return live KPI metrics: open incidents, SLA breaches, average resolution time.
  * Formatted resolution time is appended for UI convenience.
  */
-const getDashboardKpis = async () => {
-  const kpis = await getKpis();
+const getDashboardKpis = async (organisationId = null) => {
+  const kpis = await getKpis(organisationId);
   const { avgResolutionTimeMinutes } = kpis;
   const hours = Math.floor(avgResolutionTimeMinutes / 60);
   const minutes = avgResolutionTimeMinutes % 60;
@@ -85,7 +86,7 @@ const submitMood = async (agentId, mood) => {
 /**
  * Return incidents grouped by support team.
  */
-const getIncidentsByTeam = async () => getTeamBreakdown();
+const getIncidentsByTeam = async (organisationId = null) => getTeamBreakdown(organisationId);
 
 /**
  * Return incidents grouped by category.
@@ -118,9 +119,9 @@ const getNewTicketsPanel = async (query = {}, organisationId = null) => {
  *   - Assignments count
  *   - Tasks count
  */
-const getAgentSummary = async (agentId) => {
+const getAgentSummary = async (agentId, organisationId = null) => {
   // Pull all tickets owned by this agent from the my-work model
-  const allTickets = await getTickets({ assignedAgentId: agentId });
+  const allTickets = await getTickets({ assignedAgentId: agentId, organisationId });
 
   const ticketCounts = {
     active: allTickets.filter((t) => t.status === 'Active').length,
@@ -141,6 +142,70 @@ const getAgentSummary = async (agentId) => {
   };
 };
 
+// ─── Workload KPIs: Tickets by Priority + Team Distribution ──────────────────
+
+/**
+ * Return workload distribution data used by dashboard visualisations (SCR-015):
+ *   - ticketsByPriority: counts for the donut chart (Critical / High / Medium / Low)
+ *   - ticketsByTeam    : counts per team for the bar chart
+ *   - unassignedTickets: total active tickets with no assigned agent
+ *   - pendingApprovals : org-wide pending approval count
+ *   - avgResponseTimeMinutes: avg time-to-first-response (from timeRecord proxy)
+ *
+ * Falls back to computed mock data in test / offline mode.
+ */
+const getWorkloadKpis = async (organisationId = null) => {
+  // Fetch all tickets scoped to the organisation (or all orgs for admins)
+  const filters = organisationId ? { organisationId } : {};
+  const allTickets = await getTickets(filters);
+
+  // ── Tickets by Priority (donut chart) ──────────────────────────────────────
+  const priorityOrder = ['Critical', 'High', 'Medium', 'Low'];
+  const priorityCounts = priorityOrder.reduce((acc, p) => {
+    acc[p] = allTickets.filter((t) => t.priority === p).length;
+    return acc;
+  }, {});
+
+  const ticketsByPriority = priorityOrder.map((priority) => ({
+    priority,
+    count: priorityCounts[priority],
+  }));
+
+  // ── Unassigned tickets (active, no agent) ──────────────────────────────────
+  const unassignedTickets = allTickets.filter(
+    (t) => t.status === 'Active' && (!t.assignedAgentId || t.assignedAgentId === '')
+  ).length;
+
+  // ── Average response time ──────────────────────────────────────────────────
+  // Proxy: use timeRecord on Actioned/On Hold/Pending tickets as a first-response
+  // signal until a dedicated responseTime field is added.
+  const respondedTickets = allTickets.filter(
+    (t) => t.status !== 'Active' && typeof t.timeRecord === 'number' && t.timeRecord > 0
+  );
+  const avgResponseTimeMinutes = respondedTickets.length
+    ? Math.round(
+        respondedTickets.reduce((sum, t) => sum + t.timeRecord, 0) / respondedTickets.length
+      )
+    : 0;
+
+  const avgResponseHours = Math.floor(avgResponseTimeMinutes / 60);
+  const avgResponseMins = avgResponseTimeMinutes % 60;
+
+  // ── Team breakdown (bar chart) — reuse existing team breakdown model ────────
+  const ticketsByTeam = await getTeamBreakdown(organisationId);
+
+  return {
+    ticketsByPriority,
+    ticketsByTeam,
+    unassignedTickets,
+    avgResponseTimeMinutes,
+    avgResponseTimeFormatted:
+      avgResponseHours > 0
+        ? `${avgResponseHours}h ${avgResponseMins}m`
+        : `${avgResponseMins}m`,
+  };
+};
+
 module.exports = {
   VALID_MOODS,
   getDashboardKpis,
@@ -150,4 +215,5 @@ module.exports = {
   getIncidentsByCategory,
   getNewTicketsPanel,
   getAgentSummary,
+  getWorkloadKpis,
 };

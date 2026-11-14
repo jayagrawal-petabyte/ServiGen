@@ -35,12 +35,86 @@ const knowledgeDocuments = [
   },
 ];
 
+const db = require('../../../config/db');
+const { formatVectorForPostgres } = require('../embedding/embedding.service');
+
+/**
+ * Perform semantic vector similarity search via Supabase pgvector.
+ *
+ * @param {string} organisationId - Target organisation ID
+ * @param {number[]} queryVector - 384-dimensional query vector
+ * @param {number} limit - Maximum results to return
+ * @returns {Promise<Array | null>} Array of matching documents with relevanceScore or null on fallback
+ */
+const searchKnowledgeVector = async (organisationId, queryVector, limit = 5) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const vectorLiteral = formatVectorForPostgres(queryVector);
+      if (!vectorLiteral) return null;
+
+      const results = await db.$queryRaw`
+        SELECT id, title, content, category, "organisationId",
+               1 - ("embedding" <=> ${vectorLiteral}::vector) AS "relevanceScore"
+        FROM "knowledge_articles"
+        WHERE ("organisationId" = ${organisationId} OR "organisationId" IS NULL)
+          AND "status" = 'Published'
+          AND "embedding" IS NOT NULL
+        ORDER BY "embedding" <=> ${vectorLiteral}::vector
+        LIMIT ${limit};
+      `;
+
+      if (Array.isArray(results) && results.length > 0) {
+        return results.map((r) => ({
+          id: r.id,
+          title: r.title,
+          content: r.content,
+          category: r.category || 'General',
+          organisationId: r.organisationId || organisationId,
+          tags: [r.category ? r.category.toLowerCase() : 'general'],
+          relevanceScore: Number(r.relevanceScore) || 0,
+        }));
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        console.warn('[VectorSearch] pgvector query fell back to keyword search:', _err.message);
+      }
+    }
+  }
+  return null;
+};
+
 /**
  * Retrieve knowledge documents belonging to an organisation.
  */
-const getKnowledgeDocuments = async (organisationId) => {
+const getKnowledgeDocuments = async (organisationId = null) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const where = organisationId
+        ? { OR: [{ organisationId }, { organisationId: null }] }
+        : {};
+      const articles = await db.knowledgeArticle.findMany({
+        where,
+        take: 50,
+      });
+      if (articles.length > 0) {
+        return articles.map((a) => ({
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          category: a.category || 'General',
+          organisationId: a.organisationId || organisationId || 'org-001',
+          tags: [a.category ? a.category.toLowerCase() : 'general'],
+        }));
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+
   return knowledgeDocuments.filter(
-    (document) => document.organisationId === organisationId
+    (document) => !organisationId || document.organisationId === organisationId
   );
 };
 
@@ -48,6 +122,28 @@ const getKnowledgeDocuments = async (organisationId) => {
  * Find a knowledge document by ID.
  */
 const getKnowledgeDocumentById = async (id) => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const a = await db.knowledgeArticle.findUnique({
+        where: { id },
+      });
+      if (a) {
+        return {
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          category: a.category || 'General',
+          organisationId: a.organisationId || 'org-001',
+          tags: [a.category ? a.category.toLowerCase() : 'general'],
+        };
+      }
+    } catch (_err) {
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+    }
+  }
+
   return (
     knowledgeDocuments.find((document) => document.id === id) || null
   );
@@ -56,4 +152,5 @@ const getKnowledgeDocumentById = async (id) => {
 module.exports = {
   getKnowledgeDocuments,
   getKnowledgeDocumentById,
-};
+  searchKnowledgeVector,
+};

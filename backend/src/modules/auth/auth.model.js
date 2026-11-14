@@ -155,8 +155,9 @@ const findUserByCredential = async (lookup) => {
         };
       }
     } catch (_err) {
-      handleDbError('auth.findUserByCredential', _err, { allowFallback: true });
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 
@@ -204,8 +205,9 @@ const findUserById = async (id) => {
         };
       }
     } catch (_err) {
-      handleDbError('auth.findUserById', _err, { allowFallback: true });
-      // Database connection fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
 

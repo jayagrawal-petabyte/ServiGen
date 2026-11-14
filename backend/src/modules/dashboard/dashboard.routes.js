@@ -8,6 +8,7 @@ const {
   getIncidentsByCategoryHandler,
   getNewTicketsHandler,
   getSummaryHandler,
+  getWorkloadHandler,
 } = require('./dashboard.controller');
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.post('/mood', submitMoodHandler);
 // SCR-015 — Team & category breakdown (scrolled view)
 router.get('/incidents-by-team', getIncidentsByTeamHandler);
 router.get('/incidents-by-category', getIncidentsByCategoryHandler);
+
+// SCR-015 — Workload KPIs (tickets by priority donut, team bar chart, avg response time)
+router.get('/workload', getWorkloadHandler);
 
 // SCR-015 — New tickets panel
 router.get('/new-tickets', getNewTicketsHandler);

@@ -5,6 +5,21 @@ const env = require('../../config/env');
 const AppError = require('../utils/app-error');
 const { HTTP_STATUS } = require('../constants/http.constants');
 const { ROLES, ALL_ROLES } = require('../constants/roles.constants');
+const { isTokenRevoked } = require('../utils/token-revocation');
+
+const extractTokenFromRequest = (req) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1];
+  }
+  if (req.headers.cookie) {
+    const match = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+    if (match) {
+      return decodeURIComponent(match[1]);
+    }
+  }
+  return null;
+};
 
 /**
  * Helper to generate signed JWT tokens (for Auth module & tests).
@@ -14,18 +29,17 @@ const generateToken = (payload, expiresIn = env.JWT.EXPIRES_IN) => {
 };
 
 /**
- * Extracts and verifies JWT from Bearer Authorization header.
+ * Extracts and verifies JWT from Bearer Authorization header or HttpOnly cookie.
  * Allows dev override (x-user-id) strictly when NODE_ENV !== 'production' and ALLOW_DEV_AUTH_OVERRIDE === true.
  */
 const requireAuth = (req, _res, next) => {
-  let token = null;
-
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
-  }
+  const token = extractTokenFromRequest(req);
 
   if (token) {
+    if (isTokenRevoked(token)) {
+      return next(new AppError('Authentication token has been revoked', HTTP_STATUS.UNAUTHORIZED));
+    }
+
     try {
       const decoded = jwt.verify(token, env.JWT.SECRET, { algorithms: ['HS256'] });
       if (!decoded || typeof decoded.id !== 'string' || !decoded.id.trim() || !ALL_ROLES.includes(decoded.role)) {
@@ -65,9 +79,8 @@ const requireAuth = (req, _res, next) => {
  * Optional authentication: attaches user if valid token exists, but does not block if missing.
  */
 const optionalAuth = (req, _res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
+  const token = extractTokenFromRequest(req);
+  if (token && !isTokenRevoked(token)) {
     try {
       const decoded = jwt.verify(token, env.JWT.SECRET, { algorithms: ['HS256'] });
       if (decoded && typeof decoded.id === 'string' && decoded.id.trim() && ALL_ROLES.includes(decoded.role)) {

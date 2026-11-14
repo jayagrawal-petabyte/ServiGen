@@ -56,7 +56,7 @@ const recordDbSuccess = () => {
  *        behaviour for bootstrap paths (auth) so diagnostics stay reachable.
  */
 const handleDbError = (context, err, options = {}) => {
-  const allowFallback = options.allowFallback === true || ALLOW_MOCK_FALLBACK;
+  const allowFallback = options.allowFallback ?? ALLOW_MOCK_FALLBACK;
   const info = describeError(err);
   const previous = failures.get(context);
   lastFailureAt = new Date().toISOString();

@@ -5,12 +5,21 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 const env = require('./config/env');
+const createDatabaseHealthHandler = require('./config/database-health');
 const { createRateLimiter } = require('./shared/middleware/rate-limit.middleware');
-const { requestLogger, errorHandler, requireAuth, restrictTo, PERMISSIONS, approvalScope } = require('./shared');
+const {
+  requestLogger,
+  errorHandler,
+  requireAuth,
+  restrictTo,
+  PERMISSIONS,
+  approvalScope,
+  querySanitizer,
+  createOriginValidator,
+  loginLockout,
+} = require('./shared');
 const {
   probeDatabase,
-  countKeyTables,
-  describeDatasource,
   getDbDiagnostics,
 } = require('./shared/utils/db-guard');
 
@@ -36,16 +45,25 @@ const calendarRouter = require('./modules/calendar/calendar.routes');
 const knowledgeRouter = require('./modules/knowledge/knowledge.routes');
 const ticketsRouter = require('./modules/tickets/tickets.routes');
 const usersRouter = require('./modules/users/users.routes');
+const problemsRouter = require('./modules/problems/problems.routes');
+const reportsRouter = require('./modules/reports/reports.routes');
 const contractsRouter = require('./modules/contracts/contracts.routes');
+const slaEventsRouter = require('./modules/calendar/sla-events.routes');
+const searchRouter = require('./modules/search/search.routes');
 
 const app = express();
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 // ─── Core Middleware ────────────────────────────────────────────────────────
 app.use(helmet({
   strictTransportSecurity: env.isProduction ? undefined : false,
+  frameguard: { action: 'sameorigin' },
   contentSecurityPolicy: {
-    directives: { 'upgrade-insecure-requests': env.isProduction ? [] : null },
+    directives: {
+      'upgrade-insecure-requests': env.isProduction ? [] : null,
+      frameAncestors: ["'self'"],
+    },
   },
 }));
 app.use(
@@ -54,58 +72,43 @@ app.use(
     credentials: true,
   })
 );
+// Reject state-changing requests from disallowed cross-origin callers
+app.use(createOriginValidator(env.CORS_ORIGIN));
 app.use(requestLogger);
 
 // ─── Health Check ───────────────────────────────────────────────────────────
+// Minimal public health check: does not disclose internal environment flags
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     success: true,
     status: 'ok',
     service: 'servigen-backend',
-    env: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
 });
 
-// ─── Database Health / Diagnostics ──────────────────────────────────────────
-// Public on purpose: when the API silently serves mock data this is the only
-// way to see *why* from a deployed frontend. It never exposes credentials —
-// the datasource is reported host/port/database only.
-app.get('/api/health/db', async (_req, res) => {
-  const probe = await probeDatabase();
-  const diagnostics = getDbDiagnostics();
-  const payload = {
-    success: probe.connected,
-    connected: probe.connected,
-    latencyMs: probe.latencyMs,
-    env: env.NODE_ENV,
-    datasource: describeDatasource(),
-    mockFallbackEnabled: diagnostics.mockFallbackEnabled,
-    lastSuccessAt: diagnostics.lastSuccessAt,
-    lastFailureAt: diagnostics.lastFailureAt,
-    recentFailures: diagnostics.recentFailures,
-    timestamp: new Date().toISOString(),
-  };
-
-  if (probe.connected) {
-    payload.counts = await countKeyTables();
-  } else {
-    payload.error = probe.error;
-  }
-
-  return res.status(probe.connected ? 200 : 503).json(payload);
-});
+// Public because the existing frontend sends no token for this check. The
+// handler returns readiness only; datasource details, internal env and raw errors stay private.
+app.get('/api/health/db', createDatabaseHealthHandler({
+  probeDatabase,
+  getDbDiagnostics,
+  environment: env.NODE_ENV,
+}));
 
 // Limits run before body parsing and authentication. Health and browser
 // preflights stay available; AI receives an additional, smaller IP budget.
 app.use('/api', createRateLimiter(env.RATE_LIMIT.MAX));
 app.use('/api/ai-core', createRateLimiter(env.RATE_LIMIT.AI_MAX));
 app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+// Query parameter sanitizer: prevents HTTP Parameter Pollution (HPP) and 500 errors from duplicate keys
+app.use(querySanitizer);
 
-// Authentication module: login and forgot-password are public with strict rate limiting; session requires verified token.
+// Authentication module: login and forgot-password are public with strict rate limiting & lockout; session requires verified token.
 app.use(['/api/auth/login', '/api/auth/forgot-password'], createRateLimiter(20));
+app.use('/api/auth/login', loginLockout);
 app.use('/api/auth', (req, res, next) => {
-  if (req.path === '/login' || req.path === '/forgot-password') return next();
+  if (req.path === '/login' || req.path === '/forgot-password' || req.path === '/logout') return next();
   return requireAuth(req, res, (err) => {
     if (err) return next(err);
     req.headers['x-user-id'] = req.user.id;
@@ -145,13 +148,13 @@ app.use('/api/dashboard', (req, res, next) => {
 }, dashboardRouter);
 app.use('/api/approvals', restrictTo(...PERMISSIONS.APPROVALS),
   approvalScope(require('./modules/approvals/approvals.model').getApprovalById), approvalsRouter);
-app.use('/api/services', restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
+app.use(['/api/services-catalogue', '/api/services'], restrictTo(...PERMISSIONS.CATALOGUE), servicesCatalogueRouter);
 app.use('/api/major-incidents', restrictTo(...PERMISSIONS.STAFF), majorIncidentsRouter);
 app.use('/api/incidents', restrictTo(...PERMISSIONS.STAFF), incidentsRouter);
 app.use('/api/organisations', restrictTo(...PERMISSIONS.STAFF), (req, res, next) => {
   if (req.user.role !== 'Admin') {
     const match = req.path.match(/^\/([^/]+)/);
-    if (match && match[1] && (!req.user.organisationId || match[1] !== req.user.organisationId)) {
+    if (!match || !match[1] || !req.user.organisationId || match[1] !== req.user.organisationId) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
   }
@@ -174,8 +177,15 @@ app.use(['/api/list-builder', '/api/lists'], restrictTo(...PERMISSIONS.STAFF), l
 app.use('/api/calendar', restrictTo(...PERMISSIONS.STAFF), calendarRouter);
 app.use('/api/articles', restrictTo(...PERMISSIONS.STAFF), knowledgeRouter);
 app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);
-app.use('/api/users', restrictTo(...PERMISSIONS.STAFF), usersRouter);
+// Only Admin can list users or view personal directory details
+app.use('/api/users', restrictTo(...PERMISSIONS.USERS), usersRouter);
+app.use('/api/problems', restrictTo(...PERMISSIONS.STAFF));
+app.use('/api', problemsRouter);
 app.use('/api/contracts', restrictTo(...PERMISSIONS.STAFF), contractsRouter);
+app.use('/api/sla-events', restrictTo(...PERMISSIONS.STAFF), slaEventsRouter);
+app.use('/api/search', restrictTo(...PERMISSIONS.STAFF), searchRouter);
+app.use('/api/reports', restrictTo(...PERMISSIONS.STAFF));
+app.use('/api', reportsRouter);
 app.use('/api/ai-core/intent', intentRouter);
 app.use('/api/ai-core', escalationRouter);
 

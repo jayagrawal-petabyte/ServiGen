@@ -1,5 +1,4 @@
 const express = require('express');
-const { restrictTo } = require('../../shared/middleware');
 
 const {
   listMajorIncidents,
@@ -7,13 +6,17 @@ const {
   addMajorIncident,
   editMajorIncident,
   addMajorIncidentUpdate,
+  streamMajorIncidentUpdates,
+  getServicesHealth,
 } = require('./major-incidents.controller');
 
 const router = express.Router();
 
 router.get('/', listMajorIncidents);
-router.post('/', restrictTo('Admin'), addMajorIncident);
+router.post('/', addMajorIncident);
 router.get('/:incidentId', getMajorIncident);
+router.get('/:incidentId/stream', streamMajorIncidentUpdates);
+router.get('/:incidentId/services-health', getServicesHealth);
 router.patch('/:incidentId', editMajorIncident);
 router.post('/:incidentId/updates', addMajorIncidentUpdate);
 

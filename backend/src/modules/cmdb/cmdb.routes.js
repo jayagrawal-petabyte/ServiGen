@@ -8,9 +8,11 @@ const {
   getConfigurationItemById,
   createConfigurationItem,
   updateConfigurationItem,
-  addCiRelationship,
-  removeCiRelationship,
-  getCiTopology,
+  getCiRelationshipsHandler,
+  createCiRelationshipHandler,
+  deleteCiRelationshipHandler,
+  getCiTopologyHandler,
+  getCiImpactHandler,
   getServiceCis,
 } = require('./cmdb.controller');
 
@@ -20,17 +22,16 @@ router.get('/configuration-items', getConfigurationItems);
 router.post('/configuration-items', createConfigurationItem);
 router.get('/service-cis', getServiceCis);
 
-router.get(
-  '/configuration-items/grouped-by-type',
-  getConfigurationItemsByType
-);
+router.get('/configuration-items/grouped-by-type', getConfigurationItemsByType);
 
 router.get('/configuration-items/:id', getConfigurationItemById);
 router.patch('/configuration-items/:id', updateConfigurationItem);
 
-router.get('/configuration-items/:id/topology', getCiTopology);
+router.get('/configuration-items/:id/relationships', getCiRelationshipsHandler);
+router.post('/configuration-items/:id/relationships', createCiRelationshipHandler);
+router.delete('/configuration-items/:id/relationships/:targetId', deleteCiRelationshipHandler);
 
-router.post('/configuration-items/:id/relationships', addCiRelationship);
-router.delete('/configuration-items/:id/relationships/:targetId', removeCiRelationship);
+router.get('/configuration-items/:id/topology', getCiTopologyHandler);
+router.get('/configuration-items/:id/impact', getCiImpactHandler);
 
 module.exports = router;

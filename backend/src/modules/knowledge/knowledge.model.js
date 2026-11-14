@@ -106,7 +106,10 @@ const getArticles = async (filter = {}) => {
         return results;
       }
     } catch (_err) {
-      handleDbError('knowledge.getArticles', _err);
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+      return [];
     }
   }
 
@@ -158,7 +161,10 @@ const getArticleById = async (id) => {
         };
       }
     } catch (_err) {
-      handleDbError('knowledge.getArticleById', _err);
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
+      return null;
     }
   }
 
@@ -194,8 +200,9 @@ const createArticle = async (data) => {
         updatedAt: created.updatedAt.toISOString(),
       };
     } catch (_err) {
-      handleDbError('knowledge.createArticle', _err);
-      // Fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
   return { id: 'art-' + Date.now(), ...data };
@@ -227,7 +234,9 @@ const updateArticle = async (id, data) => {
         updatedAt: updated.updatedAt.toISOString(),
       };
     } catch (_err) {
-      handleDbError('knowledge.updateArticle', _err);
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
       return null;
     }
   }

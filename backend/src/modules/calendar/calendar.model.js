@@ -20,8 +20,9 @@ const getCalendarEvents = async (agentId) => {
         agentId: e.agentId,
       }));
     } catch (_err) {
-      handleDbError('calendar.getCalendarEvents', _err);
-      // Return empty if db table empty or query fails
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
       return [];
     }
   }
@@ -49,8 +50,9 @@ const createCalendarEvent = async (data) => {
         agentId: created.agentId,
       };
     } catch (_err) {
-      handleDbError('calendar.createCalendarEvent', _err);
-      // Fallback
+      if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_OFFLINE_MOCKS) {
+        throw _err;
+      }
     }
   }
   return {

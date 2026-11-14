@@ -1,6 +1,6 @@
 
 const db = require('../../config/db');
-const { addIncidentSlaDetails } = require('./incidents.sla.service');
+const { addIncidentSlaDetails, calculateSlaStatus } = require('./incidents.sla.service');
 
 const CLOSED_STATUSES = ['Resolved', 'Closed'];
 const OPEN_STATUSES = ['Active', 'Pending', 'Actioned', 'On Hold'];
@@ -175,9 +175,18 @@ const mapSupportTicket = (ticket) => {
     slaTimeLeft: ticket.slaTimeLeft,
     createdAt: ticket.createdAt,
     updatedAt: ticket.updatedAt,
+    responseTargetAt: ticket.responseTargetAt,
+    resolutionTargetAt: ticket.resolutionTargetAt,
+    responseMetAt: ticket.responseMetAt,
+    holdStartedAt: ticket.holdStartedAt,
+    resolvedAt: ticket.resolvedAt,
+    closedAt: ticket.closedAt,
   };
 
-  return addIncidentSlaDetails(mapped);
+  return {
+    ...addIncidentSlaDetails(mapped),
+    ...calculateSlaStatus(mapped),
+  };
 };
 
 const comparePriority = (a, b) => {

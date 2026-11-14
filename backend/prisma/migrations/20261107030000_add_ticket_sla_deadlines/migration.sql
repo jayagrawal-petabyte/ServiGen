@@ -1,0 +1,4 @@
+﻿ALTER TABLE "tickets"
+    ADD COLUMN IF NOT EXISTS "responseTargetAt" TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS "resolutionTargetAt" TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS "responseMetAt" TIMESTAMP(3);
