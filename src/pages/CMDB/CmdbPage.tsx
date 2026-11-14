@@ -930,18 +930,20 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                     onRefresh={loadTopology}
                     onSelectCi={(targetId) => setSelectedTopologyCiId(targetId)}
                     onLinkRelationship={async (targetId, type, direction) => {
-                      await addCiRelationship(selectedTopologyRootCi.id, {
+                      const rootKey = selectedTopologyRootCi.tag || selectedTopologyRootCi.id;
+                      await addCiRelationship(rootKey, {
                         targetId,
                         type: type as any,
                         direction,
                       });
-                      loadTopology();
-                      loadData();
+                      await loadTopology();
+                      await loadData();
                     }}
                     onUnlinkRelationship={async (targetId) => {
-                      await deleteCiRelationship(selectedTopologyRootCi.id, targetId);
-                      loadTopology();
-                      loadData();
+                      const rootKey = selectedTopologyRootCi.tag || selectedTopologyRootCi.id;
+                      await deleteCiRelationship(rootKey, targetId);
+                      await loadTopology();
+                      await loadData();
                     }}
                   />
                 ) : (

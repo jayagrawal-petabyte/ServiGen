@@ -299,7 +299,7 @@ const mockConfigurationItems = [
   },
 ];
 
-const findCiRecord = (idOrTag) => {
+const findCiRecord = (idOrTag, autoCreate = false) => {
   if (!idOrTag || typeof idOrTag !== 'string') return null;
   const needle = idOrTag.trim().toLowerCase();
 
@@ -309,15 +309,45 @@ const findCiRecord = (idOrTag) => {
   else if (needle === 'ci-002') effectiveNeedle = 'db-001';
   else if (needle === 'ci-003') effectiveNeedle = 'net-001';
 
-  return (
-    mockConfigurationItems.find(
-      (ci) =>
-        (ci.tag && ci.tag.toLowerCase() === effectiveNeedle) ||
-        (ci.id && ci.id.toLowerCase() === effectiveNeedle) ||
-        (ci.tag && ci.tag.toLowerCase() === needle) ||
-        (ci.id && ci.id.toLowerCase() === needle)
-    ) || null
+  let found = mockConfigurationItems.find(
+    (ci) =>
+      (ci.tag && ci.tag.toLowerCase() === effectiveNeedle) ||
+      (ci.id && ci.id.toLowerCase() === effectiveNeedle) ||
+      (ci.tag && ci.tag.toLowerCase() === needle) ||
+      (ci.id && ci.id.toLowerCase() === needle)
   );
+
+  // If autoCreate is explicitly enabled and not found, dynamically register it
+  if (!found && autoCreate && idOrTag.trim()) {
+    const cleanId = idOrTag.trim();
+    const newCi = {
+      id: cleanId.startsWith('CI-') ? cleanId : `CI-${cleanId}`,
+      name: cleanId,
+      tag: cleanId,
+      type: cleanId.toLowerCase().includes('db')
+        ? 'Database'
+        : cleanId.toLowerCase().includes('net')
+        ? 'Network'
+        : 'Server',
+      status: 'Active',
+      lifecycleState: 'Deployed',
+      site: 'London Primary DC (Lon-01)',
+      businessOwner: 'Technology',
+      technicalContact: 'Platform Operations',
+      environment: 'Production',
+      criticality: 'Tier 2 - Business Operational',
+      specifications: { ipAddress: '10.240.50.1' },
+      relationships: [],
+      softwareLicenses: [],
+      organisationId: 'org-001',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockConfigurationItems.push(newCi);
+    return newCi;
+  }
+
+  return found || null;
 };
 
 const getConfigurationItems = async (options = {}) => {
@@ -581,7 +611,7 @@ const updateConfigurationItem = async (id, payload, organisationId = null) => {
 };
 
 const addCiRelationship = async (id, relationshipData, organisationId = null) => {
-  const source = findCiRecord(id);
+  const source = findCiRecord(id, true);
   if (!source) {
     return { error: 'SOURCE_NOT_FOUND' };
   }
@@ -599,7 +629,7 @@ const addCiRelationship = async (id, relationshipData, organisationId = null) =>
     return { error: 'TARGET_REQUIRED' };
   }
 
-  const target = findCiRecord(targetKey);
+  const target = findCiRecord(targetKey, true);
   if (!target) {
     return { error: 'TARGET_NOT_FOUND' };
   }
@@ -676,21 +706,62 @@ const removeCiRelationship = async (id, targetId, organisationId = null) => {
   }
 
   const targetNeedle = (targetId || '').trim().toLowerCase();
+  const target = findCiRecord(targetId);
+
+  const sourceIdNeedle = (source.id || '').toLowerCase();
+  const sourceTagNeedle = (source.tag || '').toLowerCase();
+  const targetIdNeedle = target ? (target.id || '').toLowerCase() : targetNeedle;
+  const targetTagNeedle = target && target.tag ? target.tag.toLowerCase() : targetNeedle;
+
+  // 1. Remove from source relationships
   source.relationships = (source.relationships || []).filter((r) => {
-    const idMatch = r.targetCiId && r.targetCiId.toLowerCase() === targetNeedle;
-    const tagMatch = r.targetCiTag && r.targetCiTag.toLowerCase() === targetNeedle;
-    return !idMatch && !tagMatch;
+    const rId = (r.targetCiId || '').toLowerCase();
+    const rTag = (r.targetCiTag || '').toLowerCase();
+    const match =
+      rId === targetNeedle ||
+      rTag === targetNeedle ||
+      rId === targetIdNeedle ||
+      rTag === targetTagNeedle;
+    return !match;
   });
 
-  const target = findCiRecord(targetId);
+  // 2. Remove reciprocal from target relationships if target exists
   if (target && target.relationships) {
-    const sourceIdNeedle = source.id.toLowerCase();
-    const sourceTagNeedle = source.tag.toLowerCase();
     target.relationships = target.relationships.filter((r) => {
-      const idMatch = r.targetCiId && r.targetCiId.toLowerCase() === sourceIdNeedle;
-      const tagMatch = r.targetCiTag && r.targetCiTag.toLowerCase() === sourceTagNeedle;
-      return !idMatch && !tagMatch;
+      const rId = (r.targetCiId || '').toLowerCase();
+      const rTag = (r.targetCiTag || '').toLowerCase();
+      const match =
+        rId === sourceIdNeedle ||
+        rTag === sourceTagNeedle ||
+        rId === sourceTagNeedle ||
+        rTag === sourceIdNeedle;
+      return !match;
     });
+    target.updatedAt = new Date().toISOString();
+  }
+
+  // 3. Also sweep any CI in mockConfigurationItems that links to source
+  for (const other of mockConfigurationItems) {
+    const otherId = (other.id || '').toLowerCase();
+    const otherTag = (other.tag || '').toLowerCase();
+    if (
+      otherId === targetNeedle ||
+      otherTag === targetNeedle ||
+      otherId === targetIdNeedle ||
+      otherTag === targetTagNeedle
+    ) {
+      other.relationships = (other.relationships || []).filter((r) => {
+        const rId = (r.targetCiId || '').toLowerCase();
+        const rTag = (r.targetCiTag || '').toLowerCase();
+        const match =
+          rId === sourceIdNeedle ||
+          rTag === sourceTagNeedle ||
+          rId === sourceTagNeedle ||
+          rTag === sourceIdNeedle;
+        return !match;
+      });
+      other.updatedAt = new Date().toISOString();
+    }
   }
 
   source.updatedAt = new Date().toISOString();
