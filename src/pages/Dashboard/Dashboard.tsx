@@ -451,7 +451,7 @@ export default function Dashboard() {
               onClick={() => handleMoodSelect('Good')}
               className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
                 selectedMood === 'Good'
-                  ? 'bg-[#E0F2FE] text-[#0369A1] ring-2 ring-[#0284C7] shadow-sm'
+                  ? 'bg-[#FFF9F5] text-[#C96F55] ring-2 ring-[#C96F55] shadow-sm'
                   : 'bg-[#E0F2FE] text-[#0369A1] hover:bg-[#BAE6FD] border border-[#BAE6FD]'
               }`}
             >
@@ -741,7 +741,7 @@ export default function Dashboard() {
                             t.status === 'Open'
                               ? 'bg-[#E0F2FE] text-[#0369A1]'
                               : t.status === 'In Progress'
-                              ? 'bg-[#DBEAFE] text-[#1D4ED8]'
+                              ? 'bg-[rgba(247,196,179,0.25)] text-[#C96F55]'
                               : t.status === 'On Hold'
                               ? 'bg-[#FEF3C7] text-[#B45309]'
                               : 'bg-[#DCFCE7] text-[#15803D]'

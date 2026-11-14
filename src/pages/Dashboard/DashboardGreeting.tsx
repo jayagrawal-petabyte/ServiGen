@@ -19,7 +19,7 @@ function AgentAvatar({ initials }: { initials: string }) {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#0ea5e9",
+        background: "#F4A58A",
         color: "#ffffff",
         fontWeight: 700,
         fontSize: "18px",

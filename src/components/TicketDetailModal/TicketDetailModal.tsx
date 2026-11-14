@@ -100,7 +100,7 @@ function getInitials(name?: string): string {
 // ─── Toast Component ─────────────────────────────────────────────────────────
 
 function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'error' | 'info' }) {
-  const bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#2563eb';
+  const bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#263B5E';
   return (
     <div style={{
       position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100005,
@@ -240,7 +240,7 @@ function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: '50%',
-          background: note.author.includes('Email') ? '#2563eb' : note.author.includes('Supplier') ? '#16a34a' : '#dc2626',
+          background: note.author.includes('Email') ? '#263B5E' : note.author.includes('Supplier') ? '#16a34a' : '#dc2626',
           color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 13, fontWeight: 700, flexShrink: 0,
@@ -1564,7 +1564,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       border:none; background:none; cursor:pointer; color:#6b7280;
       border-bottom:2px solid transparent; transition:all 0.13s;
     }
-    .halo-tab.active { color:#111827; border-bottom-color:#2563eb; font-weight:600; }
+    .halo-tab.active { color:#332B28; border-bottom-color:#C96F55; font-weight:600; }
     .halo-tab:hover:not(.active) { color:#374151; }
     .halo-ai-row { margin-bottom:16px; }
     .halo-ai-label { font-size:11px; color:#9ca3af; margin-bottom:3px; }
@@ -1862,7 +1862,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             <span style={{
                               display: 'inline-flex', alignItems: 'center', gap: 4,
                               padding: '2px 8px', borderRadius: 9999,
-                              background: '#eff6ff', color: '#1d4ed8',
+                              background: '#FFF9F5', color: '#C96F55',
                               fontSize: 11, fontWeight: 600, border: '1px solid #bfdbfe'
                             }}>
                               <User style={{ width: 12, height: 12 }} />

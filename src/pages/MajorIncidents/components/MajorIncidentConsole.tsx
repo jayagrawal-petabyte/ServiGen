@@ -1447,7 +1447,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                                 task.status === 'New'
                                   ? 'bg-[#184a2c]'
                                   : task.status === 'In Progress'
-                                  ? 'bg-[#0284c7]'
+                                  ? 'bg-[#263B5E]'
                                   : task.status === 'Recovery'
                                   ? 'bg-[#b45309]'
                                   : 'bg-[#059669]'

@@ -948,7 +948,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -973,7 +973,7 @@
 }
 
 .bulk-btn-assign {
-  background: #0284c7;
+  background: #C96F55;
   color: #ffffff;
 }
 
@@ -1013,4 +1013,4 @@
   font-weight: 600;
   cursor: pointer;
   outline: none;
-}
+}

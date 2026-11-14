@@ -142,7 +142,7 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
                 <span className="text-xs text-emerald-600 font-bold">Target &gt;99.9%</span>
               </div>
             </div>
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+            <div className="p-3 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-xl">
               <Activity className="w-6 h-6" />
             </div>
           </div>

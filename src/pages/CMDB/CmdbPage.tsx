@@ -348,7 +348,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               <span className="text-slate-400">0 incidents</span>
             )}
             {ci.relationships && ci.relationships.length > 0 && (
-              <span className="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 flex items-center gap-1">
+              <span className="text-[#263B5E] font-bold bg-[#FFF9F5] px-2 py-0.5 rounded-md border border-[#ebdcd3] flex items-center gap-1">
                 <GitBranch className="w-3 h-3" />
                 {ci.relationships.length}
               </span>
@@ -573,7 +573,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               onClick={() => setSelectedType('Database')}
               className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 selectedType === 'Database'
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-[#263B5E] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >

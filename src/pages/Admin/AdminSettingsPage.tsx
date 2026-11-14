@@ -352,7 +352,7 @@ export const AdminSettingsPage: React.FC = () => {
                       <td className="py-3 px-4 font-mono font-bold text-slate-600">{cat.id}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">{cat.name}</td>
                       <td className="py-3 px-4 text-slate-600">{cat.department}</td>
-                      <td className="py-3 px-4 font-semibold text-indigo-700">{cat.assignedTeam}</td>
+                      <td className="py-3 px-4 font-semibold text-[#263B5E]">{cat.assignedTeam}</td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">
                           {cat.slaTier}

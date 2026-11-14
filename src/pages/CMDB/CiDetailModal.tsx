@@ -310,7 +310,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   {currentCi.type}
                 </span>
                 <StatusBadge label={currentCi.status} variant={getCiStatusVariant(currentCi.status)} />
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFF9F5] text-[#263B5E] border border-[#ebdcd3]">
                   {currentCi.lifecycleState || 'Deployed'}
                 </span>
                 {currentCi.criticality && (
@@ -673,8 +673,8 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       onClick={toggleTopologyView}
                       className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                         showTopology
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white border border-slate-200 text-indigo-700 hover:bg-indigo-50'
+                          ? 'bg-[#C96F55] text-white'
+                          : 'bg-white border border-[#ebdcd3] text-[#332B28] hover:bg-[#FFF9F5]'
                       }`}
                     >
                       <GitBranch className="w-3.5 h-3.5" />
@@ -830,7 +830,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase">
+                          <span className="text-[10px] font-bold text-[#C96F55] bg-[#FFF9F5] border border-[#ebdcd3] px-2.5 py-1 rounded-full uppercase">
                             {rel.direction}
                           </span>
                           <button
@@ -941,7 +941,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center gap-2">
-                  <Key className="w-5 h-5 text-indigo-600" />
+                  <Key className="w-5 h-5 text-[#C96F55]" />
                   <h4 className="font-bold text-sm text-slate-900">Software Licences</h4>
                 </div>
                 <p className="text-slate-500 text-xs">

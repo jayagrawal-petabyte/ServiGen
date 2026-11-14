@@ -265,7 +265,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               onClick={() => setSelectedDirectionFilter('upstream')}
               className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                 selectedDirectionFilter === 'upstream'
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-[#263B5E] text-white shadow-xs'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -403,7 +403,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                             <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-tighter px-1 rounded bg-slate-950">
                               calls
                             </span>
-                            <div className="w-0.5 h-3 bg-indigo-500/60" />
+                            <div className="w-0.5 h-3 bg-[#C96F55]/60" />
                           </div>
                         </div>
                       );
@@ -419,7 +419,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                 <svg className="w-64 h-12 stroke-indigo-500/60" fill="none">
                   <path d="M 32 0 C 32 30, 128 10, 128 48" strokeWidth="2" strokeDasharray="4 2" />
                   <path d="M 224 0 C 224 30, 128 10, 128 48" strokeWidth="2" strokeDasharray="4 2" />
-                  <circle cx="128" cy="48" r="4" fill="#6366f1" />
+                  <circle cx="128" cy="48" r="4" fill="#C96F55" />
                 </svg>
               </div>
             )}

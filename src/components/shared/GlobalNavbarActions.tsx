@@ -939,7 +939,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                         onClick={() => handleCiSelect(ci.id)}
                       >
                         <div className="global-search-item-left">
-                          <span className="global-search-item-id text-indigo-600">{ci.tag}</span>
+                          <span className="global-search-item-id text-[#C96F55]">{ci.tag}</span>
                           <span className="global-search-item-title" title={ci.name}>{ci.name}</span>
                           <span className="global-search-item-sub">{ci.type} • {ci.site}</span>
                         </div>

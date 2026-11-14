@@ -484,7 +484,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                         <button
                           type="button"
                           onClick={() => onChangeStatus('Scheduled')}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
+                          className="px-3 py-1.5 rounded-xl bg-[#C96F55] hover:bg-[#b55f46] text-white font-bold text-xs cursor-pointer shadow-2xs"
                         >
                           Schedule Change Window →
                         </button>
@@ -757,7 +757,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                    <ShieldCheck className="w-5 h-5 text-[#C96F55]" />
                     <div>
                       <h3 className="font-bold text-sm text-slate-900">Change Advisory Board Review</h3>
                       <p className="text-slate-500 text-xs">

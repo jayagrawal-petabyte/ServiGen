@@ -345,7 +345,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="font-medium">Linked CI</span>
-                      <span className="font-bold text-indigo-600 truncate max-w-[150px]">
+                      <span className="font-bold text-[#263B5E] truncate max-w-[150px]">
                         {cr.linkedCiName}
                       </span>
                     </div>

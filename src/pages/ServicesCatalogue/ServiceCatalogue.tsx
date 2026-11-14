@@ -381,7 +381,7 @@ export default function ServiceCatalogue() {
                               {st.title}
                             </span>
                             {st.status === "active" && (
-                              <span style={{ fontSize: 10, fontWeight: 700, background: "#dbeafe", color: "#1d4ed8", padding: "1px 6px", borderRadius: 999 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, background: "rgba(247, 196, 179, 0.25)", color: "#C96F55", padding: "1px 6px", borderRadius: 999 }}>
                                 Current Stage
                               </span>
                             )}
