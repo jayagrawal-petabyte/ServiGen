@@ -69,6 +69,15 @@ export default function ServiceCatalogue() {
   const [submittedResult, setSubmittedResult] = useState<SubmittedServiceRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Dynamic custom form field specifications (SR-1)
+  const [laptopModel, setLaptopModel] = useState('14" High Performance Laptop (M-Series / Intel i7)');
+  const [laptopMemory, setLaptopMemory] = useState('32 GB Unified RAM');
+  const [deliveryLocation, setDeliveryLocation] = useState('Corporate Office Desk Pickup - London HQ');
+  const [softwareLicense, setSoftwareLicense] = useState('Full Creative / Developer License');
+  const [softwareJustification, setSoftwareJustification] = useState('Core workflow requirement for active sprint delivery.');
+  const [accessEnv, setAccessEnv] = useState('Staging & Production Read-Only');
+  const [accessRole, setAccessRole] = useState('Developer / Contributor');
+
   // Load categories and initial services from live backend API
   useEffect(() => {
     let mounted = true;
@@ -140,10 +149,18 @@ export default function ServiceCatalogue() {
 
     setRequestState("submitting");
     try {
+      const isHardware = Boolean(requestService.name.toLowerCase().includes('laptop') || requestService.name.toLowerCase().includes('hardware') || requestService.name.toLowerCase().includes('desktop'));
+      const isSoftware = Boolean(requestService.name.toLowerCase().includes('software') || requestService.name.toLowerCase().includes('license') || requestService.category.toLowerCase().includes('application'));
+
       const result = await submitServiceRequest(requestService.id, {
         details: requestDetails.trim(),
         urgency: "Medium",
-        requester: user?.fullName || "",
+        requester: user?.fullName || "Employee",
+        customFields: isHardware
+          ? { model: laptopModel, memory: laptopMemory, deliveryLocation }
+          : isSoftware
+          ? { licenseTier: softwareLicense, justification: softwareJustification }
+          : { environment: accessEnv, rolePermission: accessRole },
       });
       setSubmittedResult(result);
       setRequestState("success");
@@ -322,21 +339,62 @@ export default function ServiceCatalogue() {
             </button>
 
             {requestState === "success" ? (
-              <div className="success-state">
-                <div className="success-icon">✓</div>
-                <h2 id="request-title">Request submitted</h2>
-                <p>
-                  Your request for <strong>{requestService?.name}</strong> has been submitted to the backend API.
-                </p>
-                {submittedResult && (
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 space-y-1 text-left my-3">
-                    <div><strong>Request ID:</strong> #{submittedResult.id}</div>
-                    <div><strong>Initial Status:</strong> {submittedResult.status}</div>
-                    <div><strong>Timestamp:</strong> {new Date(submittedResult.submittedAt).toLocaleString()}</div>
+              <div className="success-state" style={{ textAlign: "left", width: "100%" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">✓</div>
+                  <div>
+                    <h2 id="request-title" style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1e293b" }}>Request Logged Successfully</h2>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>Order Reference: #{submittedResult?.id || "REQ-2026-4491"}</span>
                   </div>
-                )}
+                </div>
+
+                <p style={{ fontSize: 13, color: "#475569", marginBottom: 16 }}>
+                  Your service request for <strong>{requestService?.name}</strong> has been registered in the system.
+                </p>
+
+                {/* ── Requester Stage-by-Stage Fulfillment Stepper (SR-2) ── */}
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", display: "block", marginBottom: 12 }}>
+                    Fulfillment Lifecycle Tracking
+                  </span>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
+                    {[
+                      { step: 1, title: "1. Request Submission Logged", status: "completed", desc: `Captured by API with details (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` },
+                      { step: 2, title: "2. Line Manager & Compliance Authorization", status: "active", desc: "Currently queued in My Approvals awaiting manager decision" },
+                      { step: 3, title: "3. IT Provisioning & License Assignment", status: "pending", desc: "Automated provisioning script & Tier 2 assignment" },
+                      { step: 4, title: "4. Handover & Delivery", status: "pending", desc: "Asset delivery / access credentials dispatched to requester" },
+                    ].map((st) => (
+                      <div key={st.step} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
+                          background: st.status === "completed" ? "#10b981" : st.status === "active" ? "#3b82f6" : "#e2e8f0",
+                          color: st.status === "pending" ? "#64748b" : "#ffffff",
+                          boxShadow: st.status === "active" ? "0 0 0 3px rgba(59, 130, 246, 0.2)" : undefined,
+                        }}>
+                          {st.status === "completed" ? "✓" : st.step}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: st.status === "pending" ? "#94a3b8" : "#1e293b" }}>
+                              {st.title}
+                            </span>
+                            {st.status === "active" && (
+                              <span style={{ fontSize: 10, fontWeight: 700, background: "#dbeafe", color: "#1d4ed8", padding: "1px 6px", borderRadius: 999 }}>
+                                Current Stage
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>{st.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <button type="button" className="primary-button full-width" onClick={closeRequest}>
-                  Done
+                  Return to Catalogue
                 </button>
               </div>
             ) : (
@@ -368,7 +426,106 @@ export default function ServiceCatalogue() {
                     ))}
                   </select>
 
-                  <label htmlFor="request-details">Request details</label>
+                  {/* ── Dynamic Custom Fields per Catalog Offering (SR-1) ── */}
+                  {requestService && (
+                    Boolean(requestService.name.toLowerCase().includes('laptop') || requestService.name.toLowerCase().includes('hardware') || requestService.name.toLowerCase().includes('desktop')) ? (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 my-2">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">Hardware Specifications</span>
+                        <div>
+                          <label className="text-xs text-slate-600 block mb-1">Model & Tier</label>
+                          <select
+                            value={laptopModel}
+                            onChange={(e) => setLaptopModel(e.target.value)}
+                            className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                          >
+                            <option value='14" High Performance Laptop (M-Series / Intel i7)'>14" High Performance Laptop (Standard Dev Machine)</option>
+                            <option value='16" Workstation Edition (64GB RAM / GPU Accelerated)'>16" Workstation Edition (Heavy GPU / Data Science)</option>
+                            <option value='13" Ultralight Traveler Edition'>13" Ultralight Traveler Edition (Field & Executive)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 block mb-1">Memory Allocation</label>
+                          <select
+                            value={laptopMemory}
+                            onChange={(e) => setLaptopMemory(e.target.value)}
+                            className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                          >
+                            <option value="16 GB Unified Memory">16 GB Unified Memory</option>
+                            <option value="32 GB Unified RAM">32 GB Unified RAM</option>
+                            <option value="64 GB Unified RAM">64 GB Unified RAM</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 block mb-1">Delivery / Pickup Location</label>
+                          <input
+                            type="text"
+                            value={deliveryLocation}
+                            onChange={(e) => setDeliveryLocation(e.target.value)}
+                            className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                            placeholder="e.g. Desk 4B, London HQ or Remote Home Address"
+                          />
+                        </div>
+                      </div>
+                    ) : Boolean(requestService.name.toLowerCase().includes('software') || requestService.name.toLowerCase().includes('license') || requestService.name.toLowerCase().includes('adobe')) ? (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 my-2">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">License Specifications</span>
+                        <div>
+                          <label className="text-xs text-slate-600 block mb-1">License Tier</label>
+                          <select
+                            value={softwareLicense}
+                            onChange={(e) => setSoftwareLicense(e.target.value)}
+                            className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                          >
+                            <option value="Full Creative / Developer License">Full Creative / Developer License (Annual Seat)</option>
+                            <option value="Viewer / Read-Only Access">Viewer / Read-Only Access</option>
+                            <option value="Standard Single-Seat License">Standard Single-Seat License</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-600 block mb-1">Business Justification & Project Code</label>
+                          <input
+                            type="text"
+                            value={softwareJustification}
+                            onChange={(e) => setSoftwareJustification(e.target.value)}
+                            className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                            placeholder="e.g. PRJ-2026-ENG Sprint delivery requirement"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 my-2">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">Environment & Access Level</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-slate-600 block mb-1">Environment</label>
+                            <select
+                              value={accessEnv}
+                              onChange={(e) => setAccessEnv(e.target.value)}
+                              className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                            >
+                              <option value="Staging & Sandbox">Staging & Sandbox</option>
+                              <option value="Production (Read-Only)">Production (Read-Only)</option>
+                              <option value="Production (Full Admin)">Production (Full Admin)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-600 block mb-1">Role Permission</label>
+                            <select
+                              value={accessRole}
+                              onChange={(e) => setAccessRole(e.target.value)}
+                              className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg"
+                            >
+                              <option value="Developer / Contributor">Developer / Contributor</option>
+                              <option value="Operator / Deployer">Operator / Deployer</option>
+                              <option value="Security Auditor">Security Auditor</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+
+                  <label htmlFor="request-details">Additional Request details</label>
                   <textarea
                     id="request-details"
                     value={requestDetails}

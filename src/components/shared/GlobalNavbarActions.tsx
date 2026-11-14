@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
@@ -169,6 +170,16 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   const [searchQuery, setSearchQuery] = useState('');
   const [searchScope, setSearchScope] = useState<'all' | 'tickets' | 'problems' | 'cmdb' | 'articles' | 'users'>('all');
   const [ticketList, setTicketList] = useState<QuickSearchItem[]>([]);
+  const [ciList, setCiList] = useState<any[]>(() => defaultConfigurationItems || []);
+  const [articleList, setArticleList] = useState<any[]>(() => MOCK_ARTICLES || []);
+  const [userList, setUserList] = useState<any[]>(() => MOCK_USERS || []);
+  const [problemList, setProblemList] = useState<any[]>(() => {
+    try {
+      return problemsService.getProblems();
+    } catch {
+      return [];
+    }
+  });
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Global shortcut Ctrl+K / Cmd+K to toggle global search
@@ -227,7 +238,11 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     Promise.allSettled([
       api.get('/api/major-incidents'),
       api.get('/api/tickets'),
-    ]).then(([miRes, tickRes]) => {
+      api.get('/api/cmdb/configuration-items'),
+      api.get('/api/articles'),
+      api.get('/api/users'),
+      api.get('/api/problems'),
+    ]).then(([miRes, tickRes, ciRes, artRes, userRes, probRes]) => {
       if (!active) return;
       const liveNotifs: NotificationItem[] = [];
 
@@ -249,6 +264,49 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             status: t.status || '',
           }))
         );
+      }
+
+      // Populate CMDB CIs from live backend
+      if (ciRes.status === 'fulfilled') {
+        const rawCis = Array.isArray(ciRes.value?.data) ? ciRes.value.data : Array.isArray(ciRes.value) ? ciRes.value : [];
+        if (rawCis.length > 0) {
+          setCiList(rawCis.map((c: any) => ({
+            tag: c.tag || c.id || '',
+            name: c.name || c.tag || 'Configuration Item',
+            type: c.type || 'Server',
+            site: c.site || 'Primary DC',
+            businessOwner: c.businessOwner || 'Technology',
+          })));
+        }
+      }
+
+      // Populate Knowledge Articles from live backend
+      if (artRes.status === 'fulfilled') {
+        const rawArts = Array.isArray(artRes.value?.data) ? artRes.value.data : Array.isArray(artRes.value) ? artRes.value : [];
+        if (rawArts.length > 0) {
+          setArticleList(rawArts.map((a: any) => ({
+            id: String(a.id || ''),
+            title: a.title || a.summaryTitle || 'Knowledge Article',
+            category: a.category || 'General',
+            author: a.author || 'Admin',
+          })));
+        }
+      }
+
+      // Populate Users from live backend
+      if (userRes.status === 'fulfilled') {
+        const rawUsers = Array.isArray(userRes.value?.data) ? userRes.value.data : Array.isArray(userRes.value) ? userRes.value : [];
+        if (rawUsers.length > 0) {
+          setUserList(rawUsers);
+        }
+      }
+
+      // Populate Problems from live backend
+      if (probRes.status === 'fulfilled') {
+        const rawProbs = Array.isArray(probRes.value?.data) ? probRes.value.data : Array.isArray(probRes.value) ? probRes.value : [];
+        if (rawProbs.length > 0) {
+          setProblemList(rawProbs);
+        }
       }
 
       // 1. Live Major Incidents (active, unresolved incidents only)
@@ -396,20 +454,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     handleTicketClick(item.ticketId);
   };
 
-  // Multi-entity search datasets
-  const allProblems = useMemo(() => {
-    try {
-      return problemsService.getProblems();
-    } catch {
-      return [];
-    }
-  }, [activeFlyout]);
-
-  const allCis = useMemo(() => defaultConfigurationItems || [], []);
-  const allArticles = useMemo(() => MOCK_ARTICLES || [], []);
-  const allUsers = useMemo(() => MOCK_USERS || [], []);
-
-  // Filtered multi-entity search results
+  // Filtered multi-entity search results using live backend states
   const query = searchQuery.trim().toLowerCase();
 
   const matchingTickets = useMemo(() => {
@@ -423,49 +468,50 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   }, [ticketList, query]);
 
   const matchingProblems = useMemo(() => {
-    if (!query) return allProblems.slice(0, 3);
-    return allProblems.filter(
-      (p) =>
-        p.id.toLowerCase().includes(query) ||
-        p.prefixId.toLowerCase().includes(query) ||
-        p.summary.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.team.toLowerCase().includes(query)
+    if (!query) return problemList.slice(0, 3);
+    return problemList.filter(
+      (p: any) =>
+        (p.id && String(p.id).toLowerCase().includes(query)) ||
+        (p.prefixId && p.prefixId.toLowerCase().includes(query)) ||
+        (p.summary && p.summary.toLowerCase().includes(query)) ||
+        (p.category && p.category.toLowerCase().includes(query)) ||
+        (p.team && p.team.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [allProblems, query]);
+  }, [problemList, query]);
 
   const matchingCis = useMemo(() => {
-    if (!query) return allCis.slice(0, 3);
-    return allCis.filter(
-      (ci) =>
-        ci.tag.toLowerCase().includes(query) ||
-        ci.name.toLowerCase().includes(query) ||
-        ci.type.toLowerCase().includes(query) ||
-        ci.site.toLowerCase().includes(query) ||
+    if (!query) return ciList.slice(0, 3);
+    return ciList.filter(
+      (ci: any) =>
+        (ci.tag && ci.tag.toLowerCase().includes(query)) ||
+        (ci.name && ci.name.toLowerCase().includes(query)) ||
+        (ci.type && ci.type.toLowerCase().includes(query)) ||
+        (ci.site && ci.site.toLowerCase().includes(query)) ||
         (ci.businessOwner && ci.businessOwner.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [allCis, query]);
+  }, [ciList, query]);
 
   const matchingArticles = useMemo(() => {
-    if (!query) return allArticles.slice(0, 3);
-    return allArticles.filter(
-      (a) =>
-        a.id.toLowerCase().includes(query) ||
-        a.title.toLowerCase().includes(query) ||
+    if (!query) return articleList.slice(0, 3);
+    return articleList.filter(
+      (a: any) =>
+        (a.id && String(a.id).toLowerCase().includes(query)) ||
+        (a.title && a.title.toLowerCase().includes(query)) ||
+        (a.summaryTitle && a.summaryTitle.toLowerCase().includes(query)) ||
         (a.category && a.category.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [allArticles, query]);
+  }, [articleList, query]);
 
   const matchingUsers = useMemo(() => {
-    if (!query) return allUsers.slice(0, 3);
-    return allUsers.filter(
+    if (!query) return userList.slice(0, 3);
+    return userList.filter(
       (u: any) =>
         (u.name && u.name.toLowerCase().includes(query)) ||
         (u.fullName && u.fullName.toLowerCase().includes(query)) ||
         (u.email && u.email.toLowerCase().includes(query)) ||
         (u.role && u.role.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [allUsers, query]);
+  }, [userList, query]);
 
   const totalResultsCount =
     matchingTickets.length +
@@ -486,16 +532,16 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     navigate('/problems', { state: { selectedProblemId: problemId } });
   };
 
-  const handleCiSelect = (_ciId: string) => {
+  const handleCiSelect = (ciId: string) => {
     setActiveFlyout(null);
     setSearchQuery('');
-    navigate('/cmdb');
+    navigate(`/cmdb?ci=${encodeURIComponent(ciId)}`);
   };
 
-  const handleArticleSelect = (_articleId: string) => {
+  const handleArticleSelect = (articleId: string) => {
     setActiveFlyout(null);
     setSearchQuery('');
-    navigate('/article-drafts');
+    navigate(`/article-drafts?id=${encodeURIComponent(articleId)}`);
   };
 
   const handleUserSelect = (_userId: string) => {
@@ -573,7 +619,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             }}
             title="Create New Ticket"
           >
-            <span className="global-nav-plus-sign">+</span>
+            <Plus size={14} strokeWidth={2.5} className="shrink-0" />
             <span>New Ticket</span>
           </button>
         </div>

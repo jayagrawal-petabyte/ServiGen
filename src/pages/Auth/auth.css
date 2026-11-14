@@ -1,6 +1,9 @@
 /* Login Screen, Splash Screen & Users List Styling */
 
-/* Login Page */
+/* ==========================================================================
+   Login Screen - Strict Figma Template Alignment & Animations
+   ========================================================================== */
+
 .figma-login-page {
   width: 100vw;
   height: 100vh;
@@ -16,6 +19,7 @@
   box-sizing: border-box;
 }
 
+/* Central Organic Shape SVG matching Figma screenshot */
 .figma-svg-bg {
   position: absolute;
   top: 0;
@@ -24,8 +28,21 @@
   height: 100%;
   z-index: 1;
   pointer-events: none;
+  animation: fadeInOrganic 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes fadeInOrganic {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Ambient Floating Decorative Layer */
 .figma-decor-layer {
   position: absolute;
   top: 0;
@@ -44,6 +61,7 @@
   height: 28px;
   border-radius: 50%;
   background-color: #A8543D;
+  animation: floatGentle 5.5s ease-in-out infinite;
 }
 
 .decor-dot-2 {
@@ -54,94 +72,176 @@
   height: 42px;
   border-radius: 50%;
   background-color: #FFFFFF;
+  animation: floatReverse 6.5s ease-in-out infinite 0.4s;
 }
 
 .decor-dot-3 {
   position: absolute;
-  bottom: 26%;
-  left: 4.2%;
-  width: 26px;
-  height: 26px;
+  top: 10%;
+  right: 5%;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: #FBE2D8;
+  animation: floatGentle 6s ease-in-out infinite 0.8s;
 }
 
 .decor-dot-4 {
   position: absolute;
-  bottom: -15px;
-  left: 19%;
-  width: 44px;
-  height: 44px;
+  top: 24%;
+  right: -24px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background-color: #FBE2D8;
+  background-color: #FFFFFF;
+  animation: floatReverse 7.5s ease-in-out infinite 1.2s;
 }
 
 .decor-dot-5 {
   position: absolute;
-  top: 10.5%;
-  right: 9.5%;
-  width: 26px;
-  height: 26px;
+  bottom: 23%;
+  left: 8.5%;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background-color: #D7DEE5;
+  background-color: #C2674D;
+  animation: floatGentle 5s ease-in-out infinite 0.2s;
 }
 
 .decor-capsule-6 {
   position: absolute;
-  top: 33.5%;
-  right: -12px;
-  width: 64px;
-  height: 34px;
+  bottom: 8%;
+  left: 2%;
+  width: 28px;
+  height: 52px;
   border-radius: 20px;
-  background-color: #C2674D;
+  background-color: #F3ECE6;
+  border: 1px solid rgba(168, 84, 61, 0.25);
+  animation: floatReverse 8s ease-in-out infinite 1s;
 }
 
 .decor-dot-7 {
   position: absolute;
-  bottom: 21.5%;
-  right: 5%;
-  width: 26px;
-  height: 26px;
+  bottom: 15%;
+  right: 7%;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background-color: #FBE2D8;
+  background-color: #D7DEE5;
+  animation: floatGentle 6.8s ease-in-out infinite 0.6s;
 }
 
 .decor-dot-8 {
   position: absolute;
-  bottom: 8.5%;
-  right: 9%;
-  width: 26px;
-  height: 26px;
+  bottom: 5.5%;
+  right: -16px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #FBE2D8;
+  background-color: #FFFFFF;
+  animation: floatReverse 7.2s ease-in-out infinite 1.5s;
 }
 
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(3px, -11px, 0);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-4px, 9px, 0);
+  }
+}
+
+/* Login Wrapper & Card Container */
 .figma-login-wrapper {
   position: relative;
   z-index: 10;
-  width: 100%;
-  max-width: 370px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 330px;
+  max-width: 90vw;
+  animation: cardEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Brand Logo Header */
+.figma-brand-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+  animation: logoEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.figma-brand-logo {
+  max-width: 210px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(168, 84, 61, 0.12));
+}
+
+@keyframes logoEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .figma-login-header {
-  font-size: 28px;
-  font-weight: 500;
+  font-size: 26px;
+  font-weight: 700;
   color: #1A1A1A;
-  margin: 0 0 18px 0;
+  margin: 0 0 16px 0;
   text-align: center;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Figma Card Box - Strict Colors from Figma */
 .figma-card-box {
-  width: 100%;
   background-color: #FFFBF8;
   border: 1.5px solid #C4674E;
-  border-radius: 20px;
-  padding: 28px 32px 24px 32px;
+  border-radius: 24px;
+  box-shadow: 0 14px 34px rgba(168, 84, 61, 0.22);
+  width: 100%;
+  padding: 26px 24px 22px 24px;
   box-sizing: border-box;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.figma-card-box.has-error {
+  animation: shakeCard 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shakeCard {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 .figma-field {
@@ -152,112 +252,163 @@
 
 .figma-field-label {
   font-size: 13px;
-  font-weight: 500;
-  color: #222222;
+  font-weight: 600;
+  color: #3A2E2B;
   margin-bottom: 6px;
-}
-
-.figma-password-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
+  letter-spacing: -0.005em;
 }
 
 .figma-input-field {
-  width: 100%;
-  height: 42px;
   background-color: #EAD1C6;
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 10px;
+  height: 44px;
   padding: 0 14px;
   font-size: 14px;
   color: #1A1A1A;
   outline: none;
   box-sizing: border-box;
-  transition: box-shadow 0.15s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  width: 100%;
+}
+
+.figma-input-field::placeholder {
+  color: #7A6964;
+  opacity: 0.8;
 }
 
 .figma-input-field:focus {
-  box-shadow: 0 0 0 2px #C4674E;
+  background-color: #F3DDD3;
+  border-color: #C4674E;
+  box-shadow: 0 0 0 3px rgba(196, 103, 78, 0.22);
+}
+
+.figma-password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.figma-password-input-wrapper .figma-input-field {
+  padding-right: 44px;
 }
 
 .figma-eye-btn {
   position: absolute;
   right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 14px;
   cursor: pointer;
-  padding: 4px;
+  color: #7A6964;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  transition: color 0.18s ease;
+}
+
+.figma-eye-btn:hover {
+  color: #C4674E;
 }
 
 .figma-btn-row {
-  display: flex;
-  justify-content: center;
   margin-top: 22px;
-  margin-bottom: 4px;
+  width: 100%;
 }
 
+/* Submit Button with Hover & Loading Animations */
 .figma-submit-btn {
-  height: 38px;
-  min-width: 136px;
   background-color: #FFFFFF;
   border: 1.5px solid #C4674E;
   border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 500;
+  height: 42px;
+  width: 100%;
+  font-size: 14.5px;
+  font-weight: 600;
   color: #222222;
   cursor: pointer;
+  box-shadow: 0 3px 8px rgba(196, 103, 78, 0.14);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  gap: 8px;
 }
 
-.figma-submit-btn:hover {
-  background-color: #FFFBF8;
-  transform: translateY(-1px);
+.figma-submit-btn:hover:not(:disabled) {
+  background-color: #C4674E;
+  color: #FFFFFF;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 14px rgba(196, 103, 78, 0.28);
 }
 
-.figma-submit-btn:active {
-  transform: translateY(0);
+.figma-submit-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+  box-shadow: 0 2px 4px rgba(196, 103, 78, 0.2);
+}
+
+.figma-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.figma-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinBtn 0.75s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinBtn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .figma-forget-row {
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .figma-forget-text {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: #1A1A1A;
   text-decoration: none;
   cursor: pointer;
+  transition: color 0.18s ease;
 }
 
 .figma-forget-text:hover {
+  color: #C4674E;
   text-decoration: underline;
 }
 
 .figma-error-msg {
-  color: #D32F2F;
-  font-size: 12px;
-  margin-bottom: 12px;
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
   text-align: center;
 }
 
-/* Splash Screen */
+/* ==========================================================================
+   Splash Screen - Smooth Entrance & Transition Animations
+   ========================================================================== */
+
 .figma-splash-page {
   width: 100vw;
   height: 100vh;
-  background-color: #FFFFFF;
+  background-color: #FFFBF8;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -267,6 +418,12 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  animation: splashFadeIn 0.4s ease-out both;
+}
+
+@keyframes splashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .splash-teal-curve {
@@ -277,12 +434,68 @@
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  animation: curveSlideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes curveSlideIn {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) {
   .splash-teal-curve {
     width: 58%;
   }
+}
+
+/* Ambient Floating Dots for Splash matching Figma template */
+.splash-decor-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.splash-decor-dot-1 {
+  position: absolute;
+  top: 12%;
+  left: 8%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #A8543D;
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+.splash-decor-dot-2 {
+  position: absolute;
+  bottom: 18%;
+  left: 12%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #FBE2D8;
+  animation: floatReverse 6.5s ease-in-out infinite 0.5s;
+}
+
+.splash-decor-dot-3 {
+  position: absolute;
+  bottom: 28%;
+  left: 24%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #D7DEE5;
+  animation: floatGentle 5s ease-in-out infinite 0.8s;
 }
 
 .splash-content-wrapper {
@@ -293,13 +506,14 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  animation: splashFadeIn 0.35s ease-out both;
 }
 
 .splash-welcome-heading {
-  font-size: 23px;
-  font-weight: 500;
-  color: #111827;
-  margin: 0 0 36px 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 0 0 30px 0;
   letter-spacing: -0.015em;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -311,13 +525,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
+}
+
+.splash-brainmint-logo {
+  width: 130px;
+  max-width: 130px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  z-index: 2;
+  filter: drop-shadow(0 2px 6px rgba(168, 84, 61, 0.14));
 }
 
 .splash-loader-orbit {
   position: absolute;
   inset: -10px;
-  animation: splashSpin 2s linear infinite;
+  animation: splashSpin 2.2s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes splashSpin {
@@ -328,7 +553,7 @@
 .splash-subtext {
   font-size: 14.5px;
   font-weight: 400;
-  color: #111827;
+  color: #7A6964;
   margin: 0;
   letter-spacing: -0.01em;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

@@ -10,6 +10,7 @@ export type TicketNote = {
   author: string;
   time: string;
   text: string;
+  attachments?: Array<{ id: string; name: string; url: string }>;
 };
 
 export interface UserAsset {

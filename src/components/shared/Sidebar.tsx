@@ -118,14 +118,14 @@ const CmdbIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 13. Contacts: ID badge / contact notebook with spiral pins at top and person inside
-const ContactsIcon: React.FC<{ className?: string }> = ({ className }) => (
+// 13. Contracts: Document agreement icon with folded corner and signature lines
+const ContractsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-    <rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5" />
-    <circle cx="12" cy="11.5" r="2.8" />
-    <path d="M7.5 21v-1.8a2.2 2.2 0 0 1 2.2-2.2h4.6a2.2 2.2 0 0 1 2.2 2.2V21" />
-    <line x1="8" y1="2" x2="8" y2="4.5" />
-    <line x1="16" y1="2" x2="16" y2="4.5" />
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <line x1="10" y1="9" x2="8" y2="9" />
   </svg>
 );
 
@@ -162,7 +162,7 @@ const ReportingNavIcon: React.FC<{ className?: string }> = ({ className }) => (
    10. Calendar
    11. Organisations
    12. CMDB
-   13. Contacts
+   13. Contracts
    14. My Approvals
 
    RBAC Filter:
@@ -201,7 +201,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     matchActive: (path) => path === '/incidents' || path.startsWith('/team'),
   },
   {
-    to: '/major-incidents/live',
+    to: '/major-incidents',
     label: 'Major Incidents',
     line1: 'Major',
     line2: 'Incidents',
@@ -268,10 +268,10 @@ const NAV_ITEMS: NavItemConfig[] = [
     roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
   {
-    to: '/contacts',
-    label: 'Contacts',
-    icon: ContactsIcon,
-    matchActive: (path) => path.startsWith('/contacts'),
+    to: '/contracts',
+    label: 'Contracts',
+    icon: ContractsIcon,
+    matchActive: (path) => path.startsWith('/contracts') || path.startsWith('/contacts'),
   },
   {
     to: '/approvals',
@@ -294,7 +294,7 @@ const PREFETCH_MAP: Record<string, () => Promise<any>> = {
   '/dashboard': () => import('../../pages/Dashboard/Dashboard'),
   '/my-work': () => import('../../pages/MyWork/MyWork'),
   '/incidents': () => import('../../pages/Incidents'),
-  '/major-incidents/live': () => import('../../pages/MajorIncidents'),
+  '/major-incidents': () => import('../../pages/MajorIncidents'),
   '/problems': () => import('../../pages/Problems'),
   '/requests': () => import('../../pages/Requests/RequestsPage'),
   '/change-requests': () => import('../../pages/ChangeRequests/ChangeRequestsPage'),
@@ -303,6 +303,7 @@ const PREFETCH_MAP: Record<string, () => Promise<any>> = {
   '/calendar': () => import('../../pages/Calendar/CalendarPage'),
   '/organisations': () => import('../../pages/Auth'),
   '/cmdb': () => import('../../pages/CMDB/CmdbPage'),
+  '/contracts': () => import('../../pages/Auth'),
   '/contacts': () => import('../../pages/Auth'),
   '/approvals': () => import('../../pages/Approvals/ApprovalsPage'),
   '/reporting': () => import('../../pages/Reporting/IncidentsByCategoryReport'),
@@ -382,7 +383,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
               title={item.label}
               data-active={isActive ? 'true' : undefined}
             >
-              <Icon className="sidebar-nav-icon" />
+              <div className="relative flex items-center justify-center">
+                <Icon className="sidebar-nav-icon" />
+              </div>
               {item.line1 ? (
                 <span className="nav-label">
                   <span>{item.line1}</span>

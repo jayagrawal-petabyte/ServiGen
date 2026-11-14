@@ -271,11 +271,18 @@
 }
 
 .pj-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   border: none;
   border-radius: 999px;
   background: var(--pj-btn);
-  padding: 7px 18px;
-  font-weight: 500;
+  padding: 6px 16px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .pj-new:hover {

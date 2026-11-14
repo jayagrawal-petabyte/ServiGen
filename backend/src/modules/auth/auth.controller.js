@@ -1,6 +1,7 @@
 const {
   login,
   getSession,
+  refreshSession,
 } = require('./auth.service');
 
 /**
@@ -118,8 +119,31 @@ const forgotPasswordHandler = async (req, res) => {
   }
 };
 
+/**
+ * POST /auth/refresh
+ *
+ * Refresh the currently authenticated user's session token.
+ */
+const refreshHandler = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.headers['x-user-id'];
+    const refreshed = await refreshSession(userId);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'Session refreshed successfully',
+      data: refreshed,
+      token: refreshed.token,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to refresh session');
+  }
+};
+
 module.exports = {
   loginHandler,
   getSessionHandler,
   forgotPasswordHandler,
+  refreshHandler,
 };

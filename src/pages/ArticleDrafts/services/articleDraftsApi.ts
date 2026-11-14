@@ -32,7 +32,10 @@ const SIMULATED_LATENCY_MS = 100;
  * Check if custom or default backend articles endpoint is available
  */
 function getArticlesBackendEndpoint(): string {
-  const custom = import.meta.env.VITE_ARTICLES_API_URL;
+  const custom =
+    typeof import.meta !== 'undefined' && import.meta.env
+      ? import.meta.env.VITE_ARTICLES_API_URL
+      : undefined;
   if (typeof custom === 'string' && custom.trim().length > 0) {
     return custom.trim().replace(/\/+$/, '');
   }
@@ -110,14 +113,12 @@ function getStoredDrafts(): ArticleDraft[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (err) {
     console.warn('Failed to read article drafts from storage:', err);
   }
-  const seeded = MOCK_ARTICLES.map(adaptBackendArticle);
-  setStoredDrafts(seeded);
-  return seeded;
+  return [];
 }
 
 /**
@@ -145,20 +146,18 @@ export const articleDraftsApi = {
         ? response.data
         : Array.isArray(response)
         ? response
-        : [];
+        : null;
 
-      if (rawList.length > 0) {
+      if (rawList !== null) {
         const backendDrafts = rawList.map(adaptBackendArticle);
 
         // Merge: keep locally created or modified drafts that may not yet be in backend
         const mergedMap = new Map<string, ArticleDraft>();
         backendDrafts.forEach((d: ArticleDraft) => mergedMap.set(d.id, d));
         stored.forEach((localDraft) => {
-          // If local draft has changes (e.g. status changed to Awaiting Approval or newly created)
           if (!mergedMap.has(localDraft.id)) {
             mergedMap.set(localDraft.id, localDraft);
           } else {
-            // Keep local status if newer or awaiting approval
             const existing = mergedMap.get(localDraft.id)!;
             if (localDraft.status !== existing.status) {
               mergedMap.set(localDraft.id, {
@@ -325,6 +324,9 @@ export const articleDraftsApi = {
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('servigen-approvals-updated'));
+    }
     return updated;
   },
 
@@ -380,6 +382,9 @@ export const articleDraftsApi = {
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('servigen-approvals-updated'));
+    }
     return updated;
   },
 

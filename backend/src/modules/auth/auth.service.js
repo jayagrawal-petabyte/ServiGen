@@ -107,7 +107,25 @@ const getSession = async (userId) => {
   return safeUser;
 };
 
+/**
+ * Refresh an active authenticated session and return a new token.
+ */
+const refreshSession = async (userId) => {
+  const safeUser = await getSession(userId);
+  const token = generateToken({
+    id: safeUser.id,
+    email: safeUser.email,
+    role: safeUser.role,
+    organisationId: safeUser.organisationId,
+  });
+  return {
+    ...safeUser,
+    token,
+  };
+};
+
 module.exports = {
   login,
   getSession,
+  refreshSession,
 };

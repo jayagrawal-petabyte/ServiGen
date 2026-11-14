@@ -209,7 +209,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs border ${badgeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs border whitespace-nowrap shrink-0 ${badgeClasses} ${className}`}
       style={customStyle}
       title={
         urgency === 'overdue'
@@ -219,8 +219,8 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
           : 'SLA on track (> 1h remaining)'
       }
     >
-      <span className={`w-1.5 h-1.5 rounded-full inline-block ${dotClasses}`} style={dotStyle} />
-      <span className="font-mono tabular-nums">{text}</span>
+      <span className={`w-1.5 h-1.5 rounded-full inline-block shrink-0 ${dotClasses}`} style={dotStyle} />
+      <span className="font-mono tabular-nums whitespace-nowrap">{text}</span>
     </span>
   );
 });

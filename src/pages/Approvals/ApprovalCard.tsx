@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 
 export interface TicketDetails {
   ticketId: string;
@@ -44,6 +45,22 @@ export default function ApprovalCard({
   isActionLoading = false,
 }: ApprovalCardProps) {
   const isPending = approval.status === 'pending';
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [reasonText, setReasonText] = useState('');
+  const [errorText, setErrorText] = useState<string | null>(null);
+
+  const handleConfirmReject = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = reasonText.trim();
+    if (!trimmed || trimmed.length < 5) {
+      setErrorText('Please provide a mandatory rejection reason (at least 5 characters).');
+      return;
+    }
+    setErrorText(null);
+    setIsRejectDialogOpen(false);
+    onReject(approval.id, trimmed);
+    setReasonText('');
+  };
 
   return (
     <div className={`approval-card status-${approval.status}`}>
@@ -213,11 +230,8 @@ export default function ApprovalCard({
             type="button"
             disabled={isActionLoading}
             onClick={() => {
-              if (onOpenDetails) {
-                onOpenDetails(approval, true);
-              } else {
-                onReject(approval.id);
-              }
+              setErrorText(null);
+              setIsRejectDialogOpen(true);
             }}
             style={{ opacity: isActionLoading ? 0.6 : 1 }}
           >
@@ -235,6 +249,66 @@ export default function ApprovalCard({
               <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z" />
             </svg>
           </button>
+
+          {/* Mandatory Rejection Reason Dialog */}
+          <Dialog.Root open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
+              <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-full max-w-md z-50 flex flex-col gap-3.5 animate-in zoom-in-95">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <Dialog.Title className="text-base font-bold text-rose-700 flex items-center gap-2">
+                    <span>⚠️ Reject Approval Request</span>
+                  </Dialog.Title>
+                  <Dialog.Close className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</Dialog.Close>
+                </div>
+
+                <Dialog.Description className="text-xs text-slate-500">
+                  Please provide a mandatory justification for rejecting <strong>{approval.ticketNumber}</strong> ({approval.title}). This reason will be logged to the audit trail and sent to <strong>{approval.authorName}</strong>.
+                </Dialog.Description>
+
+                <form onSubmit={handleConfirmReject} className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      Rejection Justification <span className="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={reasonText}
+                      onChange={(e) => {
+                        setReasonText(e.target.value);
+                        if (errorText && e.target.value.trim().length >= 5) setErrorText(null);
+                      }}
+                      placeholder="e.g. Budget authorization cap exceeded; please submit revised quotation."
+                      className="w-full p-2.5 text-xs text-slate-800 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+                      autoFocus
+                    />
+                    {errorText && (
+                      <p className="text-[11px] text-rose-600 font-medium mt-1">
+                        {errorText}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsRejectDialogOpen(false)}
+                      className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isActionLoading}
+                      className="px-4 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm cursor-pointer transition-all disabled:opacity-50"
+                    >
+                      Confirm Rejection
+                    </button>
+                  </div>
+                </form>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </div>
       ) : (
         <div className="approval-card-completed">

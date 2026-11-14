@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import './auth.css';
-import brainmintDark from '../../assets/brainmint-dark.png';
+import brainmintLogo from '../../assets/brainmint-logo-transparent.png';
 
 export interface SplashScreenProps {
   userName?: string;
@@ -10,10 +10,10 @@ export interface SplashScreenProps {
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
-  userName = 'Demo',
+  userName = 'admin001',
   loadingMessage = 'We are signing you in',
   onComplete,
-  durationMs = 750,
+  durationMs = 1500,
 }) => {
   const handleProceed = () => {
     if (onComplete) onComplete();
@@ -49,44 +49,61 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') handleProceed();
       }}
     >
-      {/* Right-side Teal Curved Graphic - Exact Match for Figma design */}
+      {/* Right-side Curved Graphic - Strict Figma Terracotta Color Template (#EFA087 -> #C4674E) */}
       <svg
         className="splash-teal-curve"
         viewBox="0 0 500 1000"
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
       >
+        <defs>
+          <linearGradient id="figmaCurveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#EFA087" />
+            <stop offset="100%" stopColor="#C4674E" />
+          </linearGradient>
+        </defs>
         <path
           d="M 230 0 C 190 280, 110 650, 0 1000 L 500 1000 L 500 0 Z"
-          fill="#00D4BB"
+          fill="url(#figmaCurveGrad)"
         />
       </svg>
 
+      {/* Ambient Floating Dots matching Figma palette */}
+      <div className="splash-decor-layer">
+        <div className="splash-decor-dot-1" />
+        <div className="splash-decor-dot-2" />
+        <div className="splash-decor-dot-3" />
+      </div>
+
       {/* Center Content Area */}
       <div className="splash-content-wrapper">
-        {/* Welcome Message formatted as "Hello Demo" without comma or exclamation */}
+        {/* Welcome Message formatted as "Hello {userName}" */}
         <h1 className="splash-welcome-heading">Hello {userName}</h1>
 
         {/* Brand Icon with Orbiting Dots */}
         <div className="splash-logo-container">
-          {/* Main Cyan Chat Bubble Badge */}
           <img
-          src={brainmintDark}
-          alt="BrainMint"
-          className="splash-brainmint-logo"
+            src={brainmintLogo}
+            alt="BrainMint"
+            className="splash-brainmint-logo"
           />
 
-          {/* Rotating Orbiting Dots */}
-          <svg className="splash-loader-orbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="84" r="5" fill="#00D4BB" />
-            <circle cx="34" cy="99" r="4.2" fill="#00D4BB" />
-            <circle cx="60" cy="107" r="3.4" fill="#00D4BB" />
-            <circle cx="86" cy="99" r="2.5" fill="#00D4BB" />
-            <circle cx="101" cy="84" r="1.7" fill="#00D4BB" />
+          {/* Rotating Orbiting Dots in Figma Color Template */}
+          <svg
+            className="splash-loader-orbit"
+            viewBox="0 0 120 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="20" cy="84" r="5" fill="#C4674E" />
+            <circle cx="34" cy="99" r="4.2" fill="#EFA087" />
+            <circle cx="60" cy="107" r="3.4" fill="#A8543D" />
+            <circle cx="86" cy="99" r="2.8" fill="#EAD1C6" />
+            <circle cx="101" cy="84" r="2" fill="#C4674E" />
           </svg>
         </div>
 
-        {/* Sign-in Subtext */}
+        {/* Sign-in Subtext matching Figma styling */}
         <p className="splash-subtext">{loadingMessage}</p>
       </div>
     </div>

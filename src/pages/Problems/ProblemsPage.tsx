@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { ProblemsSidebar } from './components/ProblemsSidebar';
 import { NewProblemModal } from './components/NewProblemModal';
@@ -267,9 +268,9 @@ export const ProblemsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowNewModal(true)}
-                className="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#eb6a47] hover:bg-[#d65736] text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95 leading-none"
               >
-                <span>+</span>
+                <Plus size={14} strokeWidth={2.5} className="shrink-0" />
                 <span>New</span>
               </button>
 

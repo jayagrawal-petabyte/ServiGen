@@ -152,7 +152,8 @@ export const setStoredUser = (user: any | null): void => {
  * Defaults to empty string (same host / Vite proxy) or VITE_API_BASE_URL.
  */
 export function getApiBaseUrl(): string {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL;
+  const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
+  const envUrl = env?.VITE_API_BASE_URL || env?.VITE_BACKEND_URL;
   if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
     let clean = envUrl.trim().replace(/\/+$/, '');
     if (clean.includes('servigen-1.onrender.com')) {
@@ -161,7 +162,7 @@ export function getApiBaseUrl(): string {
     return clean;
   }
   // In production builds (e.g. Vercel), default to the live Render backend
-  if (import.meta.env.PROD) {
+  if (env?.PROD) {
     return 'https://servigen-backend.onrender.com';
   }
   // In local development, empty string leverages Vite's dev proxy to Render
@@ -239,18 +240,12 @@ export async function refreshSession(): Promise<string | null> {
       });
 
       if (!res.ok) {
-        if (!isOfflineFallbackToken(currentToken)) {
-          clearAuthToken();
-        }
         return null;
       }
 
       const json = await res.json();
       const token = json?.data?.token || json?.token;
       if (!token) {
-        if (!isOfflineFallbackToken(currentToken)) {
-          clearAuthToken();
-        }
         return null;
       }
 
@@ -449,8 +444,8 @@ async function executeRequest<T = any>(
         headers: retryHeaders,
       });
     }
-    // Refresh failed: the session is genuinely over unless running an offline fallback token
-    if (!isOfflineFallbackToken(token)) {
+    // Refresh failed: only expire the entire app session if the auth verification endpoint itself rejected the token
+    if (normalizedEndpoint.includes('/auth/session') && !isOfflineFallbackToken(token)) {
       clearAuthToken();
       announceSessionExpiry();
     }

@@ -3,12 +3,22 @@ export type ProblemStatus = 'New' | 'Investigation' | 'Workaround' | 'Known Erro
 
 export type ProblemStage = 'Investigation' | 'Workaround' | 'Known Error Review' | 'Resolved';
 
+export interface PirData {
+  rootCauseCategory: string;
+  executiveSummary: string;
+  preventiveActions: string;
+  lessonsLearned: string;
+  targetDate: string;
+  completedAt: string;
+  leadInvestigator: string;
+}
+
 export interface ProblemLogEntry {
   id: string;
   author: string;
   authorRole?: string;
   timestamp: string;
-  type: 'initial' | 'note' | 'stage_change' | 'reassign' | 'cause_update';
+  type: 'initial' | 'note' | 'stage_change' | 'reassign' | 'cause_update' | 'pir_complete' | 'kb_publish';
   content: string;
   badge?: string;
 }
@@ -33,12 +43,20 @@ export interface ProblemItem {
   causeStatus?: 'Identified' | 'Unknown' | 'Under Investigation';
   rootCauseDescription?: string;
   workaroundDescription?: string;
+  pirData?: PirData;
   monitoredServices: string[]; // e.g. ["Microsoft Teams"]
   childCis: Array<{
     id: string;
     name: string;
     type: string;
     status: string;
+  }>;
+  linkedIncidents?: Array<{
+    id: string;
+    summary: string;
+    priority: string;
+    status: string;
+    dateLogged?: string;
   }>;
   endUser: {
     name: string;

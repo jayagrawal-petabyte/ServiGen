@@ -17,11 +17,8 @@ const Incidents = React.lazy(() => import('./pages/Incidents'))
 // Problems
 const ProblemsPage = React.lazy(() => import('./pages/Problems'))
 
-// Major Incidents
-const MajorIncidentsDesign = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsDesign })))
-const MajorIncidentsLive = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsLive })))
-const MajorIncidentsWithFeed = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsWithFeed })))
-const MajorIncidentsListMockup = React.lazy(() => import('./pages/MajorIncidents').then((m) => ({ default: m.MajorIncidentsListMockup })))
+// Major Incidents (Unified Canonical Live Page)
+const MajorIncidentsPage = React.lazy(() => import('./pages/MajorIncidents'))
 
 // Projects & Calendar
 const ProjectsPage = React.lazy(() => import('./pages/Projects/ProjectsPage'))
@@ -33,6 +30,9 @@ const ServiceCatalogue = React.lazy(() => import('./pages/ServicesCatalogue/Serv
 
 // Approvals
 const ApprovalsPage = React.lazy(() => import('./pages/Approvals/ApprovalsPage'))
+
+// Contracts & Supplier Agreements
+const ContractsPage = React.lazy(() => import('./pages/Contracts/ContractsPage'))
 
 // Article Drafts
 const ArticleDraftsPage = React.lazy(() => import('./pages/ArticleDrafts/ArticleDraftsPage'))
@@ -223,11 +223,12 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/my-work" element={<MyWork />} />
-              <Route path="/major-incidents" element={<Navigate to="/major-incidents/live" replace />} />
-              <Route path="/major-incidents/design" element={<MajorIncidentsDesign />} />
-              <Route path="/major-incidents/live" element={<MajorIncidentsLive />} />
-              <Route path="/major-incidents/feed" element={<MajorIncidentsWithFeed />} />
-              <Route path="/major-incidents/list" element={<MajorIncidentsListMockup />} />
+              {/* Major Incidents (All legacy mock routes redirect to canonical live page) */}
+              <Route path="/major-incidents" element={<MajorIncidentsPage />} />
+              <Route path="/major-incidents/live" element={<Navigate to="/major-incidents" replace />} />
+              <Route path="/major-incidents/design" element={<Navigate to="/major-incidents" replace />} />
+              <Route path="/major-incidents/feed" element={<Navigate to="/major-incidents" replace />} />
+              <Route path="/major-incidents/list" element={<Navigate to="/major-incidents" replace />} />
               <Route path="/problems" element={<ProblemsPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
@@ -238,6 +239,7 @@ export default function App() {
               <Route path="/on-hold" element={<OnHoldTicketScreen />} />
               <Route path="/custom-lists" element={<CustomLists />} />
               <Route path="/organisations" element={<OrganisationsScreen />} />
+              <Route path="/contracts" element={<ContractsPage />} />
               <Route path="/contacts" element={<OrganisationUsersScreen />} />
               <Route path="/team/1st-line-live" element={<FirstLineLive />} />
               <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
