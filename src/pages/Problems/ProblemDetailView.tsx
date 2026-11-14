@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ProblemItem, ProblemLogEntry, ProblemStage } from './types/problem.types';
+import { ProblemItem, ProblemLogEntry, ProblemStage, PirData } from './types/problem.types';
 import { api } from '../../services/apiClient';
+import { articleDraftsApi } from '../ArticleDrafts/services/articleDraftsApi';
 
 interface ProblemDetailViewProps {
   problem: ProblemItem;
@@ -27,13 +28,34 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
   onUpdateProblem,
   onAddLog,
 }) => {
-  const [activeTab, setActiveTab] = useState<'progress' | 'linkedIncidents' | 'cis' | 'viewLog' | 'notifLog'>('progress');
+  const [activeTab, setActiveTab] = useState<'progress' | 'linkedIncidents' | 'pir' | 'cis' | 'viewLog' | 'notifLog'>('progress');
   const [newNote, setNewNote] = useState('');
   const [showReassignDropdown, setShowReassignDropdown] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSubject, setEmailSubject] = useState(`Update on Problem [${problem.prefixId}]: ${problem.summary}`);
   const [emailBody, setEmailBody] = useState('');
   const noteInputRef = useRef<HTMLTextAreaElement>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3200);
+  };
+
+  // Post-Incident Review (PIR) Form Modal State
+  const [showPirModal, setShowPirModal] = useState(false);
+  const [pirCategory, setPirCategory] = useState(problem.pirData?.rootCauseCategory || 'Software Defect / Application Bug');
+  const [pirSummary, setPirSummary] = useState(problem.pirData?.executiveSummary || problem.rootCauseDescription || '');
+  const [pirPreventive, setPirPreventive] = useState(problem.pirData?.preventiveActions || '');
+  const [pirLessons, setPirLessons] = useState(problem.pirData?.lessonsLearned || '');
+  const [pirTargetDate, setPirTargetDate] = useState(problem.pirData?.targetDate || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
+  const [pirInvestigator, setPirInvestigator] = useState(problem.pirData?.leadInvestigator || problem.agent || 'Ken Yang');
+
+  // Publish Workaround to Knowledge Base State
+  const [showKbModal, setShowKbModal] = useState(false);
+  const [kbTitle, setKbTitle] = useState(`Workaround: ${problem.summary}`);
+  const [kbContent, setKbContent] = useState(problem.workaroundDescription || '');
+  const [isPublishingKb, setIsPublishingKb] = useState(false);
 
   // Link Incident Modal state
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -168,8 +190,100 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     setShowEmailModal(false);
   };
 
+  const handleSavePir = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pirSummary.trim()) {
+      showToast('PIR Executive Summary is required.');
+      return;
+    }
+    const pirData: PirData = {
+      rootCauseCategory: pirCategory,
+      executiveSummary: pirSummary.trim(),
+      preventiveActions: pirPreventive.trim(),
+      lessonsLearned: pirLessons.trim(),
+      targetDate: pirTargetDate,
+      completedAt: new Date().toLocaleDateString('en-GB'),
+      leadInvestigator: pirInvestigator.trim() || 'Ken Yang',
+    };
+    const updated: ProblemItem = {
+      ...problem,
+      causeStatus: 'Identified',
+      pirData,
+      rootCauseDescription: pirSummary.trim(),
+    };
+    onUpdateProblem(updated);
+    onAddLog(
+      'Ken Yang',
+      `Completed Post-Incident Review (PIR):\n• Root Cause Summary: ${pirSummary.trim()}\n• Category: ${pirCategory}\n• Preventive Actions: ${pirPreventive.trim() || 'Documented'}\n• Remediation Target: ${pirTargetDate}`,
+      'pir_complete'
+    );
+    setShowPirModal(false);
+    showToast('✓ Post-Incident Review (PIR) documented and saved!');
+  };
+
+  const handleOpenKbModal = () => {
+    setKbTitle(`Workaround: ${problem.summary}`);
+    setKbContent(
+      newNote.trim() ||
+        problem.workaroundDescription ||
+        `### Temporary Workaround for: ${problem.summary}\n\n**Symptom:**\nUsers experiencing service degradation or disconnects.\n\n**Workaround Steps:**\n1. Clear local application cache and temporary tokens.\n2. Force fallback connection via secondary gateway.\n3. Validate operational telemetry with IT Support.`
+    );
+    setShowKbModal(true);
+  };
+
+  const handleConfirmPublishKb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kbTitle.trim() || !kbContent.trim()) {
+      showToast('Title and workaround content are required.');
+      return;
+    }
+    setIsPublishingKb(true);
+    try {
+      const created = await articleDraftsApi.createArticleDraft({
+        summaryTitle: kbTitle.trim(),
+        summarySubtitle: kbContent.trim().slice(0, 80).replace(/^[#\s]+/, ''),
+        body: kbContent.trim(),
+        category: problem.category || 'General',
+        priority: problem.priority || 'High',
+        priorityColor: '#eb6a47',
+        status: 'Draft',
+        type: 'Article Draft',
+        date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+        author: 'Ken Yang',
+        team: problem.team || 'Infrastructure',
+        agent: 'Ken Yang',
+        slaTimeLeft: '48h',
+        slaStatus: 'safe',
+      });
+      const updated: ProblemItem = {
+        ...problem,
+        workaroundDescription: kbContent.trim(),
+      };
+      onUpdateProblem(updated);
+      onAddLog(
+        'Ken Yang',
+        `Published official workaround to Knowledge Base: "${created.summaryTitle}" [Article ID #${created.id}]`,
+        'kb_publish'
+      );
+      setShowKbModal(false);
+      showToast(`✓ Workaround published to Knowledge Base as draft (#${created.id})`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to publish to Knowledge Base');
+    } finally {
+      setIsPublishingKb(false);
+    }
+  };
+
   return (
     <div className="flex-1 w-full h-full flex flex-col bg-slate-50 overflow-y-auto font-sans select-text">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <span>✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* ── Top Bar: Breadcrumb & Quick Actions ── */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-2xs">
         <div className="flex items-center gap-3">
@@ -220,6 +334,30 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           >
             <span>⊘</span>
             <span>Cause Unknown</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowPirModal(true)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              problem.pirData
+                ? 'bg-purple-100 text-purple-800 border border-purple-300 shadow-2xs'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700'
+            }`}
+            title="Open Post-Incident Review (PIR) form"
+          >
+            <span>📝</span>
+            <span>{problem.pirData ? 'PIR Completed ✓' : 'PIR Review'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenKbModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-all cursor-pointer"
+            title="Publish workaround to Knowledge Base"
+          >
+            <span>📚</span>
+            <span>Publish to KB</span>
           </button>
 
           <button
@@ -349,6 +487,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 {[
                   { id: 'progress', label: 'Progress' },
                   { id: 'linkedIncidents', label: `Linked Incidents (${problem.linkedIncidents?.length ?? 0})` },
+                  { id: 'pir', label: problem.pirData ? 'PIR / RCA (✓)' : 'PIR / RCA' },
                   { id: 'cis', label: `Child Ticket CIs (${problem.childCis.length})` },
                   { id: 'viewLog', label: `View Log (${problem.logs.length})` },
                   { id: 'notifLog', label: 'Notification Log' },
@@ -373,6 +512,47 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             <div className="p-5 space-y-4">
               {activeTab === 'progress' && (
                 <>
+                  {/* PIR Status Card (if documented) */}
+                  {problem.pirData && (
+                    <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200 text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-purple-900 flex items-center gap-1.5">
+                          <span>📝</span>
+                          <span>Post-Incident Review (PIR) Documented</span>
+                        </span>
+                        <span className="text-[10px] font-bold bg-purple-200/80 text-purple-800 px-2 py-0.5 rounded-full">
+                          {problem.pirData.completedAt}
+                        </span>
+                      </div>
+                      <p className="text-purple-950 font-medium">{problem.pirData.executiveSummary}</p>
+                      <div className="flex flex-wrap items-center gap-4 text-[11px] text-purple-800 pt-1 border-t border-purple-200/60">
+                        <span><strong>Category:</strong> {problem.pirData.rootCauseCategory}</span>
+                        <span><strong>Remediation Target:</strong> {problem.pirData.targetDate}</span>
+                        <span><strong>Lead:</strong> {problem.pirData.leadInvestigator}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Active Workaround Card (if documented) */}
+                  {problem.workaroundDescription && (
+                    <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                          <span>📚</span>
+                          <span>Published Official Workaround</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleOpenKbModal}
+                          className="text-[10px] font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
+                        >
+                          Update in KB
+                        </button>
+                      </div>
+                      <p className="text-emerald-950 whitespace-pre-line leading-relaxed">{problem.workaroundDescription}</p>
+                    </div>
+                  )}
+
                   {/* Activity Feed Items */}
                   <div className="space-y-3">
                     {problem.logs.map((log) => (
@@ -407,7 +587,17 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                       placeholder="Post a diagnostic update, root cause insight, or permanent fix notes..."
                       className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-[#eb6a47] focus:ring-1 focus:ring-[#eb6a47]/20 resize-none text-slate-800"
                     />
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={handleOpenKbModal}
+                        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                        title="Publish this workaround directly to the Knowledge Base as a draft article"
+                      >
+                        <span>📚</span>
+                        <span>Publish Workaround to KB</span>
+                      </button>
+
                       <button
                         type="submit"
                         disabled={!newNote.trim()}
@@ -500,6 +690,95 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'pir' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800">Post-Incident Review (PIR) &amp; Root Cause Analysis</h4>
+                      <p className="text-[11px] text-slate-500">
+                        Formal technical post-mortem, permanent preventive remediation, and operational learnings.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPirModal(true)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#eb6a47] text-white hover:bg-[#d65736] transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                    >
+                      <span>📝</span>
+                      <span>{problem.pirData ? 'Edit PIR' : 'Conduct PIR'}</span>
+                    </button>
+                  </div>
+
+                  {!problem.pirData ? (
+                    <div className="text-center py-10 px-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 space-y-2">
+                      <p className="text-xs font-semibold text-slate-600">No Post-Incident Review Documented Yet</p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        Capture root-cause insights, technical learnings, and permanent preventive actions to prevent recurrence.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowPirModal(true)}
+                        className="mt-2 px-3.5 py-1.5 text-xs font-bold text-[#eb6a47] bg-white border border-[#eb6a47]/30 rounded-lg hover:bg-orange-50 cursor-pointer"
+                      >
+                        + Document Post-Incident Review
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 text-xs">
+                      <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-purple-900 text-sm">Executive Summary</span>
+                          <span className="text-[10px] font-bold bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">
+                            Completed {problem.pirData.completedAt}
+                          </span>
+                        </div>
+                        <p className="text-purple-950 font-medium whitespace-pre-line leading-relaxed">
+                          {problem.pirData.executiveSummary}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                            Root Cause Category
+                          </span>
+                          <span className="font-bold text-slate-800">{problem.pirData.rootCauseCategory}</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                            Lead Investigator
+                          </span>
+                          <span className="font-bold text-slate-800">{problem.pirData.leadInvestigator}</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Preventive Actions &amp; Permanent Remediation
+                        </span>
+                        <p className="text-slate-800 whitespace-pre-line leading-relaxed">
+                          {problem.pirData.preventiveActions || 'No specific preventive action documented.'}
+                        </p>
+                        <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-500">
+                          <strong>Target Completion Date:</strong> {problem.pirData.targetDate}
+                        </div>
+                      </div>
+
+                      {problem.pirData.lessonsLearned && (
+                        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Lessons Learned &amp; Best Practices
+                          </span>
+                          <p className="text-slate-800 whitespace-pre-line leading-relaxed">
+                            {problem.pirData.lessonsLearned}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -927,6 +1206,220 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Post-Incident Review (PIR) Modal ── */}
+      {showPirModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setShowPirModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh] text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+              <div className="flex items-center gap-2">
+                <span className="text-base">📝</span>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Post-Incident Review (PIR) &amp; Root Cause Analysis</h3>
+                  <p className="text-[11px] text-slate-500">Formal technical post-mortem for [{problem.prefixId}]</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPirModal(false)}
+                className="w-7 h-7 rounded-full text-slate-400 hover:text-slate-600 flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePir} className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Root Cause Category *</label>
+                <select
+                  value={pirCategory}
+                  onChange={(e) => setPirCategory(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] cursor-pointer"
+                >
+                  <option value="Software Defect / Application Bug">Software Defect / Application Bug</option>
+                  <option value="Infrastructure Hardware Failure">Infrastructure Hardware Failure</option>
+                  <option value="Configuration / Network Drift">Configuration / Network Drift</option>
+                  <option value="Third-Party Vendor Outage">Third-Party Vendor Outage</option>
+                  <option value="Security / Authentication Policy Failure">Security / Authentication Policy Failure</option>
+                  <option value="Procedural / Human Error">Procedural / Human Error</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Executive Root Cause Summary *</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={pirSummary}
+                  onChange={(e) => setPirSummary(e.target.value)}
+                  placeholder="Detail the technical trigger, sequence of failures, and why the incident occurred..."
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Preventive Actions &amp; Permanent Remediation</label>
+                <textarea
+                  rows={3}
+                  value={pirPreventive}
+                  onChange={(e) => setPirPreventive(e.target.value)}
+                  placeholder="Engineering tasks, architectural fixes, or policy updates to permanently eliminate root cause..."
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Lessons Learned &amp; Process Improvements</label>
+                <textarea
+                  rows={2}
+                  value={pirLessons}
+                  onChange={(e) => setPirLessons(e.target.value)}
+                  placeholder="Monitoring gaps, alerting improvements, or runbook updates identified during triage..."
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47] resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Remediation Target Date</label>
+                  <input
+                    type="date"
+                    value={pirTargetDate}
+                    onChange={(e) => setPirTargetDate(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Lead Investigator</label>
+                  <input
+                    type="text"
+                    value={pirInvestigator}
+                    onChange={(e) => setPirInvestigator(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#eb6a47]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowPirModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#eb6a47] hover:bg-[#d65736] text-white font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+                >
+                  Document &amp; Save PIR
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Publish Workaround to Knowledge Base Modal ── */}
+      {showKbModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setShowKbModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-emerald-50/50">
+              <div className="flex items-center gap-2">
+                <span className="text-base">📚</span>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Publish Workaround to Knowledge Base</h3>
+                  <p className="text-[11px] text-slate-500">Creates an official searchable KB article draft for all support tiers</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKbModal(false)}
+                className="w-7 h-7 rounded-full text-slate-400 hover:text-slate-600 flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmPublishKb} className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Article Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={kbTitle}
+                  onChange={(e) => setKbTitle(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Workaround Instructions (Markdown) *</label>
+                <textarea
+                  rows={8}
+                  required
+                  value={kbContent}
+                  onChange={(e) => setKbContent(e.target.value)}
+                  placeholder="Detail step-by-step diagnostic and mitigation instructions for support agents..."
+                  className="w-full p-3 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-emerald-600 font-mono text-xs leading-relaxed"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span>Target Category:</span>
+                  <span className="font-bold text-slate-700">{problem.category}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Author:</span>
+                  <span className="font-bold text-slate-700">Ken Yang</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Destination:</span>
+                  <span className="font-bold text-slate-700">Knowledge Base Articles (/api/articles)</span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowKbModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPublishingKb}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isPublishingKb ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      <span>Publishing...</span>
+                    </>
+                  ) : (
+                    <span>Publish Article Draft</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
