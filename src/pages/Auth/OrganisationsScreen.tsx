@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RotateCcw, Plus } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
@@ -191,7 +192,7 @@ export const OrganisationsScreen: React.FC = () => {
                 onClick={() => setSearchQuery('')}
                 title="Reset filters"
               >
-                <span>🔄</span>
+                <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
                 <span>Reset</span>
               </button>
               {isAdmin && (
@@ -201,7 +202,7 @@ export const OrganisationsScreen: React.FC = () => {
                   onClick={() => setIsAddOrgModalOpen(true)}
                   title="Add a new client organisation"
                 >
-                  <span>+</span>
+                  <Plus className="w-4 h-4" />
                   <span>Add Organisation</span>
                 </button>
               )}

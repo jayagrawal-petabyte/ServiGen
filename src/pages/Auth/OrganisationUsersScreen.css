@@ -99,11 +99,11 @@
 
 .org-btn-refresh {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  padding: 6px 13px;
-  border-radius: 6px;
-  font-size: 0.775rem;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 7px 16px;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -114,29 +114,30 @@
 }
 
 .org-btn-refresh:hover {
-  background: var(--bg-canvas);
-  border-color: #94a3b8;
+  background: #f8fafc;
+  border-color: #cbd5e1;
   color: #0f172a;
 }
 
 .org-btn-add-user {
-  background: var(--accent-coral);
-  border: 1px solid #1d4ed8;
+  background: var(--accent-coral, #eb6a47);
+  border: 1px solid transparent;
   color: #ffffff;
-  padding: 6px 15px;
-  border-radius: 6px;
-  font-size: 0.775rem;
+  padding: 7px 18px;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(235, 106, 71, 0.25);
 }
 
 .org-btn-add-user:hover {
-  background: var(--accent-coral-hover);
+  background: var(--accent-coral-hover, #db5936);
+  box-shadow: 0 2px 6px rgba(235, 106, 71, 0.35);
 }
 
 /* Region Filter Tabs */
