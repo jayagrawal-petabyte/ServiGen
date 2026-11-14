@@ -98,7 +98,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
         className={`ml-2 shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
           isActive
             ? 'bg-white text-[#C96F55] shadow-2xs'
-            : 'bg-white/80 text-[#332B28]/80 border border-[#ebdcd3]/60'
+            : 'bg-slate-100 text-slate-600'
         }`}
       >
         {count}
@@ -110,7 +110,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
     <aside
       className={`${
         isCollapsed ? collapsedWidth : width
-      } shrink-0 bg-[#FDE9E1] border border-[#ebdcd3] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out ${className}`}
+      } shrink-0 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out ${className}`}
     >
       {/* ── Collapsed Mode ── */}
       {isCollapsed ? (
@@ -119,7 +119,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-[#332B28] hover:text-[#1c0f0c] hover:bg-white/50 font-bold transition-all cursor-pointer text-base select-none"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold transition-all cursor-pointer text-base select-none"
               title="Expand sidebar (»)"
               aria-label="Expand sidebar"
             >
@@ -148,10 +148,10 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
 
           {/* 2. Header Row: Title, Subtitle & Collapse Button */}
           {(title || onToggleCollapse) && (
-            <div className="flex items-center justify-between border-b border-[#ebdcd3]/70 px-3.5 py-2.5 shrink-0">
+            <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
               <div className="min-w-0 flex-1">
                 <div
-                  className={`flex items-center gap-1.5 text-xs font-bold text-[#332B28] hover:text-[#C96F55] transition-colors ${
+                  className={`flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#C96F55] transition-colors ${
                     onResetTitle ? 'cursor-pointer' : ''
                   }`}
                   onClick={onResetTitle}
@@ -171,7 +171,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                 <button
                   type="button"
                   onClick={onToggleCollapse}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#332B28]/70 hover:text-[#332B28] hover:bg-white/50 font-bold transition-all cursor-pointer text-sm select-none shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 font-bold transition-all cursor-pointer text-sm select-none shrink-0"
                   title="Collapse sidebar («)"
                   aria-label="Collapse sidebar"
                 >
@@ -199,7 +199,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                       className={`w-full flex items-center justify-between px-3 py-1.5 rounded-full text-left text-xs transition-all cursor-pointer ${
                         isActive
                           ? 'bg-[#C96F55] text-white font-bold shadow-xs'
-                          : 'text-[#332B28] hover:bg-white/60 font-medium'
+                          : 'text-slate-700 hover:bg-slate-100/80 font-medium'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -230,22 +230,22 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                         type="button"
                         onClick={() => group.isCollapsible !== false && toggleGroup(key)}
                         className={`w-full flex items-center justify-between px-2.5 py-1 text-left rounded-md transition-colors mb-0.5 group ${
-                          group.isCollapsible !== false ? 'hover:bg-white/50 cursor-pointer' : 'cursor-default'
+                          group.isCollapsible !== false ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-default'
                         }`}
                         title={group.isCollapsible !== false ? `Toggle ${group.title} section` : undefined}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           {group.isCollapsible !== false && (
-                            <span className="text-[10px] text-[#332B28]/60 font-bold group-hover:text-[#332B28] transition-colors">
+                            <span className="text-[10px] text-slate-400 font-bold group-hover:text-slate-600 transition-colors">
                               {isExpanded ? '▼' : '►'}
                             </span>
                           )}
-                          <span className="text-[11px] font-bold text-[#332B28]/70 tracking-wider uppercase group-hover:text-[#332B28] transition-colors truncate">
+                          <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase group-hover:text-slate-700 transition-colors truncate">
                             {group.title}
                           </span>
                         </div>
                         {totalCount > 0 && (
-                          <span className="text-[10px] font-bold text-[#332B28]/70 bg-white/70 px-1.5 py-0.5 rounded-full border border-[#ebdcd3]/50">
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
                             {totalCount}
                           </span>
                         )}
@@ -267,7 +267,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                               className={`w-full flex items-center justify-between px-3 py-1.5 rounded-full text-left text-xs transition-all cursor-pointer ${
                                 isActive
                                   ? 'bg-[#C96F55] text-white font-bold shadow-xs'
-                                  : 'text-[#332B28] hover:bg-white/60 font-medium'
+                                  : 'text-slate-700 hover:bg-slate-100/80 font-medium'
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">

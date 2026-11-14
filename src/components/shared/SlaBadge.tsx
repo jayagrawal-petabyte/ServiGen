@@ -114,6 +114,7 @@ export interface SlaBadgeProps {
   slaFormatted?: string | null;
   status?: string;
   className?: string;
+  variant?: 'standard' | 'restrained';
 }
 
 export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
@@ -121,6 +122,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   slaFormatted,
   status,
   className = '',
+  variant = 'standard',
 }) => {
   const isOnHold = Boolean(
     status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused'))
@@ -153,7 +155,11 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   if (isOnHold) {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-100 text-slate-700 border-slate-300 shadow-sm ${className}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+          variant === 'restrained'
+            ? 'bg-slate-100 text-slate-700 border-slate-200'
+            : 'bg-slate-100 text-slate-700 border-slate-300 shadow-sm'
+        } ${className}`}
         title="SLA clock paused while ticket is on hold"
       >
         <span className="text-[10px]">⏸</span>
@@ -169,42 +175,79 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   let customStyle: React.CSSProperties | undefined;
   let dotStyle: React.CSSProperties | undefined;
 
-  if (urgency === 'overdue') {
-    // Breached: Pulse red with high-visibility alert border and glow
-    badgeClasses = 'bg-rose-100 text-rose-800 border-rose-300 shadow-[0_0_8px_rgba(225,29,72,0.35)] animate-pulse font-bold';
-    dotClasses = 'bg-rose-600 animate-ping';
-    customStyle = {
-      backgroundColor: '#ffe4e6',
-      color: '#be123c',
-      borderColor: '#fca5a5',
-    };
-    dotStyle = {
-      backgroundColor: '#e11d48',
-    };
-  } else if (urgency === 'warning') {
-    // Approaching breach (< 1h): Yellow / Amber theme
-    badgeClasses = 'bg-amber-100 text-amber-900 border-amber-300 shadow-sm font-semibold';
-    dotClasses = 'bg-amber-500 animate-pulse';
-    customStyle = {
-      backgroundColor: '#fef3c7',
-      color: '#92400e',
-      borderColor: '#fcd34d',
-    };
-    dotStyle = {
-      backgroundColor: '#d97706',
-    };
+  if (variant === 'restrained') {
+    if (urgency === 'overdue') {
+      badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 font-semibold';
+      dotClasses = 'bg-rose-600';
+      customStyle = {
+        backgroundColor: '#fff1f2',
+        color: '#be123c',
+        borderColor: '#fecdd3',
+      };
+      dotStyle = {
+        backgroundColor: '#e11d48',
+      };
+    } else if (urgency === 'warning') {
+      badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
+      dotClasses = 'bg-amber-500';
+      customStyle = {
+        backgroundColor: '#fffbeb',
+        color: '#92400e',
+        borderColor: '#fde68a',
+      };
+      dotStyle = {
+        backgroundColor: '#d97706',
+      };
+    } else {
+      badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
+      dotClasses = 'bg-emerald-600';
+      customStyle = {
+        backgroundColor: '#ecfdf5',
+        color: '#065f46',
+        borderColor: '#a7f3d0',
+      };
+      dotStyle = {
+        backgroundColor: '#059669',
+      };
+    }
   } else {
-    // Safe (> 1h): Green theme
-    badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
-    dotClasses = 'bg-emerald-600';
-    customStyle = {
-      backgroundColor: '#ecfdf5',
-      color: '#065f46',
-      borderColor: '#a7f3d0',
-    };
-    dotStyle = {
-      backgroundColor: '#059669',
-    };
+    if (urgency === 'overdue') {
+      // Breached: Pulse red with high-visibility alert border and glow
+      badgeClasses = 'bg-rose-100 text-rose-800 border-rose-300 shadow-[0_0_8px_rgba(225,29,72,0.35)] animate-pulse font-bold';
+      dotClasses = 'bg-rose-600 animate-ping';
+      customStyle = {
+        backgroundColor: '#ffe4e6',
+        color: '#be123c',
+        borderColor: '#fca5a5',
+      };
+      dotStyle = {
+        backgroundColor: '#e11d48',
+      };
+    } else if (urgency === 'warning') {
+      // Approaching breach (< 1h): Yellow / Amber theme
+      badgeClasses = 'bg-amber-100 text-amber-900 border-amber-300 shadow-sm font-semibold';
+      dotClasses = 'bg-amber-500 animate-pulse';
+      customStyle = {
+        backgroundColor: '#fef3c7',
+        color: '#92400e',
+        borderColor: '#fcd34d',
+      };
+      dotStyle = {
+        backgroundColor: '#d97706',
+      };
+    } else {
+      // Safe (> 1h): Green theme
+      badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
+      dotClasses = 'bg-emerald-600';
+      customStyle = {
+        backgroundColor: '#ecfdf5',
+        color: '#065f46',
+        borderColor: '#a7f3d0',
+      };
+      dotStyle = {
+        backgroundColor: '#059669',
+      };
+    }
   }
 
   return (

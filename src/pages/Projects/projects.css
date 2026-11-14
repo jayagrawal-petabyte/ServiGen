@@ -4,16 +4,16 @@
 .projects-page {
   --pj-bg: #FFF9F5;
   --pj-surface: #ffffff;
-  --pj-panel: #FDE9E1;
+  --pj-panel: #ffffff;
   --pj-btn: #C96F55;
   --pj-btn-hover: #b55f46;
   --pj-accent: #C96F55;
   --pj-accent-dark: #C96F55;
-  --pj-accent-soft: #FDE9E1;
+  --pj-accent-soft: #f1f5f9;
   --pj-navy: #263B5E;
   --pj-ink: #332B28;
   --pj-muted: #6b6f7b;
-  --pj-line: #ebdcd3;
+  --pj-line: #e2e8f0;
   --pj-chip: #f3f5f8;
   --pj-good: #4caf50;
   --pj-mid: #f0694a;
@@ -64,8 +64,8 @@
   width: 250px;
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
-  background: var(--pj-panel);
-  border: 1px solid #ebdcd3;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   padding: 24px 10px 32px;
@@ -80,7 +80,8 @@
 .pj-search {
   display: flex;
   align-items: center;
-  background: var(--pj-surface);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
   padding: 4px 6px 4px 14px;
   margin-bottom: 16px;
@@ -132,8 +133,8 @@
 }
 
 .pj-nav:hover {
-  background: rgba(255, 255, 255, 0.6);
-  color: #1c0f0c;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .pj-nav.active {

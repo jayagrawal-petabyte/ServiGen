@@ -26,7 +26,7 @@ export default function ArticleDraftSidebar({
       <div className="subnav-search-box">
         <input
           type="text"
-          placeholder="Search Article Drafts"
+          placeholder="Search article drafts..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />

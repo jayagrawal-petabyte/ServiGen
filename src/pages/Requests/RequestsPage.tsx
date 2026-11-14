@@ -780,7 +780,7 @@ export const RequestsPage: React.FC = () => {
             <div className="requests-tree-search-wrapper">
               <input
                 type="text"
-                placeholder="Search Requests..."
+                placeholder="Search requests..."
                 value={searchTree}
                 onChange={(e) => setSearchTree(e.target.value)}
                 className="requests-tree-search-input"

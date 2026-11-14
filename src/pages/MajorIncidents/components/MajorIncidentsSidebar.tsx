@@ -21,9 +21,9 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     groupLabel: 'Views',
     items: [
-      { id: 'board', label: 'Major Incident Board', count: 3, iconKey: 'chart' },
+      { id: 'board', label: 'Major Incident Board', iconKey: 'chart' },
       { id: 'calendar', label: 'Major Incident Calendar', iconKey: 'calendar' },
-      { id: 'dashboard', label: 'Major Incident Dashboard', count: 3, iconKey: 'globe' },
+      { id: 'dashboard', label: 'Major Incident Dashboard', iconKey: 'globe' },
     ],
   },
 ];
@@ -34,6 +34,8 @@ interface MajorIncidentsSidebarProps {
   selectedListId?: string;
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
+  searchValue?: string;
+  onSearchChange?: (val: string) => void;
 }
 
 const getIcon = (iconKey?: string) => {
@@ -112,6 +114,8 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
   selectedListId: controlledSelectedId,
   isCollapsed: controlledIsCollapsed,
   onToggleCollapse,
+  searchValue = '',
+  onSearchChange,
 }) => {
   const [internalIsCollapsed, setInternalIsCollapsed] = useState<boolean>(false);
   const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : internalIsCollapsed;
@@ -126,7 +130,9 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
   };
 
   const [selectedId, setSelectedId]   = useState<string>(controlledSelectedId || 'update-required');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [internalSearch, setInternalSearch] = useState<string>('');
+  const currentSearch = onSearchChange !== undefined ? searchValue : internalSearch;
+  const handleSearchChange = onSearchChange || setInternalSearch;
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     Active: true,
@@ -192,14 +198,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
     onSelectList?.('update-required');
   };
 
-  const filteredGroups = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return SIDEBAR_GROUPS;
-    return SIDEBAR_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => item.label.toLowerCase().includes(q)),
-    })).filter((group) => group.items.length > 0);
-  }, [searchQuery]);
+  const filteredGroups = SIDEBAR_GROUPS;
 
   return (
     <aside
@@ -228,9 +227,9 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
           <div className="p-3 pb-2 shrink-0">
             <SearchInput
               size="sm"
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search Major Incidents..."
+              value={currentSearch}
+              onChange={handleSearchChange}
+              placeholder="Search major incidents..."
               id="major-incidents-sidebar-search-input"
             />
           </div>
@@ -264,11 +263,11 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
           {/* 3. Navigation Tree with Collapsible Sections */}
           <nav className="flex-1 overflow-y-auto px-2 mt-2 pb-6 flex flex-col gap-2">
             {filteredGroups.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-slate-400 text-center">No results for "{searchQuery}"</p>
+              <p className="px-3 py-4 text-xs text-slate-400 text-center">No results for "{currentSearch}"</p>
             ) : (
               filteredGroups.map((group) => {
                 const isGroupExpanded = expandedSections[group.groupLabel] !== false;
-                const totalGroupCount = group.items.reduce((sum, item) => {
+                const totalGroupCount = group.groupLabel === 'Views' ? 0 : group.items.reduce((sum, item) => {
                   const val = counts && counts[item.id] !== undefined ? counts[item.id] : (item.count || 0);
                   return sum + val;
                 }, 0);
@@ -302,7 +301,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                       <div className="flex flex-col gap-0.5 pl-1.5">
                         {group.items.map((item) => {
                           const isActive = item.id === selectedId;
-                          const countVal = counts && counts[item.id] !== undefined ? counts[item.id] : item.count;
+                          const countVal = group.groupLabel === 'Views' ? undefined : (counts && counts[item.id] !== undefined ? counts[item.id] : item.count);
 
                           return (
                             <button

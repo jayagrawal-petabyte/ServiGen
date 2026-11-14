@@ -40,7 +40,13 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar, RefreshButton, Button } from '../../components/shared';
+import {
+  SegmentedTabs,
+  RefreshButton,
+  Button,
+  ModuleSidebar,
+  ModuleSidebarGroup,
+} from '../../components/shared';
 
 interface CmdbPageProps {
   configurationItems?: ConfigurationItem[];
@@ -89,7 +95,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get('search') || '';
 
-  // Direct backend state - no mock file reliance
+  // Direct backend state
   const [items, setItems] = useState<ConfigurationItem[]>(initialItems || []);
   const [groupedItems, setGroupedItems] = useState<GroupedConfigurationItems | null>(null);
   const [viewGrouping, setViewGrouping] = useState<'all' | 'grouped' | 'topology'>('all');
@@ -100,6 +106,10 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>(externalSearch || querySearch);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sidebar navigation state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [selectedViewId, setSelectedViewId] = useState<string>('all-cis');
 
   // Topology Tree state
   const [selectedTopologyCiId, setSelectedTopologyCiId] = useState<string>('');
@@ -190,6 +200,217 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     return counts;
   }, [items]);
 
+  const activeCount = useMemo(() => items.filter((ci) => ci.status === 'Active').length, [items]);
+  const maintenanceCount = useMemo(
+    () => items.filter((ci) => ci.status === 'Maintenance').length,
+    [items]
+  );
+  const warrantyExpiringCount = useMemo(() => {
+    return items.filter((ci) => {
+      const w = getWarrantyTag(ci.warrantyExpiry || ci.specifications?.warrantyExpiry);
+      return w?.status === 'warning';
+    }).length;
+  }, [items]);
+  const warrantyExpiredCount = useMemo(() => {
+    return items.filter((ci) => {
+      const w = getWarrantyTag(ci.warrantyExpiry || ci.specifications?.warrantyExpiry);
+      return w?.status === 'expired';
+    }).length;
+  }, [items]);
+
+  // Sidebar navigation structure
+  const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
+    () => [
+      {
+        id: 'views',
+        title: 'Repository Views',
+        items: [
+          {
+            id: 'all-cis',
+            label: 'All Configuration Items',
+            icon: <LayoutGrid className="w-3.5 h-3.5 text-slate-600" />,
+            count: items.length,
+          },
+          {
+            id: 'category-view',
+            label: 'Category Breakdown',
+            icon: <Layers className="w-3.5 h-3.5 text-slate-600" />,
+            count: items.length,
+          },
+          {
+            id: 'topology-tree',
+            label: 'Dependency Topology',
+            icon: <GitBranch className="w-3.5 h-3.5 text-slate-600" />,
+          },
+          {
+            id: 'service-cis',
+            label: 'Service CIs & SLA',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-[#C96F55]" />,
+            onClick: () => navigate('/cmdb/services'),
+          },
+        ],
+      },
+      {
+        id: 'ci-types',
+        title: 'Configuration Types',
+        items: [
+          {
+            id: 'type-server',
+            label: 'Servers',
+            icon: <HardDrive className="w-3.5 h-3.5 text-amber-500" />,
+            count: typeCounts.Server,
+          },
+          {
+            id: 'type-application',
+            label: 'Applications',
+            icon: <Layers className="w-3.5 h-3.5 text-violet-500" />,
+            count: typeCounts.Application,
+          },
+          {
+            id: 'type-database',
+            label: 'Databases',
+            icon: <Database className="w-3.5 h-3.5 text-indigo-500" />,
+            count: typeCounts.Database,
+          },
+          {
+            id: 'type-network',
+            label: 'Network Devices',
+            icon: <Network className="w-3.5 h-3.5 text-emerald-500" />,
+            count: typeCounts.Network,
+          },
+          {
+            id: 'type-cloud',
+            label: 'Cloud Services',
+            icon: <Cloud className="w-3.5 h-3.5 text-sky-500" />,
+            count: typeCounts['Cloud Service'],
+          },
+          {
+            id: 'type-security',
+            label: 'Security & Firewalls',
+            icon: <Shield className="w-3.5 h-3.5 text-rose-500" />,
+            count: typeCounts.Security,
+          },
+        ],
+      },
+      {
+        id: 'lifecycle',
+        title: 'Lifecycle & Warranty',
+        items: [
+          {
+            id: 'active',
+            label: 'Active in Production',
+            icon: <Check className="w-3.5 h-3.5 text-emerald-600" />,
+            count: activeCount,
+          },
+          {
+            id: 'maintenance',
+            label: 'Maintenance Mode',
+            icon: <AlertCircle className="w-3.5 h-3.5 text-amber-600" />,
+            count: maintenanceCount,
+          },
+          {
+            id: 'warranty-expiring',
+            label: 'Warranty Expiring (≤90d)',
+            icon: <Calendar className="w-3.5 h-3.5 text-amber-600" />,
+            count: warrantyExpiringCount,
+          },
+          {
+            id: 'warranty-expired',
+            label: 'Warranty Expired',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />,
+            count: warrantyExpiredCount,
+          },
+        ],
+      },
+    ],
+    [
+      items.length,
+      typeCounts,
+      activeCount,
+      maintenanceCount,
+      warrantyExpiringCount,
+      warrantyExpiredCount,
+      navigate,
+    ]
+  );
+
+  const handleSelectSidebarView = (viewId: string) => {
+    setSelectedViewId(viewId);
+    switch (viewId) {
+      case 'all-cis':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('ALL');
+        setSelectedLifecycle('ALL');
+        setSelectedWarranty('ALL');
+        break;
+      case 'category-view':
+        setViewGrouping('grouped');
+        setSelectedType('ALL');
+        break;
+      case 'topology-tree':
+        setViewGrouping('topology');
+        break;
+      case 'service-cis':
+        navigate('/cmdb/services');
+        break;
+      case 'type-server':
+        setViewGrouping('all');
+        setSelectedType('Server');
+        break;
+      case 'type-application':
+        setViewGrouping('all');
+        setSelectedType('Application');
+        break;
+      case 'type-database':
+        setViewGrouping('all');
+        setSelectedType('Database');
+        break;
+      case 'type-network':
+        setViewGrouping('all');
+        setSelectedType('Network');
+        break;
+      case 'type-cloud':
+        setViewGrouping('all');
+        setSelectedType('Cloud Service');
+        break;
+      case 'type-security':
+        setViewGrouping('all');
+        setSelectedType('Security');
+        break;
+      case 'active':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('Active');
+        break;
+      case 'maintenance':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedStatus('Maintenance');
+        break;
+      case 'warranty-expiring':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedWarranty('warning');
+        break;
+      case 'warranty-expired':
+        setViewGrouping('all');
+        setSelectedType('ALL');
+        setSelectedWarranty('expired');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const currentViewLabel = useMemo(() => {
+    for (const group of rawSidebarGroups) {
+      const found = group.items.find((i) => i.id === selectedViewId);
+      if (found) return found.label;
+    }
+    return 'Configuration Management Database';
+  }, [selectedViewId, rawSidebarGroups]);
+
   // Live filter query matching
   const filteredCis = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -207,7 +428,8 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
       const matchesType = selectedType === 'ALL' || ci.type === selectedType;
       const matchesStatus = selectedStatus === 'ALL' || ci.status === selectedStatus;
-      const matchesLifecycle = selectedLifecycle === 'ALL' || ci.lifecycleState === selectedLifecycle;
+      const matchesLifecycle =
+        selectedLifecycle === 'ALL' || ci.lifecycleState === selectedLifecycle;
 
       let matchesWarranty = true;
       if (selectedWarranty !== 'ALL') {
@@ -299,70 +521,77 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                   <span className="text-[11px] font-mono font-extrabold text-[#C96F55] tracking-wide block">
                     {ci.tag}
                   </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
-                    {ci.lifecycleState || 'Deployed'}
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {ci.type}
                   </span>
-                  {warranty && (
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded border flex items-center gap-0.5 ${warranty.badgeClass}`}
-                    >
-                      <ShieldCheck className="w-2.5 h-2.5 shrink-0" />
-                      {warranty.shortLabel}
-                    </span>
-                  )}
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm leading-tight mt-0.5 group-hover:text-[#C96F55] transition-colors">
+                <h3 className="text-sm font-bold text-slate-800 group-hover:text-[#C96F55] transition-colors leading-snug mt-0.5 line-clamp-1">
                   {ci.name}
                 </h3>
               </div>
             </div>
-            <StatusBadge label={ci.status} variant={getCiStatusVariant(ci.status)} />
+            <StatusBadge status={ci.status} variant={getCiStatusVariant(ci.status)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-2 my-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <div className="flex items-center gap-1.5 text-slate-600">
-              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">{ci.site}</span>
+          {/* Quick Specifications */}
+          <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-b border-slate-100 mb-3 bg-slate-50/60 rounded-xl px-3 mt-2">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                Site / Location
+              </span>
+              <span className="font-semibold text-slate-700 flex items-center gap-1 truncate text-[11px] mt-0.5">
+                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                {ci.site}
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-600">
-              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">{ci.businessOwner}</span>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                Lifecycle
+              </span>
+              <span className="font-semibold text-slate-700 text-[11px] mt-0.5 block truncate">
+                {ci.lifecycleState || 'In Production'}
+              </span>
             </div>
-            <div className="col-span-2 text-slate-400 text-[10px] pt-1.5 border-t border-slate-200/60 flex justify-between font-mono">
-              <span>Env: {ci.environment}</span>
-              <span>IP: {ci.ipAddress || ci.specifications?.ipAddress || 'DHCP'}</span>
-            </div>
+            {ci.ipAddress && (
+              <div className="col-span-2 pt-1 border-t border-slate-200/50 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500">IP: {ci.ipAddress}</span>
+                {ci.specifications?.os && (
+                  <span className="text-[10px] text-slate-500 truncate max-w-[140px]">
+                    {ci.specifications.os}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-            {ci.type}
-          </span>
-          <div className="flex items-center gap-2">
-            {ci.activeIncidentsCount > 0 ? (
-              <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
-                {ci.activeIncidentsCount} {ci.activeIncidentsCount === 1 ? 'incident' : 'incidents'}
-              </span>
-            ) : (
-              <span className="text-slate-400">0 incidents</span>
-            )}
-            {ci.relationships && ci.relationships.length > 0 && (
-              <span className="text-[#263B5E] font-bold bg-[#FFF9F5] px-2 py-0.5 rounded-md border border-[#ebdcd3] flex items-center gap-1">
-                <GitBranch className="w-3 h-3" />
-                {ci.relationships.length}
-              </span>
-            )}
+        {/* Card Footer: Warranty & Owner */}
+        <div className="flex items-center justify-between pt-1 text-xs">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <User className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[11px] font-medium truncate max-w-[120px]">
+              {ci.businessOwner || 'IT Operations'}
+            </span>
           </div>
+
+          {warranty ? (
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${warranty.badgeClass}`}
+            >
+              {warranty.label}
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-400 font-medium">No warranty info</span>
+          )}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5] select-none">
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <button
             type="button"
@@ -372,358 +601,270 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             Service Desk
           </button>
           <span>/</span>
-          <span className="text-[#C96F55] font-extrabold">Configuration Management (CMDB)</span>
+          <span className="text-gray-900 font-extrabold">Configuration Management (CMDB)</span>
         </div>
         <GlobalNavbarActions />
       </header>
 
-      <div className="flex-1 p-6 max-w-7xl w-full mx-auto flex flex-col gap-6">
-        {/* Top Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Configuration Management Database
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Live ITIL asset repository, recursive dependency topologies, and hardware warranty lifecycle.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/cmdb/services')}
-              icon={<Layers className="w-4 h-4 text-[#C96F55]" />}
-            >
-              Service CIs & SLA
-            </Button>
-
-            <RefreshButton
-              onClick={loadData}
-              isLoading={isLoading}
-              title="Refresh CMDB from Backend"
-            />
-
+      {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
+      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
+        {/* Left Module Sidebar */}
+        <ModuleSidebar
+          title="CMDB Repository"
+          icon={<Database className="w-3.5 h-3.5" />}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search CMDB assets..."
+          groups={rawSidebarGroups}
+          selectedId={selectedViewId}
+          onSelectId={handleSelectSidebarView}
+          onResetTitle={() => handleSelectSidebarView('all-cis')}
+          resetTitleTooltip="Reset to All Configuration Items"
+          footer={
             <Button
               variant="primary"
+              size="sm"
               onClick={() => setIsCreateModalOpen(true)}
-              icon={<Plus className="w-4 h-4 shrink-0" />}
+              icon={<Plus className="w-3.5 h-3.5" />}
+              className="w-full justify-center shadow-xs"
             >
               Register CI
             </Button>
-          </div>
-        </div>
-
-        {/* Search, Filter Toolbar & View Switcher */}
-        <FilterToolbar
-          search={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Search tag, name, IP, site, OS..."
-          searchClassName="!w-full md:!w-80"
-          filters={
-            <div className="flex items-center gap-3 w-full md:w-auto flex-wrap justify-between md:justify-end">
-              {/* Status filter */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <span>Status:</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="Active">Active</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Deprecated">Deprecated</option>
-                </select>
-              </div>
-
-              {/* Lifecycle filter */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <span>Lifecycle:</span>
-                <select
-                  value={selectedLifecycle}
-                  onChange={(e) => setSelectedLifecycle(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Lifecycle</option>
-                  <option value="Deployed">Deployed</option>
-                  <option value="In Stock">In Stock</option>
-                  <option value="Ordered">Ordered</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Retired">Retired</option>
-                </select>
-              </div>
-
-              {/* Warranty filter */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#C96F55]" />
-                <span>Warranty:</span>
-                <select
-                  value={selectedWarranty}
-                  onChange={(e) => setSelectedWarranty(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Warranties</option>
-                  <option value="active">Active Only</option>
-                  <option value="warning">Expiring Soon (≤90d)</option>
-                  <option value="expired">Expired Only</option>
-                </select>
-              </div>
-            </div>
           }
-          actions={
-            <SegmentedTabs<'all' | 'grouped' | 'topology'>
-              variant="boxed"
-              theme="navy"
-              size="sm"
-              tabs={[
-                { id: 'all', label: 'Flat View', icon: <LayoutGrid className="w-3.5 h-3.5" /> },
-                { id: 'grouped', label: 'Category View', icon: <Layers className="w-3.5 h-3.5" /> },
-                { id: 'topology', label: 'Dependency Tree', icon: <GitBranch className="w-3.5 h-3.5" /> },
-              ]}
-              activeTab={viewGrouping}
-              onChange={(view) => setViewGrouping(view)}
-            />
-          }
-        >
-          {/* Interactive Type Filter Pills with Live Item Counts */}
-          <div className="flex items-center gap-2 overflow-x-auto text-xs pb-1">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-              <Filter className="w-3 h-3" /> Filter Type:
-            </span>
-            <button
-              onClick={() => setSelectedType('ALL')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'ALL'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <span>All Assets</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'ALL' ? 'bg-slate-700 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.ALL}
-              </span>
-            </button>
+        />
 
-            <button
-              onClick={() => setSelectedType('Server')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Server'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <HardDrive className="w-3.5 h-3.5" />
-              <span>Servers</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Server' ? 'bg-amber-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.Server}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSelectedType('Application')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Application'
-                  ? 'bg-violet-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Applications</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Application' ? 'bg-violet-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.Application}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSelectedType('Database')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Database'
-                  ? 'bg-[#263B5E] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>Databases</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Database' ? 'bg-indigo-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.Database}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSelectedType('Network')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Network'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Network className="w-3.5 h-3.5" />
-              <span>Network</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Network' ? 'bg-emerald-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.Network}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSelectedType('Cloud Service')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Cloud Service'
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Cloud className="w-3.5 h-3.5" />
-              <span>Cloud Services</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Cloud Service' ? 'bg-sky-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts['Cloud Service']}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setSelectedType('Security')}
-              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                selectedType === 'Security'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>Security</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${selectedType === 'Security' ? 'bg-rose-800 text-white' : 'bg-white text-slate-600'}`}>
-                {typeCounts.Security}
-              </span>
-            </button>
-          </div>
-        </FilterToolbar>
-
-        {error && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* VIEW 1: Visual Dependency Tree View */}
-        {viewGrouping === 'topology' ? (
-          <div className="space-y-4">
-            {/* Top Root CI Selector bar */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <span className="font-bold text-slate-600 shrink-0">Focus Configuration Item:</span>
-                <select
-                  value={selectedTopologyRootCi?.id || ''}
-                  onChange={(e) => setSelectedTopologyCiId(e.target.value)}
-                  className="w-full sm:w-80 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none"
-                >
-                  {items.map((ci) => (
-                    <option key={ci.id} value={ci.id}>
-                      {ci.tag} - {ci.name} ({ci.type})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedTopologyRootCi && (
-                <button
-                  onClick={() => setSelectedCiForModal(selectedTopologyRootCi)}
-                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-[#C96F55]" />
-                  <span>Open {selectedTopologyRootCi.tag} Specifications</span>
-                </button>
-              )}
+        {/* Right Main Panel */}
+        <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
+          {/* Main Top Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>{currentViewLabel}</span>
+                <span className="text-xs font-normal text-slate-500">
+                  ({filteredCis.length} {filteredCis.length === 1 ? 'record' : 'records'})
+                </span>
+              </h2>
             </div>
 
-            {selectedTopologyRootCi ? (
-              <CiVisualTopologyTree
-                rootCi={selectedTopologyRootCi}
-                topologyGraph={topologyGraph}
-                allCis={items}
-                isLoading={isLoadingTopology}
-                onRefresh={loadTopology}
-                onSelectCi={(targetId) => setSelectedTopologyCiId(targetId)}
-                onLinkRelationship={async (targetId, type, direction) => {
-                  await addCiRelationship(selectedTopologyRootCi.id, {
-                    targetId,
-                    type: type as any,
-                    direction,
-                  });
-                  loadTopology();
-                  loadData();
-                }}
-                onUnlinkRelationship={async (targetId) => {
-                  await deleteCiRelationship(selectedTopologyRootCi.id, targetId);
-                  loadTopology();
-                  loadData();
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* View Switcher: Flat / Category / Topology */}
+              <SegmentedTabs<'all' | 'grouped' | 'topology'>
+                variant="boxed"
+                theme="navy"
+                size="sm"
+                tabs={[
+                  { id: 'all', label: 'Flat View', icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+                  { id: 'grouped', label: 'Category View', icon: <Layers className="w-3.5 h-3.5" /> },
+                  { id: 'topology', label: 'Dependency Tree', icon: <GitBranch className="w-3.5 h-3.5" /> },
+                ]}
+                activeTab={viewGrouping}
+                onChange={(view) => {
+                  setViewGrouping(view);
+                  if (view === 'grouped') setSelectedViewId('category-view');
+                  else if (view === 'topology') setSelectedViewId('topology-tree');
+                  else if (
+                    selectedViewId === 'category-view' ||
+                    selectedViewId === 'topology-tree'
+                  )
+                    setSelectedViewId('all-cis');
                 }}
               />
+
+              {/* Status filter */}
+              <select
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  if (e.target.value === 'Active') setSelectedViewId('active');
+                  else if (e.target.value === 'Maintenance') setSelectedViewId('maintenance');
+                  else setSelectedViewId('all-cis');
+                }}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
+                title="Filter by Status"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Deprecated">Deprecated</option>
+              </select>
+
+              {/* Lifecycle filter */}
+              <select
+                value={selectedLifecycle}
+                onChange={(e) => setSelectedLifecycle(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
+                title="Filter by Lifecycle"
+              >
+                <option value="ALL">All Lifecycle</option>
+                <option value="Deployed">Deployed</option>
+                <option value="In Stock">In Stock</option>
+                <option value="Ordered">Ordered</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Retired">Retired</option>
+              </select>
+
+              {/* Warranty filter */}
+              <select
+                value={selectedWarranty}
+                onChange={(e) => {
+                  setSelectedWarranty(e.target.value);
+                  if (e.target.value === 'warning') setSelectedViewId('warranty-expiring');
+                  else if (e.target.value === 'expired') setSelectedViewId('warranty-expired');
+                  else setSelectedViewId('all-cis');
+                }}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
+                title="Filter by Warranty"
+              >
+                <option value="ALL">All Warranties</option>
+                <option value="active">Active Only</option>
+                <option value="warning">Expiring Soon (≤90d)</option>
+                <option value="expired">Expired Only</option>
+              </select>
+
+              <RefreshButton
+                onClick={loadData}
+                isLoading={isLoading}
+                title="Refresh CMDB from Backend"
+              />
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs mb-4">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* VIEW 1: Visual Dependency Tree View */}
+            {viewGrouping === 'topology' ? (
+              <div className="space-y-4">
+                {/* Top Root CI Selector bar */}
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <span className="font-bold text-slate-600 shrink-0">
+                      Focus Configuration Item:
+                    </span>
+                    <select
+                      value={selectedTopologyRootCi?.id || ''}
+                      onChange={(e) => setSelectedTopologyCiId(e.target.value)}
+                      className="w-full sm:w-80 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none"
+                    >
+                      {items.map((ci) => (
+                        <option key={ci.id} value={ci.id}>
+                          {ci.tag} - {ci.name} ({ci.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedTopologyRootCi && (
+                    <button
+                      onClick={() => setSelectedCiForModal(selectedTopologyRootCi)}
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-[#C96F55]" />
+                      <span>Open {selectedTopologyRootCi.tag} Specifications</span>
+                    </button>
+                  )}
+                </div>
+
+                {selectedTopologyRootCi ? (
+                  <CiVisualTopologyTree
+                    rootCi={selectedTopologyRootCi}
+                    topologyGraph={topologyGraph}
+                    allCis={items}
+                    isLoading={isLoadingTopology}
+                    onRefresh={loadTopology}
+                    onSelectCi={(targetId) => setSelectedTopologyCiId(targetId)}
+                    onLinkRelationship={async (targetId, type, direction) => {
+                      await addCiRelationship(selectedTopologyRootCi.id, {
+                        targetId,
+                        type: type as any,
+                        direction,
+                      });
+                      loadTopology();
+                      loadData();
+                    }}
+                    onUnlinkRelationship={async (targetId) => {
+                      await deleteCiRelationship(selectedTopologyRootCi.id, targetId);
+                      loadTopology();
+                      loadData();
+                    }}
+                  />
+                ) : (
+                  <div className="p-12 bg-white rounded-3xl border border-slate-200 text-center text-slate-400">
+                    <GitBranch className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <p className="font-semibold text-slate-700">
+                      No Configuration Item available for Topology
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl p-5 border border-slate-200 animate-pulse h-48"
+                  />
+                ))}
+              </div>
+            ) : filteredCis.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
+                <Server className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold">
+                  No configuration items match your filter criteria.
+                </p>
+                <button
+                  onClick={() => {
+                    handleSelectSidebarView('all-cis');
+                    setSearchQuery('');
+                  }}
+                  className="mt-3 text-xs text-[#C96F55] font-bold hover:underline cursor-pointer"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : viewGrouping === 'grouped' && groupedItems ? (
+              /* VIEW 2: Category Grouped View */
+              <div className="space-y-8">
+                {Object.entries(groupedItems).map(([type, list]) => {
+                  const matchedCategoryItems = list.filter((ci) =>
+                    filteredCis.some((f) => f.id === ci.id)
+                  );
+                  if (matchedCategoryItems.length === 0) return null;
+
+                  return (
+                    <div key={type} className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                          {getCiIcon(type)}
+                          <span>{type}s</span>
+                          <span className="text-xs font-normal text-slate-400">
+                            ({matchedCategoryItems.length})
+                          </span>
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {matchedCategoryItems.map(renderCiCard)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="p-12 bg-white rounded-3xl border border-slate-200 text-center text-slate-400">
-                <GitBranch className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                <p className="font-semibold text-slate-700">No Configuration Item available for Topology</p>
+              /* VIEW 3: Flat Grid View */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredCis.map(renderCiCard)}
               </div>
             )}
           </div>
-        ) : isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-5 border border-slate-200 animate-pulse h-48"
-              />
-            ))}
-          </div>
-        ) : filteredCis.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
-            <Server className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-semibold">No configuration items match your filter criteria.</p>
-            <button
-              onClick={() => {
-                setSelectedType('ALL');
-                setSelectedStatus('ALL');
-                setSelectedLifecycle('ALL');
-                setSelectedWarranty('ALL');
-                setSearchQuery('');
-              }}
-              className="mt-3 text-xs text-[#C96F55] font-bold hover:underline cursor-pointer"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : viewGrouping === 'grouped' && groupedItems ? (
-          /* VIEW 2: Category Grouped View */
-          <div className="space-y-8">
-            {Object.entries(groupedItems).map(([type, list]) => {
-              const matchedCategoryItems = list.filter((ci) =>
-                filteredCis.some((f) => f.id === ci.id)
-              );
-              if (matchedCategoryItems.length === 0) return null;
-
-              return (
-                <div key={type} className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                      {getCiIcon(type)}
-                      <span>{type}s</span>
-                      <span className="text-xs font-normal text-slate-400">
-                        ({matchedCategoryItems.length})
-                      </span>
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {matchedCategoryItems.map(renderCiCard)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* VIEW 3: Flat Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredCis.map(renderCiCard)}
-          </div>
-        )}
+        </main>
       </div>
 
       <CiDetailModal
@@ -745,3 +886,5 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     </div>
   );
 };
+
+export default CmdbPage;

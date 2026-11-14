@@ -67,26 +67,16 @@ export const AppLayout: React.FC = () => {
     return <Navigate to={toUrl} replace />;
   }
 
-  // QA-RBAC-01: End Users cannot directly access restricted administrative routes; redirect to Self-Service Portal
+  // QA-RBAC-01: End Users cannot directly access restricted administrative/agent routes; redirect to Self-Service Portal
   if (user?.role === 'End User') {
-    const isRestrictedEndUserRoute =
-      location.pathname.startsWith('/cmdb') ||
-      location.pathname.startsWith('/change-requests') ||
-      location.pathname === '/organisations' ||
-      location.pathname.startsWith('/article-drafts') ||
-      location.pathname.startsWith('/major-incidents') ||
-      location.pathname.startsWith('/problems') ||
-      location.pathname.startsWith('/approvals') ||
-      location.pathname.startsWith('/admin') ||
-      location.pathname === '/dashboard';
-
-    if (isRestrictedEndUserRoute) {
+    const isPortalRoute = location.pathname.startsWith('/portal') || location.pathname === '/self-service';
+    if (!isPortalRoute) {
       return <Navigate to="/portal" replace />;
     }
   }
 
   // Admin Configuration guard: Only Administrator and System Manager
-  if (location.pathname.startsWith('/admin') && user?.role !== 'Administrator' && user?.role !== 'System Manager') {
+  if ((location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings')) && user?.role !== 'Administrator' && user?.role !== 'System Manager') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -226,41 +216,60 @@ export const AppLayout: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Quick Navigation Links */}
+                {/* Workspaces Section */}
                 <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
+                    Workspaces
+                  </span>
+
+                  {user?.role !== 'End User' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate('/dashboard');
+                      }}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-colors cursor-pointer text-left ${
+                        !location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin')
+                          ? 'bg-[#FFF9F5] text-[#C96F55] font-bold border border-[#ebdcd3]'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>📊</span>
+                        <span>Agent Console</span>
+                      </div>
+                      {!location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin') && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
+                          Current
+                        </span>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => {
                       setProfileMenuOpen(false);
                       navigate('/portal');
                     }}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#263B5E] hover:bg-[#263B5E]/5 font-semibold transition-colors cursor-pointer text-left"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-colors cursor-pointer text-left ${
+                      location.pathname.startsWith('/portal')
+                        ? 'bg-[#FFF9F5] text-[#C96F55] font-bold border border-[#ebdcd3]'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
                   >
-                    <span>🌐</span>
-                    <span>Switch to End-User Portal</span>
+                    <div className="flex items-center gap-2">
+                      <span>🌐</span>
+                      <span>Switch to End-User Portal</span>
+                    </div>
+                    {location.pathname.startsWith('/portal') && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
+                        Current
+                      </span>
+                    )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      navigate('/my-work');
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <span>📋</span>
-                    <span>My Work & Tasks</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      navigate('/organisations');
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <span>🏢</span>
-                    <span>Organisation & Sites</span>
-                  </button>
+
                   {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
                     <button
                       type="button"
@@ -268,24 +277,56 @@ export const AppLayout: React.FC = () => {
                         setProfileMenuOpen(false);
                         navigate('/admin');
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-colors cursor-pointer text-left ${
+                        location.pathname.startsWith('/admin')
+                          ? 'bg-[#FFF9F5] text-[#C96F55] font-bold border border-[#ebdcd3]'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
                     >
-                      <span>⚙️</span>
-                      <span>Admin Settings</span>
+                      <div className="flex items-center gap-2">
+                        <span>⚙️</span>
+                        <span>Administration</span>
+                      </div>
+                      {location.pathname.startsWith('/admin') && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
+                          Current
+                        </span>
+                      )}
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      navigate('/dashboard');
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <span>📊</span>
-                    <span>ITSM Dashboard</span>
-                  </button>
+                </div>
 
+                {/* Account Actions Section */}
+                <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
+                    Account Actions
+                  </span>
+                  {user?.role !== 'End User' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate('/my-work');
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <span>📋</span>
+                      <span>My Work &amp; Tasks</span>
+                    </button>
+                  )}
+                  {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate('/organisations');
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <span>🏢</span>
+                      <span>Organisation &amp; Sites</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {

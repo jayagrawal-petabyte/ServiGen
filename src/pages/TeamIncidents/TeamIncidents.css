@@ -869,10 +869,10 @@
 /* Left Sidebar */
 .team-sidebar-panel {
   width: 250px;
-  background: #FDE9E1;
+  background: #ffffff;
   border-radius: 20px;
-  border: 1px solid #ebdcd3;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -887,20 +887,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  border-bottom: 1px solid #ebdcd3;
+  border-bottom: 1px solid #f1f5f9;
   position: relative;
 }
 
 .team-sidebar-search input {
   flex: 1;
-  border: 1px solid #ebdcd3;
+  border: 1px solid #e2e8f0;
   outline: none;
   font-size: 12px;
   color: #332B28;
   background: #ffffff;
   padding: 6px 12px;
   border-radius: 9999px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .team-sidebar-search input::placeholder {
@@ -928,7 +928,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-bottom: 1px solid #ebdcd3;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .team-sidebar-title-wrap {
@@ -1150,8 +1150,8 @@
 }
 
 .team-sidebar-group-header:hover {
-  background: rgba(201, 111, 85, 0.08);
-  color: #332B28;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .team-sidebar-group-header.active-group {
@@ -1166,8 +1166,8 @@
 .team-sidebar-badge {
   font-size: 11px;
   font-weight: 700;
-  background: #f1dad1;
-  color: #332B28;
+  background: #f1f5f9;
+  color: #64748b;
   padding: 2px 7px;
   border-radius: 9999px;
   min-width: 22px;
@@ -1194,7 +1194,7 @@
   gap: 2px;
   padding-left: 10px;
   margin-top: 3px;
-  border-left: 1px dashed #ebdcd3;
+  border-left: 1px dashed #e2e8f0;
   margin-left: 12px;
 }
 
@@ -1210,14 +1210,14 @@
   width: 100%;
   text-align: left;
   font-size: 12px;
-  color: #332B28;
+  color: #334155;
   font-weight: 500;
   transition: all 0.15s ease;
 }
 
 .team-subitem-btn:hover {
-  background: rgba(201, 111, 85, 0.08);
-  color: #332B28;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .team-subitem-btn.active {
@@ -1241,8 +1241,8 @@
 }
 
 .team-section-pill-label.available {
-  background: rgba(255, 255, 255, 0.6);
-  color: #332B28;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .team-section-pill-label.offline {
@@ -1261,15 +1261,15 @@
   cursor: pointer;
   width: 100%;
   text-align: left;
-  color: #332B28;
+  color: #334155;
   font-size: 12.5px;
   font-weight: 600;
   transition: all 0.15s ease;
 }
 
 .team-sidebar-breaching-sla:hover {
-  background: rgba(201, 111, 85, 0.08);
-  color: #332B28;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .team-sidebar-breaching-sla.active-group {
@@ -1395,18 +1395,6 @@
 
 .team-btn-new-cyan:hover {
   background: #b55f46;
-}
-
-/* Status Pill in Table */
-.status-pill-in-progress {
-  background: #C96F55 !important;
-  color: #ffffff !important;
-  padding: 2.5px 12px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  display: inline-block;
-  text-align: center;
 }
 
 .star-indicator {
@@ -1563,9 +1551,9 @@
 ======================================================== */
 
 .priority-dot {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 2px !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
   display: inline-block !important;
 }
 

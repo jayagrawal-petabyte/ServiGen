@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, ExternalLink, ShieldCheck, Settings } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, ExternalLink, ShieldCheck, Settings, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
@@ -53,9 +53,17 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   hidePills = false,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const authContext = useAuth();
   const user = authContext?.user;
   const logout = authContext?.logout;
+
+  const isPortal = location.pathname.startsWith('/portal') || location.pathname === '/self-service';
+  const isAdmin = location.pathname.startsWith('/admin') || location.pathname === '/settings';
+  const isAgent = !isPortal && !isAdmin;
+  const isEndUser = user?.role === 'End User';
+  const canAccessAgent = !isEndUser;
+  const canAccessAdmin = user?.role === 'Administrator' || user?.role === 'System Manager';
 
   const userInitials = user?.fullName
     ? user.fullName
@@ -1322,55 +1330,86 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             </div>
           </div>
 
+          {/* Workspaces Section */}
           <div className="global-profile-menu-links">
-            {/* Switch to End-User Portal (Prominent Navigation Item) */}
+            <span className="global-profile-section-heading">Workspaces</span>
+
+            {/* 1. Agent Console */}
+            {canAccessAgent && (
+              <button
+                type="button"
+                className={`global-profile-link-item ${isAgent ? 'is-active' : ''}`}
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/dashboard');
+                }}
+              >
+                <LayoutDashboard className={`w-4 h-4 shrink-0 ${isAgent ? 'text-[#C96F55]' : 'text-slate-500'}`} />
+                <span className="flex-1">Agent Console</span>
+                {isAgent && <span className="global-profile-badge">Current</span>}
+              </button>
+            )}
+
+            {/* 2. Switch to End-User Portal */}
             <button
               type="button"
-              className="global-profile-link-item font-semibold text-[#263B5E] hover:bg-[#263B5E]/5"
+              className={`global-profile-link-item ${isPortal ? 'is-active' : ''}`}
               onClick={() => {
                 setActiveFlyout(null);
                 navigate('/portal');
               }}
             >
-              <ExternalLink className="w-4 h-4 text-[#C96F55] shrink-0" />
+              <ExternalLink className={`w-4 h-4 shrink-0 ${isPortal ? 'text-[#C96F55]' : 'text-slate-500'}`} />
               <span className="flex-1">Switch to End-User Portal</span>
+              {isPortal && <span className="global-profile-badge">Current</span>}
             </button>
 
-            <button
-              type="button"
-              className="global-profile-link-item"
-              onClick={() => {
-                setActiveFlyout(null);
-                navigate('/my-work');
-              }}
-            >
-              <span>📋</span>
-              <span>My Work & Tasks</span>
-            </button>
-
-            <button
-              type="button"
-              className="global-profile-link-item"
-              onClick={() => {
-                setActiveFlyout(null);
-                navigate('/organisations');
-              }}
-            >
-              <span>🏢</span>
-              <span>Organisation & Sites</span>
-            </button>
-
-            {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
+            {/* 3. Administration */}
+            {canAccessAdmin && (
               <button
                 type="button"
-                className="global-profile-link-item"
+                className={`global-profile-link-item ${isAdmin ? 'is-active' : ''}`}
                 onClick={() => {
                   setActiveFlyout(null);
                   navigate('/admin');
                 }}
               >
-                <Settings className="w-4 h-4 text-slate-500 shrink-0" />
-                <span>Admin Settings</span>
+                <Settings className={`w-4 h-4 shrink-0 ${isAdmin ? 'text-[#C96F55]' : 'text-slate-500'}`} />
+                <span className="flex-1">Administration</span>
+                {isAdmin && <span className="global-profile-badge">Current</span>}
+              </button>
+            )}
+          </div>
+
+          {/* Account Actions Section */}
+          <div className="global-profile-menu-links border-t border-slate-100">
+            <span className="global-profile-section-heading">Account Actions</span>
+
+            {canAccessAgent && (
+              <button
+                type="button"
+                className="global-profile-link-item"
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/my-work');
+                }}
+              >
+                <span>📋</span>
+                <span>My Work &amp; Tasks</span>
+              </button>
+            )}
+
+            {canAccessAdmin && (
+              <button
+                type="button"
+                className="global-profile-link-item"
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/organisations');
+                }}
+              >
+                <span>🏢</span>
+                <span>Organisation &amp; Sites</span>
               </button>
             )}
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   type ArticleDraft,
   type ArticleDraftStatus,
@@ -12,6 +12,8 @@ import ArticleDraftsLiveView from './ArticleDraftsLiveView';
 import ArticleDraftDetailModal from './ArticleDraftDetailModal';
 import CreateArticleDraftModal from './CreateArticleDraftModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { Button, RefreshButton } from '../../components/shared';
+import { Table, LayoutGrid, Plus } from 'lucide-react';
 import './articleDrafts.css';
 
 export default function ArticleDraftsPage() {
@@ -37,32 +39,23 @@ export default function ArticleDraftsPage() {
     }, 4000);
   };
 
-  // Load drafts on mount
-  useEffect(() => {
-    let isMounted = true;
-    async function loadData() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await articleDraftsApi.getDrafts();
-        if (isMounted) {
-          setDrafts(data);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load article drafts');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  // Load drafts from API
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await articleDraftsApi.getDrafts();
+      setDrafts(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load article drafts');
+    } finally {
+      setIsLoading(false);
     }
-    loadData();
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Filter drafts based on the selected sidebar view and search
   const filteredDrafts = useMemo(() => {
@@ -250,81 +243,166 @@ export default function ArticleDraftsPage() {
         />
 
         {/* Right Content Area */}
-        <main className="article-drafts-main">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="drafts-title" style={{ margin: 0 }}>
-              Open Article Drafts (Including SLA Hold)
-            </h1>
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
+        <main className="article-drafts-main flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
+          {/* Approved Shared Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
+            {/* Left: View title + context */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-sm font-bold text-slate-800 tracking-tight" style={{ margin: 0 }}>
+                Open Article Drafts
+              </h1>
+              <span className="text-xs text-slate-400 font-normal">
+                (Including SLA Hold)
+              </span>
+            </div>
+
+            {/* Right: Controls in exact required order */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* 1. Table/Card view toggle */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+                    viewMode === 'table' ? 'bg-white text-[#C96F55] shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Table view"
+                >
+                  <Table className="w-3.5 h-3.5" />
+                  <span>Table</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+                    viewMode === 'cards' ? 'bg-white text-[#C96F55] shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Card view"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Cards</span>
+                </button>
+              </div>
+
+              {/* 2. Record count */}
+              <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                {filteredDrafts.length > 0
+                  ? `${(safeCurrentPage - 1) * perPage + 1}–${Math.min(safeCurrentPage * perPage, filteredDrafts.length)} of ${filteredDrafts.length}`
+                  : '0 of 0'}
+              </span>
+
+              {/* 3. Rows-per-page selector */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <span className="text-[11px] font-medium text-slate-500">Rows:</span>
+                <select
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
+                  title="Rows per page"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* 4. Previous / Next pagination */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={safeCurrentPage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-xs"
+                  title="Previous page"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-xs"
+                  title="Next page"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* 5. Refresh */}
+              <RefreshButton
+                iconOnly
+                size="sm"
+                onClick={loadData}
+                isLoading={isLoading}
+                title="Refresh article drafts"
+              />
+
+              {/* 6. Primary Creation Action */}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsCreateModalOpen(true)}
+                icon={<Plus size={14} className="shrink-0" />}
               >
-                📋 Table View
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('cards')}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                🎴 Card View
-              </button>
+                New Draft
+              </Button>
             </div>
           </div>
 
-          {/* Error alert */}
-          {error && (
-            <div
-              style={{
-                backgroundColor: '#fee2e2',
-                color: '#dc2626',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-              role="alert"
-            >
-              ⚠️ {error}
-            </div>
-          )}
+          {/* Scrollable Content Container */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Error alert */}
+            {error && (
+              <div
+                style={{
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+                role="alert"
+              >
+                ⚠️ {error}
+              </div>
+            )}
 
-          {/* Table or Card View */}
-          {viewMode === 'table' ? (
-            <ArticleDraftsDesignView
-              drafts={paginatedDrafts}
-              totalDrafts={filteredDrafts.length}
-              currentPage={safeCurrentPage}
-              totalPages={totalPages}
-              perPage={perPage}
-              onPageChange={setCurrentPage}
-              onPerPageChange={(newPerPage) => {
-                setPerPage(newPerPage);
-                setCurrentPage(1);
-              }}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-              onToggleSelectAll={handleToggleSelectAll}
-              onOpenArticle={(draft) => setSelectedArticle(draft)}
-              sortDirection={sortDirection}
-              onToggleSort={() =>
-                setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-              }
-              isLoading={isLoading}
-            />
-          ) : (
-            <ArticleDraftsLiveView
-              drafts={filteredDrafts}
-              onOpenArticle={(draft) => setSelectedArticle(draft)}
-              onUpdateStatus={handleUpdateStatus}
-            />
-          )}
+            {/* Table or Card View */}
+            {viewMode === 'table' ? (
+              <ArticleDraftsDesignView
+                drafts={paginatedDrafts}
+                totalDrafts={filteredDrafts.length}
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                perPage={perPage}
+                onPageChange={setCurrentPage}
+                onPerPageChange={(newPerPage) => {
+                  setPerPage(newPerPage);
+                  setCurrentPage(1);
+                }}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+                onToggleSelectAll={handleToggleSelectAll}
+                onOpenArticle={(draft) => setSelectedArticle(draft)}
+                sortDirection={sortDirection}
+                onToggleSort={() =>
+                  setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                }
+                isLoading={isLoading}
+              />
+            ) : (
+              <ArticleDraftsLiveView
+                drafts={filteredDrafts}
+                onOpenArticle={(draft) => setSelectedArticle(draft)}
+                onUpdateStatus={handleUpdateStatus}
+              />
+            )}
+          </div>
         </main>
       </div>
 

@@ -128,23 +128,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Search + Refresh + Feed */}
+        {/* Right: Refresh + Feed */}
         <div className="flex items-center gap-1.5 min-w-0 justify-end">
-          {onSearchChange && (
-            <div className="relative min-w-[70px] max-w-[130px] flex-1">
-              <input
-                type="text"
-                placeholder="Search…"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="text-xs border border-gray-200 rounded-full pl-2.5 pr-6 py-1 w-full outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#f8c5b1] bg-gray-50 transition-all"
-              />
-              <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-            </div>
-          )}
-
           <RefreshButton
             iconOnly
             size="sm"

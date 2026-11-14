@@ -139,9 +139,9 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
         {incident.id}
       </td>
       <td className="whitespace-nowrap">
-        <SlaBadge slaTimeLeft={incident.sla} status={incident.status} />
+        <SlaBadge slaTimeLeft={incident.sla} status={incident.status} variant="restrained" />
       </td>
-      <td className="team-table-summary-link font-medium leading-snug max-w-[320px] truncate" title={incident.summary}>
+      <td className="team-table-summary-link font-medium leading-snug max-w-[460px] truncate" title={incident.summary}>
         {incident.summary}
       </td>
       <td className="text-gray-600 text-xs truncate max-w-[140px]" title={incident.category}>
@@ -152,30 +152,30 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
       </td>
       <td className="whitespace-nowrap">
         {incident.escalatedToTier2 ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
             ✓ Tier 2 Handoff
           </span>
         ) : (
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {aiRisk.level === 'High Risk' ? (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 shrink-0"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 shrink-0"
                 title="High AI Risk: Approaching SLA breach threshold"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0" />
                 High Risk {aiRisk.score}%
               </span>
             ) : aiRisk.level === 'At Risk' ? (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200 shrink-0"
                 title="At Risk: Elevated likelihood of SLA breach"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                 At Risk {aiRisk.score}%
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
                 Normal {aiRisk.score}%
               </span>
             )}
@@ -185,11 +185,11 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
                 type="button"
                 disabled={isEscalating}
                 onClick={() => onEscalateToTier2(incident)}
-                className="px-2.5 py-0.5 rounded-md bg-[#13273e] hover:bg-[#1e3b5e] text-white text-[10px] font-bold cursor-pointer transition-all shadow-sm flex items-center gap-1 shrink-0 disabled:opacity-50"
+                className="px-2.5 py-0.5 rounded-full border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[11px] font-medium cursor-pointer transition-colors shadow-2xs flex items-center gap-1 shrink-0 disabled:opacity-50"
                 title="1-Click Escalate to 2nd Line Support via AI Handoff"
               >
                 {isEscalating ? (
-                  <span className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-2.5 h-2.5 border border-slate-600 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span>⚡ Escalate</span>
                 )}
@@ -766,7 +766,7 @@ function TeamIncidentTable({
             <input
               id="team-sidebar-search-input"
               type="text"
-              placeholder="Search Incidents..."
+              placeholder="Search incident records..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1143,15 +1143,13 @@ function TeamIncidentTable({
         <main className="team-main-content">
           {/* Table Toolbar */}
           <div className="team-table-toolbar-row">
-            <div className="team-toolbar-left-group">
-              <button
-                type="button"
-                className="team-toolbar-add-pill"
-                title="Create Incident"
-                onClick={() => setShowNewIncidentModal(true)}
-              >
-                +
-              </button>
+            <div className="team-toolbar-left-group flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-800 tracking-tight">
+                {selectedView.kind === "team" ? `${selectedView.team} Incidents` : selectedView.kind === "breaching-sla" ? "Breaching SLA" : "Incidents"}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                ({filteredIncidents.length})
+              </span>
             </div>
 
             <div className="team-toolbar-right-group">
@@ -1388,7 +1386,7 @@ function TeamIncidentTable({
                     SLA Time Left {sortColumn === 'sla' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
                   </th>
                   <th
-                    style={{ minWidth: 260, cursor: "pointer", userSelect: "none" }}
+                    style={{ minWidth: 280, cursor: "pointer", userSelect: "none" }}
                     onClick={() => handleSort('summary')}
                     title="Click to sort by Summary"
                   >

@@ -123,7 +123,7 @@ const RecentIncidents = React.memo(function RecentIncidents({
                   </td>
 
                   <td>
-                    <SlaBadge slaTimeLeft={incident.slaTimeLeft} status={incident.status} />
+                    <SlaBadge slaTimeLeft={incident.slaTimeLeft} status={incident.status} variant="restrained" />
                   </td>
 
                   <td>{formatDate(incident.date)}</td>

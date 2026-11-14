@@ -470,9 +470,11 @@ const OnHoldTicketScreen: React.FC = () => {
 
           <div className="right-panel">
             <div className="table-toolbar">
-              <button className="tb-add-btn" onClick={handleOpenNewModal} title="Create new ticket" style={{ cursor: "pointer" }}>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                  {activeView || 'On Hold Tickets'}
+                </span>
+              </div>
               <div style={{flex:1}}></div>
               <span className="count-text">{countStart}-{countEnd} of {filteredTickets.length}</span>
               <button className="tb-nav-btn" onClick={goToPrevPage} disabled={currentPage === 1} style={{ opacity: currentPage === 1 ? 0.4 : 1 }}>

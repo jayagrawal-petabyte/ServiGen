@@ -42,11 +42,11 @@
   min-height: 0;
 }
 
-/* --- Sidebar (Soft Peach Theme) --- */
+/* --- Sidebar (White Baseline Theme) --- */
 .cl-sidebar {
   width: 250px;
-  background: #FDE9E1;
-  border: 1px solid #ebdcd3;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   margin: 12px 0 12px 12px;
@@ -55,19 +55,19 @@
   flex-shrink: 0;
   overflow: hidden;
 }
-.cl-sidebar-header { padding: 12px; border-bottom: 1px solid #ebdcd3; }
+.cl-sidebar-header { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 .cl-search-wrap { position: relative; display: flex; align-items: center; }
 .cl-search-icon { position: absolute; left: 10px; color: #94a3b8; }
-.cl-search-input { width: 100%; padding: 6px 10px 6px 30px; border: 1px solid #ebdcd3; border-radius: 9999px; font-size: 12px; outline: none; background: #ffffff; color: #332B28; transition: all 0.15s; }
+.cl-search-input { width: 100%; padding: 6px 10px 6px 30px; border: 1px solid #e2e8f0; border-radius: 9999px; font-size: 12px; outline: none; background: #ffffff; color: #332B28; transition: all 0.15s; }
 .cl-search-input:focus { border-color: #C96F55; background: #ffffff; box-shadow: 0 0 0 2px rgba(201, 111, 85, 0.15); }
 .cl-sidebar-content { flex: 1; overflow-y: auto; padding: 12px 0; }
-.cl-btn-new-list { width: calc(100% - 24px); margin: 0 12px 16px; background: #C96F55; border: none; color: #ffffff; border-radius: 9999px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.15s; }
-.cl-btn-new-list:hover { background: #b55f46; }
+.cl-btn-new-list { width: calc(100% - 24px); margin: 0 12px 16px; background: #263B5E; border: none; color: #ffffff; border-radius: 9999px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.15s; }
+.cl-btn-new-list:hover { background: #1D2D48; }
 
 .cl-group { margin-bottom: 16px; }
-.cl-group-title { font-size: 11px; font-weight: 700; color: #7c5c52; text-transform: uppercase; padding: 0 16px 6px; letter-spacing: 0.05em; }
-.cl-list-item { display: flex; align-items: center; padding: 7px 14px; cursor: pointer; color: #332B28; gap: 8px; border-radius: 9999px; margin: 0 8px 3px; transition: all 0.15s; }
-.cl-list-item:hover { background: rgba(255, 255, 255, 0.6); color: #1c0f0c; }
+.cl-group-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; padding: 0 16px 6px; letter-spacing: 0.05em; }
+.cl-list-item { display: flex; align-items: center; padding: 7px 14px; cursor: pointer; color: #334155; gap: 8px; border-radius: 9999px; margin: 0 8px 3px; transition: all 0.15s; }
+.cl-list-item:hover { background: #f1f5f9; color: #0f172a; }
 .cl-list-item.active { background: #C96F55; color: #ffffff; font-weight: 700; }
 .cl-list-icon { color: #94a3b8; display: flex; }
 .cl-list-item.active .cl-list-icon { color: #ffffff; }

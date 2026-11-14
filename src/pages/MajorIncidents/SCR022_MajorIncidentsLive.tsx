@@ -848,7 +848,13 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
       {/* Two-Column Body below top navbar */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
-        <MajorIncidentsSidebar onSelectList={setSelectedListId} counts={sidebarCounts} selectedListId={selectedListId} />
+        <MajorIncidentsSidebar
+          onSelectList={setSelectedListId}
+          counts={sidebarCounts}
+          selectedListId={selectedListId}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         <main className="flex-1 flex min-w-0 h-full overflow-y-hidden overflow-x-auto gap-4">
           <div className="flex-1 flex flex-col min-w-[340px] sm:min-w-[380px] h-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xs shrink-0 md:shrink">

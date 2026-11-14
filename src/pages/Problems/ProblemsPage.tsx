@@ -191,10 +191,18 @@ export const ProblemsPage: React.FC = () => {
         {/* Left Sidebar */}
         <ProblemsSidebar
           selectedListId={selectedListId}
-          onSelectList={setSelectedListId}
+          onSelectList={(id) => {
+            setSelectedListId(id);
+            setPage(1);
+          }}
           counts={sidebarCounts}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          searchValue={searchQuery}
+          onSearchChange={(val) => {
+            setSearchQuery(val);
+            setPage(1);
+          }}
         />
 
         {/* Right Main Table Panel */}
@@ -206,28 +214,9 @@ export const ProblemsPage: React.FC = () => {
                 <span>Open Problems</span>
                 <span className="text-slate-400 text-xs">▾</span>
               </h2>
-              <button
-                type="button"
-                onClick={() => setShowNewModal(true)}
-                className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                title="Create a new problem"
-              >
-                +
-              </button>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Search Bar */}
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="Filter records..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-44 text-xs px-3 py-1.5 border border-slate-200 rounded-full focus:outline-none focus:border-[#C96F55] text-slate-800"
-                />
-              </div>
-
               {/* Pagination controls */}
               <span className="text-xs font-medium text-slate-500">
                 {pageStart}-{pageEnd} of {totalCount}

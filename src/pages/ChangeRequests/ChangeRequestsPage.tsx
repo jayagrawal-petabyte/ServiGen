@@ -51,7 +51,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   const [selectedViewId, setSelectedViewId] = useState<string>('all-active');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [searchQuery, setSearchQuery] = useState<string>(externalSearchQuery);
-  const [sidebarSearch, setSidebarSearch] = useState<string>('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(!externalRequests);
@@ -127,19 +126,16 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             id: 'all-active',
             label: 'All Active Changes',
             icon: <Flame className="w-3.5 h-3.5 text-[#C96F55]" />,
-            count: counts.active,
           },
           {
             id: 'draft',
             label: 'Draft Changes',
             icon: <FileText className="w-3.5 h-3.5 text-slate-500" />,
-            count: counts.draft,
           },
           {
             id: 'in-progress',
             label: 'In Progress Changes',
             icon: <Clock className="w-3.5 h-3.5 text-amber-500" />,
-            count: counts.inProgress,
           },
           {
             id: 'scheduled',
@@ -163,7 +159,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             id: 'on-hold',
             label: 'On Hold Changes',
             icon: <PauseCircle className="w-3.5 h-3.5 text-orange-500" />,
-            count: counts.onHold,
           },
         ],
       },
@@ -175,7 +170,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             id: 'all',
             label: 'All Changes',
             icon: <ListFilter className="w-3.5 h-3.5 text-slate-600" />,
-            count: counts.all,
           },
           {
             id: 'emergency',
@@ -187,13 +181,11 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             id: 'normal',
             label: 'Normal Changes',
             icon: <ShieldAlert className="w-3.5 h-3.5 text-blue-500" />,
-            count: counts.normal,
           },
           {
             id: 'standard',
             label: 'Standard Changes',
             icon: <Layers className="w-3.5 h-3.5 text-emerald-500" />,
-            count: counts.standard,
           },
         ],
       },
@@ -205,7 +197,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             id: 'completed',
             label: 'Completed Changes',
             icon: <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />,
-            count: counts.completed,
           },
         ],
       },
@@ -213,19 +204,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     [counts]
   );
 
-  // Filter sidebar groups based on sidebar search input
-  const filteredSidebarGroups = useMemo(() => {
-    if (!sidebarSearch.trim()) return rawSidebarGroups;
-    const query = sidebarSearch.toLowerCase().trim();
-    return rawSidebarGroups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => item.label.toLowerCase().includes(query)),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [rawSidebarGroups, sidebarSearch]);
-
-  // Filter change requests based on selected sidebar view & top toolbar search
+  // Filter change requests based on selected sidebar view & sidebar record search
   const filteredRequests = useMemo(() => {
     return items.filter((cr: ChangeRequest) => {
       const q = searchQuery.toLowerCase().trim();
@@ -346,10 +325,13 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
           icon={<GitPullRequest className="w-3.5 h-3.5" />}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          searchValue={sidebarSearch}
-          onSearchChange={setSidebarSearch}
-          searchPlaceholder="Search Change Requests..."
-          groups={filteredSidebarGroups}
+          searchValue={searchQuery}
+          onSearchChange={(val) => {
+            setSearchQuery(val);
+            setCurrentPage(1);
+          }}
+          searchPlaceholder="Search change requests..."
+          groups={rawSidebarGroups}
           selectedId={selectedViewId}
           onSelectId={(id) => {
             setSelectedViewId(id);
@@ -376,14 +358,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                 <span>{currentViewLabel}</span>
               </h2>
-              <button
-                type="button"
-                onClick={onOpenCreateModal}
-                className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-                title="Create a new change request"
-              >
-                +
-              </button>
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
@@ -413,20 +387,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                 >
                   <Table className="w-3.5 h-3.5" />
                 </button>
-              </div>
-
-              {/* Toolbar Search Input */}
-              <div className="relative flex items-center">
-                <SearchInput
-                  size="sm"
-                  value={searchQuery}
-                  onChange={(val) => {
-                    setSearchQuery(val);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Filter records..."
-                  className="w-44"
-                />
               </div>
 
               {/* Top Toolbar Pagination Count */}

@@ -730,7 +730,27 @@
 }
 
 .global-profile-menu-links {
-  padding: 6px 0;
+  padding: 4px 0;
+}
+
+.global-profile-section-heading {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  padding: 6px 16px 2px;
+  display: block;
+}
+
+.global-profile-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background-color: #FFF9F5;
+  color: var(--accent-terracotta, #C96F55);
+  border: 1px solid #ebdcd3;
 }
 
 .global-profile-link-item {
@@ -751,6 +771,12 @@
 .global-profile-link-item:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.global-profile-link-item.is-active {
+  background-color: #FFF9F5;
+  color: var(--accent-terracotta, #C96F55);
+  font-weight: 700;
 }
 
 .global-profile-link-item.logout {

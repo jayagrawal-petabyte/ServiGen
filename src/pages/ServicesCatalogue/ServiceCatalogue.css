@@ -111,8 +111,8 @@
 .category-sidebar {
   padding: 20px 16px 32px 16px;
   border-radius: 20px;
-  background: #FDE9E1;
-  border: 1px solid #ebdcd3;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   box-sizing: border-box;
   width: 250px;
@@ -133,7 +133,7 @@
   height: 42px;
   padding: 0 14px;
   margin-bottom: 18px;
-  border: 1px solid #ead9d2;
+  border: 1px solid #e2e8f0;
   border-radius: 24px;
   background: #fff;
   box-sizing: border-box;
@@ -200,8 +200,8 @@
 }
 
 .category-button:hover {
-  background: rgba(255, 255, 255, 0.6);
-  color: #1c0f0c;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .category-button.active {

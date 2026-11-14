@@ -10,7 +10,8 @@ import { apiClient, api } from "../../services/apiClient";
 import { fetchChangeRequests } from "../../services/changeRequestsService";
 import type { ChangeRequest } from "../../types/cmdb";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
-import { RefreshButton } from "../../components/shared/RefreshButton";
+import { Button, RefreshButton } from "../../components/shared";
+import { Plus } from "lucide-react";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -727,7 +728,7 @@ export default function CalendarPage() {
         <div className="cal-search">
           <input
             ref={searchRef}
-            placeholder="Search Calendar"
+            placeholder="Search calendar events..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -925,10 +926,19 @@ export default function CalendarPage() {
 
           <div className="cal-toolbar-right">
             <RefreshButton
+              size="sm"
               onClick={refreshCalendar}
               isLoading={loading}
               title="Refresh Calendar"
             />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openDraft(anchor)}
+              icon={<Plus size={14} className="shrink-0" />}
+            >
+              New Appointment
+            </Button>
             <div className="cal-views">
               {VIEWS.map((v) => (
                 <button key={v.id} className={view === v.id ? "active" : ""} onClick={() => setView(v.id)}>
@@ -960,13 +970,6 @@ export default function CalendarPage() {
                     />
                     Working hours only (8 AM – 7 PM)
                   </label>
-                  <button className="cal-btn primary" onClick={() => {
-                      setFilterOpen(false);
-                      openDraft(anchor);
-                    }}
-                  >
-                    + New appointment
-                  </button>
                 </div>
               )}
             </div>

@@ -1,9 +1,9 @@
-/* --- Left Panel (ServiGen Standard Soft Peach Sidebar) --- */
+/* --- Left Panel (ServiGen Standard White Baseline Sidebar) --- */
 .left-panel {
   width: 250px;
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
-  background: #FDE9E1;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -11,7 +11,7 @@
   margin: 12px;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  border: 1px solid #ebdcd3;
+  border: 1px solid #e2e8f0;
   user-select: none;
   box-sizing: border-box;
 }
@@ -21,12 +21,12 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border-bottom: 1px solid #ebdcd3;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .search-input {
   flex: 1;
-  border: 1px solid #ebdcd3;
+  border: 1px solid #e2e8f0;
   outline: none;
   font-size: 12px;
   color: #332B28;
@@ -50,7 +50,7 @@
   align-items: center;
   padding: 10px 14px;
   gap: 8px;
-  border-bottom: 1px solid #ebdcd3;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .my-lists-icon-btn {
@@ -131,8 +131,8 @@
 }
 
 .my-list-nav-item:hover {
-  background: rgba(255, 255, 255, 0.6);
-  color: #1c0f0c;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .my-list-nav-item.active {
@@ -164,9 +164,9 @@
 .my-list-badge {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.85);
-  color: #332B28;
-  border: 1px solid rgba(235, 220, 211, 0.7);
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
   padding: 2px 7px;
   border-radius: 9999px;
   flex-shrink: 0;

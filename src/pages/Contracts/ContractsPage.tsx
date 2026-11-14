@@ -2,22 +2,24 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
   Plus,
-  Search,
-  Filter,
   AlertTriangle,
   Clock,
   CheckCircle,
-  ExternalLink,
   Building2,
   Calendar,
-  DollarSign,
   X,
   ChevronRight,
   ShieldCheck,
-  RefreshCw,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar, RefreshButton, Button } from '../../components/shared';
+import {
+  RefreshButton,
+  Button,
+  ModuleSidebar,
+  ModuleSidebarGroup,
+} from '../../components/shared';
 import {
   contractsService,
   ContractItem,
@@ -52,6 +54,11 @@ export const ContractsPage: React.FC = () => {
   const [selectedContract, setSelectedContract] = useState<ContractItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+
+  // Sidebar navigation state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [selectedViewId, setSelectedViewId] = useState<string>('all-contracts');
 
   // New Contract Form State
   const [newTitle, setNewTitle] = useState('');
@@ -91,16 +98,220 @@ export const ContractsPage: React.FC = () => {
 
   const expiringSoonContracts = useMemo(() => {
     return contracts.filter(
-      (c) => c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && c.daysUntilExpiry > 0 && c.daysUntilExpiry <= 60
+      (c) =>
+        c.daysUntilExpiry !== null &&
+        c.daysUntilExpiry !== undefined &&
+        c.daysUntilExpiry > 0 &&
+        c.daysUntilExpiry <= 60
     );
   }, [contracts]);
 
+  const counts = useMemo(() => {
+    return {
+      all: contracts.length,
+      active: contracts.filter((c) => c.status === 'Active').length,
+      pendingRenewal: contracts.filter((c) => c.status === 'Pending Renewal').length,
+      expiringSoon: contracts.filter(
+        (c) =>
+          c.daysUntilExpiry !== null &&
+          c.daysUntilExpiry !== undefined &&
+          c.daysUntilExpiry > 0 &&
+          c.daysUntilExpiry <= 60
+      ).length,
+      expired: contracts.filter(
+        (c) =>
+          c.status === 'Expired' ||
+          (c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && c.daysUntilExpiry <= 0)
+      ).length,
+      draft: contracts.filter((c) => c.status === 'Draft').length,
+      // Types
+      license: contracts.filter((c) => c.contractType === 'License').length,
+      sla: contracts.filter((c) => c.contractType === 'SLA').length,
+      maintenance: contracts.filter((c) => c.contractType === 'Maintenance').length,
+      underpinning: contracts.filter((c) => c.contractType === 'Underpinning').length,
+      warranty: contracts.filter((c) => c.contractType === 'Warranty').length,
+      support: contracts.filter((c) => c.contractType === 'Support').length,
+      other: contracts.filter((c) => c.contractType === 'Other').length,
+    };
+  }, [contracts]);
+
+  // Sidebar navigation structure
+  const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
+    () => [
+      {
+        id: 'status-views',
+        title: 'Status & Lifecycle',
+        items: [
+          {
+            id: 'all-contracts',
+            label: 'All Agreements',
+            icon: <FileText className="w-3.5 h-3.5 text-slate-600" />,
+            count: counts.all,
+          },
+          {
+            id: 'status-active',
+            label: 'Active Contracts',
+            icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />,
+            count: counts.active,
+          },
+          {
+            id: 'status-pending',
+            label: 'Pending Renewal',
+            icon: <Clock className="w-3.5 h-3.5 text-amber-600" />,
+            count: counts.pendingRenewal,
+          },
+          {
+            id: 'status-expiring-soon',
+            label: 'Expiring Soon (≤60d)',
+            icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />,
+            count: counts.expiringSoon,
+          },
+          {
+            id: 'status-expired',
+            label: 'Expired Contracts',
+            icon: <X className="w-3.5 h-3.5 text-rose-600" />,
+            count: counts.expired,
+          },
+          {
+            id: 'status-draft',
+            label: 'Draft Agreements',
+            icon: <FileText className="w-3.5 h-3.5 text-slate-400" />,
+            count: counts.draft,
+          },
+        ],
+      },
+      {
+        id: 'type-views',
+        title: 'Agreements by Type',
+        items: [
+          {
+            id: 'type-license',
+            label: 'Software Licenses',
+            icon: <FileText className="w-3.5 h-3.5 text-purple-600" />,
+            count: counts.license,
+          },
+          {
+            id: 'type-sla',
+            label: 'Service Level (SLA)',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />,
+            count: counts.sla,
+          },
+          {
+            id: 'type-maintenance',
+            label: 'Maintenance & Hardware',
+            icon: <Building2 className="w-3.5 h-3.5 text-blue-600" />,
+            count: counts.maintenance,
+          },
+          {
+            id: 'type-underpinning',
+            label: 'Underpinning Contracts',
+            icon: <FileText className="w-3.5 h-3.5 text-cyan-600" />,
+            count: counts.underpinning,
+          },
+          {
+            id: 'type-warranty',
+            label: 'Vendor Warranties',
+            icon: <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />,
+            count: counts.warranty,
+          },
+          {
+            id: 'type-support',
+            label: 'Support Agreements',
+            icon: <Building2 className="w-3.5 h-3.5 text-emerald-600" />,
+            count: counts.support,
+          },
+          {
+            id: 'type-other',
+            label: 'Other Agreements',
+            icon: <FileText className="w-3.5 h-3.5 text-slate-400" />,
+            count: counts.other,
+          },
+        ],
+      },
+    ],
+    [counts]
+  );
+
+  const handleSelectSidebarView = (viewId: string) => {
+    setSelectedViewId(viewId);
+    switch (viewId) {
+      case 'all-contracts':
+        setStatusFilter('All');
+        setTypeFilter('All');
+        break;
+      case 'status-active':
+        setStatusFilter('Active');
+        setTypeFilter('All');
+        break;
+      case 'status-pending':
+        setStatusFilter('Pending Renewal');
+        setTypeFilter('All');
+        break;
+      case 'status-expiring-soon':
+        setStatusFilter('Expiring Soon');
+        setTypeFilter('All');
+        break;
+      case 'status-expired':
+        setStatusFilter('Expired');
+        setTypeFilter('All');
+        break;
+      case 'status-draft':
+        setStatusFilter('Draft');
+        setTypeFilter('All');
+        break;
+      case 'type-license':
+        setStatusFilter('All');
+        setTypeFilter('License');
+        break;
+      case 'type-sla':
+        setStatusFilter('All');
+        setTypeFilter('SLA');
+        break;
+      case 'type-maintenance':
+        setStatusFilter('All');
+        setTypeFilter('Maintenance');
+        break;
+      case 'type-underpinning':
+        setStatusFilter('All');
+        setTypeFilter('Underpinning');
+        break;
+      case 'type-warranty':
+        setStatusFilter('All');
+        setTypeFilter('Warranty');
+        break;
+      case 'type-support':
+        setStatusFilter('All');
+        setTypeFilter('Support');
+        break;
+      case 'type-other':
+        setStatusFilter('All');
+        setTypeFilter('Other');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const currentViewLabel = useMemo(() => {
+    for (const group of rawSidebarGroups) {
+      const found = group.items.find((i) => i.id === selectedViewId);
+      if (found) return found.label;
+    }
+    return 'Contracts & Supplier Agreements';
+  }, [selectedViewId, rawSidebarGroups]);
+
   const filteredContracts = useMemo(() => {
     return contracts.filter((c) => {
-      if (statusFilter !== 'All' && c.status !== statusFilter) return false;
+      if (statusFilter === 'Expiring Soon') {
+        if (!c.daysUntilExpiry || c.daysUntilExpiry <= 0 || c.daysUntilExpiry > 60) return false;
+      } else if (statusFilter !== 'All' && c.status !== statusFilter) {
+        return false;
+      }
+
       if (typeFilter !== 'All' && c.contractType !== typeFilter) return false;
+
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         const matchesTitle = c.title.toLowerCase().includes(q);
         const matchesVendor = c.vendorName.toLowerCase().includes(q);
         const matchesId = c.id.toLowerCase().includes(q);
@@ -181,7 +392,7 @@ export const ContractsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-y-auto font-sans select-text">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
@@ -190,210 +401,359 @@ export const ContractsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Top Navbar */}
-      <header className="w-full bg-white border-b border-slate-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0 shadow-2xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+      {/* ── Top Navbar ── */}
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
-          <span className="text-slate-900 font-extrabold">Contracts &amp; SLAs</span>
+          <span className="text-gray-900 font-extrabold">Contracts &amp; SLAs</span>
         </div>
-
-        <GlobalNavbarActions
-          onGetStarted={() => {}}
-          onNewTicket={() => setIsCreateModalOpen(true)}
-          onOpenTicket={() => {}}
-        />
+        <GlobalNavbarActions />
       </header>
 
-      {/* Main Content Area */}
-      <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-        {/* Title & Action Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2.5">
-              <FileText className="w-6 h-6 text-[#C96F55]" />
-              Contracts &amp; Supplier Agreements
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Manage enterprise vendor agreements, SLA commitments, hardware warranties, and software subscriptions.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <RefreshButton
-              onClick={loadContracts}
-              title="Refresh Contracts"
-            />
+      {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
+      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
+        {/* Left Module Sidebar */}
+        <ModuleSidebar
+          title="Contracts & SLAs"
+          icon={<FileText className="w-3.5 h-3.5" />}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search agreements, vendors..."
+          groups={rawSidebarGroups}
+          selectedId={selectedViewId}
+          onSelectId={handleSelectSidebarView}
+          onResetTitle={() => handleSelectSidebarView('all-contracts')}
+          resetTitleTooltip="Reset to All Agreements"
+          footer={
             <Button
               variant="primary"
+              size="sm"
               onClick={() => setIsCreateModalOpen(true)}
-              icon={<Plus className="w-4 h-4 shrink-0" />}
+              icon={<Plus className="w-3.5 h-3.5" />}
+              className="w-full justify-center shadow-xs"
             >
               New Contract
             </Button>
-          </div>
-        </div>
-
-        {/* Expiry Warning Banner (if any expiring in <=60 days) */}
-        {expiringSoonContracts.length > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 flex items-start gap-3 shadow-2xs">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-bold text-amber-900">
-                {expiringSoonContracts.length} Contract{expiringSoonContracts.length > 1 ? 's' : ''} Expiring Within 60 Days
-              </h4>
-              <p className="text-[11px] text-amber-700 mt-0.5">
-                Review renewal terms with vendors before automated lapse or unexpected service disruption.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {expiringSoonContracts.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedContract(c)}
-                    className="text-[10px] font-bold bg-white text-amber-800 border border-amber-200 px-2 py-1 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <span>{c.vendorName} ({c.daysUntilExpiry}d left)</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Filters & Search Toolbar */}
-        <FilterToolbar
-          search={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Search vendor or agreement..."
-          searchClassName="!w-52"
-          filters={
-            <div className="flex flex-wrap items-center gap-2.5">
-              <SegmentedTabs
-                variant="boxed"
-                theme="terracotta"
-                size="sm"
-                tabs={[
-                  { id: 'All', label: 'All', count: contracts.length },
-                  { id: 'Active', label: 'Active', count: contracts.filter((c) => c.status === 'Active').length },
-                  { id: 'Pending Renewal', label: 'Pending Renewal', count: contracts.filter((c) => c.status === 'Pending Renewal').length },
-                  { id: 'Expired', label: 'Expired', count: contracts.filter((c) => c.status === 'Expired').length },
-                ]}
-                activeTab={statusFilter}
-                onChange={(st) => setStatusFilter(st)}
-              />
-
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-[#C96F55] cursor-pointer"
-              >
-                <option value="All">All Types</option>
-                {CONTRACT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
           }
         />
 
-        {/* Contracts Grid / Cards */}
-        {isLoading ? (
-          <div className="text-center py-20 text-slate-400 text-xs">
-            <p className="animate-pulse">Loading enterprise contracts...</p>
-          </div>
-        ) : filteredContracts.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center text-xs space-y-2">
-            <FileText className="w-8 h-8 text-slate-300 mx-auto" />
-            <p className="font-bold text-slate-700">No contracts found</p>
-            <p className="text-slate-400 max-w-sm mx-auto">
-              No contracts matched your current filters. Try resetting the status or type filter.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContracts.map((c) => {
-              const isExpired = c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && c.daysUntilExpiry <= 0;
-              const isUrgent = c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && c.daysUntilExpiry > 0 && c.daysUntilExpiry <= 30;
+        {/* Right Main Table/Grid Panel */}
+        <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
+          {/* Main Top Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>{currentViewLabel}</span>
+                <span className="text-xs font-normal text-slate-500">
+                  ({filteredContracts.length} {filteredContracts.length === 1 ? 'agreement' : 'agreements'})
+                </span>
+              </h2>
+            </div>
 
-              return (
-                <div
-                  key={c.id}
-                  onClick={() => setSelectedContract(c)}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md hover:border-[#C96F55]/40 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* View Switcher: Grid / Table */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Grid View"
+                  aria-label="Grid View"
                 >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-bold text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                        {c.id}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTypeBadge(c.contractType)}`}>
-                          {c.contractType}
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusBadge(c.status)}`}>
-                          {c.status}
-                        </span>
-                      </div>
-                    </div>
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Table View"
+                  aria-label="Table View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
-                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#C96F55] transition-colors line-clamp-2">
-                      {c.title}
-                    </h3>
+              <RefreshButton onClick={loadContracts} title="Refresh Contracts" />
+            </div>
+          </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="font-medium truncate">{c.vendorName}</span>
-                    </div>
-
-                    {c.notes && (
-                      <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                        {c.notes}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Footer Stats */}
-                  <div className="pt-3 border-t border-slate-100 space-y-2 text-[11px]">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="text-slate-400">Annual Value:</span>
-                      <span className="font-bold text-slate-900">
-                        {c.value > 0 ? `${c.currency} ${c.value.toLocaleString()}` : 'Included / Free'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="text-slate-400">Expiry:</span>
-                      <span
-                        className={`font-semibold ${
-                          isExpired
-                            ? 'text-rose-600 font-bold'
-                            : isUrgent
-                            ? 'text-amber-600 font-bold'
-                            : 'text-slate-700'
-                        }`}
+          {/* Main Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* Expiry Warning Banner (if any expiring in <=60 days) */}
+            {expiringSoonContracts.length > 0 && selectedViewId !== 'status-expiring-soon' && (
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 flex items-start gap-3 shadow-2xs">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-amber-900">
+                    {expiringSoonContracts.length} Contract
+                    {expiringSoonContracts.length > 1 ? 's' : ''} Expiring Within 60 Days
+                  </h4>
+                  <p className="text-[11px] text-amber-700 mt-0.5">
+                    Review renewal terms with vendors before automated lapse or unexpected service
+                    disruption.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {expiringSoonContracts.slice(0, 5).map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedContract(c)}
+                        className="text-[10px] font-bold bg-white text-amber-800 border border-amber-200 px-2 py-1 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer flex items-center gap-1"
                       >
-                        {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'Perpetual'}
-                        {c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && (
-                          <span className="ml-1 text-[10px] opacity-75">
-                            ({c.daysUntilExpiry > 0 ? `${c.daysUntilExpiry}d left` : 'Expired'})
-                          </span>
-                        )}
-                      </span>
-                    </div>
-
-                    {c.autoRenew && (
-                      <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>Auto-renewal active</span>
-                      </div>
+                        <span>
+                          {c.vendorName} ({c.daysUntilExpiry}d left)
+                        </span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    ))}
+                    {expiringSoonContracts.length > 5 && (
+                      <button
+                        onClick={() => handleSelectSidebarView('status-expiring-soon')}
+                        className="text-[10px] font-bold text-amber-900 underline px-1 py-1"
+                      >
+                        +{expiringSoonContracts.length - 5} more
+                      </button>
                     )}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="text-center py-20 text-slate-400 text-xs">
+                <p className="animate-pulse">Loading enterprise contracts...</p>
+              </div>
+            ) : filteredContracts.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center text-xs space-y-2">
+                <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+                <p className="font-bold text-slate-700">No contracts found</p>
+                <p className="text-slate-400 max-w-sm mx-auto">
+                  No contracts matched your current filters. Try resetting your search or view filter.
+                </p>
+                <button
+                  onClick={() => {
+                    handleSelectSidebarView('all-contracts');
+                    setSearchQuery('');
+                  }}
+                  className="mt-2 text-xs text-[#C96F55] font-bold hover:underline cursor-pointer"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : viewMode === 'table' ? (
+              /* Enterprise High-Density Table View */
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-2.5 px-3">Contract ID</th>
+                      <th className="py-2.5 px-3">Agreement Title</th>
+                      <th className="py-2.5 px-3">Vendor</th>
+                      <th className="py-2.5 px-3">Type</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Annual Value</th>
+                      <th className="py-2.5 px-3">Expiry Date</th>
+                      <th className="py-2.5 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredContracts.map((c) => {
+                      const isExpired =
+                        c.daysUntilExpiry !== null &&
+                        c.daysUntilExpiry !== undefined &&
+                        c.daysUntilExpiry <= 0;
+                      const isUrgent =
+                        c.daysUntilExpiry !== null &&
+                        c.daysUntilExpiry !== undefined &&
+                        c.daysUntilExpiry > 0 &&
+                        c.daysUntilExpiry <= 30;
+
+                      return (
+                        <tr
+                          key={c.id}
+                          onClick={() => setSelectedContract(c)}
+                          className="hover:bg-orange-50/30 transition-colors cursor-pointer group"
+                        >
+                          <td className="py-3 px-3 font-mono font-bold text-slate-700">{c.id}</td>
+                          <td className="py-3 px-3 font-semibold text-slate-900 group-hover:text-[#C96F55] max-w-xs truncate">
+                            {c.title}
+                          </td>
+                          <td className="py-3 px-3 text-slate-600 max-w-[140px] truncate">
+                            {c.vendorName}
+                          </td>
+                          <td className="py-3 px-3">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTypeBadge(
+                                c.contractType
+                              )}`}
+                            >
+                              {c.contractType}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusBadge(
+                                c.status
+                              )}`}
+                            >
+                              {c.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 font-semibold text-slate-800">
+                            {c.value > 0
+                              ? `${c.currency} ${c.value.toLocaleString()}`
+                              : 'Included'}
+                          </td>
+                          <td className="py-3 px-3">
+                            <span
+                              className={`font-semibold ${
+                                isExpired
+                                  ? 'text-rose-600 font-bold'
+                                  : isUrgent
+                                  ? 'text-amber-600 font-bold'
+                                  : 'text-slate-700'
+                              }`}
+                            >
+                              {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'Perpetual'}
+                              {c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && (
+                                <span className="ml-1 text-[10px] opacity-75">
+                                  ({c.daysUntilExpiry > 0 ? `${c.daysUntilExpiry}d left` : 'Expired'})
+                                </span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedContract(c);
+                              }}
+                              className="text-[11px] font-bold text-[#C96F55] hover:underline cursor-pointer"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Grid View Cards */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredContracts.map((c) => {
+                  const isExpired =
+                    c.daysUntilExpiry !== null &&
+                    c.daysUntilExpiry !== undefined &&
+                    c.daysUntilExpiry <= 0;
+                  const isUrgent =
+                    c.daysUntilExpiry !== null &&
+                    c.daysUntilExpiry !== undefined &&
+                    c.daysUntilExpiry > 0 &&
+                    c.daysUntilExpiry <= 30;
+
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelectedContract(c)}
+                      className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:shadow-md hover:border-[#C96F55]/40 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono font-bold text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {c.id}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTypeBadge(
+                                c.contractType
+                              )}`}
+                            >
+                              {c.contractType}
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusBadge(
+                                c.status
+                              )}`}
+                            >
+                              {c.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#C96F55] transition-colors line-clamp-2">
+                          {c.title}
+                        </h3>
+
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="font-medium truncate">{c.vendorName}</span>
+                        </div>
+
+                        {c.notes && (
+                          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                            {c.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Footer Stats */}
+                      <div className="pt-3 border-t border-slate-100 space-y-2 text-[11px]">
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="text-slate-400">Annual Value:</span>
+                          <span className="font-bold text-slate-900">
+                            {c.value > 0
+                              ? `${c.currency} ${c.value.toLocaleString()}`
+                              : 'Included / Free'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="text-slate-400">Expiry:</span>
+                          <span
+                            className={`font-semibold ${
+                              isExpired
+                                ? 'text-rose-600 font-bold'
+                                : isUrgent
+                                ? 'text-amber-600 font-bold'
+                                : 'text-slate-700'
+                            }`}
+                          >
+                            {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'Perpetual'}
+                            {c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && (
+                              <span className="ml-1 text-[10px] opacity-75">
+                                ({c.daysUntilExpiry > 0 ? `${c.daysUntilExpiry}d left` : 'Expired'})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+
+                        {c.autoRenew && (
+                          <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>Auto-renewal active</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </main>
       </div>
 
       {/* Contract Detail Modal */}
@@ -427,28 +787,44 @@ export const ContractsPage: React.FC = () => {
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">Vendor</span>
                   <span className="font-bold text-slate-800">{selectedContract.vendorName}</span>
                   {selectedContract.vendorEmail && (
-                    <span className="text-[11px] text-slate-500 block">{selectedContract.vendorEmail}</span>
+                    <span className="text-[11px] text-slate-500 block">
+                      {selectedContract.vendorEmail}
+                    </span>
                   )}
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] uppercase font-bold block">Contract Type</span>
-                  <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${getTypeBadge(selectedContract.contractType)}`}>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold block">
+                    Contract Type
+                  </span>
+                  <span
+                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${getTypeBadge(
+                      selectedContract.contractType
+                    )}`}
+                  >
                     {selectedContract.contractType}
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">Status</span>
-                  <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${getStatusBadge(selectedContract.status)}`}>
+                  <span
+                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-0.5 ${getStatusBadge(
+                      selectedContract.status
+                    )}`}
+                  >
                     {selectedContract.status}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-[10px] uppercase font-bold block">Contract Value</span>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold block">
+                    Contract Value
+                  </span>
                   <span className="font-bold text-slate-800">
-                    {selectedContract.value > 0 ? `${selectedContract.currency} ${selectedContract.value.toLocaleString()}` : 'Included'}
+                    {selectedContract.value > 0
+                      ? `${selectedContract.currency} ${selectedContract.value.toLocaleString()}`
+                      : 'Included'}
                   </span>
                 </div>
               </div>
@@ -458,22 +834,34 @@ export const ContractsPage: React.FC = () => {
                 <div className="flex items-center justify-between text-slate-700 bg-slate-50 p-2.5 rounded-xl">
                   <div>
                     <span className="text-slate-400 text-[10px] block">Start Date</span>
-                    <span className="font-semibold">{new Date(selectedContract.startDate).toLocaleDateString()}</span>
+                    <span className="font-semibold">
+                      {new Date(selectedContract.startDate).toLocaleDateString()}
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] block">End Date</span>
-                    <span className="font-semibold">{selectedContract.endDate ? new Date(selectedContract.endDate).toLocaleDateString() : 'Perpetual'}</span>
+                    <span className="font-semibold">
+                      {selectedContract.endDate
+                        ? new Date(selectedContract.endDate).toLocaleDateString()
+                        : 'Perpetual'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] block">Renewal</span>
-                    <span className="font-semibold">{selectedContract.renewalDate ? new Date(selectedContract.renewalDate).toLocaleDateString() : 'None'}</span>
+                    <span className="font-semibold">
+                      {selectedContract.renewalDate
+                        ? new Date(selectedContract.renewalDate).toLocaleDateString()
+                        : 'None'}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {selectedContract.notes && (
                 <div className="space-y-1">
-                  <span className="text-slate-400 text-[10px] uppercase font-bold block">Coverage &amp; SLA Notes</span>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold block">
+                    Coverage &amp; SLA Notes
+                  </span>
                   <p className="text-slate-700 bg-slate-50 p-3 rounded-xl leading-relaxed whitespace-pre-line">
                     {selectedContract.notes}
                   </p>
@@ -517,7 +905,9 @@ export const ContractsPage: React.FC = () => {
 
             <form onSubmit={handleCreateSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-700 font-bold mb-1">Contract / Agreement Title *</label>
+                <label className="block text-slate-700 font-bold mb-1">
+                  Contract / Agreement Title *
+                </label>
                 <input
                   type="text"
                   required
@@ -530,7 +920,9 @@ export const ContractsPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Vendor / Provider *</label>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Vendor / Provider *
+                  </label>
                   <input
                     type="text"
                     required
@@ -542,7 +934,9 @@ export const ContractsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Vendor Contact Email</label>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Vendor Contact Email
+                  </label>
                   <input
                     type="email"
                     placeholder="support@vendor.com"
@@ -562,7 +956,9 @@ export const ContractsPage: React.FC = () => {
                     className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#C96F55] cursor-pointer"
                   >
                     {CONTRACT_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -575,7 +971,9 @@ export const ContractsPage: React.FC = () => {
                     className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#C96F55] cursor-pointer"
                   >
                     {CONTRACT_STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -644,7 +1042,9 @@ export const ContractsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-bold mb-1">SLA Target &amp; Coverage Notes</label>
+                <label className="block text-slate-700 font-bold mb-1">
+                  SLA Target &amp; Coverage Notes
+                </label>
                 <textarea
                   rows={3}
                   placeholder="Detail 4-hour response SLAs, warranty numbers, serial scopes, or renewal contacts..."

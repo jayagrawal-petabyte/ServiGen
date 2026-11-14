@@ -1,24 +1,25 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Laptop,
-  HelpCircle,
-  FileText,
   Clock,
-  CheckCircle,
   AlertTriangle,
   ArrowRight,
-  PlusCircle,
-  MessageSquare,
   Sparkles,
+  Home,
+  BookOpen,
+  Plus,
+  ThumbsUp,
+  X,
+  FileText,
+  CheckCircle,
   ExternalLink,
-  ChevronRight,
-  ShieldCheck,
-  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../Auth/AuthContext';
-import { api } from '../../services/apiClient';
+import { Button } from '../../components/shared/Button';
+import { StatusBadge } from '../../components/shared/StatusBadge';
+import { BrandLogo } from '../../components/shared/BrandLogo';
 import './EndUserPortal.css';
 
 interface PortalTicket {
@@ -116,13 +117,27 @@ const POPULAR_FAQS: FaqArticle[] = [
 
 export const EndUserPortal: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'home' | 'tickets' | 'kb'>('home');
   const [selectedArticle, setSelectedArticle] = useState<FaqArticle | null>(null);
   const [myTickets, setMyTickets] = useState<PortalTicket[]>(DEFAULT_USER_TICKETS);
   const [selectedTicket, setSelectedTicket] = useState<PortalTicket | null>(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const isAgentUser = user?.role !== 'End User';
+  const isAdminUser = user?.role === 'Administrator' || user?.role === 'System Manager';
+
+  const initials = user?.fullName
+    ? user.fullName
+        .split(' ')
+        .filter(Boolean)
+        .map((p) => p[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'SU';
 
   // New Ticket Quick Form State
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
@@ -133,7 +148,7 @@ export const EndUserPortal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portalNotice, setPortalNotice] = useState<string | null>(null);
 
-  // Filtered knowledge articles
+  // Filtered knowledge articles based on search query
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return POPULAR_FAQS;
     const q = searchQuery.toLowerCase();
@@ -144,6 +159,10 @@ export const EndUserPortal: React.FC = () => {
         a.category.toLowerCase().includes(q)
     );
   }, [searchQuery]);
+
+  const activeTicketsCount = useMemo(() => {
+    return myTickets.filter((t) => t.status !== 'Resolved' && t.status !== 'Closed').length;
+  }, [myTickets]);
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,27 +197,225 @@ export const EndUserPortal: React.FC = () => {
     <div className="portal-canvas">
       {/* Top Banner Notice */}
       {portalNotice && (
-        <div className="portal-toast-banner">
-          ✓ {portalNotice}
+        <div className="portal-toast-banner" role="status">
+          <span>✓ {portalNotice}</span>
         </div>
       )}
 
-      {/* Hero Header */}
-      <section className="portal-hero">
-        <div className="portal-hero-container">
-          <div className="portal-user-badge">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>IT Self-Service Portal · Logged in as <strong>{user?.fullName || user?.firstName || 'Sam User'}</strong></span>
+      {/* ── Top Navigation Bar (Integrated Brand Navigation) ── */}
+      <header className="portal-top-bar">
+        <div className="portal-top-container">
+          {/* Brand & Portal Identity */}
+          <div className="flex items-center gap-3 shrink-0">
+            <BrandLogo size={28} />
+            <div className="flex items-baseline gap-2">
+              <span className="font-extrabold text-sm text-slate-900 tracking-tight">ServiGen</span>
+              <span className="text-[11px] font-semibold text-slate-500 hidden sm:inline">
+                Self-Service Portal
+              </span>
+            </div>
           </div>
 
-          <h1 className="portal-hero-title">
-            How can IT Support help you today?
+          {/* Central Navigation Tabs */}
+          <nav className="portal-tabs" aria-label="Portal Navigation">
+            <button
+              type="button"
+              onClick={() => setActiveTab('home')}
+              className={`portal-tab-btn ${activeTab === 'home' ? 'active' : ''}`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Self-Service Hub</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('tickets')}
+              className={`portal-tab-btn ${activeTab === 'tickets' ? 'active' : ''}`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>My Support Tickets</span>
+              <span className="portal-count-badge">{myTickets.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('kb')}
+              className={`portal-tab-btn ${activeTab === 'kb' ? 'active' : ''}`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Knowledge Base &amp; Guides</span>
+            </button>
+          </nav>
+
+          {/* Action Area & Account Controls */}
+          <div className="portal-nav-actions">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowNewTicketModal(true)}
+              icon={<Plus className="w-3.5 h-3.5 shrink-0" />}
+            >
+              Raise IT Ticket
+            </Button>
+
+            {/* Profile & Workspace Return Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen((prev) => !prev)}
+                className="w-8 h-8 rounded-full bg-[#263B5E] hover:bg-[#1d2d48] text-white font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs transition-all cursor-pointer"
+                title={`Signed in as ${user?.fullName || 'User'} (${user?.role || 'End User'})`}
+                aria-label="User Account & Workspaces"
+              >
+                {initials}
+              </button>
+
+              {profileDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute right-0 top-10 z-50 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 text-slate-800 p-3 flex flex-col gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
+                      <span className="text-xs font-bold text-slate-800">My account</span>
+                      <button
+                        type="button"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="text-xs text-slate-400 hover:text-slate-700 font-bold p-1 cursor-pointer"
+                        title="Close"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* User Card */}
+                    <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                      <div className="font-bold text-slate-900 truncate">{user?.fullName || 'Sam User'}</div>
+                      <div className="text-[11px] text-slate-500 truncate">{user?.email || 'sam.user@servigen.io'}</div>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
+                        {user?.role || 'End User'}
+                      </span>
+                    </div>
+
+                    {/* Workspaces */}
+                    <div className="flex flex-col gap-1 pt-1 text-xs">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                        Workspaces
+                      </span>
+
+                      {isAgentUser && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            navigate('/dashboard');
+                          }}
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>📊</span>
+                            <span>Agent Console</span>
+                          </div>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          setActiveTab('home');
+                        }}
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] font-bold cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>🌐</span>
+                          <span>Switch to End-User Portal</span>
+                        </div>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white text-[#C96F55] border border-[#f7c9bc]">
+                          Current
+                        </span>
+                      </button>
+
+                      {isAdminUser && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            navigate('/admin');
+                          }}
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>⚙️</span>
+                            <span>Administration</span>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Account Actions */}
+                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                        Account Actions
+                      </span>
+                      {isAgentUser && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            navigate('/my-work');
+                          }}
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                        >
+                          <span>📋</span>
+                          <span>My Work &amp; Tasks</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          if (logout) logout();
+                          navigate('/auth');
+                        }}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 font-bold transition-colors cursor-pointer text-left"
+                      >
+                        <span>🚪</span>
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content Viewport (Desktop Max 1240px, Centered) ── */}
+      <main className="portal-main-container">
+        {/* Support Introduction Section (Warm light surface, no dark navy hero) */}
+        <section className="portal-intro-section" aria-label="Support Introduction">
+          <div className="portal-user-badge">
+            <span className="portal-status-dot" />
+            <span>
+              IT Self-Service Portal · Logged in as{' '}
+              <strong>{user?.fullName || user?.firstName || 'Sam User'}</strong>
+            </span>
+          </div>
+
+          <h1 className="portal-intro-title">
+            How can we help you today?
           </h1>
-          <p className="portal-hero-subtitle">
-            Search our knowledge base for instant answers, request new hardware and software, or track your existing support tickets.
+          <p className="portal-intro-subtitle">
+            Find answers, request equipment or software, or track your IT support tickets.
           </p>
 
-          {/* Unified Search Input */}
+          {/* Prominent Capsule Knowledge Search */}
           <div className="portal-search-wrapper">
             <Search className="portal-search-icon" />
             <input
@@ -207,232 +424,230 @@ export const EndUserPortal: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search knowledge articles, VPN guides, laptop orders, password reset..."
               className="portal-search-input"
+              aria-label="Search IT knowledge base and guides"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="portal-search-clear">
-                ✕
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="portal-search-clear"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Quick Category Suggestions */}
+          {/* Common Topic Shortcuts */}
           <div className="portal-quick-tags">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Topics:</span>
+            <span className="portal-tags-label">Common Topics:</span>
             {['Password Reset', 'Global VPN', 'Developer Laptop', 'Adobe License', 'Teams Audio'].map((tag) => (
               <button
                 key={tag}
                 type="button"
-                onClick={() => setSearchQuery(tag)}
-                className="portal-tag-pill"
+                onClick={() => setSearchQuery(searchQuery === tag ? '' : tag)}
+                className={`portal-tag-pill ${searchQuery === tag ? 'active' : ''}`}
               >
                 {tag}
               </button>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Navigation Tabs */}
-      <div className="portal-nav-bar">
-        <div className="portal-nav-container">
-          <div className="portal-tabs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('home')}
-              className={`portal-tab-btn ${activeTab === 'home' ? 'active' : ''}`}
-            >
-              <span>🏠 Self-Service Hub</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('tickets')}
-              className={`portal-tab-btn ${activeTab === 'tickets' ? 'active' : ''}`}
-            >
-              <span>🎫 My Support Tickets</span>
-              <span className="portal-count-badge">{myTickets.length}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('kb')}
-              className={`portal-tab-btn ${activeTab === 'kb' ? 'active' : ''}`}
-            >
-              <span>📚 Knowledge Base &amp; Guides</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowNewTicketModal(true)}
-              className="portal-new-ticket-btn"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Raise IT Ticket</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <main className="portal-main-container">
-        {/* TAB 1: Home Hub */}
+        {/* TAB 1: Self-Service Hub */}
         {activeTab === 'home' && (
-          <div className="space-y-8">
-            {/* 3 Core Quick Action Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="portal-hub-flow">
+            {/* 3 Balanced Core Quick Action Cards */}
+            <section className="portal-actions-grid" aria-label="Core Support Actions">
               {/* Card 1: Services Catalogue */}
               <div
                 onClick={() => navigate('/services-catalogue')}
                 className="portal-action-card group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate('/services-catalogue')}
               >
-                <div className="portal-card-icon-wrap bg-orange-100 text-[#C96F55] group-hover:scale-110 transition-transform">
-                  <Laptop className="w-6 h-6" />
+                <div className="portal-card-top">
+                  <div className="portal-card-icon-wrap">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <h3 className="portal-card-title">
+                    Request Equipment &amp; Software
+                  </h3>
+                  <p className="portal-card-desc">
+                    Browse standard laptops, monitors, workspace peripherals, Adobe licenses, and cloud subscriptions.
+                  </p>
                 </div>
-                <h3 className="portal-card-title group-hover:text-[#C96F55] transition-colors">
-                  Request Equipment &amp; Software
-                </h3>
-                <p className="portal-card-desc">
-                  Browse standard laptops, monitors, accessories, Adobe licenses, and cloud IDE subscriptions.
-                </p>
                 <div className="portal-card-footer">
-                  <span className="text-xs font-bold text-[#C96F55] flex items-center gap-1">
-                    Open Service Catalog <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <span className="portal-card-link">
+                    Open Service Catalog{' '}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
               </div>
 
-              {/* Card 2: Report an Incident */}
+              {/* Card 2: Report an Issue */}
               <div
                 onClick={() => setShowNewTicketModal(true)}
                 className="portal-action-card group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setShowNewTicketModal(true)}
               >
-                <div className="portal-card-icon-wrap bg-rose-100 text-rose-600 group-hover:scale-110 transition-transform">
-                  <AlertTriangle className="w-6 h-6" />
+                <div className="portal-card-top">
+                  <div className="portal-card-icon-wrap">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <h3 className="portal-card-title">
+                    Report an Issue or Outage
+                  </h3>
+                  <p className="portal-card-desc">
+                    Experiencing an IT glitch, service disruption, login problem, or hardware fault? Raise an incident.
+                  </p>
                 </div>
-                <h3 className="portal-card-title group-hover:text-rose-600 transition-colors">
-                  Report an Issue or Outage
-                </h3>
-                <p className="portal-card-desc">
-                  Experiencing an IT glitch, login failure, or hardware fault? Raise an incident ticket with our support engineers.
-                </p>
                 <div className="portal-card-footer">
-                  <span className="text-xs font-bold text-rose-600 flex items-center gap-1">
-                    Get Support Help <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <span className="portal-card-link">
+                    Get Support Help{' '}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
               </div>
 
-              {/* Card 3: Track Existing Tickets */}
+              {/* Card 3: Track Open Requests */}
               <div
                 onClick={() => setActiveTab('tickets')}
                 className="portal-action-card group cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('tickets')}
               >
-                <div className="portal-card-icon-wrap bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
-                  <Clock className="w-6 h-6" />
+                <div className="portal-card-top">
+                  <div className="portal-card-icon-wrap">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <h3 className="portal-card-title">
+                    Track My Open Requests
+                  </h3>
+                  <p className="portal-card-desc">
+                    Check live progress, engineer notes, and estimated resolution times ({activeTicketsCount} active).
+                  </p>
                 </div>
-                <h3 className="portal-card-title group-hover:text-blue-600 transition-colors">
-                  Track My Open Requests
-                </h3>
-                <p className="portal-card-desc">
-                  Check live progress, engineer notes, and estimated resolution times for your active tickets ({myTickets.filter(t => t.status !== 'Resolved').length} active).
-                </p>
                 <div className="portal-card-footer">
-                  <span className="text-xs font-bold text-blue-600 flex items-center gap-1">
-                    View My Tickets <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <span className="portal-card-link">
+                    View My Tickets{' '}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
               </div>
-            </div>
+            </section>
 
             {/* Popular Knowledge Base Guides */}
-            <div className="portal-section-box">
+            <section className="portal-section-box" aria-label="Knowledge Base Guides">
               <div className="portal-section-header">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
+                  <h2 className="portal-section-title">
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>Frequently Asked Questions &amp; Self-Service Fixes</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Solve common issues instantly without waiting in queue</p>
+                  <p className="portal-section-subtitle">
+                    Step-by-step resolution guides to solve common IT issues instantly without waiting in queue
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveTab('kb')}
-                  className="text-xs font-bold text-[#C96F55] hover:underline"
+                  className="portal-header-action"
                 >
                   View All Guides →
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="portal-faq-grid">
                 {filteredFaqs.map((faq) => (
                   <div
                     key={faq.id}
                     onClick={() => setSelectedArticle(faq)}
                     className="portal-faq-card group"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedArticle(faq)}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="portal-faq-top">
                       <span className="portal-faq-category">{faq.category}</span>
                       <span className="portal-faq-time">{faq.readTime}</span>
                     </div>
-                    <h4 className="portal-faq-title group-hover:text-[#C96F55] transition-colors">
+                    <h3 className="portal-faq-title">
                       {faq.title}
-                    </h4>
+                    </h3>
                     <p className="portal-faq-snippet">{faq.snippet}</p>
-                    <div className="portal-faq-helpful">
-                      <span>👍 {faq.helpfulCount} colleagues found this helpful</span>
+                    <div className="portal-faq-footer">
+                      <span className="portal-faq-helpful">
+                        <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{faq.helpfulCount} found helpful</span>
+                      </span>
+                      <span className="portal-faq-read-link">
+                        Read Guide →
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
             {/* Recent Ticket Snapshot */}
-            <div className="portal-section-box">
+            <section className="portal-section-box" aria-label="Recent Ticket Activity">
               <div className="portal-section-header">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Your Recent Activity</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Summary of tickets logged under your corporate profile</p>
+                  <h2 className="portal-section-title">Your Recent Activity</h2>
+                  <p className="portal-section-subtitle">
+                    Live status of tickets and service requests logged under your profile
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveTab('tickets')}
-                  className="text-xs font-bold text-slate-600 hover:text-slate-900"
+                  className="portal-header-action"
                 >
                   See Full List ({myTickets.length}) →
                 </button>
               </div>
 
-              <div className="portal-tickets-table-wrapper mt-4">
-                <table className="portal-tickets-table">
+              <div className="portal-table-container">
+                <table className="portal-table">
                   <thead>
                     <tr>
-                      <th>Ticket ID</th>
+                      <th style={{ width: '110px' }}>Ticket ID</th>
                       <th>Summary</th>
-                      <th>Category</th>
-                      <th>Status</th>
-                      <th>Target Resolution</th>
-                      <th>Assigned Agent</th>
+                      <th style={{ width: '160px' }}>Category</th>
+                      <th style={{ width: '120px' }}>Status</th>
+                      <th style={{ width: '160px' }}>Target Resolution</th>
+                      <th style={{ width: '140px' }}>Assigned Agent</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {myTickets.slice(0, 3).map((t) => (
-                      <tr key={t.id} onClick={() => setSelectedTicket(t)} className="cursor-pointer">
-                        <td className="font-bold text-[#C96F55]">{t.id}</td>
-                        <td className="font-medium text-slate-800">{t.summary}</td>
-                        <td className="text-xs text-slate-600">{t.category}</td>
+                    {myTickets.slice(0, 4).map((t) => (
+                      <tr
+                        key={t.id}
+                        onClick={() => setSelectedTicket(t)}
+                        className="cursor-pointer"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setSelectedTicket(t)}
+                      >
+                        <td className="portal-cell-id">{t.id}</td>
+                        <td className="portal-cell-summary">{t.summary}</td>
+                        <td className="portal-cell-category">{t.category}</td>
                         <td>
-                          <span className={`portal-status-pill status-${t.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                            {t.status}
-                          </span>
+                          <StatusBadge status={t.status} size="sm" />
                         </td>
-                        <td className="text-xs text-slate-500">{t.targetResolution}</td>
-                        <td className="text-xs text-slate-700">{t.assignedAgent}</td>
+                        <td className="portal-cell-resolution">{t.targetResolution}</td>
+                        <td className="portal-cell-agent">{t.assignedAgent}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </section>
           </div>
         )}
 
@@ -441,54 +656,60 @@ export const EndUserPortal: React.FC = () => {
           <div className="portal-section-box">
             <div className="portal-section-header">
               <div>
-                <h2 className="text-base font-bold text-slate-900">My Support Tickets</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Complete history of IT requests, incidents, and approvals</p>
+                <h2 className="portal-section-title">My Support Tickets</h2>
+                <p className="portal-section-subtitle">
+                  Complete history of your logged IT requests, incidents, and approvals
+                </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setShowNewTicketModal(true)}
-                className="portal-new-ticket-btn"
+                icon={<Plus className="w-3.5 h-3.5 shrink-0" />}
               >
-                <PlusCircle className="w-4 h-4" />
-                <span>+ New Request</span>
-              </button>
+                New Request
+              </Button>
             </div>
 
-            <div className="portal-tickets-table-wrapper mt-4">
-              <table className="portal-tickets-table">
+            <div className="portal-table-container">
+              <table className="portal-table">
                 <thead>
                   <tr>
-                    <th>Ticket ID</th>
+                    <th style={{ width: '110px' }}>Ticket ID</th>
                     <th>Summary</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Logged Date</th>
-                    <th>Target SLA</th>
-                    <th>Assigned Agent</th>
+                    <th style={{ width: '150px' }}>Category</th>
+                    <th style={{ width: '90px' }}>Priority</th>
+                    <th style={{ width: '120px' }}>Status</th>
+                    <th style={{ width: '110px' }}>Logged Date</th>
+                    <th style={{ width: '160px' }}>Target SLA</th>
+                    <th style={{ width: '140px' }}>Assigned Agent</th>
                   </tr>
                 </thead>
                 <tbody>
                   {myTickets.map((t) => (
-                    <tr key={t.id} onClick={() => setSelectedTicket(t)} className="cursor-pointer">
-                      <td className="font-bold text-[#C96F55]">{t.id}</td>
-                      <td className="font-semibold text-slate-800">{t.summary}</td>
-                      <td className="text-xs text-slate-600">{t.category}</td>
+                    <tr
+                      key={t.id}
+                      onClick={() => setSelectedTicket(t)}
+                      className="cursor-pointer"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && setSelectedTicket(t)}
+                    >
+                      <td className="portal-cell-id">{t.id}</td>
+                      <td className="portal-cell-summary">{t.summary}</td>
+                      <td className="portal-cell-category">{t.category}</td>
                       <td>
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          t.priority === 'High' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
-                        }`}>
+                        <span
+                          className={`portal-priority-badge priority-${t.priority.toLowerCase()}`}
+                        >
                           {t.priority}
                         </span>
                       </td>
                       <td>
-                        <span className={`portal-status-pill status-${t.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {t.status}
-                        </span>
+                        <StatusBadge status={t.status} size="sm" />
                       </td>
-                      <td className="text-xs text-slate-500">{t.createdAt}</td>
-                      <td className="text-xs font-mono text-slate-600">{t.targetResolution}</td>
-                      <td className="text-xs text-slate-700 font-medium">{t.assignedAgent}</td>
+                      <td className="portal-cell-date">{t.createdAt}</td>
+                      <td className="portal-cell-resolution">{t.targetResolution}</td>
+                      <td className="portal-cell-agent">{t.assignedAgent}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -502,28 +723,48 @@ export const EndUserPortal: React.FC = () => {
           <div className="portal-section-box">
             <div className="portal-section-header">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Knowledge Base &amp; IT Help Articles</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Official step-by-step resolution guides authored by engineering</p>
+                <h2 className="portal-section-title">Knowledge Base &amp; IT Help Articles</h2>
+                <p className="portal-section-subtitle">
+                  Official step-by-step resolution guides authored by engineering ({filteredFaqs.length} articles)
+                </p>
               </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="portal-header-action"
+                >
+                  Clear Search Filter
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="portal-faq-grid">
               {filteredFaqs.map((faq) => (
                 <div
                   key={faq.id}
                   onClick={() => setSelectedArticle(faq)}
                   className="portal-faq-card group"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelectedArticle(faq)}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="portal-faq-top">
                     <span className="portal-faq-category">{faq.category}</span>
                     <span className="portal-faq-time">{faq.readTime}</span>
                   </div>
-                  <h4 className="portal-faq-title group-hover:text-[#C96F55] transition-colors">
+                  <h3 className="portal-faq-title">
                     {faq.title}
-                  </h4>
+                  </h3>
                   <p className="portal-faq-snippet">{faq.snippet}</p>
-                  <div className="portal-faq-helpful">
-                    <span>👍 {faq.helpfulCount} colleagues found this helpful</span>
+                  <div className="portal-faq-footer">
+                    <span className="portal-faq-helpful">
+                      <ThumbsUp className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{faq.helpfulCount} colleagues found this helpful</span>
+                    </span>
+                    <span className="portal-faq-read-link">
+                      Read Guide →
+                    </span>
                   </div>
                 </div>
               ))}
@@ -539,20 +780,27 @@ export const EndUserPortal: React.FC = () => {
             <div className="portal-modal-header">
               <div>
                 <span className="portal-faq-category">{selectedArticle.category}</span>
-                <h3 className="text-base font-bold text-slate-900 mt-1">{selectedArticle.title}</h3>
-                <span className="text-xs text-slate-400">{selectedArticle.readTime} · Last updated Oct 2026</span>
+                <h3 className="portal-modal-title">{selectedArticle.title}</h3>
+                <span className="portal-modal-meta">{selectedArticle.readTime} · Last updated November 2026</span>
               </div>
-              <button onClick={() => setSelectedArticle(null)} className="portal-modal-close">✕</button>
+              <button
+                type="button"
+                onClick={() => setSelectedArticle(null)}
+                className="portal-modal-close"
+                aria-label="Close guide modal"
+              >
+                ✕
+              </button>
             </div>
             <div className="portal-modal-body">
-              <div className="whitespace-pre-line text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="portal-article-content">
                 {selectedArticle.content}
               </div>
 
-              {/* Deflection Feedback */}
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl mt-4 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-700">Did this article answer your question?</span>
-                <div className="flex items-center gap-2">
+              {/* Deflection / Helpfulness Feedback */}
+              <div className="portal-feedback-box">
+                <span className="portal-feedback-prompt">Did this article answer your question?</span>
+                <div className="portal-feedback-buttons">
                   <button
                     type="button"
                     onClick={() => {
@@ -560,9 +808,9 @@ export const EndUserPortal: React.FC = () => {
                       setSelectedArticle(null);
                       setTimeout(() => setPortalNotice(null), 4000);
                     }}
-                    className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
+                    className="portal-feedback-yes"
                   >
-                    ✓ Yes, it resolved my issue
+                    ✓ Yes, resolved my issue
                   </button>
                   <button
                     type="button"
@@ -570,7 +818,7 @@ export const EndUserPortal: React.FC = () => {
                       setSelectedArticle(null);
                       setShowNewTicketModal(true);
                     }}
-                    className="px-3 py-1 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors"
+                    className="portal-feedback-no"
                   >
                     No, I need support help
                   </button>
@@ -587,59 +835,84 @@ export const EndUserPortal: React.FC = () => {
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
               <div>
-                <span className="text-xs font-mono font-bold text-[#C96F55]">{selectedTicket.id}</span>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">{selectedTicket.summary}</h3>
+                <span className="portal-modal-tag">{selectedTicket.id}</span>
+                <h3 className="portal-modal-title">{selectedTicket.summary}</h3>
               </div>
-              <button onClick={() => setSelectedTicket(null)} className="portal-modal-close">✕</button>
+              <button
+                type="button"
+                onClick={() => setSelectedTicket(null)}
+                className="portal-modal-close"
+                aria-label="Close ticket view modal"
+              >
+                ✕
+              </button>
             </div>
             <div className="portal-modal-body space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div className="portal-detail-grid">
                 <div>
-                  <span className="text-slate-400 block">Status:</span>
-                  <span className="font-bold text-slate-800">{selectedTicket.status}</span>
+                  <span className="portal-detail-label">Status:</span>
+                  <div className="mt-1">
+                    <StatusBadge status={selectedTicket.status} size="sm" />
+                  </div>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Category:</span>
-                  <span className="font-bold text-slate-800">{selectedTicket.category}</span>
+                  <span className="portal-detail-label">Category:</span>
+                  <span className="portal-detail-value">{selectedTicket.category}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Assigned Agent:</span>
-                  <span className="font-bold text-slate-800">{selectedTicket.assignedAgent}</span>
+                  <span className="portal-detail-label">Assigned Agent:</span>
+                  <span className="portal-detail-value">{selectedTicket.assignedAgent}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Estimated Resolution:</span>
-                  <span className="font-bold text-emerald-600">{selectedTicket.targetResolution}</span>
+                  <span className="portal-detail-label">Estimated SLA:</span>
+                  <span className="portal-detail-value font-mono text-emerald-600">
+                    {selectedTicket.targetResolution}
+                  </span>
                 </div>
               </div>
 
               {/* Progress Timeline */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-700">Ticket Activity &amp; Status Path:</span>
-                <div className="border-l-2 border-orange-300 pl-3 space-y-3 text-xs">
-                  <div>
-                    <span className="font-bold text-slate-800 block">Ticket Created</span>
-                    <span className="text-[11px] text-slate-400">Logged on {selectedTicket.createdAt} by {user?.fullName || user?.firstName || 'Sam User'}</span>
+              <div className="portal-timeline-section">
+                <span className="portal-timeline-title">Ticket Activity &amp; Status Path:</span>
+                <div className="portal-timeline">
+                  <div className="portal-timeline-item">
+                    <span className="portal-timeline-point active" />
+                    <div>
+                      <span className="portal-timeline-heading">Ticket Logged</span>
+                      <span className="portal-timeline-desc">
+                        Logged on {selectedTicket.createdAt} by {user?.fullName || user?.firstName || 'Sam User'}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-bold text-slate-800 block">Assigned to Engineer</span>
-                    <span className="text-[11px] text-slate-400">Triage complete; assigned to {selectedTicket.assignedAgent}</span>
+                  <div className="portal-timeline-item">
+                    <span className="portal-timeline-point active" />
+                    <div>
+                      <span className="portal-timeline-heading">Assigned to Engineer</span>
+                      <span className="portal-timeline-desc">
+                        Triage complete; assigned to {selectedTicket.assignedAgent}
+                      </span>
+                    </div>
                   </div>
                   {selectedTicket.status === 'Resolved' && (
-                    <div>
-                      <span className="font-bold text-emerald-600 block">Resolved ✓</span>
-                      <span className="text-[11px] text-slate-400">Resolution verified per SLA standards</span>
+                    <div className="portal-timeline-item">
+                      <span className="portal-timeline-point success" />
+                      <div>
+                        <span className="portal-timeline-heading text-emerald-600">Resolved ✓</span>
+                        <span className="portal-timeline-desc">Resolution verified per SLA standards</span>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
             <div className="portal-modal-footer">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setSelectedTicket(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors"
               >
                 Close Ticket View
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -650,35 +923,45 @@ export const EndUserPortal: React.FC = () => {
         <div className="portal-modal-backdrop" onClick={() => setShowNewTicketModal(false)}>
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-orange-100 text-[#C96F55] rounded-lg">
-                  <PlusCircle className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-xl">
+                  <Plus className="w-4 h-4" />
                 </span>
-                <h3 className="text-base font-bold text-slate-900">Raise IT Support Request</h3>
+                <div>
+                  <h3 className="portal-modal-title">Raise IT Support Request</h3>
+                  <span className="portal-modal-meta">Our triage team will review and respond promptly</span>
+                </div>
               </div>
-              <button onClick={() => setShowNewTicketModal(false)} className="portal-modal-close">✕</button>
+              <button
+                type="button"
+                onClick={() => setShowNewTicketModal(false)}
+                className="portal-modal-close"
+                aria-label="Close request modal"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleCreateTicket} className="portal-modal-body space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Issue Subject / Request Title *</label>
+                <label className="portal-form-label">Issue Subject / Request Title *</label>
                 <input
                   type="text"
                   value={ticketTitle}
                   onChange={(e) => setTicketTitle(e.target.value)}
                   placeholder="e.g. Cannot connect to corporate VPN after password update"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#C96F55] font-medium"
+                  className="portal-form-input"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                  <label className="portal-form-label">Category</label>
                   <select
                     value={ticketCategory}
                     onChange={(e) => setTicketCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
+                    className="portal-form-select"
                   >
                     <option value="General Support">General Support</option>
                     <option value="Hardware Request">Hardware Request</option>
@@ -689,11 +972,11 @@ export const EndUserPortal: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Urgency</label>
+                  <label className="portal-form-label">Urgency</label>
                   <select
                     value={ticketPriority}
                     onChange={(e) => setTicketPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C96F55]"
+                    className="portal-form-select"
                   >
                     <option value="Low">Low (General Inquiry)</option>
                     <option value="Medium">Medium (Standard Work Impact)</option>
@@ -703,32 +986,35 @@ export const EndUserPortal: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Detailed Description *</label>
+                <label className="portal-form-label">Detailed Description *</label>
                 <textarea
                   rows={4}
                   value={ticketDescription}
                   onChange={(e) => setTicketDescription(e.target.value)}
-                  placeholder="Please describe the symptoms, error messages, and steps already tried..."
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#C96F55] text-slate-800"
+                  placeholder="Please describe symptoms, error messages, and steps already attempted..."
+                  className="portal-form-textarea"
                   required
                 />
               </div>
 
               <div className="portal-modal-footer">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowNewTicketModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={isSubmitting || !ticketTitle.trim() || !ticketDescription.trim()}
-                  className="px-5 py-2 bg-[#C96F55] hover:bg-[#b55f46] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+                  isLoading={isSubmitting}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Support Request'}
-                </button>
+                  Submit Support Request
+                </Button>
               </div>
             </form>
           </div>

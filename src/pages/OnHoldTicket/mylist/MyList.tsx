@@ -157,7 +157,7 @@ const MyList: React.FC<MyListProps> = ({
         <input
           type="text"
           className="search-input"
-          placeholder="Search Tickets..."
+          placeholder="Search ticket records..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />

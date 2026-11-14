@@ -632,7 +632,7 @@ export default function ProjectsPage() {
         <div className="pj-search">
           <input
             ref={searchRef}
-            placeholder="Search Projects...."
+            placeholder="Search project records..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

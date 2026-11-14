@@ -13,7 +13,7 @@ import {
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 import { StatusPill } from "../../components/shared/StatusBadge";
-import { SegmentedTabs, FilterToolbar } from "../../components/shared";
+import { SegmentedTabs, FilterToolbar, SearchInput } from "../../components/shared";
 
 export type Ticket = MyWorkTicket;
 
@@ -529,32 +529,45 @@ export default function MyWork() {
       <div className="flex flex-1 min-h-0 w-full">
         {/* Left Sidebar Panel */}
         <aside
-          className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-[#FDE9E1] border border-[#ebdcd3] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] my-3 ml-3 overflow-hidden ${
+          className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] my-3 ml-3 overflow-hidden ${
             isSidebarCollapsed ? "w-16 px-2" : "w-[250px] px-4"
           }`}
         >
           {/* Sidebar Header with Collapse Toggle */}
           <div
             className={
-              "flex items-center mb-4 pb-3 border-b border-[#ebdcd3] " +
+              "flex items-center mb-4 pb-3 border-b border-slate-100 " +
               (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
             }
           >
             {!isSidebarCollapsed && (
-              <span className="text-xs font-bold uppercase tracking-wider text-[#332B28]">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Views
               </span>
             )}
             <button
               type="button"
               onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              className="inline-flex items-center justify-center rounded-md p-1.5 text-[#332B28] hover:bg-black/5 transition-colors text-xs font-bold cursor-pointer"
+              className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs font-bold cursor-pointer"
               title={isSidebarCollapsed ? "Expand sidebar (>>)" : "Collapse sidebar (<<)"}
               aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isSidebarCollapsed ? ">>" : "<<"}
             </button>
           </div>
+
+          {/* Sidebar Record Search */}
+          {!isSidebarCollapsed && (
+            <div className="mb-3 px-1">
+              <SearchInput
+                size="sm"
+                value={query}
+                onChange={setQuery}
+                placeholder="Search my work tickets..."
+                className="bg-white"
+              />
+            </div>
+          )}
 
           {/* View Options List */}
           <nav className="flex flex-col gap-1.5" aria-label="Views">
@@ -573,11 +586,11 @@ export default function MyWork() {
                       ? "justify-center w-10 h-10 mx-auto p-0 rounded-full "
                       : "w-full gap-3 px-3 py-2.5 rounded-full ") +
                     (isActive
-                      ? "bg-[#C96F55] text-white font-bold shadow-sm"
-                      : "text-[#332B28] hover:bg-black/5 font-medium")
+                      ? "bg-[#C96F55] text-white font-bold shadow-xs"
+                      : "text-slate-700 hover:bg-slate-100/80 font-medium")
                   }
                 >
-                  <div className={`shrink-0 ${isActive ? "text-white" : "text-[#332B28]"}`}>
+                  <div className={`shrink-0 ${isActive ? "text-white" : "text-slate-500"}`}>
                     {item.icon(isActive)}
                   </div>
                   {!isSidebarCollapsed && (
@@ -623,9 +636,6 @@ export default function MyWork() {
 
             <FilterToolbar
               className="mb-4"
-              search={query}
-              onSearchChange={setQuery}
-              searchPlaceholder="Search by ticket ID, organisation, or summary"
               filters={
                 <select
                   value={priorityFilter}
