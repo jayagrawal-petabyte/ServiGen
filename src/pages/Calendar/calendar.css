@@ -1,5 +1,4 @@
-/* Calendar page – peach / navy theme. Everything is scoped under .calendar-page
-   so it does not leak into other teams' pages. */
+
 
 .calendar-page {
   --cal-bg: #fff7f3;
@@ -42,7 +41,7 @@
   cursor: pointer;
 }
 
-/* ---------- left panel ---------- */
+
 
 .cal-side {
   width: 250px;
@@ -248,6 +247,9 @@
 .cal-dot.big {
   width: 16px;
   height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cal-avatar {
@@ -262,7 +264,7 @@
   flex-shrink: 0;
 }
 
-/* ---------- toolbar ---------- */
+
 
 .cal-main {
   flex: 1;
@@ -976,7 +978,7 @@
   background: #fde8e8;
 }
 
-/* ---------- responsive ---------- */
+
 
 @media (max-width: 1000px) {
   .calendar-page {
