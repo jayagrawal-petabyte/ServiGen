@@ -46,11 +46,11 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl border border-slate-200 w-[95vw] max-w-2xl max-h-[90vh] z-50 flex flex-col overflow-hidden animate-in zoom-in-95">
+        <Dialog.Content className="fixed inset-0 m-auto bg-white rounded-2xl shadow-2xl border border-[#ebdcd3] w-[95vw] max-w-2xl h-fit max-h-[90vh] z-50 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-[#FAF7F5] px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg">
+              <span className="p-1.5 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-lg">
                 <Sliders className="w-4 h-4" />
               </span>
               <div>
@@ -80,7 +80,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Critical Incidents Breaching SLA by Region"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
                 required
               />
             </div>
@@ -93,7 +93,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={entity}
                   onChange={(e) => setEntity(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
                 >
                   <option value="incidents">Tickets &amp; Incidents</option>
                   <option value="requests">Service Requests &amp; Orders</option>
@@ -109,7 +109,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={metric}
                   onChange={(e) => setMetric(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
                 >
                   <option value="count">Record Volume Count (Total #)</option>
                   <option value="slaMet">SLA Resolution Met Percentage (%)</option>
@@ -124,7 +124,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
                 >
                   <option value="category">Category (Service Taxonomy)</option>
                   <option value="priority">Priority (Critical, High, Medium, Low)</option>
@@ -140,7 +140,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
+                  className="w-full px-3 py-2 border border-[#ebdcd3] rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#eb6a47] font-medium"
                 >
                   <option value="today">Today (Last 24 Hours)</option>
                   <option value="7days">Last 7 Days</option>
@@ -166,7 +166,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                     onClick={() => setChartType(mode.id as any)}
                     className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                       chartType === mode.id
-                        ? 'border-[#eb6a47] bg-orange-50/50 text-[#eb6a47] font-bold shadow-xs'
+                        ? 'border-[#C96F55] bg-[#F7C4B3]/20 text-[#C96F55] font-bold shadow-xs'
                         : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600'
                     }`}
                   >
@@ -195,7 +195,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-[#332B28] hover:bg-[#FFF9F5] border border-[#ebdcd3] rounded-full cursor-pointer transition-colors"
               >
                 Cancel
               </button>

@@ -66,12 +66,12 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FAF7F5] rounded-2xl shadow-2xl border border-slate-200 w-[95vw] max-w-4xl max-h-[88vh] z-50 flex flex-col overflow-hidden animate-in zoom-in-95">
+        <Dialog.Content className="fixed inset-0 m-auto bg-[#FFF9F5] rounded-2xl shadow-2xl border border-[#ebdcd3] w-[95vw] max-w-4xl h-fit max-h-[88vh] z-50 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <div className="bg-white px-6 py-4 border-b border-[#ebdcd3] flex items-center justify-between shrink-0">
             <div>
               <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-orange-100 text-[#eb6a47] rounded-lg">
+                <span className="p-1.5 bg-[#FFF9F5] text-[#C96F55] border border-[#ebdcd3] rounded-lg">
                   <Sparkles className="w-4 h-4" />
                 </span>
                 <Dialog.Title className="text-base font-bold text-slate-900">
@@ -94,7 +94,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
           </div>
 
           {/* Search & Category Filter Bar */}
-          <div className="bg-white px-6 py-3 border-b border-slate-200 shrink-0 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div className="bg-white px-6 py-3 border-b border-[#ebdcd3] shrink-0 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -103,7 +103,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search report titles, descriptions, metrics..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#eb6a47] focus:bg-white text-slate-800"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-[#ebdcd3] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#eb6a47] focus:bg-white text-slate-800"
               />
               {searchQuery && (
                 <button
@@ -122,7 +122,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
           </div>
 
           {/* Category Pills Bar */}
-          <div className="px-6 py-2.5 bg-slate-100/70 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto shrink-0">
+          <div className="px-6 py-2.5 bg-slate-100/70 border-b border-[#ebdcd3] flex items-center gap-1.5 overflow-x-auto shrink-0">
             {[
               { id: 'all', label: 'All Reports' },
               { id: 'incidents', label: 'Incidents' },
@@ -140,8 +140,8 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                   onClick={() => setSelectedCategory(tab.id as CategoryTab)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#eb6a47] text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-200/80 border border-slate-200/60'
+                      ? 'bg-[#C96F55] text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200/80 border border-[#ebdcd3]/60'
                   }`}
                 >
                   <span>{tab.label}</span>
@@ -172,7 +172,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                   <div
                     key={report.id}
                     className={`bg-white rounded-xl border p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-slate-300 ${
-                      isActive ? 'border-[#eb6a47] ring-1 ring-[#eb6a47]/30 bg-orange-50/20' : 'border-slate-200'
+                      isActive ? 'border-[#C96F55] ring-1 ring-[#C96F55]/30 bg-[#F7C4B3]/20' : 'border-[#ebdcd3]'
                     }`}
                   >
                     <div>
@@ -195,7 +195,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                       </div>
 
                       {/* Title & Description */}
-                      <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#eb6a47] transition-colors">
+                      <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#C96F55] transition-colors">
                         {report.title}
                       </h3>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
@@ -220,7 +220,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                           onSelectReport(report);
                           onClose();
                         }}
-                        className="px-3 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                        className="px-3 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                       >
                         <span>▶ Run Report</span>
                         <ArrowRight className="w-3 h-3" />
@@ -233,7 +233,7 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
           </div>
 
           {/* Modal Footer */}
-          <div className="bg-white px-6 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+          <div className="bg-white px-6 py-3 border-t border-[#ebdcd3] flex items-center justify-between text-xs text-slate-500 shrink-0">
             <span>
               💡 <em>Select any report to load its live dataset, KPI cards, and exportable grid.</em>
             </span>

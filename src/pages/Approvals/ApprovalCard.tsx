@@ -254,7 +254,7 @@ export default function ApprovalCard({
           <Dialog.Root open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-              <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-full max-w-md z-50 flex flex-col gap-3.5 animate-in zoom-in-95">
+              <Dialog.Content className="fixed inset-0 m-auto bg-white rounded-2xl shadow-2xl border border-[#ebdcd3] p-6 w-full max-w-md h-fit max-h-[90vh] z-50 flex flex-col gap-3.5 overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <Dialog.Title className="text-base font-bold text-rose-700 flex items-center gap-2">
                     <span>⚠️ Reject Approval Request</span>

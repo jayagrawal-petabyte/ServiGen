@@ -612,7 +612,7 @@ export default function IncidentsByCategoryReport() {
           {/* Primary Action 1: Pre-Built Report Catalog (24 Templates) */}
           <button
             type="button"
-            className="px-3.5 py-1.5 bg-[#eb6a47] hover:bg-[#db5936] text-white text-xs font-bold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
             onClick={() => setIsCatalogOpen(true)}
             title="Browse all 24 standardized ITIL pre-built report templates"
           >
@@ -623,17 +623,17 @@ export default function IncidentsByCategoryReport() {
           {/* Primary Action 2: No-Code Query Builder */}
           <button
             type="button"
-            className="px-3 py-1.5 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            className="px-3.5 py-1.5 bg-[#FFF9F5] border border-[#ebdcd3] hover:bg-[#F7C4B3]/20 text-[#332B28] text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
             onClick={() => setIsQueryBuilderOpen(true)}
             title="Design custom cross-cutting ad-hoc report using no-code builder"
           >
-            <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+            <Sliders className="w-3.5 h-3.5 text-[#C96F55]" />
             <span>Custom Query Builder</span>
           </button>
 
           <button
             type="button"
-            className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
             onClick={handleExportCSV}
             title="Download report data as CSV file"
           >
@@ -643,7 +643,7 @@ export default function IncidentsByCategoryReport() {
 
           <button
             type="button"
-            className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+            className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
             onClick={() => setIsScheduleOpen(true)}
             title="Automate recurring report generation"
           >
@@ -655,7 +655,7 @@ export default function IncidentsByCategoryReport() {
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+                className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
                 title="Customize table column display"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
@@ -700,14 +700,14 @@ export default function IncidentsByCategoryReport() {
 
         {/* ── Report Catalog Switcher Tabs ── */}
         <div className="mb-5 overflow-x-auto pb-1">
-          <div className="inline-flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-lg shadow-2xs flex-nowrap min-w-max">
+          <div className="inline-flex items-center gap-1 p-1 bg-white border border-[#ebdcd3] rounded-full shadow-2xs flex-nowrap min-w-max">
             <button
               type="button"
               onClick={() => setActiveReport('category')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'category'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" />
@@ -718,8 +718,8 @@ export default function IncidentsByCategoryReport() {
               onClick={() => setActiveReport('sla')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'sla'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -730,8 +730,8 @@ export default function IncidentsByCategoryReport() {
               onClick={() => setActiveReport('agents')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'agents'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -742,8 +742,8 @@ export default function IncidentsByCategoryReport() {
               onClick={() => setActiveReport('fcr')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'fcr'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -754,8 +754,8 @@ export default function IncidentsByCategoryReport() {
               onClick={() => setActiveReport('changes')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'changes'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <ShieldAlert className="w-3.5 h-3.5" />
@@ -766,8 +766,8 @@ export default function IncidentsByCategoryReport() {
               onClick={() => setActiveReport('assets')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'assets'
-                  ? 'bg-[#eb6a47] text-white shadow-xs font-bold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
+                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
               }`}
             >
               <Database className="w-3.5 h-3.5" />
@@ -779,8 +779,8 @@ export default function IncidentsByCategoryReport() {
                 onClick={() => setActiveReport('custom')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                   activeReport === 'custom'
-                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
-                    : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
+                    ? 'bg-[#263B5E] text-white shadow-xs font-bold rounded-full'
+                    : 'text-[#263B5E] hover:bg-[#FFF9F5] border border-[#263B5E]/30 rounded-full'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -986,7 +986,7 @@ export default function IncidentsByCategoryReport() {
             </span>
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-[#eb6a47] hover:bg-[#eb6a47]/10 rounded-lg border border-[#eb6a47]/30 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-[#C96F55] hover:bg-[#C96F55]/10 rounded-full border border-[#C96F55]/30 transition-all cursor-pointer"
               onClick={handleAddFilterRow}
               title="Add another filter condition"
             >
@@ -1150,7 +1150,7 @@ export default function IncidentsByCategoryReport() {
         <div className="report-table-action-bar">
           <button
             type="button"
-            className="px-4 py-2 bg-[#eb6a47] hover:bg-[#d65a37] text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
+            className="px-4 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
             onClick={() => {
               setIsRefreshing(true);
               setStatusMessage('Refreshed report data with latest metrics');
@@ -1773,9 +1773,9 @@ export default function IncidentsByCategoryReport() {
         {activeReport === 'custom' && customQueryConfig && (
           <div className="flex flex-col gap-5">
             {/* Custom Query Header Banner */}
-            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-4 bg-[#FFF9F5] border border-[#ebdcd3] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">Active Custom Query</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#263B5E] block">Active Custom Query</span>
                 <h3 className="font-bold text-sm text-slate-900 mt-0.5">{customQueryConfig.title}</h3>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Entity: <strong>{customQueryConfig.entity}</strong> · Metric: <strong>{customQueryConfig.metric}</strong> · Grouped by: <strong>{customQueryConfig.groupBy}</strong> · Window: <strong>{customQueryConfig.timeRange}</strong>
@@ -1784,7 +1784,7 @@ export default function IncidentsByCategoryReport() {
               <button
                 type="button"
                 onClick={() => setIsQueryBuilderOpen(true)}
-                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer transition-all self-start sm:self-center"
+                className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all self-start sm:self-center"
               >
                 Modify Query
               </button>
@@ -1799,7 +1799,7 @@ export default function IncidentsByCategoryReport() {
               </div>
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Group Dimensions</span>
-                <span className="text-2xl font-black text-indigo-600 block mt-2">5 Groups</span>
+                <span className="text-2xl font-black text-[#263B5E] block mt-2">5 Groups</span>
                 <span className="text-[11px] text-slate-400 mt-1">Aggregated by {customQueryConfig.groupBy}</span>
               </div>
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -1838,7 +1838,7 @@ export default function IncidentsByCategoryReport() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold">{row.share}</span>
                           <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div className="h-full bg-[#eb6a47]" style={{ width: row.share }} />
+                            <div className="h-full bg-[#C96F55]" style={{ width: row.share }} />
                           </div>
                         </div>
                       </td>
@@ -1874,30 +1874,30 @@ export default function IncidentsByCategoryReport() {
       <Dialog.Root open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 animate-in fade-in" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-full max-w-md z-50 flex flex-col gap-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <Dialog.Title className="text-base font-bold text-slate-800 flex items-center gap-2">
+          <Dialog.Content className="fixed inset-0 m-auto bg-white rounded-2xl shadow-2xl border border-[#ebdcd3] p-6 w-full max-w-md h-fit max-h-[90vh] z-50 flex flex-col gap-4 overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#ebdcd3] pb-3">
+              <Dialog.Title className="text-base font-bold text-[#332B28] flex items-center gap-2">
                 <span>⏰ Schedule Automated Export</span>
               </Dialog.Title>
-              <Dialog.Close className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer">✕</Dialog.Close>
+              <Dialog.Close className="text-[#332B28]/50 hover:text-[#332B28] text-lg cursor-pointer transition-colors">✕</Dialog.Close>
             </div>
-            <Dialog.Description className="text-xs text-slate-500">
+            <Dialog.Description className="text-xs text-[#332B28]/70">
               Configure recurring delivery of this report directly to your team's email inboxes.
             </Dialog.Description>
 
-            <div className="flex flex-col gap-3.5 text-xs text-slate-700">
+            <div className="flex flex-col gap-3.5 text-xs text-[#332B28]">
               <div>
-                <label className="font-semibold block mb-1.5">Export Frequency</label>
+                <label className="font-semibold block mb-1.5 text-[#332B28]">Export Frequency</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['Daily', 'Weekly', 'Monthly'] as const).map((freq) => (
                     <button
                       key={freq}
                       type="button"
                       onClick={() => setScheduleFreq(freq)}
-                      className={`py-2 rounded-lg font-semibold border transition-all cursor-pointer ${
+                      className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
                         scheduleFreq === freq
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          ? 'bg-[#263B5E] text-white border-[#263B5E] shadow-xs'
+                          : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
                       }`}
                     >
                       {freq}
@@ -1907,17 +1907,17 @@ export default function IncidentsByCategoryReport() {
               </div>
 
               <div>
-                <label className="font-semibold block mb-1.5">Report File Format</label>
+                <label className="font-semibold block mb-1.5 text-[#332B28]">Report File Format</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['CSV', 'PDF'] as const).map((fmt) => (
                     <button
                       key={fmt}
                       type="button"
                       onClick={() => setScheduleFormat(fmt)}
-                      className={`py-2 rounded-lg font-semibold border transition-all cursor-pointer ${
+                      className={`py-2 rounded-full font-semibold border transition-all cursor-pointer ${
                         scheduleFormat === fmt
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          ? 'bg-[#C96F55] text-white border-[#C96F55] shadow-xs'
+                          : 'bg-white text-[#332B28] border-[#ebdcd3] hover:bg-[#FFF9F5]'
                       }`}
                     >
                       {fmt === 'CSV' ? '📊 CSV Spreadsheet' : '📄 PDF Document'}
@@ -1927,22 +1927,22 @@ export default function IncidentsByCategoryReport() {
               </div>
 
               <div>
-                <label className="font-semibold block mb-1">Recipient Email(s)</label>
+                <label className="font-semibold block mb-1 text-[#332B28]">Recipient Email(s)</label>
                 <input
                   type="email"
                   value={scheduleEmail}
                   onChange={(e) => setScheduleEmail(e.target.value)}
                   placeholder="e.g. operations@servigen.io, team@halo.ai"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 border border-[#ebdcd3] rounded-xl text-xs text-[#332B28] bg-white placeholder-[#332B28]/40 focus:outline-none focus:ring-2 focus:ring-[#C96F55] focus:border-[#C96F55] transition-all"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[#ebdcd3]">
               <button
                 type="button"
                 onClick={() => setIsScheduleOpen(false)}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-[#332B28] hover:bg-[#FFF9F5] border border-[#ebdcd3] rounded-full cursor-pointer transition-all"
               >
                 Cancel
               </button>
@@ -1957,7 +1957,7 @@ export default function IncidentsByCategoryReport() {
                   setIsScheduleOpen(false);
                   setStatusMessage(`Export schedule configured: ${scheduleFreq} ${scheduleFormat} to ${scheduleEmail || 'your email'}.`);
                 }}
-                className="px-4 py-2 text-xs font-bold bg-[#eb6a47] hover:bg-[#d65a37] text-white rounded-lg shadow-sm cursor-pointer transition-all"
+                className="px-5 py-2 text-xs font-bold bg-[#C96F55] hover:bg-[#b55f46] text-white rounded-full shadow-sm cursor-pointer transition-all"
               >
                 Save Schedule
               </button>
