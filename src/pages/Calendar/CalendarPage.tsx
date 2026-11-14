@@ -10,6 +10,7 @@ import { apiClient, api } from "../../services/apiClient";
 import { fetchChangeRequests } from "../../services/changeRequestsService";
 import type { ChangeRequest } from "../../types/cmdb";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
+import { RefreshButton } from "../../components/shared/RefreshButton";
 import "./calendar.css";
 
 type View = "month" | "week" | "day" | "agenda" | "timeline";
@@ -923,14 +924,11 @@ export default function CalendarPage() {
           </h2>
 
           <div className="cal-toolbar-right">
-            <button
-              className="cal-refresh-btn"
+            <RefreshButton
               onClick={refreshCalendar}
-              disabled={loading}
-              title="Fetch latest from backend"
-            >
-              <span className={loading ? "cal-spin" : ""}>↻</span> Refresh
-            </button>
+              isLoading={loading}
+              title="Refresh Calendar"
+            />
             <div className="cal-views">
               {VIEWS.map((v) => (
                 <button key={v.id} className={view === v.id ? "active" : ""} onClick={() => setView(v.id)}>

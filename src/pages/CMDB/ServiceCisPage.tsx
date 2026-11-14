@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import type { ServiceCI } from '../../types/cmdb';
 import { fetchServiceCis } from '../../services/cmdbService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
+import Button from '../../components/shared/Button';
+import RefreshButton from '../../components/shared/RefreshButton';
 import { getServiceHealthVariant } from '../../utils/statusUtils';
 import { defaultServiceCis } from './cmdbData';
 import {
@@ -97,22 +99,19 @@ export const ServiceCisPage: React.FC<ServiceCisPageProps> = ({ serviceCis: init
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => navigate('/cmdb')}
-              className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
+              icon={<Server className="w-4 h-4 text-[#C96F55]" />}
             >
-              <Server className="w-4 h-4 text-[#C96F55]" />
-              <span>Asset Inventory</span>
-            </button>
+              Asset Inventory
+            </Button>
 
-            <button
+            <RefreshButton
               onClick={loadData}
-              disabled={isLoading}
-              className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+              isLoading={isLoading}
               title="Refresh Service Status"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
+            />
           </div>
         </div>
 

@@ -323,15 +323,6 @@ const NAV_ITEMS: NavItemConfig[] = [
     matchActive: (path) => path.startsWith('/reporting') || path.startsWith('/reports'),
   },
   {
-    to: '/portal',
-    label: 'Self-Service Portal',
-    line1: 'Self',
-    line2: 'Service',
-    icon: PortalNavIcon,
-    matchActive: (path) => path.startsWith('/portal') || path.startsWith('/self-service'),
-    roles: ['End User', 'Administrator', 'Support Agent', 'System Manager', 'Team Lead'],
-  },
-  {
     to: '/admin',
     label: 'Admin Settings',
     line1: 'Admin',

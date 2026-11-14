@@ -390,13 +390,13 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => navigate('/cmdb/services')}
-              className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-2 cursor-pointer"
+              icon={<Layers className="w-4 h-4 text-[#C96F55]" />}
             >
-              <Layers className="w-4 h-4 text-[#C96F55]" />
-              <span>Service CIs & SLA</span>
-            </button>
+              Service CIs & SLA
+            </Button>
 
             <RefreshButton
               onClick={loadData}

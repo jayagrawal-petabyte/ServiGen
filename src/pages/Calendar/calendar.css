@@ -2,18 +2,18 @@
    so it does not leak into other teams' pages. */
 
 .calendar-page {
-  --cal-bg: #fff7f3;
+  --cal-bg: #FFF9F5;
   --cal-surface: #ffffff;
-  --cal-panel: #e49b8e;
-  --cal-panel-strong: #d4887b;
-  --cal-btn: #f4a98d;
-  --cal-btn-hover: #ef9373;
-  --cal-accent: #d9694f;
-  --cal-accent-soft: #fdeee8;
-  --cal-navy: #263a5e;
-  --cal-ink: #1f2430;
+  --cal-panel: #FDE9E1;
+  --cal-panel-strong: #ebdcd3;
+  --cal-btn: #C96F55;
+  --cal-btn-hover: #b55f46;
+  --cal-accent: #C96F55;
+  --cal-accent-soft: #FDE9E1;
+  --cal-navy: #263B5E;
+  --cal-ink: #332B28;
   --cal-muted: #6b6f7b;
-  --cal-line: #f1e3dc;
+  --cal-line: #ebdcd3;
 
   display: flex;
   flex-direction: row;
@@ -49,9 +49,9 @@
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
   background: var(--cal-panel);
-  border: 1px solid #d4887b;
+  border: 1px solid #ebdcd3;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   padding: 18px 12px 24px;
   display: flex;
   flex-direction: column;
@@ -222,13 +222,15 @@
   border: none;
   background: transparent;
   text-align: left;
-  padding: 6px 6px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 9999px;
   font-size: 13px;
+  color: #332B28;
 }
 
 .cal-side-item:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.6);
+  color: #1c0f0c;
 }
 
 .cal-side-item.is-off {

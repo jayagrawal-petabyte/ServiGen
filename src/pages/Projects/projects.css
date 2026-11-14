@@ -2,18 +2,18 @@
    so it does not leak into other teams' pages. */
 
 .projects-page {
-  --pj-bg: #fff7f3;
+  --pj-bg: #FFF9F5;
   --pj-surface: #ffffff;
-  --pj-panel: #e49b8e;
-  --pj-btn: #f4a98d;
-  --pj-btn-hover: #ef9373;
-  --pj-accent: #f0694a;
-  --pj-accent-dark: #c4573f;
-  --pj-accent-soft: #fdeee8;
-  --pj-navy: #1c2541;
-  --pj-ink: #1f2430;
+  --pj-panel: #FDE9E1;
+  --pj-btn: #C96F55;
+  --pj-btn-hover: #b55f46;
+  --pj-accent: #C96F55;
+  --pj-accent-dark: #C96F55;
+  --pj-accent-soft: #FDE9E1;
+  --pj-navy: #263B5E;
+  --pj-ink: #332B28;
   --pj-muted: #6b6f7b;
-  --pj-line: #eef0f3;
+  --pj-line: #ebdcd3;
   --pj-chip: #f3f5f8;
   --pj-good: #4caf50;
   --pj-mid: #f0694a;
@@ -65,9 +65,9 @@
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
   background: var(--pj-panel);
-  border: 1px solid #d4887b;
+  border: 1px solid #ebdcd3;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   padding: 24px 10px 32px;
   display: flex;
   flex-direction: column;
@@ -132,11 +132,20 @@
 }
 
 .pj-nav:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.6);
+  color: #1c0f0c;
 }
 
 .pj-nav.active {
-  background: var(--pj-btn);
+  background: #C96F55;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(201, 111, 85, 0.25);
+}
+
+.pj-nav.active .pj-nav-count {
+  background: #ffffff;
+  color: #C96F55;
 }
 
 .pj-nav-icon {

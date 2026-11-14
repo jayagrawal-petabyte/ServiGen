@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useDeferredValue } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Pagination from "../../components/shared/Pagination";
+import RefreshButton from "../../components/shared/RefreshButton";
+import Button from "../../components/shared/Button";
 import PriorityIndicator from "./PriorityIndicator";
 import { useAuth } from "../Auth/AuthContext";
 import { TicketDetailModal, type TicketPriority } from "../../components/TicketDetailModal";
@@ -1189,9 +1191,10 @@ function TeamIncidentTable({
                 onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               />
 
-              <button
-                type="button"
-                className="tb-nav-btn"
+              <RefreshButton
+                iconOnly
+                size="sm"
+                isLoading={isLoading}
                 onClick={() => {
                   setIsLoading(true);
                   fetchAllTeamIncidents()
@@ -1205,20 +1208,16 @@ function TeamIncidentTable({
                     .finally(() => setIsLoading(false));
                 }}
                 title="Refresh table from API"
-              >
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
-              </button>
+              />
 
-              <button
-                type="button"
-                className="team-btn-new-cyan"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setShowNewIncidentModal(true)}
+                icon={<span style={{ fontSize: 14, lineHeight: 1 }}>+</span>}
               >
-                <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
-                <span>New</span>
-              </button>
+                New
+              </Button>
 
               <div className="relative" ref={tableMenuRef}>
                 <button
