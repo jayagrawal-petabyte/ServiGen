@@ -82,45 +82,6 @@
   background-color: #f2967a;
 }
 
-.sidebar-icon-container {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-nav-badge {
-  position: absolute;
-  top: -5px;
-  right: -9px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background-color: #ef4444;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  border: 1.5px solid #23354e;
-  pointer-events: none;
-  z-index: 5;
-  transition: transform 0.15s ease, background-color 0.15s ease;
-}
-
-.sidebar-nav-link:hover .sidebar-nav-badge {
-  transform: scale(1.08);
-}
-
-.sidebar-nav-link.active .sidebar-nav-badge {
-  background-color: #dc2626;
-  border-color: #f2967a;
-}
-
 .sidebar-nav-icon {
   flex-shrink: 0;
   width: 22px;
