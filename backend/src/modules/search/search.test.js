@@ -56,3 +56,4 @@ test.describe('Global Unified Search Service', () => {
     assert.ok(results.query.includes('Database'));
   });
 });
+

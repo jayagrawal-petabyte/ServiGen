@@ -8,3 +8,4 @@ const router = express.Router();
 router.get('/', globalSearchHandler);
 
 module.exports = router;
+

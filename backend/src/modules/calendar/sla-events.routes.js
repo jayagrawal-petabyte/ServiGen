@@ -8,3 +8,4 @@ const router = express.Router();
 router.get('/', getSlaEventsHandler);
 
 module.exports = router;
+

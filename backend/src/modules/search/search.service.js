@@ -152,3 +152,4 @@ const globalSearch = async (options = {}) => {
 module.exports = {
   globalSearch,
 };
+

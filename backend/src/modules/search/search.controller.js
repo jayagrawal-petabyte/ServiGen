@@ -34,3 +34,4 @@ const globalSearchHandler = async (req, res, next) => {
 module.exports = {
   globalSearchHandler,
 };
+

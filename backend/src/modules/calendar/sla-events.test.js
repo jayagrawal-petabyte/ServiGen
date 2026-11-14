@@ -37,3 +37,4 @@ test.describe('Calendar SLA Events Service', () => {
     assert.equal(pastEvents.length, 0);
   });
 });
+

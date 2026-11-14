@@ -37,3 +37,4 @@ const getSlaEventsHandler = async (req, res, next) => {
 module.exports = {
   getSlaEventsHandler,
 };
+
