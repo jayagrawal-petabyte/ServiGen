@@ -67,7 +67,7 @@ export const AppLayout: React.FC = () => {
     return <Navigate to={toUrl} replace />;
   }
 
-  // QA-RBAC-01: End Users cannot directly access restricted administrative routes
+  // QA-RBAC-01: End Users cannot directly access restricted administrative routes; redirect to Self-Service Portal
   if (user?.role === 'End User') {
     const isRestrictedEndUserRoute =
       location.pathname.startsWith('/cmdb') ||
@@ -76,11 +76,18 @@ export const AppLayout: React.FC = () => {
       location.pathname.startsWith('/article-drafts') ||
       location.pathname.startsWith('/major-incidents') ||
       location.pathname.startsWith('/problems') ||
-      location.pathname.startsWith('/approvals');
+      location.pathname.startsWith('/approvals') ||
+      location.pathname.startsWith('/admin') ||
+      location.pathname === '/dashboard';
 
     if (isRestrictedEndUserRoute) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/portal" replace />;
     }
+  }
+
+  // Admin Configuration guard: Only Administrator and System Manager
+  if (location.pathname.startsWith('/admin') && user?.role !== 'Administrator' && user?.role !== 'System Manager') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   const initials = user?.fullName

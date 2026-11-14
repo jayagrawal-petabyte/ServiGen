@@ -1,0 +1,144 @@
+/* ── Administrative Configuration Settings Screen (Halo Parity) ── */
+
+.admin-settings-canvas {
+  min-height: 100vh;
+  background-color: #FAF7F5;
+  color: #1e293b;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toast Banner */
+.admin-toast-banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #065f46;
+  color: #ffffff;
+  padding: 6px 20px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: adminFadeIn 0.2s ease-out;
+}
+
+@keyframes adminFadeIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Top Navigation Bar */
+.admin-header {
+  height: 48px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* Title Area */
+.admin-title-area {
+  padding: 24px 28px 12px;
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* Nav Tabs */
+.admin-nav-tabs {
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.admin-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-nav-btn:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.admin-nav-btn.active {
+  color: #eb6a47;
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Panel */
+.admin-main-panel {
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 24px 28px 64px;
+  flex: 1;
+}
+
+/* Inputs & Buttons */
+.admin-input-box {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.admin-input-box:focus {
+  border-color: #eb6a47;
+  box-shadow: 0 0 0 3px rgba(235, 106, 71, 0.15);
+}
+
+.admin-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #eb6a47;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(235, 106, 71, 0.25);
+}
+
+.admin-save-btn:hover {
+  background-color: #db5936;
+}

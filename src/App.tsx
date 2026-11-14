@@ -55,6 +55,10 @@ const SecondLineDesign = React.lazy(() => import('./pages/TeamIncidents/SecondLi
 // Reporting
 const IncidentsByCategoryReport = React.lazy(() => import('./pages/Reporting/IncidentsByCategoryReport'))
 
+// End-User Self-Service Portal & Admin Configuration Screens (Halo Parity)
+const EndUserPortal = React.lazy(() => import('./pages/Portal/EndUserPortal'))
+const AdminSettingsPage = React.lazy(() => import('./pages/Admin/AdminSettingsPage'))
+
 // CMDB
 const CmdbPage = React.lazy(() => import('./pages/CMDB/CmdbPage').then((m) => ({ default: m.CmdbPage })))
 const ServiceCisPage = React.lazy(() => import('./pages/CMDB/ServiceCisPage').then((m) => ({ default: m.ServiceCisPage })))
@@ -250,6 +254,10 @@ export default function App() {
               <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
               <Route path="/reports/incidents-by-category" element={<IncidentsByCategoryReport />} />
               <Route path="/reporting" element={<IncidentsByCategoryReport />} />
+              <Route path="/portal" element={<EndUserPortal />} />
+              <Route path="/self-service" element={<Navigate to="/portal" replace />} />
+              <Route path="/admin" element={<AdminSettingsPage />} />
+              <Route path="/settings" element={<Navigate to="/admin" replace />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
