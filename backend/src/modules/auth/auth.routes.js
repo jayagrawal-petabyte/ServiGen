@@ -2,6 +2,7 @@ const express = require('express');
 
 const {
   loginHandler,
+  logoutHandler,
   getSessionHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
@@ -16,6 +17,13 @@ const router = express.Router();
  * Authenticate a user using username and password.
  */
 router.post('/login', loginHandler);
+
+/**
+ * POST /auth/logout
+ *
+ * Log out and invalidate current session token.
+ */
+router.post('/logout', logoutHandler);
 
 /**
  * POST /auth/refresh

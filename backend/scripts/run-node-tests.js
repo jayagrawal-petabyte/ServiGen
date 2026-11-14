@@ -13,7 +13,8 @@ const folders = [
   'src/modules/change-requests', 'src/modules/ai-core/embedding',
   'src/modules/ai-core/retrieval', 'src/modules/projects',
   'src/modules/ai-core/escalation', 'src/modules/problems',
-  'src/modules/reports',
+  'src/modules/reports', 'src/modules/cmdb',
+  'src/modules/organisations', 'src/modules/auth',
 ];
 const files = folders.flatMap(folder => readdirSync(path.join(root, folder))
   .filter(file => file.endsWith('.test.js')).map(file => path.join(root, folder, file)));

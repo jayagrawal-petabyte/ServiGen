@@ -218,6 +218,69 @@ const createIncidentUpdate = async (id, payload, authenticatedAuthor = 'Unassign
   return addIncidentUpdate(id, update);
 };
 
+const getMajorIncidentServicesHealth = async (incidentId, organisationId = null) => {
+  if (!incidentId || typeof incidentId !== 'string') {
+    throw createValidationError('incidentId must be a non-empty string');
+  }
+
+  const incident = await getMajorIncidentById(incidentId.trim());
+  if (!incident) return null;
+  if (organisationId && incident.organisationId && incident.organisationId !== organisationId) {
+    return null;
+  }
+
+  const { getAllConfigurationItems, getCiDependencies } = require('../cmdb/cmdb.service');
+  let allCis = [];
+  try {
+    allCis = await getAllConfigurationItems({ organisationId });
+  } catch (_e) {
+    allCis = [];
+  }
+
+  const affectedServicesList = Array.isArray(incident.affectedServices) ? incident.affectedServices : [];
+  const servicesHealth = [];
+  let degradedCount = 0;
+
+  for (const serviceName of affectedServicesList) {
+    const matchingCis = allCis.filter((ci) =>
+      ci.name.toLowerCase().includes(serviceName.toLowerCase()) ||
+      serviceName.toLowerCase().includes(ci.name.toLowerCase()) ||
+      ci.type.toLowerCase().includes(serviceName.toLowerCase())
+    );
+
+    const isDegraded = matchingCis.some((ci) => ci.status === 'Inactive' || ci.lifecycleStatus === 'Maintenance') ||
+      incident.status !== 'Resolved' && incident.status !== 'Closed';
+
+    if (isDegraded) degradedCount++;
+
+    servicesHealth.push({
+      serviceName,
+      status: isDegraded ? 'Degraded' : 'Operational',
+      matchedCis: matchingCis.map((ci) => ({
+        id: ci.id,
+        name: ci.name,
+        type: ci.type,
+        status: ci.status,
+        lifecycleStatus: ci.lifecycleStatus,
+      })),
+    });
+  }
+
+  const overallHealth = degradedCount > 0
+    ? (incident.priority === 'P1' ? 'Critical' : 'Degraded')
+    : 'Operational';
+
+  return {
+    incidentId: incident.id,
+    incidentTitle: incident.title,
+    incidentStatus: incident.status,
+    priority: incident.priority,
+    overallHealth,
+    servicesCount: affectedServicesList.length,
+    servicesHealth,
+  };
+};
+
 module.exports = {
   VALID_STATUSES,
   ALLOWED_STATUS_TRANSITIONS,
@@ -226,5 +289,6 @@ module.exports = {
   createMajorIncident,
   changeMajorIncident,
   createIncidentUpdate,
+  getMajorIncidentServicesHealth,
   sanitizeInputText,
 };

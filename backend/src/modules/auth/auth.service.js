@@ -5,6 +5,7 @@ const {
   findUserById,
 } = require('./auth.model');
 const { generateToken } = require('../../shared');
+const { revokeToken, isTokenRevoked } = require('../../shared/utils/token-revocation');
 
 const safePasswordCompare = async (supplied, stored) => {
   if (typeof supplied !== 'string' || typeof stored !== 'string') return false;
@@ -109,10 +110,17 @@ const getSession = async (userId) => {
 
 /**
  * Refresh an existing valid JWT token and return fresh credentials.
+ * Implements single-use token rotation: revokes the previous token upon issue of the new one.
  */
 const refreshToken = async (tokenString) => {
   if (!tokenString) {
     const error = new Error('Token is required');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (isTokenRevoked(tokenString)) {
+    const error = new Error('Token has been revoked');
     error.statusCode = 401;
     throw error;
   }
@@ -135,6 +143,9 @@ const refreshToken = async (tokenString) => {
     throw error;
   }
 
+  // Single-use token rotation: invalidate the previously used token
+  revokeToken(tokenString);
+
   const { password: _p, passwordHash: _ph, ...safeUser } = user;
 
   const token = generateToken({
@@ -148,6 +159,16 @@ const refreshToken = async (tokenString) => {
     ...safeUser,
     token,
   };
+};
+
+/**
+ * Server-side logout: revokes the current session token.
+ */
+const logout = async (tokenString) => {
+  if (tokenString && typeof tokenString === 'string') {
+    revokeToken(tokenString.trim());
+  }
+  return { success: true };
 };
 
 /**
@@ -226,6 +247,7 @@ const resetPassword = async (tokenString, newPassword) => {
 
 module.exports = {
   login,
+  logout,
   getSession,
   refreshToken,
   requestPasswordReset,

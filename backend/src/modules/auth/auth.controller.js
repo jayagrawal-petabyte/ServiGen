@@ -1,10 +1,48 @@
 const {
   login,
+  logout,
   getSession,
   refreshToken,
   requestPasswordReset,
   resetPassword,
 } = require('./auth.service');
+const env = require('../../config/env');
+
+const COOKIE_NAME = 'token';
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const setAuthCookie = (res, token) => {
+  if (!token) return;
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: 'strict',
+    maxAge: COOKIE_MAX_AGE,
+    path: '/',
+  });
+};
+
+const clearAuthCookie = (res) => {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: 'strict',
+    path: '/',
+  });
+};
+
+const extractToken = (req) => {
+  let token = req.body?.token;
+  const authHeader = req.headers.authorization;
+  if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
+  if (!token && req.headers.cookie) {
+    const match = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+    if (match) token = decodeURIComponent(match[1]);
+  }
+  return token || null;
+};
 
 /**
  * Standard error responder used by the authentication endpoints.
@@ -60,6 +98,7 @@ const loginHandler = async (req, res) => {
       password
     );
 
+    setAuthCookie(res, user.token);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
@@ -151,14 +190,11 @@ const resetPasswordHandler = async (req, res) => {
  */
 const refreshHandler = async (req, res) => {
   try {
-    let token = req.body?.token;
-    const authHeader = req.headers.authorization;
-    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    }
+    const token = extractToken(req);
 
     const user = await refreshToken(token);
 
+    setAuthCookie(res, user.token);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     return res.status(200).json({
       success: true,
@@ -170,8 +206,30 @@ const refreshHandler = async (req, res) => {
   }
 };
 
+/**
+ * POST /auth/logout
+ *
+ * Revoke the current token and clear authentication cookie.
+ */
+const logoutHandler = async (req, res) => {
+  try {
+    const token = extractToken(req);
+    await logout(token);
+    clearAuthCookie(res);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    return res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to log out');
+  }
+};
+
 module.exports = {
   loginHandler,
+  logoutHandler,
   getSessionHandler,
   forgotPasswordHandler,
   resetPasswordHandler,

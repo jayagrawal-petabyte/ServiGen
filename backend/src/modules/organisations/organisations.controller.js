@@ -1,6 +1,8 @@
 const {
   getUsers,
   getUser,
+  getSites,
+  getContacts,
 } = require('./organisations.service');
 
 /**
@@ -82,7 +84,65 @@ const getUserHandler = async (req, res) => {
   }
 };
 
+/**
+ * GET /organisations/:organisationId/sites
+ *
+ * Get all sites belonging to an organisation.
+ */
+const getSitesHandler = async (req, res) => {
+  try {
+    const { organisationId } = req.params;
+
+    if (req.user && req.user.role !== 'Admin' && (!req.user.organisationId || req.user.organisationId !== organisationId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden',
+      });
+    }
+
+    const sites = await getSites(organisationId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Organisation sites loaded successfully',
+      data: sites,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to load organisation sites');
+  }
+};
+
+/**
+ * GET /organisations/:organisationId/contacts
+ *
+ * Get organisation contacts directory with VIP designations.
+ */
+const getContactsHandler = async (req, res) => {
+  try {
+    const { organisationId } = req.params;
+
+    if (req.user && req.user.role !== 'Admin' && (!req.user.organisationId || req.user.organisationId !== organisationId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden',
+      });
+    }
+
+    const contacts = await getContacts(organisationId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Organisation contacts loaded successfully',
+      data: contacts,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to load organisation contacts');
+  }
+};
+
 module.exports = {
   getUsersHandler,
   getUserHandler,
+  getSitesHandler,
+  getContactsHandler,
 };

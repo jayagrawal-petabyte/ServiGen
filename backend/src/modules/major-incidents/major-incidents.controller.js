@@ -4,6 +4,7 @@ const {
   createMajorIncident,
   changeMajorIncident,
   createIncidentUpdate,
+  getMajorIncidentServicesHealth,
 } = require('./major-incidents.service');
 
 const {
@@ -162,6 +163,30 @@ const streamMajorIncidentUpdates = async (req, res) => {
   }
 };
 
+const getServicesHealth = async (req, res) => {
+  try {
+    const { incidentId } = req.params;
+    const organisationId = req.user?.role === 'Admin' && typeof req.query.organisationId === 'string'
+      ? req.query.organisationId.trim()
+      : (req.user?.organisationId || null);
+
+    const health = await getMajorIncidentServicesHealth(incidentId, organisationId);
+    if (!health) {
+      return res.status(404).json({
+        success: false,
+        message: 'Major incident not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: health,
+    });
+  } catch (error) {
+    return respondWithError(res, error, 'Failed to fetch services health for major incident');
+  }
+};
+
 module.exports = {
   listMajorIncidents,
   getMajorIncident,
@@ -169,4 +194,5 @@ module.exports = {
   editMajorIncident,
   addMajorIncidentUpdate,
   streamMajorIncidentUpdates,
+  getServicesHealth,
 };

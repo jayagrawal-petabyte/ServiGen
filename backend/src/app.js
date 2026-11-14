@@ -55,8 +55,12 @@ app.disable('x-powered-by');
 // ─── Core Middleware ────────────────────────────────────────────────────────
 app.use(helmet({
   strictTransportSecurity: env.isProduction ? undefined : false,
+  frameguard: { action: 'sameorigin' },
   contentSecurityPolicy: {
-    directives: { 'upgrade-insecure-requests': env.isProduction ? [] : null },
+    directives: {
+      'upgrade-insecure-requests': env.isProduction ? [] : null,
+      frameAncestors: ["'self'"],
+    },
   },
 }));
 app.use(
@@ -101,7 +105,7 @@ app.use(querySanitizer);
 app.use(['/api/auth/login', '/api/auth/forgot-password'], createRateLimiter(20));
 app.use('/api/auth/login', loginLockout);
 app.use('/api/auth', (req, res, next) => {
-  if (req.path === '/login' || req.path === '/forgot-password') return next();
+  if (req.path === '/login' || req.path === '/forgot-password' || req.path === '/logout') return next();
   return requireAuth(req, res, (err) => {
     if (err) return next(err);
     req.headers['x-user-id'] = req.user.id;

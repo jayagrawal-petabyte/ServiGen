@@ -20,3 +20,4 @@ router.post('/problems/:id/workaround', addWorkaroundHandler);
 router.post('/problems/:id/incidents', linkIncidentsHandler);
 
 module.exports = router;
+
