@@ -449,9 +449,11 @@ export default function ApprovalsPage() {
               <>
                 <h3>You're all caught up!</h3>
                 <p>There are no pending requests awaiting your review at the moment.</p>
-                <button className="btn-reset-approvals" type="button" onClick={handleRefresh}>
-                  Refresh Approvals
-                </button>
+                <RefreshButton
+                  onClick={handleRefresh}
+                  isLoading={isLoading}
+                  title="Refresh approvals"
+                />
               </>
             ) : (
               <>

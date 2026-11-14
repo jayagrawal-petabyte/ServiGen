@@ -680,6 +680,34 @@
 ================================ */
 
 @media (max-width: 900px) {
+  .team-body-row {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .team-sidebar-panel,
+  .team-sidebar-panel.collapsed {
+    width: 100%;
+    max-height: 240px;
+    flex-shrink: 0;
+  }
+
+  .team-sidebar-panel.collapsed {
+    min-height: 48px;
+    max-height: 58px;
+  }
+
+  .team-main-content {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .team-table-toolbar-row {
+    flex-wrap: wrap;
+  }
+
   .team-incident-filters {
     flex-wrap: wrap;
   }
@@ -1402,10 +1430,31 @@
   background: #b55f46;
 }
 
-.star-indicator {
+.star-button {
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
   color: #eab308;
   font-size: 14px;
-  display: inline-block;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.star-button:hover,
+.star-button:focus-visible {
+  background: #fef3c7;
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
+}
+
+.star-button-empty {
+  color: #cbd5e1;
+}
+
+.star-button-empty:hover,
+.star-button-empty:focus-visible {
+  color: #eab308;
 }
 
 /* ── Team Get Started Guide Modal ── */

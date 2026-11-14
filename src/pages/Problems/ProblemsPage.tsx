@@ -243,10 +243,8 @@ export const ProblemsPage: React.FC = () => {
 
               {/* Refresh Button */}
               <RefreshButton
-                iconOnly
                 size="sm"
                 onClick={() => {
-                  setSearchQuery('');
                   setProblems(problemsService.getProblems());
                 }}
                 title="Refresh list"

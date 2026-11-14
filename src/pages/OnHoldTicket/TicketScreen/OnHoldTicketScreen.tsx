@@ -6,6 +6,7 @@ import { useAuth } from "../../Auth";
 import { TicketDetailModal, type TicketPriority } from "../../../components/TicketDetailModal";
 import { usePersistentState } from "../../../utils/persistentState";
 import { GlobalNavbarActions } from "../../../components/shared/GlobalNavbarActions";
+import { RefreshButton } from "../../../components/shared/RefreshButton";
 import {
   fetchOnHoldTickets,
   fetchActiveTickets,
@@ -204,8 +205,8 @@ const OnHoldTicketScreen: React.FC = () => {
     }
   };
 
-  const handleRefresh = () => {
-    fetchData();
+  const handleRefresh = async () => {
+    await fetchData();
   };
 
   // New Ticket Modal State
@@ -483,9 +484,12 @@ const OnHoldTicketScreen: React.FC = () => {
               <button className="tb-nav-btn" onClick={goToNextPage} disabled={currentPage === totalPages || totalPages === 0} style={{ opacity: currentPage === totalPages || totalPages === 0 ? 0.4 : 1 }}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
-              <button className="tb-nav-btn" onClick={handleRefresh}>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              </button>
+              <RefreshButton
+                size="sm"
+                onClick={handleRefresh}
+                isLoading={isLoading}
+                title="Refresh tickets"
+              />
               <button className="btn-new-green" onClick={handleOpenNewModal}>
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New

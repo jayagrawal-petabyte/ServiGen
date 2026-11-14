@@ -46,6 +46,7 @@ export interface ModuleSidebarProps {
   // Custom Slots
   footer?: React.ReactNode;
   children?: React.ReactNode;
+  hideZeroCountBadges?: boolean;
 
   className?: string;
   width?: string;
@@ -71,6 +72,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
   onToggleCollapse,
   footer,
   children,
+  hideZeroCountBadges = false,
   className = '',
   width = 'w-[250px] min-w-[250px]',
   collapsedWidth = 'w-[48px] min-w-[48px]',
@@ -101,6 +103,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
 
   const renderBadge = (count?: number | string, isActive = false) => {
     if (count === undefined || count === null) return null;
+    if (hideZeroCountBadges && count === 0) return null;
     return (
       <span
         className={`ml-2 shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${

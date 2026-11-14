@@ -484,7 +484,11 @@ export const ContractsPage: React.FC = () => {
                 </button>
               </div>
 
-              <RefreshButton onClick={loadContracts} title="Refresh Contracts" />
+              <RefreshButton
+                onClick={loadContracts}
+                isLoading={isLoading}
+                title="Refresh Contracts"
+              />
             </div>
           </div>
 

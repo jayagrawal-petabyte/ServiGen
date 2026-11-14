@@ -616,24 +616,6 @@
   pointer-events: none;
 }
 
-.toolbar-refresh-btn {
-  width: 26px;
-  height: 26px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.toolbar-refresh-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #C96F55;
-}
-
 .requests-create-btn {
   background-color: var(--accent-terracotta, #C96F55);
   color: #ffffff;

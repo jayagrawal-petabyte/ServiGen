@@ -3,6 +3,7 @@ export * from './MetricCard';
 export * from './SegmentedTabs';
 export * from './FilterToolbar';
 export * from './RefreshButton';
+export * from './ResetButton';
 export * from './SearchInput';
 export * from './ModuleSidebar';
 export * from './PageActionToolbar';

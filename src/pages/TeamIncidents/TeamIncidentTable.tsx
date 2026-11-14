@@ -88,6 +88,7 @@ interface IncidentTableRowProps {
   isActive: boolean;
   onSelect: (incident: Incident) => void;
   onToggleSelect: (id: string) => void;
+  onToggleStar: (incident: Incident) => void;
   onEscalateToTier2?: (incident: Incident) => void;
   isEscalating?: boolean;
 }
@@ -98,6 +99,7 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
   isActive,
   onSelect,
   onToggleSelect,
+  onToggleStar,
   onEscalateToTier2,
   isEscalating = false,
 }: IncidentTableRowProps) {
@@ -132,9 +134,31 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
       </td>
       <td style={{ textAlign: "center" }}>
         {incident.isStarred ? (
-          <span className="star-indicator" title="Starred / Flagged">⭐</span>
+          <button
+            type="button"
+            className="star-button"
+            aria-label={`Unstar ${incident.id}`}
+            title="Unstar ticket"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleStar(incident);
+            }}
+          >
+            ⭐
+          </button>
         ) : (
-          <span className="text-slate-300 text-xs">☆</span>
+          <button
+            type="button"
+            className="star-button star-button-empty"
+            aria-label={`Star ${incident.id}`}
+            title="Star ticket"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleStar(incident);
+            }}
+          >
+            ☆
+          </button>
         )}
       </td>
       <td className="font-bold text-gray-900 font-mono text-xs whitespace-nowrap">
@@ -233,6 +257,20 @@ function TeamIncidentTable({
   const [escalatingId, setEscalatingId] = useState<string | null>(null);
   const [escalationToast, setEscalationToast] = useState<string | null>(null);
 
+  const handleToggleStar = useCallback(async (incident: Incident) => {
+    const isStarred = !incident.isStarred;
+    try {
+      await api.patch(`/api/tickets/${encodeURIComponent(incident.id)}`, { isStarred });
+      setIncidents((prev) =>
+        prev.map((item) => item.id === incident.id ? { ...item, isStarred } : item)
+      );
+    } catch (err) {
+      console.error("[TeamIncidentTable] Star update failed:", err);
+      setEscalationToast(`Could not ${isStarred ? "star" : "unstar"} ${incident.id}. Please try again.`);
+      setTimeout(() => setEscalationToast(null), 4000);
+    }
+  }, []);
+
   const handleEscalateToTier2 = async (incident: Incident) => {
     setEscalatingId(incident.id);
     const risk = computeAiRisk(incident);
@@ -243,12 +281,19 @@ function TeamIncidentTable({
         reason: `AI Risk Score ${risk.score}% (${risk.level}) on ticket #${incident.id} approaching SLA deadline (${incident.sla}).`,
       });
     } catch (err) {
-      console.warn('[Escalation] Backend handoff synced:', err);
+      setEscalatingId(null);
+      setEscalationToast('Tier 2 escalation could not be created. Please try again.');
+      setTimeout(() => setEscalationToast(null), 4000);
+      return;
     }
 
-    try {
-      await updateSupportIncidentStatus(incident.id, incident.status, "2nd Line Support");
-    } catch {}
+    const statusUpdated = await updateSupportIncidentStatus(incident.id, incident.status, "2nd Line Support");
+    if (!statusUpdated) {
+      setEscalatingId(null);
+      setEscalationToast('Tier 2 escalation was not saved because the team handoff failed.');
+      setTimeout(() => setEscalationToast(null), 4000);
+      return;
+    }
 
     setIncidents((prev) =>
       prev.map((i) =>
@@ -749,69 +794,114 @@ function TeamIncidentTable({
 
   const selectedIncidentsSet = useMemo(() => new Set(selectedIncidents), [selectedIncidents]);
 
-  const handleBulkAssignToMe = () => {
+  const handleBulkAssignToMe = async () => {
     const myName = user?.fullName || "Assigned Agent";
-    setIncidents((prev) =>
-      prev.map((inc) =>
-        selectedIncidents.includes(inc.id) ? { ...inc, agent: myName } : inc
-      )
+    const ids = [...selectedIncidents];
+    const results = await Promise.all(ids.map(async (id) => {
+      try {
+        await api.patch(`/api/tickets/${encodeURIComponent(id)}/assign`, { agentName: myName });
+        return id;
+      } catch {
+        return null;
+      }
+    }));
+    const succeeded = results.filter((id): id is string => Boolean(id));
+    if (succeeded.length > 0) {
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          succeeded.includes(inc.id) ? { ...inc, agent: myName } : inc
+        )
+      );
+      succeeded.forEach((id) => {
+        ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, agent: myName } });
+      });
+    }
+    setEscalationToast(
+      succeeded.length === ids.length
+        ? `✓ Assigned ${succeeded.length} incident(s) to ${myName}`
+        : `${succeeded.length} of ${ids.length} incidents were assigned. Failed updates were not applied.`
     );
-    selectedIncidents.forEach((id) => {
-      api.patch(`/tickets/${id}/assign`, { agentName: myName }).catch(() => {});
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, agent: myName } });
-    });
-    setEscalationToast(`✓ Assigned ${selectedIncidents.length} incident(s) to ${myName}`);
     setTimeout(() => setEscalationToast(null), 3000);
     setSelectedIncidents([]);
   };
 
-  const handleBulkSetPriority = (newPri: string) => {
-    setIncidents((prev) =>
-      prev.map((inc) =>
-        selectedIncidents.includes(inc.id) ? { ...inc, priority: newPri } : inc
-      )
+  const handleBulkSetPriority = async (newPri: string) => {
+    const ids = [...selectedIncidents];
+    const results = await Promise.all(ids.map(async (id) => {
+      try {
+        await api.patch(`/api/tickets/${encodeURIComponent(id)}`, { priority: newPri });
+        return id;
+      } catch {
+        return null;
+      }
+    }));
+    const succeeded = results.filter((id): id is string => Boolean(id));
+    if (succeeded.length > 0) {
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          succeeded.includes(inc.id) ? { ...inc, priority: newPri } : inc
+        )
+      );
+      succeeded.forEach((id) => {
+        ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, priority: newPri } });
+      });
+    }
+    setEscalationToast(
+      succeeded.length === ids.length
+        ? `✓ Set priority to ${newPri} for ${succeeded.length} incident(s)`
+        : `${succeeded.length} of ${ids.length} priority updates were saved.`
     );
-    selectedIncidents.forEach((id) => {
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, priority: newPri } });
-    });
-    setEscalationToast(`✓ Set priority to ${newPri} for ${selectedIncidents.length} incident(s)`);
     setTimeout(() => setEscalationToast(null), 3000);
   };
 
-  const handleBulkSetStatus = (newStat: string) => {
-    setIncidents((prev) =>
-      prev.map((inc) =>
-        selectedIncidents.includes(inc.id) ? { ...inc, status: newStat } : inc
-      )
+  const handleBulkSetStatus = async (newStat: string) => {
+    const ids = [...selectedIncidents];
+    const results = await Promise.all(ids.map(async (id) => {
+      const saved = await updateSupportIncidentStatus(id, newStat);
+      return saved ? id : null;
+    }));
+    const succeeded = results.filter((id): id is string => Boolean(id));
+    if (succeeded.length > 0) {
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          succeeded.includes(inc.id) ? { ...inc, status: newStat } : inc
+        )
+      );
+      succeeded.forEach((id) => {
+        ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, status: newStat } });
+      });
+    }
+    setEscalationToast(
+      succeeded.length === ids.length
+        ? `✓ Set status to ${newStat} for ${succeeded.length} incident(s)`
+        : `${succeeded.length} of ${ids.length} status updates were saved.`
     );
-    selectedIncidents.forEach((id) => {
-      updateSupportIncidentStatus(id, newStat).catch(() => {});
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id, status: newStat } });
-    });
-    setEscalationToast(`✓ Set status to ${newStat} for ${selectedIncidents.length} incident(s)`);
     setTimeout(() => setEscalationToast(null), 3000);
   };
 
-  const handleCreateIncident = () => {
+  const handleCreateIncident = async () => {
     if (!newSummary.trim()) return;
-    const newId = `INC-${Math.floor(2000 + Math.random() * 8000)}`;
     const targetTeam = selectedView.kind === "breaching-sla" ? "1st Line Support" : selectedView.team;
     const targetAgent = selectedView.kind === "agent" ? selectedView.agent : (user?.fullName || "Unassigned");
-    const newInc: Incident = {
-      id: newId,
-      sla: "-12:00",
-      summary: newSummary,
-      category: newCategory,
-      agent: targetAgent,
-      priority: newPriority,
-      status: "Active",
-      type: "Incident",
-      team: targetTeam,
-      dateLogged: new Date().toLocaleDateString("en-GB"),
-    };
-    setIncidents((prev) => [newInc, ...prev]);
-    setNewSummary("");
-    setShowNewIncidentModal(false);
+    try {
+      const response = await api.post('/api/tickets', {
+        ticketType: 'Incident',
+        summary: newSummary.trim(),
+        category: newCategory,
+        priority: newPriority,
+        assignedTeam: targetTeam,
+        assignedAgent: targetAgent,
+      });
+      const created = response?.data || response;
+      const newInc = normalizeSupportIncident(created, targetTeam === '2nd Line Support' ? '2nd Line Support' : '1st Line Support');
+      setIncidents((prev) => [newInc, ...prev.filter((incident) => incident.id !== newInc.id)]);
+      ticketEvents.emit({ type: 'TICKET_CREATED', ticket: { ...newInc } });
+      setNewSummary("");
+      setShowNewIncidentModal(false);
+    } catch {
+      setEscalationToast('The incident could not be created. Please try again.');
+      setTimeout(() => setEscalationToast(null), 4000);
+    }
   };
 
   return (
@@ -1275,12 +1365,11 @@ function TeamIncidentTable({
               />
 
               <RefreshButton
-                iconOnly
                 size="sm"
                 isLoading={isLoading}
                 onClick={() => {
                   setIsLoading(true);
-                  fetchAllTeamIncidents()
+                  fetchAllTeamIncidents(true)
                     .then((res) => {
                       if (res && res.incidents && res.incidents.length > 0) {
                         setIncidents(res.incidents);
@@ -1534,6 +1623,7 @@ function TeamIncidentTable({
                       isActive={selectedIncident?.id === incident.id}
                       onSelect={handleSelectIncident}
                       onToggleSelect={toggleIncidentSelection}
+                      onToggleStar={handleToggleStar}
                       onEscalateToTier2={handleEscalateToTier2}
                       isEscalating={escalatingId === incident.id}
                     />

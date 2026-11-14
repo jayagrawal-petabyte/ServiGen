@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { RotateCcw, Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { User } from './types';
 import { fetchOrganisationUsers, createOrganisationUser } from '../../services/organisationsService';
 import { usePersistentState } from '../../utils/persistentState';
 import { useAuth } from './AuthContext';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { RefreshButton } from '../../components/shared/RefreshButton';
 import './OrganisationUsersScreen.css';
 
 interface OrganisationUsersScreenProps {
@@ -182,19 +183,11 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
           <div className="org-users-header-right">
             {/* Sub actions */}
             <div className="org-users-actions-row">
-              <button
-                type="button"
-                className="org-btn-refresh"
+              <RefreshButton
                 onClick={handleRefresh}
                 title="Refresh users directory"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
-                ) : (
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                )}
-                <span>Refresh</span>
-              </button>
+                isLoading={isLoading}
+              />
               {isAdmin && (
                 <button
                   type="button"
@@ -479,7 +472,7 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
               <div className="org-modal-footer">
                 <button
                   type="button"
-                  className="org-btn-refresh"
+                  className="org-btn-cancel"
                   onClick={() => setIsAddUserModalOpen(false)}
                 >
                   Cancel

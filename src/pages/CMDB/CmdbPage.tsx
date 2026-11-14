@@ -27,7 +27,6 @@ import {
   HardDrive,
   MapPin,
   User,
-  RefreshCw,
   Layers,
   LayoutGrid,
   AlertCircle,
@@ -693,30 +692,35 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       <div
         key={ci.id}
         onClick={() => setSelectedCiForModal(ci)}
-        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#C96F55]/50 transition-all duration-200 flex flex-col justify-between cursor-pointer group"
+        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#C96F55]/50 transition-all duration-200 flex h-full min-w-0 flex-col justify-between cursor-pointer group"
         title="Click to view full specifications, topology and dependencies"
       >
         <div>
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl group-hover:bg-orange-50/50 transition-colors">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl group-hover:bg-orange-50/50 transition-colors shrink-0">
                 {getCiIcon(ci.type)}
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-mono font-extrabold text-[#C96F55] tracking-wide block">
+                  <span className="text-[11px] font-mono font-extrabold text-[#C96F55] tracking-wide block break-words">
                     {ci.tag}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
                     {ci.type}
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-slate-800 group-hover:text-[#C96F55] transition-colors leading-snug mt-0.5 line-clamp-1">
+                <h3 className="text-sm font-bold text-slate-800 group-hover:text-[#C96F55] transition-colors leading-snug mt-0.5 break-words">
                   {ci.name}
                 </h3>
               </div>
             </div>
-            <StatusBadge status={ci.status} variant={getCiStatusVariant(ci.status)} />
+            <StatusBadge
+              status={ci.status}
+              variant={getCiStatusVariant(ci.status)}
+              size="sm"
+              className="shrink-0 self-start"
+            />
           </div>
 
           {/* Quick Specifications */}
@@ -725,7 +729,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
                 Site / Location
               </span>
-              <span className="font-semibold text-slate-700 flex items-center gap-1 truncate text-[11px] mt-0.5">
+              <span className="font-semibold text-slate-700 flex items-start gap-1 break-words text-[11px] mt-0.5">
                 <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                 {ci.site}
               </span>
@@ -734,15 +738,15 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
                 Lifecycle
               </span>
-              <span className="font-semibold text-slate-700 text-[11px] mt-0.5 block truncate">
+              <span className="font-semibold text-slate-700 text-[11px] mt-0.5 block break-words">
                 {ci.lifecycleState || 'In Production'}
               </span>
             </div>
             {ci.ipAddress && (
               <div className="col-span-2 pt-1 border-t border-slate-200/50 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-slate-500">IP: {ci.ipAddress}</span>
+                <span className="text-[10px] font-mono text-slate-500 break-all">IP: {ci.ipAddress}</span>
                 {ci.specifications?.os && (
-                  <span className="text-[10px] text-slate-500 truncate max-w-[140px]">
+                  <span className="text-[10px] text-slate-500 break-words text-right">
                     {ci.specifications.os}
                   </span>
                 )}
@@ -752,17 +756,17 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         </div>
 
         {/* Card Footer: Warranty & Owner */}
-        <div className="flex items-center justify-between pt-1 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-500">
+        <div className="flex flex-wrap items-start justify-between gap-2 pt-1 text-xs">
+          <div className="flex min-w-0 items-start gap-1.5 text-slate-500">
             <User className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[11px] font-medium truncate max-w-[120px]">
+            <span className="text-[11px] font-medium break-words">
               {ci.businessOwner || 'IT Operations'}
             </span>
           </div>
 
           {warranty ? (
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${warranty.badgeClass}`}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border break-words text-right ${warranty.badgeClass}`}
             >
               {warranty.label}
             </span>
@@ -793,7 +797,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       </header>
 
       {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
-      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
+      <div className="flex flex-1 h-full min-h-0 w-full min-w-0 flex-col lg:flex-row overflow-hidden pt-3 px-3 sm:px-[18px] pb-4 sm:pb-6 gap-3 sm:gap-4">
         {/* Left Module Sidebar */}
         <ModuleSidebar
           title="CMDB Repository"
@@ -806,6 +810,9 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           groups={rawSidebarGroups}
           selectedId={selectedViewId}
           onSelectId={handleSelectSidebarView}
+          hideZeroCountBadges
+          width="w-full lg:w-[250px] lg:min-w-[250px]"
+          className="max-h-[42vh] lg:max-h-none"
           onResetTitle={() => handleSelectSidebarView('all-cis')}
           resetTitleTooltip="Reset to All Configuration Items"
           footer={
@@ -822,7 +829,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         />
 
         {/* Right Main Panel */}
-        <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
+        <main className="flex-1 flex flex-col min-w-0 w-full min-h-0 h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
           {/* Main Top Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
             <div className="flex items-center gap-3">
@@ -856,17 +863,19 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 )}
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <RefreshButton
-                onClick={loadData}
-                isLoading={isLoading}
-                title="Refresh CMDB from Backend"
-              />
-            </div>
+            {viewGrouping !== 'services' && (
+              <div className="flex items-center gap-3 flex-wrap">
+                <RefreshButton
+                  onClick={loadData}
+                  isLoading={isLoading}
+                  title="Refresh CMDB from Backend"
+                />
+              </div>
+            )}
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-5">
             {error && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs mb-4">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -945,7 +954,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 )}
               </div>
             ) : isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-5">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
                     key={i}
@@ -989,7 +998,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                           </span>
                         </h2>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-5">
                         {matchedCategoryItems.map(renderCiCard)}
                       </div>
                     </div>
@@ -998,7 +1007,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               </div>
             ) : (
               /* VIEW 3: Flat Grid View */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-5">
                 {filteredCis.map(renderCiCard)}
               </div>
             )}

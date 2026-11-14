@@ -220,6 +220,44 @@ export function handleOfflineRequest(
     return { success: true, data: { id: ticketId, status: newStatus } };
   }
 
+  // Ticket mutations used by the Incidents page and detail modal.
+  const ticketAssignMatch = path.match(/^\/api\/tickets\/([^/]+)\/assign$/);
+  if (ticketAssignMatch && upperMethod === 'PATCH') {
+    const ticketId = decodeURIComponent(ticketAssignMatch[1]);
+    const found = mutableTickets.find((t) => t.id === ticketId);
+    const agentName = parsedBody?.agentName || parsedBody?.agent || parsedBody?.agentId || 'Unassigned';
+    if (found) {
+      found.agent = agentName;
+      found.assignedAgent = typeof agentName === 'string'
+        ? { id: parsedBody?.agentId || agentName, fullName: agentName }
+        : agentName;
+    }
+    return { success: true, data: { id: ticketId, agent: agentName } };
+  }
+
+  const ticketMutationMatch = path.match(/^\/api\/tickets\/([^/]+)$/);
+  if (ticketMutationMatch && upperMethod === 'PATCH') {
+    const ticketId = decodeURIComponent(ticketMutationMatch[1]);
+    const found = mutableTickets.find((t) => t.id === ticketId);
+    if (found) {
+      Object.assign(found, parsedBody || {});
+      if (parsedBody?.priority) found.priority = parsedBody.priority;
+    }
+    return { success: true, data: { id: ticketId, ...(parsedBody || {}) } };
+  }
+
+  if (path.match(/^\/api\/tickets\/[^/]+\/(email|supplier)$/) && upperMethod === 'POST') {
+    return { success: true, data: { ...parsedBody, recorded: true } };
+  }
+
+  if (path.match(/^\/api\/tickets\/[^/]+\/related$/) && upperMethod === 'GET') {
+    return { success: true, data: [] };
+  }
+
+  if (path === '/api/ai-core/escalation/handoff' && upperMethod === 'POST') {
+    return { success: true, data: { id: `HANDOFF-${Date.now()}`, ...parsedBody } };
+  }
+
   // Specific incident sub-routes
   if (path.startsWith('/api/incidents/')) {
     // Check support agents endpoints FIRST
@@ -475,6 +513,11 @@ export function handleOfflineRequest(
 
   // 9. Calendar
   if (path === '/api/calendar') {
+    if (upperMethod === 'POST') {
+      const event = { id: `CAL-${Date.now()}`, ...parsedBody };
+      MOCK_CALENDAR_EVENTS.unshift(event);
+      return { success: true, data: event };
+    }
     return { success: true, data: MOCK_CALENDAR_EVENTS };
   }
 

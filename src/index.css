@@ -80,8 +80,7 @@ button {
 
 /* Hardware accelerated rendering for modals and popovers */
 [role="dialog"],
-.modal-overlay,
-.figma-left-sidebar {
+.modal-overlay {
   transform: translateZ(0);
   backface-visibility: hidden;
 }

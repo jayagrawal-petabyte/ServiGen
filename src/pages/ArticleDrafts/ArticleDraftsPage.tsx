@@ -333,7 +333,6 @@ export default function ArticleDraftsPage() {
 
               {/* 5. Refresh */}
               <RefreshButton
-                iconOnly
                 size="sm"
                 onClick={loadData}
                 isLoading={isLoading}

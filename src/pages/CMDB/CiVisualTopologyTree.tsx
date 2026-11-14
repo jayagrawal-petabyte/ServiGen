@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { ConfigurationItem, CiType, CiRelationship } from '../../types/cmdb';
 import type { CiTopologyGraph, CiTopologyNode, CiTopologyEdge } from '../../services/cmdbService';
+import { RefreshButton } from '../../components/shared/RefreshButton';
 import {
   Server,
   Database,
@@ -368,14 +369,13 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
 
           {/* Refresh */}
           {onRefresh && (
-            <button
+            <RefreshButton
+              size="sm"
               onClick={onRefresh}
-              disabled={isLoading}
-              className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all cursor-pointer"
+              isLoading={isLoading}
               title="Refresh topology"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
+              className="!bg-slate-800 !border-slate-700 !text-slate-300 hover:!bg-slate-700 hover:!text-white"
+            />
           )}
 
           {/* Link New Relationship */}

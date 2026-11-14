@@ -418,7 +418,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
               {/* Standardized Context Refresh Button */}
               <RefreshButton
-                iconOnly
                 size="sm"
                 onClick={() => loadData()}
                 isLoading={isLoading}

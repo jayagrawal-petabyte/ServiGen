@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
-import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, RefreshCw, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
+import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { ModalShell } from '../../components/shared/ModalShell';
@@ -266,6 +266,7 @@ export default function IncidentsByCategoryReport() {
     (location.state as any)?.category || null
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
   const [tickets, setTickets] = useState<ReportTicketRow[]>(DEFAULT_REPORT_TICKETS);
 
@@ -373,7 +374,7 @@ export default function IncidentsByCategoryReport() {
     return () => {
       mounted = false;
     };
-  }, [activeCategoryTag]);
+  }, [activeCategoryTag, refreshKey]);
 
   // Clean default filter conditions
   const [filters, setFilters] = useState<FilterRow[]>([]);
@@ -852,12 +853,9 @@ export default function IncidentsByCategoryReport() {
             <RefreshButton
               size="sm"
               onClick={() => {
-                setIsRefreshing(true);
+                setRefreshKey((key) => key + 1);
                 setStatusMessage('Refreshed report metrics');
-                setTimeout(() => {
-                  setIsRefreshing(false);
-                  setTimeout(() => setStatusMessage(null), 2000);
-                }, 600);
+                setTimeout(() => setStatusMessage(null), 2000);
               }}
               isLoading={isRefreshing}
               title="Refresh report data"

@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RotateCcw, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
+import { RefreshButton } from '../../components/shared/RefreshButton';
+import { ResetButton } from '../../components/shared/ResetButton';
 import './OrganisationUsersScreen.css';
 
 export interface OrganisationItem {
@@ -103,6 +105,7 @@ export const OrganisationsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('ALL');
   const [selectedTier, setSelectedTier] = useState('ALL');
+  const [selectedSite, setSelectedSite] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
@@ -112,6 +115,11 @@ export const OrganisationsScreen: React.FC = () => {
   const [newOrgTier, setNewOrgTier] = useState<'Enterprise' | 'Standard' | 'Premium'>('Enterprise');
   const [newOrgRegion, setNewOrgRegion] = useState<'APAC' | 'EMEA' | 'Americas'>('APAC');
   const [newOrgSite, setNewOrgSite] = useState('Bangalore HQ');
+
+  const primarySites = useMemo(() => {
+    const set = new Set(organisations.map((o) => o.primarySite));
+    return Array.from(set);
+  }, [organisations]);
 
   const filteredOrganisations = useMemo(() => {
     return organisations.filter((org) => {
@@ -125,11 +133,12 @@ export const OrganisationsScreen: React.FC = () => {
 
       const matchesRegion = selectedRegion === 'ALL' || org.region === selectedRegion;
       const matchesTier = selectedTier === 'ALL' || org.tier === selectedTier;
+      const matchesSite = selectedSite === 'ALL' || org.primarySite === selectedSite;
       const matchesStatus = selectedStatus === 'ALL' || org.status === selectedStatus;
 
-      return matchesSearch && matchesRegion && matchesTier && matchesStatus;
+      return matchesSearch && matchesRegion && matchesTier && matchesSite && matchesStatus;
     });
-  }, [organisations, searchQuery, selectedRegion, selectedTier, selectedStatus]);
+  }, [organisations, searchQuery, selectedRegion, selectedTier, selectedSite, selectedStatus]);
 
   const handleCreateOrg = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,19 +162,18 @@ export const OrganisationsScreen: React.FC = () => {
     setNewOrgDomain('');
   };
 
-  const totalContacts = useMemo(
-    () => organisations.reduce((sum, o) => sum + (o.contactCount || 0), 0),
-    [organisations]
-  );
-  const totalEnterprise = useMemo(
-    () => organisations.filter((o) => o.tier === 'Enterprise').length,
-    [organisations]
-  );
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedRegion('ALL');
+    setSelectedTier('ALL');
+    setSelectedSite('ALL');
+    setSelectedStatus('ALL');
+  };
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5]">
       {/* ── Top Navbar ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px] sticky top-0">
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-40 min-h-[50px] sticky top-0 overflow-visible">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
@@ -186,15 +194,10 @@ export const OrganisationsScreen: React.FC = () => {
 
           <div className="org-users-header-right">
             <div className="org-users-actions-row">
-              <button
-                type="button"
-                className="org-btn-refresh"
-                onClick={() => setSearchQuery('')}
-                title="Reset filters"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                <span>Reset</span>
-              </button>
+              <RefreshButton
+                onClick={handleResetFilters}
+                title="Refresh organisations directory"
+              />
               {isAdmin && (
                 <button
                   type="button"
@@ -207,38 +210,6 @@ export const OrganisationsScreen: React.FC = () => {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Summary Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Organisations</span>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">{organisations.length}</p>
-            </div>
-            <span className="text-2xl">🏢</span>
-          </div>
-          <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Enterprise Accounts</span>
-              <p className="text-xl font-bold text-purple-700 mt-0.5">{totalEnterprise}</p>
-            </div>
-            <span className="text-2xl">👑</span>
-          </div>
-          <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Managed Contacts</span>
-              <p className="text-xl font-bold text-[#C96F55] mt-0.5">{totalContacts}</p>
-            </div>
-            <span className="text-2xl">👥</span>
-          </div>
-          <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Regions Active</span>
-              <p className="text-xl font-bold text-emerald-600 mt-0.5">3 Regions</p>
-            </div>
-            <span className="text-2xl">🌐</span>
           </div>
         </div>
 
@@ -281,6 +252,19 @@ export const OrganisationsScreen: React.FC = () => {
 
           <select
             className="org-filter-select"
+            value={selectedSite}
+            onChange={(e) => setSelectedSite(e.target.value)}
+          >
+            <option value="ALL">All Default Sites</option>
+            {primarySites.map((site) => (
+              <option key={site} value={site}>
+                {site}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="org-filter-select"
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
@@ -290,7 +274,7 @@ export const OrganisationsScreen: React.FC = () => {
           </select>
         </div>
 
-        {/* Organisations Table */}
+        {/* Organisations Table matching Contacts image */}
         <div className="org-table-wrapper">
           <table className="org-users-table">
             <thead>
@@ -307,66 +291,37 @@ export const OrganisationsScreen: React.FC = () => {
             </thead>
             <tbody>
               {filteredOrganisations.length > 0 ? (
-                filteredOrganisations.map((org) => (
-                  <tr key={org.id}>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-[#13273e] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                          {org.name.slice(0, 2).toUpperCase()}
+                filteredOrganisations.map((org) => {
+                  const initials = org.name.slice(0, 2).toUpperCase();
+                  return (
+                    <tr key={org.id}>
+                      <td>
+                        <div className="org-user-identity">
+                          <div className="org-user-avatar">{initials}</div>
+                          <div className="org-user-name-box">
+                            <span className="org-user-fullname">{org.name}</span>
+                            <span className="org-user-handle">@{org.id}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-gray-900 block text-xs">{org.name}</span>
-                          <span className="text-[10px] text-gray-400 font-mono font-semibold">{org.id}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="text-[#C96F55] font-medium font-mono text-xs hover:underline cursor-pointer">
-                        {org.domain}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          org.tier === 'Enterprise'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                            : org.tier === 'Premium'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
-                        }`}
-                      >
-                        {org.tier}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="text-gray-700 font-medium text-xs">{org.primarySite}</span>
-                    </td>
-                    <td>
-                      <span className="text-slate-700 font-semibold text-xs">{org.region}</span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/contacts?organisation=${encodeURIComponent(org.name)}`)}
-                        className="text-[#C96F55] font-bold text-xs hover:underline cursor-pointer flex items-center gap-1"
-                        title={`View ${org.contactCount} contacts for ${org.name}`}
-                      >
-                        <span>{org.contactCount} Contacts</span>
-                        <span>→</span>
-                      </button>
-                    </td>
-                    <td>
-                      <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {org.openTickets} Open
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`org-status-pill ${org.status.toLowerCase()}`}>
-                        {org.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>{org.domain}</td>
+                      <td>
+                        <span className={`org-status-pill tier-${org.tier.toLowerCase()}`}>
+                          {org.tier}
+                        </span>
+                      </td>
+                      <td>{org.primarySite}</td>
+                      <td>{org.region}</td>
+                      <td>{org.contactCount} Contacts</td>
+                      <td>{org.openTickets} Open</td>
+                      <td>
+                        <span className={`org-status-pill ${org.status.toLowerCase()}`}>
+                          {org.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
@@ -447,7 +402,7 @@ export const OrganisationsScreen: React.FC = () => {
                 <div className="org-modal-footer">
                   <button
                     type="button"
-                    className="org-btn-refresh"
+                    className="org-btn-cancel"
                     onClick={() => setIsAddOrgModalOpen(false)}
                   >
                     Cancel

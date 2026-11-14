@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { RefreshButton } from '../../../components/shared/RefreshButton';
+import { ResetButton } from '../../../components/shared/ResetButton';
+import { Button } from '../../../components/shared/Button';
+import { Plus } from 'lucide-react';
 
 interface PageHeaderProps {
   onToggleFeed?: () => void;
@@ -89,19 +92,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div className="shrink-0 bg-white border-b border-gray-200 relative select-none">
-      <div className="flex items-center justify-between gap-2 px-3 py-2 min-w-0">
-        {/* Left: New Incident CTA + Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 min-w-0">
+        {/* Left: Record count + Pagination */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleNew}
-            className="flex items-center gap-1 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-semibold px-2.5 py-1 rounded-full transition-colors shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
-            title="Create New Major Incident"
-          >
-            <span className="text-sm leading-none font-light">+</span>
-            <span>New</span>
-          </button>
-
           <span className="text-xs text-gray-500 whitespace-nowrap">
             {totalCount === 0
               ? '0-0 of 0'
@@ -128,24 +121,33 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Refresh + Feed */}
-        <div className="flex items-center gap-1.5 min-w-0 justify-end">
+        {/* Right: Refresh + New + Feed */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 min-w-0">
           <RefreshButton
-            iconOnly
             size="sm"
             onClick={handleRefresh}
             isLoading={spinning}
             title="Refresh major incidents from database"
           />
 
+          <Button
+            type="button"
+            onClick={handleNew}
+            size="sm"
+            variant="primary"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            title="Create New Major Incident"
+          >
+            New
+          </Button>
+
           {onResetDemo && (
-            <button
+            <ResetButton
               onClick={onResetDemo}
-              className="hidden lg:inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:text-amber-700 bg-gray-100 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 px-2 py-0.5 rounded-full transition-colors whitespace-nowrap shrink-0"
+              className="hidden lg:inline-flex"
+              label="Reset Demo"
               title="Reset the 3 demo incidents to their initial stages"
-            >
-              <span>↺ Reset</span>
-            </button>
+            />
           )}
 
           {onToggleFeed && (

@@ -707,7 +707,6 @@ export default function ProjectsPage() {
               </>
             )}
             <RefreshButton
-              iconOnly
               size="sm"
               onClick={() => load()}
               isLoading={loading}
@@ -743,15 +742,6 @@ export default function ProjectsPage() {
                       {label}
                     </button>
                   ))}
-                  <hr />
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      load();
-                    }}
-                  >
-                    ↻ Refresh from backend
-                  </button>
                 </div>
               )}
             </div>

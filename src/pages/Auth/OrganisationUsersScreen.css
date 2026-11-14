@@ -97,7 +97,7 @@
   gap: 0.6rem;
 }
 
-.org-btn-refresh {
+.org-btn-cancel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #475569;
@@ -113,7 +113,7 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.org-btn-refresh:hover {
+.org-btn-cancel:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
   color: #0f172a;
@@ -348,6 +348,24 @@
 .org-status-pill.pending {
   background: #fffbeb;
   color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.org-status-pill.tier-enterprise {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.org-status-pill.tier-standard {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.org-status-pill.tier-premium {
+  background: #fffbeb;
+  color: #b45309;
   border: 1px solid #fde68a;
 }
 

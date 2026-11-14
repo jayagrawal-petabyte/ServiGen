@@ -244,7 +244,7 @@ export default function App() {
               <Route path="/custom-lists" element={<CustomLists />} />
               <Route path="/organisations" element={<OrganisationsScreen />} />
               <Route path="/contracts" element={<ContractsPage />} />
-              <Route path="/contacts" element={<OrganisationUsersScreen />} />
+              <Route path="/contacts" element={<Navigate to="/organisations" replace />} />
               <Route path="/team/1st-line-live" element={<FirstLineLive />} />
               <Route path="/team/1st-line-design" element={<FirstLineDesign />} />
               <Route path="/team/2nd-line-live" element={<SecondLineLive />} />

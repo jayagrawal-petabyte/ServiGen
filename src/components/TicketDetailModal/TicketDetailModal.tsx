@@ -122,9 +122,10 @@ function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'err
 function SlaClock({ seconds }: { seconds: number }) {
   const [secs, setSecs] = useState(seconds);
   useEffect(() => {
+    setSecs(seconds);
     const id = setInterval(() => setSecs(s => s - 1), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [seconds]);
   const abs = Math.abs(secs);
   const h = Math.floor(abs / 3600);
   const m = Math.floor((abs % 3600) / 60);
@@ -149,19 +150,19 @@ function SlaCard({ ticket }: { ticket: NonNullable<TicketDetailModalProps['ticke
   const resolutionMet = (ticket as any).resolutionTargetMet === true;
 
   return (
-    <div style={{
-      width: 240, flexShrink: 0,
+    <div className="ticket-sla-card" style={{
+      width: 280, flexShrink: 0,
       borderRadius: 8, overflow: 'hidden',
-      border: '1px solid #d1fae5',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
     }}>
-      <div style={{ background: '#16a34a', padding: '8px 12px', textAlign: 'center' }}>
+      <div style={{ background: '#263B5E', padding: '8px 12px', textAlign: 'center' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Incident SLA
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#d1fae5', marginTop: 1 }}>{priority}</div>
       </div>
-      <div style={{ background: '#dc2626', padding: '8px 12px', textAlign: 'center' }}>
+      <div style={{ background: overdue ? '#b91c1c' : '#C96F55', padding: '8px 12px', textAlign: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>
           <SlaClock seconds={initSecs} />
         </div>
@@ -327,6 +328,7 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   const [search, setSearch] = useState('');
   const [assigning, setAssigning] = useState<string | null>(null);
   const [successAgentId, setSuccessAgentId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/api/users?limit=40')
@@ -355,10 +357,13 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   const assign = async (agent: (typeof agents)[0]) => {
     const name = agent.fullName || `${agent.firstName || ''} ${agent.lastName || ''}`.trim();
     setAssigning(agent.id);
+    setError('');
     try {
       await api.patch(`/api/tickets/${ticketId}/assign`, { agentId: agent.id });
     } catch {
-      // offline/fallback
+      setAssigning(null);
+      setError('The ticket could not be reassigned. Please try again.');
+      return;
     }
     setAssigning(null);
     setSuccessAgentId(agent.id);
@@ -371,7 +376,7 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100001,
       background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    }} onPointerDownCapture={e => e.stopPropagation()} onFocusCapture={e => e.stopPropagation()} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: '#fff', borderRadius: 10, width: 400, maxHeight: 480, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Re-Assign Ticket</span>
@@ -386,6 +391,7 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
             style={{ width: '100%', padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
+        {error && <div role="alert" style={{ padding: '8px 16px', color: '#b91c1c', background: '#fef2f2', fontSize: 12 }}>{error}</div>}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20, color: '#9ca3af', fontSize: 13 }}>Loading agents…</div>
@@ -455,10 +461,11 @@ function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }:
         startsAt: startAt.toISOString(),
         endsAt: endAt.toISOString(),
         appointmentType: 'Appointment',
+        notes,
       });
       onCreated();
-    } catch {
-      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The appointment could not be created. Please try again.');
     }
     setSaving(false);
   };
@@ -467,7 +474,7 @@ function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }:
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100001,
       background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    }} onPointerDownCapture={e => e.stopPropagation()} onFocusCapture={e => e.stopPropagation()} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         style={{ background: '#fff', borderRadius: 10, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
@@ -564,8 +571,10 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
     setError('');
     try {
       await api.post(`/api/tickets/${ticketId}/email`, { to, cc, subject, body, postAsNote });
-    } catch {
-      // Backend handles fallback
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The email could not be sent. Please try again.');
+      setSending(false);
+      return;
     }
     onSent({ to, subject, body, postAsNote });
     setSending(false);
@@ -575,7 +584,7 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100001,
       background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    }} onPointerDownCapture={e => e.stopPropagation()} onFocusCapture={e => e.stopPropagation()} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: '#fff', borderRadius: 10, width: 520, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -705,8 +714,10 @@ function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
     setError('');
     try {
       await api.post(`/api/tickets/${ticketId}/supplier`, { supplier, externalRef, vendorSla, contactEmail, reason });
-    } catch {
-      // Backend handles fallback
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The supplier handoff could not be saved. Please try again.');
+      setSaving(false);
+      return;
     }
     onLogged({ supplier, externalRef, vendorSla, reason });
     setSaving(false);
@@ -716,7 +727,7 @@ function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100001,
       background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    }} onPointerDownCapture={e => e.stopPropagation()} onFocusCapture={e => e.stopPropagation()} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: '#fff', borderRadius: 10, width: 480, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1008,6 +1019,8 @@ function ArticlePreviewModal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      onFocusCapture={(e) => e.stopPropagation()}
     >
       <div
         style={{
@@ -1284,12 +1297,25 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   useEffect(() => {
     if (ticket) {
+      setActiveTab('progress');
+      setNoteText('');
+      setPastedAttachments([]);
+      setShowAddNote(false);
+      setShowReAssign(false);
+      setShowAppointment(false);
+      setShowEmailModal(false);
+      setShowSupplierModal(false);
+      setSupplierInfo(null);
+      setSelectedArticlePreview(null);
+      setShowAgentPicker(false);
+
       const stored = localStorage.getItem(`servigen_ticket_notes_${ticket.id}`);
       let parsedStored: TicketNote[] = [];
       try {
         if (stored) parsedStored = JSON.parse(stored);
       } catch {}
 
+      setLocalNotes([]);
       if (parsedStored.length > 0) {
         setLocalNotes(parsedStored);
       } else if (ticket.notes && ticket.notes.length > 0) {
@@ -1318,7 +1344,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         setAdditionalAgents([]);
       }
     }
-  }, [ticket]);
+  }, [ticket?.id]);
 
   // Load team users for additional agent picker
   useEffect(() => {
@@ -1345,7 +1371,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     setAdditionalAgents(updated);
     try {
       await api.patch(`/api/tickets/${ticket.id}`, { additionalAgents: updated.join(', ') });
-    } catch {}
+    } catch (err) {
+      setAdditionalAgents(additionalAgents);
+      showToast(err instanceof Error ? err.message : 'The agent assignment could not be updated.', 'error');
+      return;
+    }
     ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, additionalAgents: updated.join(', ') } });
     showToast(additionalAgents.includes(agentName) ? `Removed ${agentName}` : `Tagged ${agentName}`);
   };
@@ -1420,6 +1450,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   // Load related tickets from same requester
   useEffect(() => {
     if (!ticket?.id) return;
+    setRelatedTickets([]);
     api.get(`/api/tickets/${ticket.id}/related`)
       .then(r => setRelatedTickets(r.data?.data || []))
       .catch(() => setRelatedTickets([]));
@@ -1428,6 +1459,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   // Load KB articles dynamically relevant to this ticket
   useEffect(() => {
     if (!ticket) return;
+    setKbArticles([]);
     const q = ((ticket as any)?.title || ticket?.summary || '').trim();
     const endpoint = q ? `/api/articles?search=${encodeURIComponent(q)}` : '/api/articles?limit=8';
     api.get(endpoint)
@@ -1496,27 +1528,32 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   };
 
   const handleResolve = async () => {
+    const nextStatus = isResolved ? 'Active' : 'Resolved';
     setSavingResolve(true);
     try {
-      await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Resolved' });
-      setLocalStatus('Resolved');
-      setIsResolved(true);
-      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), status: 'Resolved' });
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, status: 'Resolved' } });
-      showToast('Ticket resolved successfully');
-    } catch {
-      setLocalStatus('Resolved');
-      setIsResolved(true);
-      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), status: 'Resolved' });
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, status: 'Resolved' } });
-      showToast('Ticket resolved (offline)', 'info');
+      await api.patch(`/api/tickets/${ticket.id}/status`, { status: nextStatus });
+      setLocalStatus(nextStatus);
+      setIsResolved(nextStatus === 'Resolved');
+      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), status: nextStatus });
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, status: nextStatus } });
+      showToast(nextStatus === 'Resolved' ? 'Ticket resolved successfully' : 'Ticket reopened successfully');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'The ticket could not be resolved. Please try again.', 'error');
+      return;
+    } finally {
+      setSavingResolve(false);
     }
-    setSavingResolve(false);
   };
 
   const handleCopy = () => {
     const text = `Ticket: ${ticket.id}\nSummary: ${ticket.summary}\nStatus: ${localStatus}\nPriority: ${ticket.priority}\nAgent: ${localAgent || 'Unassigned'}\nURL: ${window.location.href}`;
-    navigator.clipboard.writeText(text).then(() => showToast('Ticket details copied to clipboard'));
+    if (!navigator.clipboard) {
+      showToast('Clipboard access is unavailable in this browser.', 'error');
+      return;
+    }
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Ticket details copied to clipboard'))
+      .catch(() => showToast('Clipboard access was denied. Copy the ticket details manually.', 'error'));
   };
 
   const handleDownload = () => {
@@ -1539,8 +1576,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const aiSummary = `User reports issue with ${ticket.category || 'their request'}. ${ticket.description ? ticket.description.slice(0, 120) + (ticket.description.length > 120 ? '...' : '') : 'No additional details provided.'}`;
 
   const auditEntries = [
-    { actor: ticket.requester || 'End User', action: 'Ticket created', time: ticket.createdAt || 'Earlier' },
-    { actor: localAgent || ticket.agent || 'System', action: 'Assigned to agent', time: 'Recently' },
     ...(supplierInfo ? [{ actor: currentUser, action: `Logged to ${supplierInfo.supplier} (Ref: ${supplierInfo.externalRef})`, time: 'Recently' }] : []),
     ...(isEscalated ? [{ actor: currentUser, action: 'Escalated to Tier 2', time: 'Just now' }] : []),
     ...(isResolved ? [{ actor: currentUser, action: 'Ticket resolved', time: 'Just now' }] : []),
@@ -1556,6 +1591,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       border-right:1px solid #dee5ef;
       transition:background 0.12s;
     }
+    .ticket-detail-action-bar { flex-wrap:wrap; min-height:46px; }
+    .ticket-detail-action-bar > .halo-action-btn { min-height:46px; }
+    .ticket-detail-toolbar-actions { min-height:46px; }
+    .ticket-detail-tabs { overflow-x:auto; scrollbar-width:thin; }
+    .ticket-detail-tabs > .halo-tab { flex:0 0 auto; }
+    .ticket-detail-body { flex-direction:row; }
+    .ticket-detail-main { min-width:0; }
+    .ticket-detail-sidebar { width:340px !important; }
     .halo-action-btn:hover { background:#dde5f0; }
     .halo-action-btn.resolve { background:#16a34a; color:#fff; border-right:none; }
     .halo-action-btn.resolve:hover { background:#15803d; }
@@ -1578,16 +1621,24 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     .halo-textarea:focus { border-color:#3b82f6; }
     .halo-kb-item { display:flex; align-items:center; gap:8px; padding:5px 7px; margin-bottom:4px; background:#fff; border:1px solid #e5e7eb; border-radius:6px; cursor:pointer; transition:background 0.12s; }
     .halo-kb-item:hover { background:#eff6ff; }
-    @media (max-width: 1366px) {
-      .ticket-detail-sidebar { width: 270px !important; }
-    }
     @media (max-width: 1024px) {
-      .ticket-detail-sidebar { display: none !important; }
+      .ticket-detail-body { flex-direction:column !important; overflow-y:auto !important; }
+      .ticket-detail-main { flex:0 0 auto !important; overflow:visible !important; }
+      .ticket-detail-sidebar {
+        width:100% !important; max-height:320px; flex:0 0 auto !important;
+        border-left:none !important; border-top:1px solid #dee5ef;
+      }
+    }
+    @media (max-width: 720px) {
+      .ticket-detail-action-bar > .halo-action-btn { flex:1 1 auto; justify-content:center; }
+      .ticket-detail-toolbar-actions { margin-left:0 !important; width:100%; border-left:none !important; border-top:1px solid #dee5ef; }
+      .ticket-detail-toolbar-actions > .halo-action-btn { flex:1; justify-content:center; }
+      .ticket-sla-card { width:100% !important; }
     }
   `;
 
   return (
-    <Dialog.Root open={true} onOpenChange={open => { if (!open) onClose(); }}>
+    <Dialog.Root modal={false} open={true} onOpenChange={open => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay
           ref={overlayRef}
@@ -1719,12 +1770,29 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           )}
 
           {/* ── Modal Shell (Dialog.Content) ── */}
-          <Dialog.Content asChild>
-            <div style={{
+          <Dialog.Content
+            asChild
+            onPointerDownOutside={event => {
+              if (showReAssign || showAppointment || showEmailModal || showSupplierModal || selectedArticlePreview) {
+                event.preventDefault();
+              }
+            }}
+            onFocusOutside={event => {
+              if (showReAssign || showAppointment || showEmailModal || showSupplierModal || selectedArticlePreview) {
+                event.preventDefault();
+              }
+            }}
+            onInteractOutside={event => {
+              if (showReAssign || showAppointment || showEmailModal || showSupplierModal || selectedArticlePreview) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <div className="ticket-detail-shell" style={{
               background: '#fff',
               borderRadius: 10,
-              width: '100%', maxWidth: 1120,
-              height: 'calc(100vh - 48px)', maxHeight: 820,
+              width: 'min(1180px, 100%)', maxWidth: 1180,
+              height: 'min(820px, calc(100dvh - 32px))', maxHeight: 'calc(100dvh - 32px)',
               display: 'flex', flexDirection: 'column',
               boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
               overflow: 'hidden',
@@ -1736,7 +1804,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {/* ════════════════════════════════════════
                   TOP ACTION BAR
                   ════════════════════════════════════════ */}
-              <div style={{
+              <div className="ticket-detail-action-bar" style={{
                 display: 'flex', alignItems: 'stretch',
                 borderBottom: '1px solid #dee5ef',
                 background: '#f8fafc', flexShrink: 0,
@@ -1766,7 +1834,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 {/* Create Appointment — opens calendar event creator */}
                 <button className="halo-action-btn" onClick={() => setShowAppointment(true)}>
                   <CalendarPlus style={{ width: 14, height: 14, color: '#10b981' }} />
-                  Create Appointme…
+                  Appointment
                 </button>
 
                 {/* Log to Supplier — opens vendor tracking modal */}
@@ -1783,11 +1851,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 <button
                   className="halo-action-btn resolve"
                   onClick={handleResolve}
-                  disabled={isResolved || savingResolve}
-                  style={{ opacity: (isResolved || savingResolve) ? 0.7 : 1 }}
+                  disabled={savingResolve}
+                  style={{ opacity: savingResolve ? 0.7 : 1 }}
                 >
                   {savingResolve ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" /> : <CheckCircle style={{ width: 14, height: 14 }} />}
-                  {isResolved ? 'Resolved ✓' : savingResolve ? 'Resolving…' : 'Resolve Ticket'}
+                  {savingResolve ? (isResolved ? 'Reopening…' : 'Resolving…') : isResolved ? 'Reopen Ticket' : 'Resolve Ticket'}
                 </button>
 
                 {/* AI Escalation badge */}
@@ -1809,7 +1877,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 )}
 
                 {/* Right toolbar actions */}
-                <div style={{
+                <div className="ticket-detail-toolbar-actions" style={{
                   display: 'flex', alignItems: 'center',
                   marginLeft: (aiRisk === 'High Risk' && onEscalateToTier2 && !isEscalated) || isEscalated ? 0 : 'auto',
                   borderLeft: '1px solid #dee5ef',
@@ -1836,10 +1904,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {/* ════════════════════════════════════════
                   MAIN BODY — Left content + Right sidebar
                   ════════════════════════════════════════ */}
-              <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+              <div className="ticket-detail-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
                 {/* ─── LEFT / MAIN CONTENT ─────────────────────────────── */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+                <div className="ticket-detail-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
                   {/* Ticket header row (ID + summary + SLA card) */}
                   <div style={{ padding: '16px 20px 12px', flexShrink: 0 }}>
@@ -1847,7 +1915,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       {/* Left: priority circle + ID + summary */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                          <div style={{
+                          <div className="ticket-detail-tabs" style={{
                             width: 30, height: 30, borderRadius: '50%',
                             border: '2px solid #22c55e', background: '#f0fdf4',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2116,11 +2184,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                         <div className="halo-sidebar-field">
                           <div className="halo-sidebar-field-label">Site / Campus Location</div>
-                          <div className="halo-sidebar-field-value">{ticket.site || 'Corporate HQ – Main Campus'}</div>
+                          <div className="halo-sidebar-field-value">{ticket.site || '—'}</div>
                         </div>
                         <div className="halo-sidebar-field">
                           <div className="halo-sidebar-field-label">Assigned Team</div>
-                          <div className="halo-sidebar-field-value">{(ticket as any).assignedTeam || '1st Line Support'}</div>
+                          <div className="halo-sidebar-field-value">{(ticket as any).assignedTeam || '—'}</div>
                         </div>
                       </div>
                     )}
@@ -2128,7 +2196,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     {/* Tab: Audit Log */}
                     {activeTab === 'audit-log' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {auditEntries.map((e, idx) => (
+                        {auditEntries.length === 0 ? (
+                          <div style={{ color: '#64748b', fontSize: 13, padding: '24px 0' }}>
+                            No audit events are available for this ticket.
+                          </div>
+                        ) : auditEntries.map((e, idx) => (
                           <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#f9fafb', borderRadius: 6, fontSize: 12.5 }}>
                             <span style={{ color: '#111827', fontWeight: 500 }}>{e.actor} — {e.action}</span>
                             <span style={{ color: '#9ca3af', fontSize: 11 }}>{e.time}</span>
@@ -2140,17 +2212,18 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     {/* Tab: View Log */}
                     {activeTab === 'view-log' && (
                       <div style={{ fontSize: 12.5, color: '#6b7280' }}>
-                        <p style={{ margin: 0 }}>Viewed by <strong>{currentUser}</strong> at {new Date().toLocaleTimeString()} (active session).</p>
-                        <p style={{ marginTop: 6 }}>Previous viewer: <em>System Manager</em> (yesterday 17:42).</p>
+                        View logging is not available for this ticket.
                       </div>
                     )}
 
                     {/* Tab: Notification Log */}
                     {activeTab === 'notification-log' && (
                       <div style={{ fontSize: 12.5, color: '#6b7280' }}>
-                        <div style={{ padding: '8px 12px', background: '#f9fafb', borderRadius: 6, marginBottom: 6 }}>
-                          <span style={{ fontWeight: 600, color: '#111827' }}>Ticket Intake Email:</span> Sent confirmation receipt to {ticket.email || 'requester'} ({ticket.createdAt || 'on open'}).
-                        </div>
+                        {localNotes.filter(note => note.author.includes('Outbound Email')).map(note => (
+                          <div key={note.id} style={{ padding: '8px 12px', background: '#f9fafb', borderRadius: 6, marginBottom: 6 }}>
+                            <span style={{ fontWeight: 600, color: '#111827' }}>Outbound email:</span> {note.time}
+                          </div>
+                        ))}
                         {isEscalated && (
                           <div style={{ padding: '8px 12px', background: '#fef2f2', borderRadius: 6, marginBottom: 6, color: '#991b1b' }}>
                             <span style={{ fontWeight: 600 }}>Tier 2 Escalation Notification:</span> Dispatched to 2nd Line Support lead queue.
@@ -2159,6 +2232,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         {supplierInfo && (
                           <div style={{ padding: '8px 12px', background: '#f0fdf4', borderRadius: 6, color: '#166534' }}>
                             <span style={{ fontWeight: 600 }}>Supplier Dispatch:</span> External ticket created with {supplierInfo.supplier} (Ref: {supplierInfo.externalRef}).
+                          </div>
+                        )}
+                        {localNotes.filter(note => note.author.includes('Outbound Email')).length === 0 && !isEscalated && !supplierInfo && (
+                          <div style={{ color: '#64748b', padding: '24px 0' }}>
+                            No notification events are available for this ticket.
                           </div>
                         )}
                       </div>
@@ -2351,7 +2429,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <User style={{ width: 18, height: 18, color: '#374151' }} />
                         <div>
                           <div style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{localAgent || ticket.agent || 'Unassigned'}</div>
-                          <div style={{ fontSize: 11, color: '#9ca3af' }}>{(ticket as any).assignedTeam || '1st Line Support'}</div>
+                          <div style={{ fontSize: 11, color: '#9ca3af' }}>{(ticket as any).assignedTeam || '—'}</div>
                         </div>
                       </div>
                     </div>

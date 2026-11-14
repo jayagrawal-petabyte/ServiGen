@@ -1166,7 +1166,6 @@ export const RequestsPage: React.FC = () => {
               />
 
               <RefreshButton
-                iconOnly
                 size="sm"
                 title="Refresh Requests"
                 onClick={handleRefresh}

@@ -280,13 +280,6 @@ const NAV_ITEMS: NavItemConfig[] = [
     roles: ['Administrator', 'System Manager'],
   },
   {
-    to: '/contacts',
-    label: 'Contacts',
-    icon: ContactsIcon,
-    matchActive: (path) => path.startsWith('/contacts'),
-    roles: ['Administrator', 'System Manager'],
-  },
-  {
     to: '/cmdb',
     label: 'CMDB',
     icon: CmdbIcon,
