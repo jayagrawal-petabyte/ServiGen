@@ -349,6 +349,25 @@ export default function IncidentsByCategoryReport() {
     setFilters((prev) => prev.filter((row) => row.id !== rowId));
   };
 
+  
+  const handleFilterFieldChange = (rowId: string, val: string) => {
+    setFilters((prev) => prev.map((r) => (r.id === rowId ? { ...r, field: val } : r)));
+  };
+
+  const handleFilterOperatorChange = (rowId: string, val: string) => {
+    setFilters((prev) => prev.map((r) => (r.id === rowId ? { ...r, operator: val } : r)));
+  };
+
+  const handleFilterTagRemove = (rowId: string, tagId: string) => {
+    setFilters((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? { ...row, tags: row.tags?.filter((t) => t.id !== tagId) }
+          : row
+      )
+    );
+  };
+
   const handleAddFilterRow = () => {
     const newId = `f-${Date.now()}`;
     setFilters((prev) => [
@@ -469,6 +488,55 @@ export default function IncidentsByCategoryReport() {
     const metPercent = total > 0 ? ((met / total) * 100).toFixed(1) : '100.0';
     return { total, met, breached, metPercent };
   }, [tickets]);
+
+  // Contextual filters for Assets
+  const [assetSearch, setAssetSearch] = useState('');
+  const [assetTypeFilter, setAssetTypeFilter] = useState('All');
+  const [assetEnvFilter, setAssetEnvFilter] = useState('All');
+
+  // Contextual filters for Changes
+  const [changeSearch, setChangeSearch] = useState('');
+  const [changeRiskFilter, setChangeRiskFilter] = useState('All');
+  const [changeTypeFilter, setChangeTypeFilter] = useState('All');
+
+  const CMDB_ASSETS = useMemo(() => [
+    { tag: 'PAY-001', name: 'Primary Payment Gateway Host', type: 'Server', state: 'Deployed', env: 'Production', owner: 'Finance Ops', expiry: '15/12/2026', urgent: true },
+    { tag: 'DB-001', name: 'Customer Production Relational DB', type: 'Database', state: 'Deployed', env: 'Production', owner: 'Data Eng', expiry: '28/01/2027', urgent: false },
+    { tag: 'SW-001', name: 'Core Backbone Switch 01', type: 'Network', state: 'Deployed', env: 'Production', owner: 'Infrastructure', expiry: '05/12/2026', urgent: true },
+    { tag: 'LAP-042', name: 'MacBook Pro M3 Max (Dev Lead)', type: 'Hardware', state: 'Deployed', env: 'End User', owner: 'Engineering', expiry: '12/11/2027', urgent: false },
+    { tag: 'LIC-008', name: 'JetBrains Enterprise License Pool', type: 'Software', state: 'Deployed', env: 'Corporate', owner: 'IT Procurement', expiry: '20/12/2026', urgent: true },
+    { tag: 'SRV-019', name: 'Kubernetes Ingress Edge Gateway', type: 'Server', state: 'Deployed', env: 'Production', owner: 'DevOps', expiry: '18/03/2027', urgent: false },
+    { tag: 'DB-004', name: 'Redis Cache Cluster (EU West)', type: 'Database', state: 'Deployed', env: 'Production', owner: 'Platform Eng', expiry: '10/01/2027', urgent: false },
+  ], []);
+
+  const filteredAssets = useMemo(() => {
+    return CMDB_ASSETS.filter((ci) => {
+      const matchType = assetTypeFilter === 'All' || ci.type === assetTypeFilter;
+      const matchEnv = assetEnvFilter === 'All' || ci.env === assetEnvFilter;
+      const q = assetSearch.toLowerCase().trim();
+      const matchSearch = !q || ci.tag.toLowerCase().includes(q) || ci.name.toLowerCase().includes(q) || ci.owner.toLowerCase().includes(q);
+      return matchType && matchEnv && matchSearch;
+    });
+  }, [CMDB_ASSETS, assetTypeFilter, assetEnvFilter, assetSearch]);
+
+  const CHANGES_DATA = useMemo(() => [
+    { id: 'CR-2024-001', title: 'Core Data Center Switch Firmware Upgrade', type: 'Normal', risk: 'High', cab: 'Approved', rollback: 'Dual-image failback switch boot', status: 'Completed' },
+    { id: 'CR-2024-002', title: 'PostgreSQL Read Replica Cluster Migration', type: 'Normal', risk: 'Critical', cab: 'Approved', rollback: 'Automated snapshot restore', status: 'In Progress' },
+    { id: 'CR-2024-003', title: 'Azure AD SSO Token Expiry Policy Alignment', type: 'Standard', risk: 'Medium', cab: 'Pre-Approved', rollback: 'Session policy reversion', status: 'Completed' },
+    { id: 'CR-2024-004', title: 'Kubernetes Worker Node Vulnerability Patch', type: 'Emergency', risk: 'Critical', cab: 'Emergency Sign-off', rollback: 'AMI node drain & revert', status: 'Completed' },
+    { id: 'CR-2024-005', title: 'Payment Gateway Webhook Endpoint Migration', type: 'Normal', risk: 'High', cab: 'Pending CAB', rollback: 'Canary traffic routing revert', status: 'Scheduled' },
+  ], []);
+
+  const filteredChanges = useMemo(() => {
+    return CHANGES_DATA.filter((cr) => {
+      const matchRisk = changeRiskFilter === 'All' || cr.risk === changeRiskFilter;
+      const matchType = changeTypeFilter === 'All' || cr.type === changeTypeFilter;
+      const q = changeSearch.toLowerCase().trim();
+      const matchSearch = !q || cr.id.toLowerCase().includes(q) || cr.title.toLowerCase().includes(q);
+      return matchRisk && matchType && matchSearch;
+    });
+  }, [CHANGES_DATA, changeRiskFilter, changeTypeFilter, changeSearch]);
+
 
   // CSV Exporter
   const handleExportCSV = () => {
@@ -606,108 +674,18 @@ export default function IncidentsByCategoryReport() {
       </header>
 
       {/* ── Main Reporting Canvas ── */}
-      <div className="reporting-main-canvas">
-        {/* Top actions: Export to CSV, Pre-Built Catalog & Custom Query Builder */}
-        <div className="report-action-toolbar flex-wrap gap-2">
-          {/* Primary Action 1: Pre-Built Report Catalog (24 Templates) */}
-          <button
-            type="button"
-            className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-            onClick={() => setIsCatalogOpen(true)}
-            title="Browse all 24 standardized ITIL pre-built report templates"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Pre-Built Reports Catalog (24)</span>
-          </button>
+      <div className="reporting-main-canvas max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col gap-6">
 
-          {/* Primary Action 2: No-Code Query Builder */}
-          <button
-            type="button"
-            className="px-3.5 py-1.5 bg-[#FFF9F5] border border-[#ebdcd3] hover:bg-[#F7C4B3]/20 text-[#332B28] text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-            onClick={() => setIsQueryBuilderOpen(true)}
-            title="Design custom cross-cutting ad-hoc report using no-code builder"
-          >
-            <Sliders className="w-3.5 h-3.5 text-[#C96F55]" />
-            <span>Custom Query Builder</span>
-          </button>
-
-          <button
-            type="button"
-            className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-            onClick={handleExportCSV}
-            title="Download report data as CSV file"
-          >
-            <Download className="w-3.5 h-3.5 text-gray-500" />
-            <span>Export to CSV</span>
-          </button>
-
-          <button
-            type="button"
-            className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-            onClick={() => setIsScheduleOpen(true)}
-            title="Automate recurring report generation"
-          >
-            <Clock className="w-3.5 h-3.5 text-gray-500" />
-            <span>{savedSchedule ? `Scheduled (${savedSchedule.freq})` : 'Schedule Export'}</span>
-          </button>
-
-          <Popover.Root>
-            <Popover.Trigger asChild>
-              <button
-                type="button"
-                className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-                title="Customize table column display"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
-                <span>Columns</span>
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content
-                className="bg-white border border-slate-200 shadow-xl rounded-xl p-3 z-50 w-52 flex flex-col gap-1.5 text-xs text-slate-700 animate-in fade-in"
-                sideOffset={6}
-              >
-                <span className="font-bold text-slate-800 pb-1 border-b border-slate-100">Toggle Visible Columns</span>
-                {Object.keys(visibleColumns).map((colKey) => (
-                  <label key={colKey} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns[colKey]}
-                      onChange={(e) => setVisibleColumns((prev) => ({ ...prev, [colKey]: e.target.checked }))}
-                      className="rounded text-indigo-600 focus:ring-0"
-                    />
-                    <span className="capitalize">{colKey.replace(/([A-Z])/g, ' $1')}</span>
-                  </label>
-                ))}
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
-
-          <button
-            type="button"
-            className={`px-3 py-1.5 border text-xs font-semibold rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all ${
-              isFavorite
-                ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
-                : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
-            }`}
-            onClick={handleToggleFavorite}
-            title="Save to personalized My Reports list"
-          >
-            <Star className={`w-3.5 h-3.5 ${isFavorite ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
-            <span>Add to My Reports</span>
-          </button>
-        </div>
-
-        {/* ── Report Catalog Switcher Tabs ── */}
-        <div className="mb-5 overflow-x-auto pb-1">
-          <div className="inline-flex items-center gap-1 p-1 bg-white border border-[#ebdcd3] rounded-full shadow-2xs flex-nowrap min-w-max">
+        {/* ── Level 1: Report Switcher Navigation Tabs ── */}
+        <div className="flex items-center justify-between gap-4 flex-wrap pb-1">
+          <div className="inline-flex items-center gap-1.5 p-1.5 bg-white border border-[#ebdcd3] rounded-full shadow-xs flex-wrap">
             <button
               type="button"
               onClick={() => setActiveReport('category')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'category'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" />
@@ -716,10 +694,10 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('sla')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'sla'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -728,10 +706,10 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('agents')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'agents'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -740,10 +718,10 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('fcr')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'fcr'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -752,10 +730,10 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('changes')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'changes'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <ShieldAlert className="w-3.5 h-3.5" />
@@ -764,10 +742,10 @@ export default function IncidentsByCategoryReport() {
             <button
               type="button"
               onClick={() => setActiveReport('assets')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeReport === 'assets'
-                  ? 'bg-[#C96F55] text-white shadow-xs font-bold rounded-full'
-                  : 'text-[#332B28] hover:text-[#332B28] hover:bg-[#FFF9F5] rounded-full'
+                  ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                  : 'text-[#332B28] hover:bg-[#FFF9F5]'
               }`}
             >
               <Database className="w-3.5 h-3.5" />
@@ -777,582 +755,339 @@ export default function IncidentsByCategoryReport() {
               <button
                 type="button"
                 onClick={() => setActiveReport('custom')}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeReport === 'custom'
-                    ? 'bg-[#263B5E] text-white shadow-xs font-bold rounded-full'
-                    : 'text-[#263B5E] hover:bg-[#FFF9F5] border border-[#263B5E]/30 rounded-full'
+                    ? 'bg-[#C96F55] text-white shadow-xs font-bold'
+                    : 'text-[#C96F55] hover:bg-[#FFF9F5] border border-[#C96F55]/30'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Custom: {customQueryConfig.title.slice(0, 24)}...</span>
+                <span>Custom: {customQueryConfig.title.slice(0, 20)}...</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Page Title & Active Report Badge */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <h1 className="report-page-heading mb-0">
-            {activeReport === 'category' && 'Incidents by Category'}
-            {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
-            {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
-            {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
-            {activeReport === 'changes' && 'Change Management & CAB Risk Analytics'}
-            {activeReport === 'assets' && 'CMDB Asset Lifecycle & Expiring Warranties'}
-            {activeReport === 'custom' && (customQueryConfig?.title || 'Custom Ad-Hoc Report')}
-          </h1>
-          {activeCatalogReport && (
-            <span className="text-xs text-slate-500 font-semibold bg-white border border-slate-200 px-2.5 py-1 rounded-full self-start">
-              Template: <strong className="text-slate-800">{activeCatalogReport.id}</strong> ({activeCatalogReport.frequency})
-            </span>
-          )}
-        </div>
-
-        {/* ── KPI Cards for SLA Compliance View ── */}
-        {activeReport === 'sla' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">SLA Met Compliance</span>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-extrabold text-emerald-600">{slaMetrics.metPercent}%</span>
-                <span className="text-xs font-bold text-slate-500">Target 95.0%</span>
-              </div>
-              <span className="text-[11px] text-slate-400 mt-1">↑ +1.4% improvement vs previous period</span>
+        {/* ── Level 2: Active Report Header Card & Unified Action Toolbar ── */}
+        <div className="bg-white border border-[#ebdcd3] rounded-2xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl font-bold text-[#332B28] tracking-tight m-0">
+                {activeReport === 'category' && 'Incidents by Category'}
+                {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
+                {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
+                {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
+                {activeReport === 'changes' && 'Change Management & CAB Risk Analytics'}
+                {activeReport === 'assets' && 'CMDB Asset Lifecycle & Expiring Warranties'}
+                {activeReport === 'custom' && (customQueryConfig?.title || 'Custom Ad-Hoc Report')}
+              </h1>
+              <span className="text-[11px] font-bold text-[#C96F55] bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-0.5 rounded-full">
+                {activeCatalogReport ? `Template: ${activeCatalogReport.id}` : activeReport === 'category' ? 'INC-01 (Daily/Weekly)' : activeReport === 'sla' ? 'SLA-04 (Contractual)' : activeReport === 'agents' ? 'OPS-02 (Team KPI)' : activeReport === 'fcr' ? 'CSAT-03 (Quality)' : activeReport === 'changes' ? 'CHG-01 (ITIL V4)' : activeReport === 'assets' ? 'AST-08 (Inventory)' : 'AD-HOC (Custom)'}
+              </span>
             </div>
-
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Met Within Target SLA</span>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-extrabold text-slate-800">{slaMetrics.met}</span>
-                <span className="text-xs font-semibold text-emerald-600">✓ On-Track</span>
-              </div>
-              <span className="text-[11px] text-slate-400 mt-1">Tickets resolved inside contractual SLA</span>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">SLA Breached Tickets</span>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-extrabold text-rose-600">{slaMetrics.breached}</span>
-                <span className="text-xs font-semibold text-rose-600">⚠️ Critical Review</span>
-              </div>
-              <span className="text-[11px] text-slate-400 mt-1">Requiring post-incident SLA breach audit</span>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Breach Overrun</span>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-extrabold text-amber-600">+24m</span>
-                <span className="text-xs font-semibold text-slate-500">Mean time</span>
-              </div>
-              <span className="text-[11px] text-slate-400 mt-1">Average excess time past breach threshold</span>
-            </div>
-          </div>
-        )}
-
-        {/* ── KPI Cards for Agent Performance View ── */}
-        {activeReport === 'agents' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Responders</span>
-              <div className="text-3xl font-extrabold text-slate-800 mt-2">4 Agents</div>
-              <span className="text-[11px] text-slate-400 mt-1">Across 1st Line & 2nd Line Support</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tickets Resolved Today</span>
-              <div className="text-3xl font-extrabold text-indigo-600 mt-2">42 Tickets</div>
-              <span className="text-[11px] text-slate-400 mt-1">High throughput support sprint</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Resolution Time</span>
-              <div className="text-3xl font-extrabold text-emerald-600 mt-2">1h 48m</div>
-              <span className="text-[11px] text-slate-400 mt-1">Down from 2h 15m last quarter</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Team SLA Adherence</span>
-              <div className="text-3xl font-extrabold text-emerald-600 mt-2">96.4%</div>
-              <span className="text-[11px] text-slate-400 mt-1">Exceeds corporate 95.0% SLA SLA KPI</span>
-            </div>
-          </div>
-        )}
-
-        {/* ── KPI Cards for FCR View ── */}
-        {activeReport === 'fcr' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">First Contact Resolution</span>
-              <div className="text-3xl font-extrabold text-emerald-600 mt-2">78.4%</div>
-              <span className="text-[11px] text-slate-400 mt-1">Industry Benchmark: 70.0% – 75.0%</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">1st Touch Resolved</span>
-              <div className="text-3xl font-extrabold text-slate-800 mt-2">69 Tickets</div>
-              <span className="text-[11px] text-slate-400 mt-1">No escalations or handoffs required</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Escalated Handoffs</span>
-              <div className="text-3xl font-extrabold text-amber-600 mt-2">19 Tickets</div>
-              <span className="text-[11px] text-slate-400 mt-1">Transferred to Tier 2 engineering</span>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ticket Reopen Rate</span>
-              <div className="text-3xl font-extrabold text-emerald-600 mt-2">2.1%</div>
-              <span className="text-[11px] text-slate-400 mt-1">Below target ceiling of 5.0%</span>
-            </div>
-          </div>
-        )}
-
-        {/* ── Section 1: Reporting Period ── */}
-        <div className="report-section-block">
-          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-            Reporting Period
+            <p className="text-xs text-[#332B28]/70 mt-1 mb-0">
+              {activeReport === 'category' && 'Distribution of incident tickets, response times, and team assignments across technical classifications.'}
+              {activeReport === 'sla' && 'Contractual SLA response and resolution performance, breach durations, and target threshold metrics.'}
+              {activeReport === 'agents' && 'First-line and second-line engineer throughput, ticket close rates, average handling time, and team SLA adherence.'}
+              {activeReport === 'fcr' && 'Percentage of customer issues resolved upon initial touchpoint without escalation or handoff overhead.'}
+              {activeReport === 'changes' && 'Production RFC throughput, CAB approval velocity, risk profiles, and implementation success rates.'}
+              {activeReport === 'assets' && 'Asset distribution across environments, hardware lifecycle states, warranty expirations, and reserve inventory.'}
+              {activeReport === 'custom' && `Custom multi-dimensional query evaluating ${customQueryConfig?.entity || 'records'} grouped by ${customQueryConfig?.groupBy || 'dimension'}.`}
+            </p>
           </div>
 
-          <div className="report-period-row">
-            <div className="report-select-wrapper">
-              <select
-                className="report-select-input"
-                value={dateField}
-                onChange={(e) => setDateField(e.target.value)}
-              >
-                <option value="Date Created">Date Created</option>
-                <option value="Date Resolved">Date Resolved</option>
-                <option value="Date Closed">Date Closed</option>
-                <option value="Date Updated">Date Updated</option>
-              </select>
-            </div>
-
-            <div className="report-select-wrapper">
-              <select
-                className="report-select-input"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              >
-                <option value="All">All</option>
-                <option value="Today">Today</option>
-                <option value="This Week">This Week</option>
-                <option value="This Month">This Month</option>
-                <option value="This Quarter">This Quarter</option>
-                <option value="This Year">This Year</option>
-              </select>
-            </div>
-
-            {/* SLA Filter Slices */}
-            {activeReport === 'sla' && (
-              <div className="flex items-center gap-2 ml-4">
-                <span className="text-xs font-bold text-slate-500">SLA Slice:</span>
-                <button
-                  type="button"
-                  onClick={() => setSlaFilterMode('all')}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold ${
-                    slaFilterMode === 'all'
-                      ? 'bg-[#eb6a47] text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  All ({tickets.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSlaFilterMode('breached')}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold ${
-                    slaFilterMode === 'breached'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-white text-rose-700 border border-rose-200'
-                  }`}
-                >
-                  ⚠️ Breached SLA ({slaMetrics.breached})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSlaFilterMode('met')}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold ${
-                    slaFilterMode === 'met'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-emerald-700 border border-emerald-200'
-                  }`}
-                >
-                  ✓ Met SLA ({slaMetrics.met})
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Section 2: Custom Filter Condition Builder ── */}
-        <div className="report-section-block filters-block">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              Filter Conditions Builder
-            </span>
+          {/* Contextual Action Toolbar */}
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-[#C96F55] hover:bg-[#C96F55]/10 rounded-full border border-[#C96F55]/30 transition-all cursor-pointer"
-              onClick={handleAddFilterRow}
-              title="Add another filter condition"
+              className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+              onClick={() => setIsCatalogOpen(true)}
+              title="Browse all 24 standardized ITIL pre-built report templates"
             >
-              <span>+ Add Condition</span>
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Catalog (24)</span>
             </button>
-          </div>
 
-          {filters.length === 0 ? (
-            <div className="p-3.5 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
-              <span>No custom filter conditions applied. All incidents are included in this report.</span>
-            </div>
-          ) : (
-            <div className="filter-rows-container">
-              {filters.map((filter) => (
-              <div key={filter.id} className="filter-item-row">
-                {/* Field select (e.g. Category, ITIL Type, Team, Priority, Status, Agent) */}
-                <div className="filter-select-field">
-                  <select
-                    className="report-select-input"
-                    value={filter.field}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFilters((prev) =>
-                        prev.map((r) => (r.id === filter.id ? { ...r, field: val } : r))
-                      );
-                    }}
-                  >
-                    <option value="Category">Category</option>
-                    <option value="Priority">Priority</option>
-                    <option value="Status">Status</option>
-                    <option value="Team">Team</option>
-                    <option value="Agent">Agent</option>
-                    <option value="ITIL Type">ITIL Type</option>
-                  </select>
-                </div>
+            <button
+              type="button"
+              className="px-3.5 py-1.5 bg-[#FFF9F5] border border-[#ebdcd3] hover:bg-[#F7C4B3]/20 text-[#332B28] text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+              onClick={() => setIsQueryBuilderOpen(true)}
+              title="Design custom cross-cutting ad-hoc report using no-code builder"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#C96F55]" />
+              <span>Query Builder</span>
+            </button>
 
-                {/* Operator select */}
-                <div className="filter-select-operator">
-                  <select
-                    className="report-select-input"
-                    value={filter.operator}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFilters((prev) =>
-                        prev.map((r) => (r.id === filter.id ? { ...r, operator: val } : r))
-                      );
-                    }}
-                  >
-                    <option value="Equals">Equals</option>
-                    <option value="Includes">Includes</option>
-                    <option value="Does not include">Does not include</option>
-                    <option value="Is not blank">Is not blank</option>
-                    <option value="Is blank">Is blank</option>
-                  </select>
-                </div>
+            <button
+              type="button"
+              className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+              onClick={handleExportCSV}
+              title="Download report data as CSV file"
+            >
+              <Download className="w-3.5 h-3.5 text-gray-500" />
+              <span>Export CSV</span>
+            </button>
 
-                {/* Value input for custom filter rows */}
-                {filter.value !== undefined ? (
-                  <div className="flex-1 max-w-xs">
-                    {filter.field === 'Priority' ? (
-                      <select
-                        className="report-select-input w-full"
-                        value={filter.value}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFilters((prev) =>
-                            prev.map((r) => (r.id === filter.id ? { ...r, value: val } : r))
-                          );
-                        }}
-                      >
-                        <option value="Critical">Critical</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        className="report-select-input w-full"
-                        placeholder="Enter filter value..."
-                        value={filter.value}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFilters((prev) =>
-                            prev.map((r) => (r.id === filter.id ? { ...r, value: val } : r))
-                          );
-                        }}
-                      />
-                    )}
-                  </div>
-                ) : null}
+            <button
+              type="button"
+              className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+              onClick={() => setIsScheduleOpen(true)}
+              title="Automate recurring report generation"
+            >
+              <Clock className="w-3.5 h-3.5 text-gray-500" />
+              <span>{savedSchedule ? `Scheduled (${savedSchedule.freq})` : 'Schedule'}</span>
+            </button>
 
-                {/* Tag values box (if applicable) */}
-                {filter.tags && (
-                  <div className="filter-tags-box">
-                    <div className="tags-chips-list">
-                      {filter.tags.map((tag) => (
-                        <span key={tag.id} className="filter-cyan-tag">
-                          <span>{tag.label}</span>
-                          <button
-                            type="button"
-                            className="tag-remove-x"
-                            onClick={() => handleRemoveTag(filter.id, tag.id)}
-                            title={`Remove ${tag.label}`}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="tags-box-controls">
-                      {filter.tags.length > 0 && (
-                        <button
-                          type="button"
-                          className="tags-clear-all"
-                          onClick={() => handleClearTags(filter.id)}
-                          title="Clear all selected"
-                        >
-                          ✕
-                        </button>
-                      )}
-                      <span className="tags-caret">▾</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Remove filter row button on far right */}
+            <Popover.Root>
+              <Popover.Trigger asChild>
                 <button
                   type="button"
-                  className="filter-remove-row-btn"
-                  onClick={() => handleRemoveFilterRow(filter.id)}
-                  title="Remove this filter"
+                  className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+                  title="Customize table column display"
                 >
-                  ✕
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Columns</span>
                 </button>
-              </div>
-            ))}
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  className="bg-white border border-[#ebdcd3] shadow-xl rounded-xl p-3 z-50 w-52 flex flex-col gap-1.5 text-xs text-[#332B28] animate-in fade-in"
+                  sideOffset={6}
+                >
+                  <span className="font-bold text-[#332B28] pb-1 border-b border-[#ebdcd3]">Toggle Columns</span>
+                  {Object.keys(visibleColumns).map((colKey) => (
+                    <label key={colKey} className="flex items-center gap-2 cursor-pointer hover:bg-[#FFF9F5] p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[colKey]}
+                        onChange={(e) => setVisibleColumns((prev) => ({ ...prev, [colKey]: e.target.checked }))}
+                        className="rounded text-[#C96F55] focus:ring-[#C96F55]"
+                      />
+                      <span className="capitalize">{colKey.replace(/([A-Z])/g, ' $1')}</span>
+                    </label>
+                  ))}
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
+            <button
+              type="button"
+              className="px-3.5 py-1.5 bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28] text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+              onClick={() => {
+                setIsRefreshing(true);
+                setStatusMessage('Refreshed report metrics');
+                setTimeout(() => {
+                  setIsRefreshing(false);
+                  setTimeout(() => setStatusMessage(null), 2000);
+                }, 600);
+              }}
+              title="Refresh report data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#C96F55]' : 'text-gray-500'}`} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              type="button"
+              className={`px-3.5 py-1.5 border text-xs font-semibold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all ${
+                isFavorite
+                  ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                  : 'bg-white border-[#ebdcd3] hover:bg-[#FFF9F5] text-[#332B28]'
+              }`}
+              onClick={handleToggleFavorite}
+              title="Save to personalized My Reports list"
+            >
+              <Star className={`w-3.5 h-3.5 ${isFavorite ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
+              <span>{isFavorite ? 'Favorited' : 'Favorite'}</span>
+            </button>
           </div>
-          )}
         </div>
 
-        {/* ── Active Filter Tag ── */}
-        {activeCategoryTag && (
-          <div className="report-active-filter-row">
-            <span className="report-filter-tag-pill">
-              <span>Category = "{activeCategoryTag}"</span>
-              <button
-                type="button"
-                className="report-tag-close-btn"
-                onClick={() => setActiveCategoryTag(null)}
-                title="Remove Category Filter"
-              >
-                ✕
-              </button>
-            </span>
-          </div>
-        )}
+        {/* ── Level 3: Active Report Content & Data ── */}
 
-        {/* ── Refresh Report & Results Counter ── */}
-        <div className="report-table-action-bar">
-          <button
-            type="button"
-            className="px-4 py-2 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
-            onClick={() => {
-              setIsRefreshing(true);
-              setStatusMessage('Refreshed report data with latest metrics');
-              setTimeout(() => {
-                setIsRefreshing(false);
-                setTimeout(() => setStatusMessage(null), 2000);
-              }, 600);
-            }}
-            title="Refresh current report query"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh Report</span>
-          </button>
-
-          <span className="report-results-count">Results: {filteredTickets.length}</span>
-        </div>
-
-        {/* ── View 1: Incidents by Category Table ── */}
+        {/* ══════════════ VIEW 1: INCIDENTS BY CATEGORY ══════════════ */}
         {activeReport === 'category' && (
-          <div className="report-table-wrapper">
-            <table className="report-data-table">
-              <thead>
-                <tr>
-                  <th
-                    className="sortable-th cursor-pointer select-none hover:bg-slate-100 transition-colors"
-                    onClick={() => handleSort('category')}
-                    title="Click to toggle sort order by Category"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span>Category</span>
-                      <span className="text-[11px] font-bold text-[#C96F55]">
-                        {sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '▲'}
-                      </span>
-                    </div>
-                  </th>
-                  <th>Ticket ID</th>
-                  <th>Summary</th>
-                  <th>Date Created</th>
-                  <th>Site</th>
-                  <th>Team</th>
-                  <th>Priority</th>
-                  <th>Assigned Agent</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>SLA Resolution Met</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedTickets.map((t, idx) => (
-                  <tr
-                    key={t.id}
-                    onClick={() => setSelectedTicket(t)}
-                    title={`View ticket #${t.id} details`}
-                  >
-                    <td className="font-semibold text-slate-800">
-                      {sortField === 'category'
-                        ? idx === 0 || t.category !== sortedTickets[idx - 1]?.category
-                          ? t.category
-                          : ''
-                        : t.category}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="report-ticket-id-link"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTicket(t);
-                        }}
-                      >
-                        {t.id}
-                      </button>
-                    </td>
-                    <td className="report-summary-cell">{t.summary}</td>
-                    <td className="whitespace-nowrap">{t.createdAt}</td>
-                    <td>{t.site}</td>
-                    <td className="whitespace-nowrap">{t.team}</td>
-                    <td>
-                      <span className={`report-priority-badge priority-${t.priority.toLowerCase()}`}>
-                        {t.priority}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap">{t.agent}</td>
-                    <td>
-                      <span className="report-status-badge">{t.status}</span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {t.slaResolutionMet === 1 ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          ✓ Met
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                          ✕ Breached
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ── View 2: SLA Compliance & Breach Analysis Table ── */}
-        {activeReport === 'sla' && (
-          <div className="flex flex-col gap-5">
-            {/* Visual Charts: Donut Gauge + Priority Breach Bars */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-2">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Resolution SLA Met vs Breached</span>
-                <div className="flex items-center gap-6 mt-1">
-                  <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        className="text-slate-100"
-                        strokeWidth="3.8"
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                      <path
-                        className="text-emerald-500 transition-all duration-1000"
-                        strokeDasharray={`${slaMetrics.metPercent}, 100`}
-                        strokeWidth="3.8"
-                        strokeLinecap="round"
-                        stroke="currentColor"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    <div className="absolute flex flex-col items-center">
-                      <span className="text-lg font-black text-slate-800">{slaMetrics.metPercent}%</span>
-                      <span className="text-[9px] uppercase font-bold text-emerald-600">Compliance</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-emerald-500" />
-                      <span className="font-medium text-slate-700">Met Target ({slaMetrics.met} tickets)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-rose-500" />
-                      <span className="font-medium text-slate-700">Breached SLA ({slaMetrics.breached} tickets)</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Contractual SLA objective: 95.0% compliance</div>
-                  </div>
-                </div>
+          <div className="flex flex-col gap-6">
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Active Incidents</span>
+                <span className="text-2xl font-black text-[#332B28] mt-2">{tickets.length}</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Across 1st &amp; 2nd line support</span>
               </div>
-
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">SLA Breach Breakdown by Priority</span>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { label: 'Critical (P1)', count: filteredTickets.filter(t => t.priority === 'Critical' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Critical').length || 1, color: 'bg-rose-600' },
-                    { label: 'High (P2)', count: filteredTickets.filter(t => t.priority === 'High' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'High').length || 1, color: 'bg-orange-500' },
-                    { label: 'Medium (P3)', count: filteredTickets.filter(t => t.priority === 'Medium' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Medium').length || 1, color: 'bg-amber-400' },
-                    { label: 'Low (P4)', count: filteredTickets.filter(t => t.priority === 'Low' && t.slaResolutionMet === 0).length, total: filteredTickets.filter(t => t.priority === 'Low').length || 1, color: 'bg-blue-400' },
-                  ].map((row) => {
-                    const pct = Math.round((row.count / row.total) * 100);
-                    return (
-                      <div key={row.label} className="flex flex-col gap-1 text-xs">
-                        <div className="flex justify-between font-semibold text-slate-700">
-                          <span>{row.label}</span>
-                          <span className="text-slate-500">{row.count} breached ({pct}%)</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div className={`h-full ${row.color} transition-all duration-500`} style={{ width: `${Math.min(100, Math.max(pct, 4))}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Critical &amp; High Priority</span>
+                <span className="text-2xl font-black text-rose-600 mt-2">{tickets.filter(t => t.priority === 'Critical' || t.priority === 'High').length}</span>
+                <span className="text-[11px] text-rose-600 font-semibold mt-1">Expedited queue handling</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Met Compliance</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-2xl font-black text-emerald-600">{slaMetrics.metPercent}%</span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target 95%</span>
                 </div>
+                <span className="text-[11px] text-emerald-600 mt-1">✓ Met contractual SLA</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Category Clusters</span>
+                <span className="text-2xl font-black text-[#263B5E] mt-2">6</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Hardware, Network, Software...</span>
               </div>
             </div>
 
-            <div className="report-table-wrapper">
-            <table className="report-data-table">
-              <thead>
-                <tr>
-                  {visibleColumns.id && <th>Ticket ID</th>}
-                  {visibleColumns.summary && <th>Summary</th>}
-                  {visibleColumns.priority && <th>Priority</th>}
-                  {visibleColumns.category && <th>Category</th>}
-                  {visibleColumns.agent && <th>Assigned Agent</th>}
-                  {visibleColumns.targetSla && <th>Target SLA</th>}
-                  {visibleColumns.status && <th>Status</th>}
-                  {visibleColumns.slaMet && <th style={{ textAlign: 'center' }}>Resolution SLA Met</th>}
-                  {visibleColumns.breachDuration && <th>Breach Analysis & Overrun</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTickets.map((t) => (
-                  <tr
-                    key={t.id}
-                    onClick={() => setSelectedTicket(t)}
-                    title={`View ticket #${t.id} details`}
+            {/* Contextual Incident Filter Strip */}
+            <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#ebdcd3]/60">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs font-bold text-[#332B28] uppercase tracking-wider">Filter Period:</span>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1.5 text-xs text-[#332B28] font-semibold outline-none focus:ring-1 focus:ring-[#C96F55]"
+                      value={dateField}
+                      onChange={(e) => setDateField(e.target.value)}
+                    >
+                      <option value="Date Created">Date Created</option>
+                      <option value="Date Resolved">Date Resolved</option>
+                      <option value="Date Closed">Date Closed</option>
+                    </select>
+                    <select
+                      className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1.5 text-xs text-[#332B28] font-semibold outline-none focus:ring-1 focus:ring-[#C96F55]"
+                      value={period}
+                      onChange={(e) => setPeriod(e.target.value)}
+                    >
+                      <option value="All">All Time</option>
+                      <option value="Today">Today</option>
+                      <option value="This Week">This Week</option>
+                      <option value="This Month">This Month</option>
+                      <option value="This Quarter">This Quarter</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-[#C96F55] hover:bg-[#C96F55]/10 rounded-full border border-[#C96F55]/30 transition-all cursor-pointer"
+                    onClick={handleAddFilterRow}
+                    title="Add another filter condition"
                   >
-                    {visibleColumns.id && (
+                    <span>+ Add Condition</span>
+                  </button>
+                  <span className="text-xs font-bold text-[#332B28]/70 bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-1 rounded-full">
+                    Showing {sortedTickets.length} matching incidents
+                  </span>
+                </div>
+              </div>
+
+              {/* Dynamic Filter Conditions Builder */}
+              {filters.length > 0 && (
+                <div className="filter-rows-container pt-2">
+                  {filters.map((filter) => (
+                    <div key={filter.id} className="filter-item-row flex items-center gap-2 flex-wrap">
+                      <select
+                        value={filter.field}
+                        onChange={(e) => handleFilterFieldChange(filter.id, e.target.value)}
+                        className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1.5 text-xs text-[#332B28] font-semibold"
+                      >
+                        <option value="Category">Category</option>
+                        <option value="Priority">Priority</option>
+                        <option value="Status">Status</option>
+                        <option value="Assigned Agent">Assigned Agent</option>
+                        <option value="Site">Site</option>
+                      </select>
+                      <select
+                        value={filter.operator}
+                        onChange={(e) => handleFilterOperatorChange(filter.id, e.target.value)}
+                        className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1.5 text-xs text-[#332B28] font-semibold"
+                      >
+                        <option value="Equals">Equals</option>
+                        <option value="Contains">Contains</option>
+                        <option value="Does Not Equal">Does Not Equal</option>
+                      </select>
+                      <div className="flex-1 min-w-[200px] flex items-center gap-1.5 bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3 py-1">
+                        {filter.tags && filter.tags.length > 0 ? (
+                          filter.tags.map((tag) => (
+                            <span key={tag.id} className="inline-flex items-center gap-1 bg-white border border-[#ebdcd3] text-[#332B28] text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                              {tag.label}
+                              <button type="button" onClick={() => handleFilterTagRemove(filter.id, tag.id)} className="text-rose-500 font-bold hover:text-rose-700">✕</button>
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-400">Condition active</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFilterRow(filter.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-full cursor-pointer"
+                        title="Remove condition"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Active Category Tag pill */}
+              {activeCategoryTag && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs font-semibold text-[#332B28]/60">Active Filter:</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20">
+                    Category: {activeCategoryTag}
+                    <button type="button" onClick={() => setActiveCategoryTag(null)} className="hover:text-rose-600 font-black">✕</button>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Incidents Table */}
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
+                <thead>
+                  <tr>
+                    <th
+                      className="sortable-th cursor-pointer select-none hover:bg-[#FFF9F5] transition-colors"
+                      onClick={() => handleSort('category')}
+                      title="Click to toggle sort order by Category"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span>Category</span>
+                        <span className="text-[11px] font-bold text-[#C96F55]">
+                          {sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '▲'}
+                        </span>
+                      </div>
+                    </th>
+                    <th>Ticket ID</th>
+                    <th>Summary</th>
+                    <th>Date Created</th>
+                    <th>Site</th>
+                    <th>Team</th>
+                    <th>Priority</th>
+                    <th>Assigned Agent</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'center' }}>SLA Resolution Met</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedTickets.map((t, idx) => (
+                    <tr
+                      key={t.id}
+                      onClick={() => setSelectedTicket(t)}
+                      className="hover:bg-[#FFF9F5] cursor-pointer transition-colors"
+                      title={`View ticket #${t.id} details`}
+                    >
+                      <td className="font-semibold text-[#332B28]">
+                        {sortField === 'category'
+                          ? idx === 0 || t.category !== sortedTickets[idx - 1]?.category
+                            ? t.category
+                            : ''
+                          : t.category}
+                      </td>
                       <td>
                         <button
                           type="button"
-                          className="report-ticket-id-link font-bold"
+                          className="font-bold text-[#C96F55] hover:underline cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedTicket(t);
@@ -1361,244 +1096,344 @@ export default function IncidentsByCategoryReport() {
                           {t.id}
                         </button>
                       </td>
-                    )}
-                    {visibleColumns.summary && <td className="report-summary-cell font-medium">{t.summary}</td>}
-                    {visibleColumns.priority && (
+                      <td className="max-w-[320px] text-[#332B28] font-medium">{t.summary}</td>
+                      <td className="whitespace-nowrap text-[#332B28]/70 text-xs">{t.createdAt}</td>
+                      <td className="text-xs text-[#332B28]">{t.site}</td>
+                      <td className="whitespace-nowrap text-xs text-[#332B28]">{t.team}</td>
                       <td>
-                        <span className={`report-priority-badge priority-${t.priority.toLowerCase()}`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          t.priority === 'Critical' ? 'bg-rose-100 text-rose-700' : t.priority === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
+                        }`}>
                           {t.priority}
                         </span>
                       </td>
-                    )}
-                    {visibleColumns.category && <td className="text-xs text-slate-600">{t.category}</td>}
-                    {visibleColumns.agent && <td className="whitespace-nowrap">{t.agent}</td>}
-                    {visibleColumns.targetSla && <td className="whitespace-nowrap font-mono text-xs">{t.slaTarget || '4h Target'}</td>}
-                    {visibleColumns.status && (
+                      <td className="text-xs font-medium text-[#332B28]">{t.agent}</td>
                       <td>
-                        <span className="report-status-badge">{t.status}</span>
-                      </td>
-                    )}
-                    {visibleColumns.slaMet && (
-                      <td style={{ textAlign: 'center' }}>
-                        {t.slaResolutionMet === 1 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            ✓ Met
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
-                            ✕ Breached
-                          </span>
-                        )}
-                      </td>
-                    )}
-                    {visibleColumns.breachDuration && (
-                      <td className="whitespace-nowrap">
-                        <span
-                          className={`text-xs font-semibold ${
-                            t.slaResolutionMet === 0 ? 'text-rose-600 font-bold' : 'text-slate-600'
-                          }`}
-                        >
-                          {t.breachDuration || (t.slaResolutionMet ? 'Within Target' : '+20m Breach')}
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28]">
+                          {t.status}
                         </span>
                       </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          t.slaResolutionMet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {t.slaResolutionMet ? '✓ Met' : '⚠️ Breached'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
         )}
 
-        {/* ── View 3: Agent Performance Table ── */}
-        {activeReport === 'agents' && (
-          <div className="flex flex-col gap-5">
-            {/* Visual Workload Distribution Bars */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Agent Resolution Velocity & SLA Adherence</span>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-                {[
-                  { name: 'Alex Rivera', role: '1st Line Senior', closed: 28, metPct: 96.4, color: 'bg-emerald-500' },
-                  { name: 'Sarah Jenkins', role: 'Support Specialist', closed: 22, metPct: 92.8, color: 'bg-emerald-500' },
-                  { name: 'Alex Agent', role: 'Help Desk', closed: 10, metPct: 90.0, color: 'bg-amber-500' },
-                  { name: 'Alice Approver', role: 'Operations Lead', closed: 8, metPct: 100.0, color: 'bg-indigo-500' },
-                ].map((ag) => (
-                  <div key={ag.name} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-slate-800">{ag.name}</span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{ag.metPct}% Met</span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-slate-900">{ag.closed}</span>
-                      <span className="text-xs text-slate-400">tickets resolved</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className={`h-full ${ag.color}`} style={{ width: `${ag.metPct}%` }} />
-                    </div>
-                  </div>
-                ))}
+        {/* ══════════════ VIEW 2: SLA COMPLIANCE ══════════════ */}
+        {activeReport === 'sla' && (
+          <div className="flex flex-col gap-6">
+            {/* SLA KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Met Compliance</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl font-extrabold text-emerald-600">{slaMetrics.metPercent}%</span>
+                  <span className="text-xs font-bold text-slate-500">Target 95.0%</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1">↑ +1.4% improvement vs previous period</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Met Within Target SLA</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl font-extrabold text-[#332B28]">{slaMetrics.met}</span>
+                  <span className="text-xs font-semibold text-emerald-600">✓ On-Track</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1">Tickets resolved inside contractual SLA</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">SLA Breached Tickets</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl font-extrabold text-rose-600">{slaMetrics.breached}</span>
+                  <span className="text-xs font-semibold text-rose-600">⚠️ Critical Review</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1">Requiring post-incident SLA breach audit</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Breach Overrun</span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl font-extrabold text-amber-600">+24m</span>
+                  <span className="text-xs font-semibold text-slate-500">Mean time</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1">Average excess time past breach threshold</span>
               </div>
             </div>
 
-            <div className="report-table-wrapper">
-            <table className="report-data-table">
-              <thead>
-                <tr>
-                  <th>Agent Name</th>
-                  <th>Team / Role</th>
-                  <th>Assigned Active</th>
-                  <th>Resolved Today</th>
-                  <th>Avg Handling Time</th>
-                  <th>SLA Met Adherence</th>
-                  <th>Performance Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="font-bold text-slate-800">Alex Rivera</td>
-                  <td className="text-slate-600 text-xs">1st Line Senior Agent</td>
-                  <td className="font-semibold text-slate-800">7</td>
-                  <td className="font-bold text-indigo-600">28</td>
-                  <td className="font-mono text-xs">1h 24m</td>
-                  <td className="font-bold text-emerald-600">96.4%</td>
-                  <td>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ⭐ Top Performer
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Sarah Jenkins</td>
-                  <td className="text-slate-600 text-xs">1st Line Support Specialist</td>
-                  <td className="font-semibold text-slate-800">4</td>
-                  <td className="font-bold text-indigo-600">22</td>
-                  <td className="font-mono text-xs">1h 52m</td>
-                  <td className="font-bold text-emerald-600">92.8%</td>
-                  <td>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      🟢 Target Met
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Alex Agent</td>
-                  <td className="text-slate-600 text-xs">1st Line Help Desk</td>
-                  <td className="font-semibold text-slate-800">0</td>
-                  <td className="font-bold text-indigo-600">10</td>
-                  <td className="font-mono text-xs">2h 10m</td>
-                  <td className="font-bold text-amber-600">90.0%</td>
-                  <td>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      🟡 Coaching
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Alice Approver</td>
-                  <td className="text-slate-600 text-xs">Change & Operations Lead</td>
-                  <td className="font-semibold text-slate-800">2</td>
-                  <td className="font-bold text-indigo-600">8</td>
-                  <td className="font-mono text-xs">45m</td>
-                  <td className="font-bold text-emerald-600">100.0%</td>
-                  <td>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ⭐ Top Performer
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        )}
-
-        {/* ── View 4: First Contact Resolution (FCR) Table ── */}
-        {activeReport === 'fcr' && (
-          <div className="report-table-wrapper">
-            <table className="report-data-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Total Handled</th>
-                  <th>First-Contact Resolved</th>
-                  <th>Escalated to Specialist</th>
-                  <th>FCR Success Rate</th>
-                  <th>Benchmark Comparison</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="font-bold text-slate-800">Account Administration & Passwords</td>
-                  <td>35</td>
-                  <td className="font-semibold text-emerald-600">33</td>
-                  <td>2</td>
-                  <td className="font-bold text-emerald-600">94.3%</td>
-                  <td className="text-xs text-emerald-700 font-semibold">+19.3% vs Industry (75%)</td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Office & Collaboration Tools</td>
-                  <td>28</td>
-                  <td className="font-semibold text-emerald-600">24</td>
-                  <td>4</td>
-                  <td className="font-bold text-emerald-600">85.7%</td>
-                  <td className="text-xs text-emerald-700 font-semibold">+13.7% vs Industry (72%)</td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Hardware & Peripherals</td>
-                  <td>18</td>
-                  <td className="font-semibold text-slate-700">12</td>
-                  <td>6</td>
-                  <td className="font-bold text-amber-600">66.7%</td>
-                  <td className="text-xs text-amber-700 font-semibold">+1.7% vs Industry (65%)</td>
-                </tr>
-                <tr>
-                  <td className="font-bold text-slate-800">Network & VPN Access</td>
-                  <td>16</td>
-                  <td className="font-semibold text-slate-700">11</td>
-                  <td>5</td>
-                  <td className="font-bold text-emerald-600">68.8%</td>
-                  <td className="text-xs text-emerald-700 font-semibold">+8.8% vs Industry (60%)</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ── View 5: Change Management & CAB Risk Analytics ── */}
-        {activeReport === 'changes' && (
-          <div className="flex flex-col gap-5">
-            {/* KPI Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Production RFCs</span>
-                <span className="text-2xl font-black text-slate-900 mt-2">24</span>
-                <span className="text-[11px] text-slate-400 mt-1">18 Normal · 4 Standard · 2 Emergency</span>
+            {/* SLA Filter Slices */}
+            <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-[#332B28] uppercase tracking-wider">Filter SLA Slices:</span>
+                <button
+                  type="button"
+                  onClick={() => setSlaFilterMode('all')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                    slaFilterMode === 'all'
+                      ? 'bg-[#263B5E] text-white shadow-xs font-bold'
+                      : 'bg-white text-[#332B28] border border-[#ebdcd3] hover:bg-[#FFF9F5]'
+                  }`}
+                >
+                  All ({tickets.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSlaFilterMode('breached')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                    slaFilterMode === 'breached'
+                      ? 'bg-rose-600 text-white font-bold'
+                      : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50'
+                  }`}
+                >
+                  ⚠️ Breached SLA ({slaMetrics.breached})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSlaFilterMode('met')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                    slaFilterMode === 'met'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'
+                  }`}
+                >
+                  ✓ Met SLA ({slaMetrics.met})
+                </button>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Change Success Rate</span>
+
+              <span className="text-xs font-bold text-[#332B28]/70 bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-1 rounded-full">
+                Showing {filteredTickets.length} incidents
+              </span>
+            </div>
+
+            {/* SLA Table */}
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Summary</th>
+                    <th>Priority</th>
+                    <th>Category</th>
+                    <th>Assigned Agent</th>
+                    <th>Target SLA</th>
+                    <th>Status</th>
+                    <th>SLA Met?</th>
+                    <th>Breach Overrun / Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTickets.map((t) => (
+                    <tr
+                      key={t.id}
+                      onClick={() => setSelectedTicket(t)}
+                      className="hover:bg-[#FFF9F5] cursor-pointer transition-colors"
+                      title={`View ticket #${t.id} details`}
+                    >
+                      <td className="font-bold text-[#C96F55]">{t.id}</td>
+                      <td className="font-medium text-[#332B28]">{t.summary}</td>
+                      <td>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          t.priority === 'Critical' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {t.priority}
+                        </span>
+                      </td>
+                      <td className="text-xs text-[#332B28]/70">{t.category}</td>
+                      <td className="text-xs font-medium text-[#332B28]">{t.agent}</td>
+                      <td className="text-xs font-mono">{t.slaTarget || '4h Target'}</td>
+                      <td>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28]">
+                          {t.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          t.slaResolutionMet ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {t.slaResolutionMet ? '✓ Met' : '⚠️ Breached'}
+                        </span>
+                      </td>
+                      <td className="text-xs font-medium text-rose-700">{t.breachDuration || 'None (Resolved in window)'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════ VIEW 3: AGENT PERFORMANCE ══════════════ */}
+        {activeReport === 'agents' && (
+          <div className="flex flex-col gap-6">
+            {/* Agent KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Responders</span>
+                <div className="text-3xl font-extrabold text-[#332B28] mt-2">4 Agents</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Across 1st Line &amp; 2nd Line Support</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Tickets Resolved Today</span>
+                <div className="text-3xl font-extrabold text-[#C96F55] mt-2">42 Tickets</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">High throughput support sprint</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Resolution Time</span>
+                <div className="text-3xl font-extrabold text-emerald-600 mt-2">1h 48m</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Down from 2h 15m last quarter</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Team SLA Adherence</span>
+                <div className="text-3xl font-extrabold text-emerald-600 mt-2">96.4%</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Exceeds corporate 95.0% SLA KPI</span>
+              </div>
+            </div>
+
+            {/* Agent Performance Table */}
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
+                <thead>
+                  <tr>
+                    <th>Agent Name</th>
+                    <th>Role &amp; Assignment Group</th>
+                    <th>Active / In-Progress Tickets</th>
+                    <th>Resolved Tickets</th>
+                    <th>Average Handling Time</th>
+                    <th>SLA Resolution Met %</th>
+                    <th>Operational Rating</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { name: 'Alex Rivera', role: '1st Line Senior Agent', active: 7, closed: 28, aht: '1h 24m', metPct: 96.4, color: 'bg-[#C96F55]' },
+                    { name: 'Sarah Jenkins', role: '1st Line Support Specialist', active: 4, closed: 22, aht: '1h 52m', metPct: 92.8, color: 'bg-emerald-500' },
+                    { name: 'Marcus Chen', role: '2nd Line Network Engineer', active: 5, closed: 10, aht: '3h 10m', metPct: 90.0, color: 'bg-purple-500' },
+                    { name: 'Alice Approver', role: 'Operations Lead', closed: 8, active: 2, aht: '45m', metPct: 100.0, color: 'bg-[#263B5E]' },
+                  ].map((ag) => (
+                    <tr key={ag.name} className="hover:bg-[#FFF9F5] transition-colors">
+                      <td className="font-bold text-[#332B28] flex items-center gap-2.5">
+                        <span className={`w-3 h-3 rounded-full ${ag.color}`} />
+                        <span>{ag.name}</span>
+                      </td>
+                      <td className="text-xs text-[#332B28]/70">{ag.role}</td>
+                      <td className="font-bold text-[#332B28]">{ag.active}</td>
+                      <td className="font-bold text-[#C96F55]">{ag.closed}</td>
+                      <td className="font-mono text-xs">{ag.aht}</td>
+                      <td className="font-bold text-emerald-600">{ag.metPct}%</td>
+                      <td>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {ag.metPct >= 95 ? '★ Top Tier' : '✓ Good'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════ VIEW 4: FIRST CONTACT RESOLUTION (FCR) ══════════════ */}
+        {activeReport === 'fcr' && (
+          <div className="flex flex-col gap-6">
+            {/* FCR KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">First Contact Resolution</span>
+                <div className="text-3xl font-extrabold text-emerald-600 mt-2">78.4%</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Industry Benchmark: 70.0% – 75.0%</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">1st Touch Resolved</span>
+                <div className="text-3xl font-extrabold text-[#332B28] mt-2">69 Tickets</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">No escalations or handoffs required</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Escalated Handoffs</span>
+                <div className="text-3xl font-extrabold text-amber-600 mt-2">19 Tickets</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Transferred to Tier 2 engineering</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Ticket Reopen Rate</span>
+                <div className="text-3xl font-extrabold text-emerald-600 mt-2">2.1%</div>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Below target ceiling of 5.0%</span>
+              </div>
+            </div>
+
+            {/* FCR Breakdown Table */}
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
+                <thead>
+                  <tr>
+                    <th>Category Classification</th>
+                    <th>Total Handled</th>
+                    <th>First-Contact Resolved</th>
+                    <th>FCR Success Rate</th>
+                    <th>Benchmark Comparison</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { cat: 'Account Administration & Passwords', total: 35, fcr: 33, rate: '94.3%', comp: '+19.3% vs Industry (75%)' },
+                    { cat: 'Office & Collaboration Tools', total: 28, fcr: 24, rate: '85.7%', comp: '+13.7% vs Industry (72%)' },
+                    { cat: 'Hardware & Peripheral Setup', total: 18, fcr: 12, rate: '66.7%', comp: '-1.3% vs Industry (68%)' },
+                    { cat: 'Network & VPN Connectivity', total: 16, fcr: 11, rate: '68.8%', comp: '+8.8% vs Industry (60%)' },
+                  ].map((row) => (
+                    <tr key={row.cat} className="hover:bg-[#FFF9F5] transition-colors">
+                      <td className="font-bold text-[#332B28]">{row.cat}</td>
+                      <td className="font-semibold text-[#332B28]">{row.total}</td>
+                      <td className="font-semibold text-emerald-600">{row.fcr}</td>
+                      <td className="font-bold text-emerald-700">{row.rate}</td>
+                      <td className="text-xs text-emerald-700 font-semibold">{row.comp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════ VIEW 5: CHANGE MANAGEMENT & CAB ══════════════ */}
+        {activeReport === 'changes' && (
+          <div className="flex flex-col gap-6">
+            {/* Changes KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Production RFCs</span>
+                <span className="text-2xl font-black text-[#332B28] mt-2">24</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">18 Normal · 4 Standard · 2 Emergency</span>
+              </div>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Change Success Rate</span>
                 <div className="flex items-baseline gap-2 mt-2">
                   <span className="text-2xl font-black text-emerald-600">95.8%</span>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Target &gt;95%</span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Target &gt;95%</span>
                 </div>
                 <span className="text-[11px] text-slate-400 mt-1">23 Succeeded · 1 Rollback Triggered</span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CAB Approval Velocity</span>
-                <span className="text-2xl font-black text-indigo-600 mt-2">18.4h</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">CAB Approval Velocity</span>
+                <span className="text-2xl font-black text-[#263B5E] mt-2">18.4h</span>
                 <span className="text-[11px] text-slate-400 mt-1">Avg review turnaround time</span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Emergency / Blackout</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Emergency / Blackout</span>
                 <span className="text-2xl font-black text-amber-600 mt-2">2</span>
                 <span className="text-[11px] text-slate-400 mt-1">Requires post-implementation audit</span>
               </div>
             </div>
 
-            {/* Change Risk Distribution Progress */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3">
+            {/* Risk Profile Breakdown Bar */}
+            <div className="bg-white p-5 rounded-2xl border border-[#ebdcd3] shadow-xs flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Risk Profile Breakdown &amp; CAB Governance</span>
-                <span className="text-xs text-slate-400 font-medium">Evaluated via 4-Question Risk Scoring Matrix</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#332B28]">Risk Profile Breakdown &amp; CAB Governance</span>
+                <span className="text-xs text-[#332B28]/60 font-medium">Evaluated via 4-Question Risk Scoring Matrix</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 flex overflow-hidden">
                 <div style={{ width: '12.5%' }} className="bg-rose-500" title="Critical Risk (3)" />
@@ -1614,9 +1449,41 @@ export default function IncidentsByCategoryReport() {
               </div>
             </div>
 
+            {/* Contextual Changes Filter Strip */}
+            <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <input
+                  type="text"
+                  placeholder="Search change ID, title, rollback..."
+                  value={changeSearch}
+                  onChange={(e) => setChangeSearch(e.target.value)}
+                  className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3.5 py-1.5 text-xs text-[#332B28] placeholder-[#332B28]/40 outline-none focus:ring-1 focus:ring-[#C96F55] min-w-[240px]"
+                />
+                <div className="flex items-center gap-1 flex-wrap">
+                  {['All', 'Critical', 'High', 'Medium', 'Low'].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setChangeRiskFilter(r)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                        changeRiskFilter === r
+                          ? 'bg-[#263B5E] text-white font-bold'
+                          : 'bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28] hover:bg-white'
+                      }`}
+                    >
+                      {r} Risk
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <span className="text-xs font-bold text-[#332B28]/70 bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-1 rounded-full self-start sm:self-center">
+                Showing {filteredChanges.length} of 24 production RFCs
+              </span>
+            </div>
+
             {/* Changes Table */}
-            <div className="report-table-wrapper">
-              <table className="report-data-table">
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
                 <thead>
                   <tr>
                     <th>Change ID</th>
@@ -1629,34 +1496,28 @@ export default function IncidentsByCategoryReport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { id: 'CR-2024-001', title: 'Core Data Center Switch Firmware Upgrade', type: 'Normal', risk: 'High', cab: 'Approved', rollback: 'Dual-image failback switch boot', status: 'Completed' },
-                    { id: 'CR-2024-002', title: 'PostgreSQL Read Replica Cluster Migration', type: 'Normal', risk: 'Critical', cab: 'Approved', rollback: 'Automated snapshot restore', status: 'In Progress' },
-                    { id: 'CR-2024-003', title: 'Azure AD SSO Token Expiry Policy Alignment', type: 'Standard', risk: 'Medium', cab: 'Pre-Approved', rollback: 'Session policy reversion', status: 'Completed' },
-                    { id: 'CR-2024-004', title: 'Kubernetes Worker Node Vulnerability Patch', type: 'Emergency', risk: 'Critical', cab: 'Emergency Sign-off', rollback: 'AMI node drain & revert', status: 'Completed' },
-                    { id: 'CR-2024-005', title: 'Payment Gateway Webhook Endpoint Migration', type: 'Normal', risk: 'High', cab: 'Pending CAB', rollback: 'Canary traffic routing revert', status: 'Scheduled' },
-                  ].map((cr) => (
-                    <tr key={cr.id}>
-                      <td className="font-bold text-slate-800">{cr.id}</td>
-                      <td className="font-medium text-slate-800">{cr.title}</td>
+                  {filteredChanges.map((cr) => (
+                    <tr key={cr.id} className="hover:bg-[#FFF9F5] transition-colors">
+                      <td className="font-bold text-[#C96F55]">{cr.id}</td>
+                      <td className="font-medium text-[#332B28]">{cr.title}</td>
                       <td>
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                           cr.type === 'Emergency' ? 'bg-rose-100 text-rose-700' : cr.type === 'Standard' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                         }`}>
                           {cr.type}
                         </span>
                       </td>
                       <td>
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                           cr.risk === 'Critical' ? 'bg-rose-100 text-rose-700' : cr.risk === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
                         }`}>
                           {cr.risk} Risk
                         </span>
                       </td>
-                      <td className="font-semibold text-slate-700">{cr.cab}</td>
-                      <td className="text-xs text-slate-600 font-mono">{cr.rollback}</td>
+                      <td className="font-semibold text-[#332B28]">{cr.cab}</td>
+                      <td className="text-xs text-[#332B28]/70 font-mono">{cr.rollback}</td>
                       <td>
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {cr.status}
                         </span>
                       </td>
@@ -1668,58 +1529,90 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ── View 6: CMDB Asset Lifecycle & Expiring Warranties ── */}
+        {/* ══════════════ VIEW 6: CMDB ASSET LIFECYCLE ══════════════ */}
         {activeReport === 'assets' && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
             {/* Asset KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total CMDB Assets</span>
-                <span className="text-2xl font-black text-slate-900 mt-2">42</span>
-                <span className="text-[11px] text-slate-400 mt-1">Servers, Appliances &amp; Software</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total CMDB Assets</span>
+                <span className="text-2xl font-black text-[#332B28] mt-2">42</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Servers, Appliances &amp; Software</span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Deployed Assets</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Active Deployed Assets</span>
                 <span className="text-2xl font-black text-emerald-600 mt-2">31</span>
-                <span className="text-[11px] text-slate-400 mt-1">73.8% in live production environments</span>
+                <span className="text-[11px] text-emerald-600 font-semibold mt-1">73.8% in live production</span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ready In Stock</span>
-                <span className="text-2xl font-black text-indigo-600 mt-2">6</span>
-                <span className="text-[11px] text-slate-400 mt-1">Pre-provisioned reserve inventory</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Ready In Stock</span>
+                <span className="text-2xl font-black text-[#263B5E] mt-2">6</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Pre-provisioned reserve inventory</span>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiring Warranty (&lt;60d)</span>
+              <div className="bg-white rounded-2xl p-4 border border-[#ebdcd3] shadow-xs flex flex-col">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Expiring Warranty (&lt;60d)</span>
                 <span className="text-2xl font-black text-rose-600 mt-2">5</span>
                 <span className="text-[11px] text-rose-600 font-semibold mt-1">Requires renewal negotiation</span>
               </div>
             </div>
 
-            {/* Asset Lifecycle Distribution Progress */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3">
+            {/* Asset Lifecycle Progression Bar */}
+            <div className="bg-white p-5 rounded-2xl border border-[#ebdcd3] shadow-xs flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">CI Lifecycle Progression</span>
-                <span className="text-xs text-slate-400 font-medium">Ordered → In Stock → Deployed → Maintenance → Retired</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#332B28]">CI Lifecycle Progression</span>
+                <span className="text-xs text-[#332B28]/60 font-medium">Ordered → In Stock → Deployed → Maintenance → Retired</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 flex overflow-hidden">
                 <div style={{ width: '4.8%' }} className="bg-purple-500" title="Ordered (2)" />
-                <div style={{ width: '14.3%' }} className="bg-indigo-500" title="In Stock (6)" />
+                <div style={{ width: '14.3%' }} className="bg-[#263B5E]" title="In Stock (6)" />
                 <div style={{ width: '73.8%' }} className="bg-emerald-500" title="Deployed (31)" />
                 <div style={{ width: '4.8%' }} className="bg-amber-500" title="Maintenance (2)" />
                 <div style={{ width: '2.3%' }} className="bg-slate-400" title="Retired (1)" />
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Ordered (2)</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> In Stock (6)</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263B5E]" /> In Stock (6)</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Deployed (31)</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Maintenance (2)</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Retired (1)</span>
               </div>
             </div>
 
+            {/* Contextual Asset Filter Strip (NO INCIDENT MISMATCH!) */}
+            <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <input
+                  type="text"
+                  placeholder="Search CI tag, asset name, department..."
+                  value={assetSearch}
+                  onChange={(e) => setAssetSearch(e.target.value)}
+                  className="bg-[#FFF9F5] border border-[#ebdcd3] rounded-full px-3.5 py-1.5 text-xs text-[#332B28] placeholder-[#332B28]/40 outline-none focus:ring-1 focus:ring-[#C96F55] min-w-[240px]"
+                />
+                <div className="flex items-center gap-1 flex-wrap">
+                  {['All', 'Server', 'Database', 'Network', 'Hardware', 'Software'].map((tp) => (
+                    <button
+                      key={tp}
+                      type="button"
+                      onClick={() => setAssetTypeFilter(tp)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                        assetTypeFilter === tp
+                          ? 'bg-[#263B5E] text-white font-bold'
+                          : 'bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28] hover:bg-white'
+                      }`}
+                    >
+                      {tp}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <span className="text-xs font-bold text-[#332B28]/70 bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-1 rounded-full self-start sm:self-center">
+                Showing {filteredAssets.length} of 42 CMDB assets
+              </span>
+            </div>
+
             {/* Assets Table */}
-            <div className="report-table-wrapper">
-              <table className="report-data-table">
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
                 <thead>
                   <tr>
                     <th>CI Tag</th>
@@ -1732,31 +1625,25 @@ export default function IncidentsByCategoryReport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { tag: 'PAY-001', name: 'Primary Payment Gateway Host', type: 'Server', state: 'Deployed', env: 'Production', owner: 'Finance Ops', expiry: '15/12/2026', urgent: true },
-                    { tag: 'DB-001', name: 'Customer Production Relational DB', type: 'Database', state: 'Deployed', env: 'Production', owner: 'Data Eng', expiry: '28/01/2027', urgent: false },
-                    { tag: 'SW-001', name: 'Core Backbone Switch 01', type: 'Network', state: 'Deployed', env: 'Production', owner: 'Infrastructure', expiry: '05/12/2026', urgent: true },
-                    { tag: 'LAP-042', name: 'MacBook Pro M3 Max (Dev Lead)', type: 'Hardware', state: 'Deployed', env: 'End User', owner: 'Engineering', expiry: '12/11/2027', urgent: false },
-                    { tag: 'LIC-008', name: 'JetBrains Enterprise License Pool', type: 'Software', state: 'Deployed', env: 'Corporate', owner: 'IT Procurement', expiry: '20/12/2026', urgent: true },
-                  ].map((ci) => (
-                    <tr key={ci.tag}>
-                      <td className="font-bold text-slate-800">{ci.tag}</td>
-                      <td className="font-medium text-slate-800">{ci.name}</td>
+                  {filteredAssets.map((ci) => (
+                    <tr key={ci.tag} className="hover:bg-[#FFF9F5] transition-colors">
+                      <td className="font-bold text-[#C96F55]">{ci.tag}</td>
+                      <td className="font-medium text-[#332B28]">{ci.name}</td>
                       <td>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF9F5] border border-[#ebdcd3] text-[#332B28]">
                           {ci.type}
                         </span>
                       </td>
                       <td>
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {ci.state}
                         </span>
                       </td>
-                      <td className="text-xs text-slate-600">{ci.env}</td>
-                      <td className="text-xs text-slate-600">{ci.owner}</td>
+                      <td className="text-xs text-[#332B28]/70">{ci.env}</td>
+                      <td className="text-xs text-[#332B28]/70">{ci.owner}</td>
                       <td>
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                          ci.urgent ? 'bg-rose-100 text-rose-700 animate-pulse' : 'bg-slate-100 text-slate-700'
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          ci.urgent ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
                         }`}>
                           {ci.expiry} {ci.urgent && '⚠️ (<60d)'}
                         </span>
@@ -1769,49 +1656,49 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ── View 7: No-Code Custom Query Result View ── */}
+        {/* ══════════════ VIEW 7: NO-CODE CUSTOM QUERY VIEW ══════════════ */}
         {activeReport === 'custom' && customQueryConfig && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
+            {/* Custom KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Total Evaluated Records</span>
+                <span className="text-2xl font-black text-[#332B28] block mt-2">128</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Across all active teams</span>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Group Dimensions</span>
+                <span className="text-2xl font-black text-[#263B5E] block mt-2">5 Groups</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Aggregated by {customQueryConfig.groupBy}</span>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-[#ebdcd3] shadow-xs">
+                <span className="text-xs font-bold text-[#332B28]/60 uppercase tracking-wider">Avg Value / Group</span>
+                <span className="text-2xl font-black text-emerald-600 block mt-2">25.6</span>
+                <span className="text-[11px] text-[#332B28]/50 mt-1">Computed live</span>
+              </div>
+            </div>
+
             {/* Custom Query Header Banner */}
-            <div className="p-4 bg-[#FFF9F5] border border-[#ebdcd3] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-4 bg-[#FFF9F5] border border-[#ebdcd3] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#263B5E] block">Active Custom Query</span>
-                <h3 className="font-bold text-sm text-slate-900 mt-0.5">{customQueryConfig.title}</h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <h3 className="font-bold text-sm text-[#332B28] mt-0.5">{customQueryConfig.title}</h3>
+                <p className="text-xs text-[#332B28]/70 mt-0.5">
                   Entity: <strong>{customQueryConfig.entity}</strong> · Metric: <strong>{customQueryConfig.metric}</strong> · Grouped by: <strong>{customQueryConfig.groupBy}</strong> · Window: <strong>{customQueryConfig.timeRange}</strong>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQueryBuilderOpen(true)}
-                className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all self-start sm:self-center"
+                className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all self-start sm:self-center"
               >
                 Modify Query
               </button>
             </div>
 
-            {/* Custom KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Evaluated Records</span>
-                <span className="text-2xl font-black text-slate-900 block mt-2">128</span>
-                <span className="text-[11px] text-slate-400 mt-1">Across all active teams</span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Group Dimensions</span>
-                <span className="text-2xl font-black text-[#263B5E] block mt-2">5 Groups</span>
-                <span className="text-[11px] text-slate-400 mt-1">Aggregated by {customQueryConfig.groupBy}</span>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Value / Group</span>
-                <span className="text-2xl font-black text-emerald-600 block mt-2">25.6</span>
-                <span className="text-[11px] text-slate-400 mt-1">Computed live</span>
-              </div>
-            </div>
-
             {/* Custom Aggregation Table */}
-            <div className="report-table-wrapper">
-              <table className="report-data-table">
+            <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
+              <table className="report-data-table w-full">
                 <thead>
                   <tr>
                     <th className="capitalize">{customQueryConfig.groupBy} Group</th>
@@ -1829,14 +1716,14 @@ export default function IncidentsByCategoryReport() {
                     { group: 'Application & Software', count: 16, sla: '87.5%', time: '3h 15m', share: '12.5%' },
                     { group: 'Access & Compliance', count: 8, sla: '100.0%', time: '22m', share: '6.2%' },
                   ].map((row) => (
-                    <tr key={row.group}>
-                      <td className="font-bold text-slate-800">{row.group}</td>
-                      <td className="font-semibold text-slate-800">{row.count}</td>
+                    <tr key={row.group} className="hover:bg-[#FFF9F5] transition-colors">
+                      <td className="font-bold text-[#332B28]">{row.group}</td>
+                      <td className="font-semibold text-[#332B28]">{row.count}</td>
                       <td className="font-bold text-emerald-600">{row.sla}</td>
-                      <td className="font-mono text-xs">{row.time}</td>
+                      <td className="font-mono text-xs text-[#332B28]/70">{row.time}</td>
                       <td>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold">{row.share}</span>
+                          <span className="text-xs font-semibold text-[#332B28]">{row.share}</span>
                           <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                             <div className="h-full bg-[#C96F55]" style={{ width: row.share }} />
                           </div>
@@ -1851,7 +1738,7 @@ export default function IncidentsByCategoryReport() {
         )}
       </div>
 
-      {/* ── Ticket Detail Modal Popup ── */}
+{/* ── Ticket Detail Modal Popup ── */}
       {selectedTicket && (
         <TicketDetailModal
           ticket={{

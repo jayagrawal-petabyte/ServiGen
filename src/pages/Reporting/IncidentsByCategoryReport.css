@@ -120,7 +120,7 @@
 }
 
 .get-started-btn {
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -132,11 +132,11 @@
 }
 
 .get-started-btn:hover {
-  background: #db5936;
+  background: #b55f46;
 }
 
 .new-ticket-btn {
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -149,7 +149,7 @@
 }
 
 .new-ticket-btn:hover {
-  background: #db5936;
+  background: #b55f46;
 }
 
 .header-icon-group {
@@ -194,7 +194,7 @@
   height: 24px;
   border-radius: 50%;
   background: #f0fdfa;
-  border: 1.5px solid #38bdf8;
+  border: 1.5px solid #F4A58A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +233,7 @@
 
 .report-pill-btn {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   border-radius: 9999px;
   padding: 6px 14px;
   font-size: 12px;
@@ -277,7 +277,7 @@
   justify-content: space-between;
   background: #f1f5f9;
   color: #475569;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -294,7 +294,7 @@
 .filter-add-plus-btn {
   border: none;
   background: transparent;
-  color: #eb6a47;
+  color: #C96F55;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -307,7 +307,7 @@
 
 .filter-add-plus-btn:hover {
   transform: scale(1.05);
-  color: #d65a37;
+  color: #b55f46;
 }
 
 .report-period-row {
@@ -323,7 +323,7 @@
 .report-select-input {
   width: 100%;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 12.5px;
@@ -335,7 +335,7 @@
 }
 
 .report-select-input:focus {
-  border-color: #2563eb;
+  border-color: #C96F55;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
@@ -366,7 +366,7 @@
   flex: 1;
   min-height: 38px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   border-radius: 6px;
   padding: 5px 10px;
   display: flex;
@@ -506,7 +506,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #13273e;
+  background: #263B5E;
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -519,7 +519,7 @@
 }
 
 .report-refresh-btn:hover {
-  background: #1e3a5f;
+  background: #1b2942;
   transform: translateY(-1px);
 }
 
@@ -532,7 +532,7 @@
 /* ── Data Table ── */
 .report-table-wrapper {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   border-radius: 8px;
   overflow-x: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -547,7 +547,9 @@
 }
 
 .report-data-table thead th {
-  background: #f8fafc;
+  background: #FFF9F5;
+  color: #332B28;
+  border-bottom: 1px solid #ebdcd3;
   color: #475569;
   font-weight: 700;
   font-size: 11.5px;
@@ -578,7 +580,7 @@
 }
 
 .report-data-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #FFF9F5;
 }
 
 .report-data-table tbody tr:last-child {
@@ -594,7 +596,7 @@
 }
 
 .report-ticket-id-link {
-  color: #0284c7;
+  color: #C96F55;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -602,7 +604,7 @@
 
 .report-ticket-id-link:hover {
   text-decoration: underline;
-  color: #0369a1;
+  color: #b55f46;
 }
 
 .report-summary-cell {
@@ -653,7 +655,7 @@
   border-radius: 9999px;
   background: #f1f5f9;
   color: #334155;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
 }
 
 .report-sla-met-cell {
@@ -671,8 +673,8 @@
 
 .gauge-btn-active {
   background: #ffffff !important;
-  color: #eb6a47 !important;
-  border: 2px solid #eb6a47 !important;
+  color: #C96F55 !important;
+  border: 2px solid #C96F55 !important;
   box-shadow: 0 1px 4px rgba(235, 106, 71, 0.3);
 }
 
@@ -686,7 +688,7 @@
   border-radius: 16px;
   padding: 22px 24px;
   box-shadow: 0 16px 45px rgba(15, 23, 42, 0.14);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ebdcd3;
   z-index: 100;
   animation: ticketFadeIn 0.18s ease-out;
   display: flex;
@@ -744,7 +746,7 @@
 }
 
 .todo-date-input:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 .todo-content-area {
@@ -776,7 +778,7 @@
 .todo-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #eb6a47;
+  accent-color: #C96F55;
   cursor: pointer;
 }
 
@@ -787,7 +789,7 @@
 
 .todo-add-pill-btn {
   align-self: flex-start;
-  background: #eb6a47;
+  background: #C96F55;
   color: #ffffff;
   border-radius: 9999px;
   padding: 7px 22px;
@@ -803,7 +805,7 @@
 }
 
 .todo-add-pill-btn:hover {
-  background: #db5936;
+  background: #b55f46;
 }
 
 .todo-add-pill-btn .plus-icon {
@@ -827,7 +829,7 @@
 }
 
 .todo-input-field:focus {
-  border-color: #eb6a47;
+  border-color: #C96F55;
 }
 
 /* ── Split Agent KPI Dashboard View ── */
@@ -946,7 +948,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #eb6a47;
+  background: #C96F55;
   animation: cyanBounce 1.4s infinite ease-in-out both;
 }
 
