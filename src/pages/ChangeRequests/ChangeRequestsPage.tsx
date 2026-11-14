@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { ChangeRequest, SubTask } from '../../types/cmdb';
-import {
-  fetchChangeRequests,
-  fetchActiveChangeRequests,
-} from '../../services/changeRequestsService';
+import type { ChangeRequest } from '../../types/cmdb';
+import { fetchChangeRequests } from '../../services/changeRequestsService';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { Pagination } from '../../components/shared/Pagination';
 import { Button } from '../../components/shared/Button';
 import { Card } from '../../components/shared/Card';
 import { getChangeStatusVariant } from '../../utils/statusUtils';
@@ -15,14 +11,21 @@ import {
   Table,
   Plus,
   Clock,
-  Tag as TagIcon,
   AlertCircle,
-  RefreshCw,
   Flame,
   ListFilter,
+  GitPullRequest,
+  FileText,
+  Calendar,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldAlert,
+  Layers,
+  PauseCircle,
+  HelpCircle,
 } from 'lucide-react';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
-import { SegmentedTabs, FilterToolbar, RefreshButton } from '../../components/shared';
+import { RefreshButton, SearchInput, ModuleSidebar, ModuleSidebarGroup } from '../../components/shared';
 
 interface ChangeRequestsPageProps {
   changeRequests?: ChangeRequest[];
@@ -34,7 +37,7 @@ interface ChangeRequestsPageProps {
 
 export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   changeRequests: externalRequests,
-  searchQuery = '',
+  searchQuery: externalSearchQuery = '',
   onOpenCreateModal = () => {},
   onSelectChangeRequest = () => {},
   onRefreshData,
@@ -45,10 +48,11 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
   const ciName = searchParams.get('ciName');
 
   const [internalRequests, setInternalRequests] = useState<ChangeRequest[]>([]);
-  const [filterMode, setFilterMode] = useState<'all' | 'active'>('all');
+  const [selectedViewId, setSelectedViewId] = useState<string>('all-active');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [selectedType, setSelectedType] = useState<string>('ALL');
-  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>(externalSearchQuery);
+  const [sidebarSearch, setSidebarSearch] = useState<string>('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(!externalRequests);
   const [error, setError] = useState<string | null>(null);
@@ -81,45 +85,227 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
   const items = externalRequests || internalRequests;
 
-  const filteredRequests = items.filter((cr: ChangeRequest) => {
-    const matchesSearch =
-      cr.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cr.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cr.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cr.linkedCiName.toLowerCase().includes(searchQuery.toLowerCase());
+  // Compute live view counts for the sidebar
+  const counts = useMemo(() => {
+    const all = items.length;
+    const active = items.filter(
+      (cr) => cr.status !== 'Completed' && cr.status !== 'Rejected' && cr.status !== 'Failed'
+    ).length;
+    const draft = items.filter((cr) => cr.status.toLowerCase().includes('draft')).length;
+    const inProgress = items.filter((cr) => cr.status === 'In Progress').length;
+    const scheduled = items.filter((cr) => cr.status === 'Scheduled').length;
+    const pendingApproval = items.filter((cr) => cr.status === 'Pending Approval').length;
+    const onHold = items.filter((cr) => cr.status === 'On Hold').length;
+    const emergency = items.filter((cr) => cr.type === 'Emergency').length;
+    const normal = items.filter((cr) => cr.type === 'Normal').length;
+    const standard = items.filter((cr) => cr.type === 'Standard').length;
+    const completed = items.filter((cr) => cr.status === 'Completed').length;
 
-    const matchesType = selectedType === 'ALL' || cr.type === selectedType;
-    const matchesStatus = selectedStatus === 'ALL' || cr.status === selectedStatus;
-    const matchesActiveTab =
-      filterMode === 'all' ||
-      (cr.status !== 'Completed' && cr.status !== 'Rejected' && cr.status !== 'Failed');
+    return {
+      all,
+      active,
+      draft,
+      inProgress,
+      scheduled,
+      pendingApproval,
+      onHold,
+      emergency,
+      normal,
+      standard,
+      completed,
+    };
+  }, [items]);
 
-    const matchesCi =
-      !ciId && !ciName
-        ? true
-        : (cr.linkedCiId && cr.linkedCiId.toLowerCase() === ciId?.toLowerCase()) ||
-          (cr.linkedCiName && ciName && cr.linkedCiName.toLowerCase().includes(ciName.toLowerCase())) ||
-          (cr.title.toLowerCase().includes((ciName || ciId || '').toLowerCase()));
-
-    return matchesSearch && matchesType && matchesStatus && matchesActiveTab && matchesCi;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
-  const paginatedRequests = filteredRequests.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  // Sidebar navigation structure inspired by reference design with brand soft-peach styling
+  const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
+    () => [
+      {
+        id: 'active-group',
+        title: 'Active',
+        items: [
+          {
+            id: 'all-active',
+            label: 'All Active Changes',
+            icon: <Flame className="w-3.5 h-3.5 text-[#C96F55]" />,
+            count: counts.active,
+          },
+          {
+            id: 'draft',
+            label: 'Draft Changes',
+            icon: <FileText className="w-3.5 h-3.5 text-slate-500" />,
+            count: counts.draft,
+          },
+          {
+            id: 'in-progress',
+            label: 'In Progress Changes',
+            icon: <Clock className="w-3.5 h-3.5 text-amber-500" />,
+            count: counts.inProgress,
+          },
+          {
+            id: 'scheduled',
+            label: "Today's Scheduled",
+            icon: <Calendar className="w-3.5 h-3.5 text-blue-500" />,
+            count: counts.scheduled,
+          },
+        ],
+      },
+      {
+        id: 'pending-group',
+        title: 'Pending & Review',
+        items: [
+          {
+            id: 'pending-approval',
+            label: 'Awaiting Approval',
+            icon: <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />,
+            count: counts.pendingApproval,
+          },
+          {
+            id: 'on-hold',
+            label: 'On Hold Changes',
+            icon: <PauseCircle className="w-3.5 h-3.5 text-orange-500" />,
+            count: counts.onHold,
+          },
+        ],
+      },
+      {
+        id: 'type-group',
+        title: 'By Change Type',
+        items: [
+          {
+            id: 'all',
+            label: 'All Changes',
+            icon: <ListFilter className="w-3.5 h-3.5 text-slate-600" />,
+            count: counts.all,
+          },
+          {
+            id: 'emergency',
+            label: 'Emergency Changes',
+            icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />,
+            count: counts.emergency,
+          },
+          {
+            id: 'normal',
+            label: 'Normal Changes',
+            icon: <ShieldAlert className="w-3.5 h-3.5 text-blue-500" />,
+            count: counts.normal,
+          },
+          {
+            id: 'standard',
+            label: 'Standard Changes',
+            icon: <Layers className="w-3.5 h-3.5 text-emerald-500" />,
+            count: counts.standard,
+          },
+        ],
+      },
+      {
+        id: 'history-group',
+        title: 'History',
+        items: [
+          {
+            id: 'completed',
+            label: 'Completed Changes',
+            icon: <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />,
+            count: counts.completed,
+          },
+        ],
+      },
+    ],
+    [counts]
   );
 
-  const getPercentBadgeVariant = (percent: number) => {
-    if (percent >= 60) return 'green';
-    if (percent >= 30) return 'orange';
-    return 'red';
-  };
+  // Filter sidebar groups based on sidebar search input
+  const filteredSidebarGroups = useMemo(() => {
+    if (!sidebarSearch.trim()) return rawSidebarGroups;
+    const query = sidebarSearch.toLowerCase().trim();
+    return rawSidebarGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.label.toLowerCase().includes(query)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [rawSidebarGroups, sidebarSearch]);
+
+  // Filter change requests based on selected sidebar view & top toolbar search
+  const filteredRequests = useMemo(() => {
+    return items.filter((cr: ChangeRequest) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        cr.title.toLowerCase().includes(q) ||
+        cr.id.toLowerCase().includes(q) ||
+        cr.agentName.toLowerCase().includes(q) ||
+        cr.linkedCiName.toLowerCase().includes(q);
+
+      let matchesView = true;
+      switch (selectedViewId) {
+        case 'all-active':
+          matchesView =
+            cr.status !== 'Completed' && cr.status !== 'Rejected' && cr.status !== 'Failed';
+          break;
+        case 'draft':
+          matchesView = cr.status.toLowerCase().includes('draft');
+          break;
+        case 'in-progress':
+          matchesView = cr.status === 'In Progress';
+          break;
+        case 'scheduled':
+          matchesView = cr.status === 'Scheduled';
+          break;
+        case 'pending-approval':
+          matchesView = cr.status === 'Pending Approval';
+          break;
+        case 'on-hold':
+          matchesView = cr.status === 'On Hold';
+          break;
+        case 'emergency':
+          matchesView = cr.type === 'Emergency';
+          break;
+        case 'normal':
+          matchesView = cr.type === 'Normal';
+          break;
+        case 'standard':
+          matchesView = cr.type === 'Standard';
+          break;
+        case 'completed':
+          matchesView = cr.status === 'Completed';
+          break;
+        case 'all':
+        default:
+          matchesView = true;
+          break;
+      }
+
+      const matchesCi =
+        !ciId && !ciName
+          ? true
+          : (cr.linkedCiId && cr.linkedCiId.toLowerCase() === ciId?.toLowerCase()) ||
+            (cr.linkedCiName && ciName && cr.linkedCiName.toLowerCase().includes(ciName.toLowerCase())) ||
+            cr.title.toLowerCase().includes((ciName || ciId || '').toLowerCase());
+
+      return matchesSearch && matchesView && matchesCi;
+    });
+  }, [items, searchQuery, selectedViewId, ciId, ciName]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
+  const pageStart = filteredRequests.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const pageEnd = Math.min(currentPage * pageSize, filteredRequests.length);
+
+  const paginatedRequests = useMemo(() => {
+    return filteredRequests.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredRequests, currentPage, pageSize]);
+
+  const currentViewLabel = useMemo(() => {
+    for (const group of rawSidebarGroups) {
+      const found = group.items.find((i) => i.id === selectedViewId);
+      if (found) return found.label;
+    }
+    return 'Change Requests';
+  }, [selectedViewId, rawSidebarGroups]);
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5] select-none">
+    <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
       {/* ── Top Navbar ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
+      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
           <span>/</span>
@@ -128,365 +314,381 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
         <GlobalNavbarActions />
       </header>
 
-      <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-        {(ciId || ciName) && (
-          <div className="mb-4 px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center justify-between text-xs font-semibold shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-              <span>
-                Showing change requests linked to Configuration Item: <strong>{ciName || ciId}</strong>
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const nextParams = new URLSearchParams(searchParams);
-                nextParams.delete('ci');
-                nextParams.delete('ciName');
-                setSearchParams(nextParams);
-              }}
-              className="text-purple-700 hover:text-purple-950 font-bold cursor-pointer underline text-[11px]"
-            >
-              Clear filter ✕
-            </button>
-          </div>
-        )}
-        {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Change Management
-            </h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
-              Active change requests, implementation windows, risk review, and rollback checklists
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {/* Refresh button */}
-            <RefreshButton
-              onClick={() => loadData()}
-              isLoading={isLoading}
-              title="Fetch latest from backend API"
-            />
-
-            {/* New Change Request Button */}
-            <Button
-              variant="primary"
-              onClick={onOpenCreateModal}
-              icon={<Plus className="w-4 h-4 shrink-0" />}
-              className="shadow-sm shadow-[#C96F55]/20"
-            >
-              New Change Request
-            </Button>
-          </div>
-        </div>
-
-      {/* Error state */}
-      {error && (
-        <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span className="font-semibold">{error}</span>
+      {/* CI Filter Active Notification */}
+      {(ciId || ciName) && (
+        <div className="mx-[18px] mt-3 px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center justify-between text-xs font-semibold shadow-2xs shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
+            <span>
+              Showing change requests linked to Configuration Item: <strong>{ciName || ciId}</strong>
+            </span>
           </div>
           <button
-            onClick={() => loadData()}
-            className="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors cursor-pointer"
+            type="button"
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.delete('ci');
+              nextParams.delete('ciName');
+              setSearchParams(nextParams);
+            }}
+            className="text-purple-700 hover:text-purple-950 font-bold cursor-pointer underline text-[11px]"
           >
-            Retry
+            Clear filter ✕
           </button>
         </div>
       )}
 
-      {/* Filter and View Controls Bar */}
-      <FilterToolbar
-        className="mb-6"
-        filters={
-          <div className="flex flex-wrap items-center gap-2">
-            <SegmentedTabs<'all' | 'active'>
-              variant="boxed"
-              theme="terracotta"
+      {/* ── Two-Column Layout (Sidebar + Main Panel) ── */}
+      <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
+        {/* Left Module Sidebar */}
+        <ModuleSidebar
+          title="Change Requests"
+          icon={<GitPullRequest className="w-3.5 h-3.5" />}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          searchValue={sidebarSearch}
+          onSearchChange={setSidebarSearch}
+          searchPlaceholder="Search Change Requests..."
+          groups={filteredSidebarGroups}
+          selectedId={selectedViewId}
+          onSelectId={(id) => {
+            setSelectedViewId(id);
+            setCurrentPage(1);
+          }}
+          footer={
+            <Button
+              variant="primary"
               size="sm"
-              tabs={[
-                { id: 'all', label: 'All Changes', icon: <ListFilter className="w-3.5 h-3.5" /> },
-                { id: 'active', label: 'Active Only', icon: <Flame className="w-3.5 h-3.5" /> },
-              ]}
-              activeTab={filterMode}
-              onChange={(mode) => {
-                setFilterMode(mode);
-                setCurrentPage(1);
-              }}
-            />
-
-            <div className="h-6 w-px bg-slate-200 hidden md:block mx-1" />
-
-            {/* Type filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => {
-                setSelectedType(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
+              onClick={onOpenCreateModal}
+              icon={<Plus className="w-3.5 h-3.5" />}
+              className="w-full justify-center shadow-xs"
             >
-              <option value="ALL">All Change Types</option>
-              <option value="Normal">Normal</option>
-              <option value="Standard">Standard</option>
-              <option value="Emergency">Emergency</option>
-            </select>
+              New Change Request
+            </Button>
+          }
+        />
 
-            {/* Status filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C96F55]"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="In Progress">In Progress</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Pending Approval">Pending Approval</option>
-              <option value="Scheduled">Scheduled</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-        }
-        actions={
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+        {/* Right Main Table/Grid Panel */}
+        <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
+          {/* Main Top Toolbar */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <span>{currentViewLabel}</span>
+              </h2>
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-white text-[#C96F55] shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Grid view"
+                type="button"
+                onClick={onOpenCreateModal}
+                className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                title="Create a new change request"
               >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-white text-[#C96F55] shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Table view"
-              >
-                <Table className="w-4 h-4" />
+                +
               </button>
             </div>
-            <span className="text-xs text-slate-400 font-semibold">
-              {filteredRequests.length} results
-            </span>
-          </div>
-        }
-      />
 
-      {/* Grid View */}
-      {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedRequests.map((cr: ChangeRequest) => {
-            const completedSubtasks = cr.subtasks.filter((s) => s.completed).length;
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* View Switcher: Grid / Table */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-white text-[#C96F55] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Grid view"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white text-[#C96F55] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Table view"
+                >
+                  <Table className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
-            return (
-              <Card
-                key={cr.id}
-                onClick={() => onSelectChangeRequest(cr)}
-                className="group hover:border-[#C96F55]/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+              {/* Toolbar Search Input */}
+              <div className="relative flex items-center">
+                <SearchInput
+                  size="sm"
+                  value={searchQuery}
+                  onChange={(val) => {
+                    setSearchQuery(val);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Filter records..."
+                  className="w-44"
+                />
+              </div>
+
+              {/* Top Toolbar Pagination Count */}
+              <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                {pageStart}-{pageEnd} of {filteredRequests.length}
+              </span>
+
+              {/* Top Toolbar Page Navigation Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-xs"
+                  title="Previous page"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-xs"
+                  title="Next page"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* Standardized Context Refresh Button */}
+              <RefreshButton
+                iconOnly
+                size="sm"
+                onClick={() => loadData()}
+                isLoading={isLoading}
+                title="Refresh Change Requests"
+              />
+
+              {/* Primary Action Button */}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onOpenCreateModal}
+                icon={<Plus className="w-3.5 h-3.5" />}
+                className="shadow-xs"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <span className="text-xs font-extrabold text-[#C96F55] tracking-wider block mb-1">
-                        {cr.id}
-                      </span>
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#C96F55] transition-colors">
-                        {cr.title}
-                      </h3>
-                    </div>
-                    <StatusBadge
-                      label={cr.status}
-                      variant={getChangeStatusVariant(cr.status)}
-                    />
-                  </div>
+                New
+              </Button>
+            </div>
+          </div>
 
-                  <div className="space-y-2.5 my-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="font-medium">Assigned Agent</span>
-                      <span className="font-bold text-slate-800">{cr.agentName}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="font-medium">Target / Spent</span>
-                      <span className="font-bold text-slate-800">
-                        {cr.timeSpentHours}h / {cr.targetHours}h
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span className="font-medium">Linked CI</span>
-                      <span className="font-bold text-[#263B5E] truncate max-w-[150px]">
-                        {cr.linkedCiName}
-                      </span>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200/60">
-                      <div className="flex justify-between items-center text-[11px] mb-1">
-                        <span className="text-slate-500 font-semibold">Implementation Progress</span>
-                        <span className="font-extrabold text-slate-800">{cr.completionPercent}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-[#C96F55] h-full rounded-full transition-all duration-300"
-                          style={{ width: `${cr.completionPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+          {/* Scrollable Content Container */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Error banner */}
+            {error && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span className="font-semibold">{error}</span>
                 </div>
+                <button
+                  onClick={() => loadData()}
+                  className="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors cursor-pointer text-xs"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{cr.scheduledStart}</span>
-                  </div>
+            {/* Grid View */}
+            {viewMode === 'grid' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {paginatedRequests.map((cr: ChangeRequest) => {
+                  const completedSubtasks = cr.subtasks.filter((s) => s.completed).length;
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                      {completedSubtasks}/{cr.subtasks.length} tasks
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        cr.risk === 'High'
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : cr.risk === 'Medium'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}
+                  return (
+                    <Card
+                      key={cr.id}
+                      onClick={() => onSelectChangeRequest(cr)}
+                      className="group hover:border-[#C96F55]/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
                     >
-                      {cr.risk} Risk
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-
-          {paginatedRequests.length === 0 && (
-            <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-              <Clock className="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-1" />
-              <p className="text-sm font-bold text-slate-600">No Change Requests Found</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Try adjusting your search criteria or create a new change request.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Table View */}
-      {viewMode === 'table' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="py-3.5 px-4">CR ID</th>
-                  <th className="py-3.5 px-4">Title</th>
-                  <th className="py-3.5 px-4">Type</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Risk</th>
-                  <th className="py-3.5 px-4">Linked CI</th>
-                  <th className="py-3.5 px-4">Owner</th>
-                  <th className="py-3.5 px-4">Progress</th>
-                  <th className="py-3.5 px-4">Window</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedRequests.map((cr: ChangeRequest) => (
-                  <tr
-                    key={cr.id}
-                    onClick={() => onSelectChangeRequest(cr)}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                  >
-                    <td className="py-3 px-4 font-extrabold text-[#C96F55]">{cr.id}</td>
-                    <td className="py-3 px-4 font-bold text-slate-800 max-w-[220px] truncate">
-                      {cr.title}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                        {cr.type}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge
-                        label={cr.status}
-                        variant={getChangeStatusVariant(cr.status)}
-                      />
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          cr.risk === 'High'
-                            ? 'text-rose-700 bg-rose-50'
-                            : cr.risk === 'Medium'
-                            ? 'text-amber-700 bg-amber-50'
-                            : 'text-emerald-700 bg-emerald-50'
-                        }`}
-                      >
-                        {cr.risk}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium truncate max-w-[140px]">
-                      {cr.linkedCiName}
-                    </td>
-                    <td className="py-3 px-4 text-slate-700 font-semibold">{cr.agentName}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className="bg-[#C96F55] h-full rounded-full"
-                            style={{ width: `${cr.completionPercent}%` }}
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <span className="text-xs font-extrabold text-[#C96F55] tracking-wider block mb-1">
+                              {cr.id}
+                            </span>
+                            <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#C96F55] transition-colors">
+                              {cr.title}
+                            </h3>
+                          </div>
+                          <StatusBadge
+                            label={cr.status}
+                            variant={getChangeStatusVariant(cr.status)}
                           />
                         </div>
-                        <span className="font-bold text-slate-700 text-[10px]">
-                          {cr.completionPercent}%
-                        </span>
+
+                        <div className="space-y-2.5 my-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span className="font-medium">Assigned Agent</span>
+                            <span className="font-bold text-slate-800">{cr.agentName}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span className="font-medium">Target / Spent</span>
+                            <span className="font-bold text-slate-800">
+                              {cr.timeSpentHours}h / {cr.targetHours}h
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span className="font-medium">Linked CI</span>
+                            <span className="font-bold text-[#263B5E] truncate max-w-[150px]">
+                              {cr.linkedCiName}
+                            </span>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-200/60">
+                            <div className="flex justify-between items-center text-[11px] mb-1">
+                              <span className="text-slate-500 font-semibold">Implementation Progress</span>
+                              <span className="font-extrabold text-slate-800">{cr.completionPercent}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#C96F55] h-full rounded-full transition-all duration-300"
+                                style={{ width: `${cr.completionPercent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
-                      {cr.scheduledStart}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{cr.scheduledStart}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                            {completedSubtasks}/{cr.subtasks.length} tasks
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              cr.risk === 'High'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : cr.risk === 'Medium'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}
+                          >
+                            {cr.risk} Risk
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+
+                {paginatedRequests.length === 0 && (
+                  <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
+                    <Clock className="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-1" />
+                    <p className="text-sm font-bold text-slate-600">No Change Requests Found</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Try adjusting your sidebar view or search filter.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Table View */}
+            {viewMode === 'table' && (
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-3.5 px-4">CR ID</th>
+                        <th className="py-3.5 px-4">Title</th>
+                        <th className="py-3.5 px-4">Type</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-4">Risk</th>
+                        <th className="py-3.5 px-4">Linked CI</th>
+                        <th className="py-3.5 px-4">Owner</th>
+                        <th className="py-3.5 px-4">Progress</th>
+                        <th className="py-3.5 px-4">Window</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {paginatedRequests.map((cr: ChangeRequest) => (
+                        <tr
+                          key={cr.id}
+                          onClick={() => onSelectChangeRequest(cr)}
+                          className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                        >
+                          <td className="py-3 px-4 font-extrabold text-[#C96F55]">{cr.id}</td>
+                          <td className="py-3 px-4 font-bold text-slate-800 max-w-[220px] truncate">
+                            {cr.title}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                              {cr.type}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <StatusBadge
+                              label={cr.status}
+                              variant={getChangeStatusVariant(cr.status)}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                cr.risk === 'High'
+                                  ? 'text-rose-700 bg-rose-50'
+                                  : cr.risk === 'Medium'
+                                  ? 'text-amber-700 bg-amber-50'
+                                  : 'text-emerald-700 bg-emerald-50'
+                              }`}
+                            >
+                              {cr.risk}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 font-medium truncate max-w-[140px]">
+                            {cr.linkedCiName}
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 font-semibold">{cr.agentName}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-[#C96F55] h-full rounded-full"
+                                  style={{ width: `${cr.completionPercent}%` }}
+                                />
+                              </div>
+                              <span className="font-bold text-slate-700 text-[10px]">
+                                {cr.completionPercent}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+                            {cr.scheduledStart}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {paginatedRequests.length === 0 && (
+                  <div className="py-16 text-center text-slate-400">
+                    <p className="text-sm font-bold text-slate-600">No Change Requests Found</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Try adjusting your sidebar view or search filter.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Pagination Footer */}
-      {filteredRequests.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <p className="text-xs text-slate-500 font-medium">
-            Showing {(currentPage - 1) * pageSize + 1} to{' '}
-            {Math.min(currentPage * pageSize, filteredRequests.length)} of{' '}
-            {filteredRequests.length} change requests
-          </p>
-
-          <Pagination
-            currentRange={`Page ${currentPage} of ${totalPages}`}
-            hasPrevious={currentPage > 1}
-            hasNext={currentPage < totalPages}
-            onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          />
-        </div>
-      )}
+        </main>
       </div>
     </div>
   );

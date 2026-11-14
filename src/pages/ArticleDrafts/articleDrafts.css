@@ -47,42 +47,49 @@
   box-sizing: border-box;
 }
 
-/* --- Peach Sub-Navigation Panel --- */
+/* --- Sub-Navigation Panel (Brand Theme Standard) --- */
 .article-drafts-subnav {
   width: 250px;
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
   overflow-y: auto;
-  background-color: #e49b8e;
-  border: 1px solid #d4887b;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
-  padding: 24px 18px 36px 18px;
+  padding: 16px 12px 36px 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
   box-sizing: border-box;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .subnav-search-box {
-  background-color: #ffffff;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
-  height: 44px;
-  padding: 0 18px;
+  height: 38px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s;
+}
+
+.subnav-search-box:focus-within {
+  background-color: #ffffff;
+  border-color: #C96F55;
+  box-shadow: 0 0 0 2px rgba(201, 111, 85, 0.15);
 }
 
 .subnav-search-box input {
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 13px;
   width: 100%;
-  color: #334155;
+  color: #1e293b;
   background: transparent;
 }
 
@@ -91,7 +98,7 @@
 }
 
 .subnav-search-icon {
-  color: #8c4533;
+  color: #94a3b8;
   flex-shrink: 0;
   margin-left: 6px;
 }
@@ -99,12 +106,12 @@
 .subnav-all-drafts-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #5c2718;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
   transition: all 0.15s;
   background: transparent;
   width: 100%;
@@ -113,35 +120,42 @@
   cursor: pointer;
 }
 
-.subnav-all-drafts-btn:hover,
+.subnav-all-drafts-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
 .subnav-all-drafts-btn.active {
-  background-color: rgba(255, 255, 255, 0.55);
+  background-color: #C96F55;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .subnav-section-title {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  color: #3a150c;
-  padding: 4px 14px;
-  letter-spacing: -0.01em;
-  margin-top: 6px;
+  color: #64748b;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
 }
 
 .subnav-menu-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .subnav-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-  border-radius: 12px;
-  font-size: 14px;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 500;
-  color: #5c2718;
+  color: #334155;
   transition: all 0.15s;
   width: 100%;
   text-align: left;
@@ -151,12 +165,14 @@
 }
 
 .subnav-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.35);
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 .subnav-menu-item.active {
-  background-color: rgba(255, 255, 255, 0.55);
-  font-weight: 600;
+  background-color: #C96F55;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .subnav-menu-item svg {

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SidebarListItem, SidebarGroup } from '../types/majorIncident.types';
+import { SearchInput } from '../../../components/shared/SearchInput';
 
 const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
@@ -204,7 +205,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
     <aside
       className={`${
         isCollapsed ? 'w-[44px] min-w-[44px]' : 'w-[250px] min-w-[250px]'
-      } shrink-0 bg-[#e49b8e] border border-[#d4887b] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out`}
+      } shrink-0 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out`}
     >
       {/* ── Collapsed (Minimized) Mode ── */}
       {isCollapsed ? (
@@ -213,7 +214,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
           <button
             type="button"
             onClick={toggleCollapse}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#3a201a] hover:text-[#1c0f0c] hover:bg-black/10 font-bold transition-all cursor-pointer text-base select-none"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold transition-all cursor-pointer text-base select-none"
             title="Expand sidebar (»)"
             aria-label="Expand sidebar"
           >
@@ -225,55 +226,26 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
         <>
           {/* 1. Top Search Bar */}
           <div className="p-3 pb-2 shrink-0">
-            <div className="relative flex items-center">
-              <input
-                id="major-incidents-sidebar-search-input"
-                type="text"
-                placeholder="Search Major Incidents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1c0f0c]/20 hover:bg-[#1c0f0c]/25 focus:bg-white text-xs text-[#1c0f0c] focus:text-gray-900 placeholder-[#542d25]/80 focus:placeholder-gray-400 pl-3 pr-8 py-1.5 rounded-full outline-none transition-all border border-black/10 focus:border-[#C96F55] shadow-inner font-medium"
-              />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 text-xs text-[#542d25] hover:text-[#1c0f0c] font-bold cursor-pointer p-0.5"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              ) : (
-                <svg className="absolute right-3 w-3.5 h-3.5 text-[#542d25] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16" y2="16" />
-                </svg>
-              )}
-            </div>
+            <SearchInput
+              size="sm"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search Major Incidents..."
+              id="major-incidents-sidebar-search-input"
+            />
           </div>
 
           {/* 2. Header Row: Title & Collapse Arrow */}
-          <div className="flex items-center justify-between border-b border-[#d4887b] px-3.5 py-2.5 shrink-0">
+          <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
             {/* Title with click to reset */}
             <div
-              className="flex items-center gap-2 text-[13px] font-bold text-[#3a201a] hover:text-[#1c0f0c] cursor-pointer transition-colors select-none"
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#C96F55] cursor-pointer transition-colors select-none"
               onClick={handleResetToDefault}
               title="Reset to Updates Required"
             >
-              <svg
-                className="w-4 h-4 shrink-0 text-[#3a201a]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <span className="w-5 h-5 rounded-full bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center text-[10px] shrink-0 font-black">
+                !
+              </span>
               <span className="truncate">Major Incidents</span>
             </div>
 
@@ -281,7 +253,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
             <button
               type="button"
               onClick={toggleCollapse}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#3a201a] hover:text-[#1c0f0c] hover:bg-black/10 font-bold transition-all cursor-pointer text-sm select-none shrink-0"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 font-bold transition-all cursor-pointer text-sm select-none shrink-0"
               title="Collapse sidebar («)"
               aria-label="Collapse sidebar"
             >
@@ -292,7 +264,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
           {/* 3. Navigation Tree with Collapsible Sections */}
           <nav className="flex-1 overflow-y-auto px-2 mt-2 pb-6 flex flex-col gap-2">
             {filteredGroups.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-[#542d25] text-center">No results for "{searchQuery}"</p>
+              <p className="px-3 py-4 text-xs text-slate-400 text-center">No results for "{searchQuery}"</p>
             ) : (
               filteredGroups.map((group) => {
                 const isGroupExpanded = expandedSections[group.groupLabel] !== false;
@@ -307,19 +279,19 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                     <button
                       type="button"
                       onClick={() => handleToggleSection(group.groupLabel)}
-                      className="w-full flex items-center justify-between px-2.5 py-1 text-left rounded-md hover:bg-black/5 transition-colors cursor-pointer mb-0.5 group"
+                      className="w-full flex items-center justify-between px-2.5 py-1 text-left rounded-md hover:bg-slate-50 transition-colors cursor-pointer mb-0.5 group"
                       title={`Toggle ${group.groupLabel} section`}
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-[#542d25] font-bold group-hover:text-[#1c0f0c] transition-colors">
+                        <span className="text-[10px] text-slate-400 font-bold group-hover:text-slate-600 transition-colors">
                           {isGroupExpanded ? '▼' : '►'}
                         </span>
-                        <span className="text-[11px] font-bold text-[#542d25] tracking-wider uppercase group-hover:text-[#1c0f0c] transition-colors">
+                        <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase group-hover:text-slate-700 transition-colors">
                           {group.groupLabel}
                         </span>
                       </div>
                       {totalGroupCount > 0 && (
-                        <span className="text-[10px] font-bold text-[#542d25]/80 bg-white/40 px-1.5 py-0.2 rounded-full">
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
                           {totalGroupCount}
                         </span>
                       )}
@@ -337,10 +309,10 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                               key={item.id}
                               type="button"
                               onClick={() => handleSelect(item)}
-                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-full text-left text-xs transition-colors cursor-pointer ${
                                 isActive
-                                  ? 'bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs'
-                                  : 'text-[#3a201a] hover:bg-black/5 font-medium'
+                                  ? 'bg-[#C96F55] text-white font-bold shadow-xs'
+                                  : 'text-slate-700 hover:bg-slate-100/80 font-medium'
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
@@ -349,8 +321,8 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                               </div>
                               {countVal !== undefined && (
                                 <span
-                                  className={`ml-2 shrink-0 text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full ${
-                                    isActive ? 'bg-white/80 text-[#3a201a]' : 'bg-white/40 text-[#3a201a]'
+                                  className={`ml-2 shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    isActive ? 'bg-white text-[#C96F55]' : 'bg-slate-100 text-slate-600'
                                   }`}
                                 >
                                   {countVal}
@@ -372,18 +344,18 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => handleToggleSection('Custom')}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-left rounded-md hover:bg-black/5 transition-colors cursor-pointer mb-0.5 group"
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-left rounded-md hover:bg-slate-50 transition-colors cursor-pointer mb-0.5 group"
                   title="Toggle Custom section"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#542d25] font-bold">
+                    <span className="text-[10px] text-slate-400 font-bold">
                       {expandedSections.Custom !== false ? '▼' : '►'}
                     </span>
-                    <span className="text-[11px] font-bold text-[#542d25] tracking-wider uppercase">
+                    <span className="text-[11px] font-bold text-slate-500 tracking-wider uppercase">
                       Custom Lists
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-[#542d25]/80 bg-white/40 px-1.5 py-0.2 rounded-full">
+                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
                     {customLists.length}
                   </span>
                 </button>
@@ -396,10 +368,10 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                         <div
                           key={item.id}
                           onClick={() => handleSelect(item)}
-                          className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer group ${
+                          className={`w-full flex items-center justify-between px-3 py-1.5 rounded-full text-left text-xs transition-colors cursor-pointer group ${
                             isActive
-                              ? 'bg-[#d28072] text-[#1c0f0c] font-bold shadow-2xs'
-                              : 'text-[#3a201a] hover:bg-black/5 font-medium'
+                              ? 'bg-[#C96F55] text-white font-bold shadow-xs'
+                              : 'text-slate-700 hover:bg-slate-100/80 font-medium'
                           }`}
                         >
                           <span className="truncate">{item.label}</span>
@@ -430,7 +402,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                     transition={{ duration: 0.15 }}
                     className="mb-2"
                   >
-                    <div className="flex items-center gap-1.5 bg-white border border-[#13273e]/20 rounded-lg px-2.5 py-1.5 shadow-sm">
+                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-xs">
                       <input
                         ref={newListInputRef}
                         type="text"
@@ -444,12 +416,12 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                           }
                         }}
                         placeholder="List name…"
-                        className="flex-1 text-xs text-gray-700 outline-none bg-transparent placeholder-gray-400"
+                        className="flex-1 text-xs text-slate-800 outline-none bg-transparent placeholder-slate-400 font-medium"
                       />
                       <button
                         type="button"
                         onClick={handleCreateList}
-                        className="shrink-0 text-[11px] font-semibold text-white bg-[#13273e] hover:bg-[#0c1a2b] px-2 py-0.5 rounded transition-colors cursor-pointer"
+                        className="shrink-0 text-[11px] font-bold text-white bg-[#C96F55] hover:bg-[#B55F46] px-2.5 py-0.5 rounded-full transition-colors cursor-pointer"
                       >
                         Add
                       </button>
@@ -459,7 +431,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                           setIsCreating(false);
                           setNewListName('');
                         }}
-                        className="shrink-0 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
+                        className="shrink-0 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
                         title="Cancel"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -474,7 +446,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => setIsCreating((v) => !v)}
-                className="flex items-center justify-center gap-2 w-full bg-[#13273e] hover:bg-[#0c1a2b] text-white text-xs font-semibold py-2 px-3 rounded-full shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                className="flex items-center justify-center gap-2 w-full bg-[#263B5E] hover:bg-[#1D2D48] text-white text-xs font-bold py-2 px-3.5 rounded-full shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                 title="Click to create a new list"
               >
                 <svg className="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

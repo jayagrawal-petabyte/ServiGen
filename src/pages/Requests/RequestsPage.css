@@ -178,15 +178,15 @@
   overflow: hidden;
 }
 
-/* ── Left Tree Sidebar (Major Incident Palette Match) ── */
+/* ── Left Tree Sidebar (Brand Theme Standard) ── */
 .requests-tree-sidebar {
   width: 250px;
   height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
-  background-color: #e49b8e;
-  border: 1px solid #d4887b;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -205,17 +205,19 @@
   width: 100%;
   padding: 6px 28px 6px 12px;
   font-size: 11px;
-  border: 0;
+  border: 1px solid #e2e8f0;
   border-radius: 9999px;
-  background: #ffffff;
+  background: #f8fafc;
   outline: none;
   color: #1e293b;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: all 0.15s ease;
 }
 
 .requests-tree-search-input:focus {
-  box-shadow: 0 0 0 2px rgba(19, 39, 62, 0.2);
+  background: #ffffff;
+  border-color: #C96F55;
+  box-shadow: 0 0 0 2px rgba(201, 111, 85, 0.15);
 }
 
 .tree-search-icon {
@@ -234,7 +236,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid #d4887b;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .tree-header-left {
@@ -249,7 +251,8 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background-color: #13273e;
+  background-color: #263B5E;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -263,20 +266,20 @@
 .tree-title {
   font-size: 12px;
   font-weight: 700;
-  color: #3a201a;
+  color: #1e293b;
   line-height: 1.1;
 }
 
 .tree-subtitle {
   font-size: 10px;
-  color: #542d25;
+  color: #64748b;
   cursor: pointer;
 }
 
 .tree-collapse-btn {
   background: transparent;
   border: none;
-  color: #3a201a;
+  color: #64748b;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -286,8 +289,8 @@
 }
 
 .tree-collapse-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: #1c0f0c;
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 .requests-tree-nodes {
@@ -300,21 +303,22 @@
 .tree-group-title-row {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
   font-size: 12px;
-  color: #3a201a;
+  color: #334155;
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
 
 .tree-group-title-row:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 .tree-group-title-row.active-group {
-  background-color: #d28072;
-  color: #1c0f0c;
+  background-color: #C96F55;
+  color: #ffffff;
   font-weight: 700;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -322,8 +326,12 @@
 .tree-caret {
   margin-right: 6px;
   font-size: 10px;
-  color: #542d25;
+  color: #64748b;
   width: 10px;
+}
+
+.active-group .tree-caret {
+  color: #ffffff;
 }
 
 .group-name {
@@ -335,24 +343,24 @@
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.4);
-  color: #3a201a;
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
 .group-count-badge.cyan-badge {
-  background-color: rgba(255, 255, 255, 0.4);
-  color: #3a201a;
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
 .tree-group-title-row.active-group .group-count-badge {
-  background-color: rgba(255, 255, 255, 0.85);
-  color: #1c0f0c;
+  background-color: #ffffff;
+  color: #C96F55;
 }
 
 .tree-sub-items {
   margin-left: 14px;
   padding-left: 8px;
-  border-left: 1px dashed #d4887b;
+  border-left: 1px dashed #cbd5e1;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -363,28 +371,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 8px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
   font-size: 11px;
-  color: #3a201a;
+  color: #334155;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .tree-agent-row:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 .tree-agent-row.active-agent {
-  background-color: #d28072;
+  background-color: #C96F55;
   font-weight: 700;
-  color: #1c0f0c;
+  color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tree-agent-row.highlight-demo-user {
-  background-color: #d28072;
-  color: #1c0f0c;
+  background-color: #C96F55;
+  color: #ffffff;
   font-weight: 700;
   border-radius: 9999px;
   padding: 4px 10px;
