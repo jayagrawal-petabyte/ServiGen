@@ -31,16 +31,17 @@
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Top Navigation Bar */
+/* Top Navigation Bar matching UI/UX exact replication */
 .admin-header {
-  height: 48px;
+  height: 64px;
   background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 0 24px;
+  border-bottom: 1px solid #f0ede8;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 /* Title Area */

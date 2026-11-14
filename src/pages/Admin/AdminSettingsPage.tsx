@@ -16,6 +16,7 @@ import {
   HelpCircle,
   Lock,
 } from 'lucide-react';
+import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import './AdminSettings.css';
 
 type AdminTab = 'sla' | 'categories' | 'matrix' | 'workflows' | 'fields' | 'roles';
@@ -140,19 +141,14 @@ export const AdminSettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Top Navbar */}
+      {/* Top Application Navbar matching UI/UX design */}
       <header className="admin-header">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
-          <span>Administration</span>
+          <span>Service Desk</span>
           <span>/</span>
-          <span className="text-gray-900">System Configuration &amp; Governance</span>
+          <span className="text-gray-900">Administration</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-            <Lock className="w-3 h-3" />
-            <span>Admin Control Panel (Halo Parity)</span>
-          </span>
-        </div>
+        <GlobalNavbarActions />
       </header>
 
       {/* Page Title & Subtitle */}
