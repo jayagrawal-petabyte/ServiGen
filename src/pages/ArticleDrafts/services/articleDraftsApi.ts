@@ -32,7 +32,10 @@ const SIMULATED_LATENCY_MS = 100;
  * Check if custom or default backend articles endpoint is available
  */
 function getArticlesBackendEndpoint(): string {
-  const custom = import.meta.env.VITE_ARTICLES_API_URL;
+  const custom =
+    typeof import.meta !== 'undefined' && import.meta.env
+      ? import.meta.env.VITE_ARTICLES_API_URL
+      : undefined;
   if (typeof custom === 'string' && custom.trim().length > 0) {
     return custom.trim().replace(/\/+$/, '');
   }
@@ -321,6 +324,9 @@ export const articleDraftsApi = {
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('servigen-approvals-updated'));
+    }
     return updated;
   },
 
@@ -376,6 +382,9 @@ export const articleDraftsApi = {
     };
 
     setStoredDrafts(list.map((d) => (d.id === id ? updated : d)));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('servigen-approvals-updated'));
+    }
     return updated;
   },
 

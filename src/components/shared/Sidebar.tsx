@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import type { User } from '../../pages/Auth/types';
+import { approvalsApi } from '../../pages/Approvals/services/approvalsApi';
 import './Sidebar.css';
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -328,6 +329,35 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
   const { user } = useAuth();
   const currentRole: User['role'] = user?.role || 'Administrator';
 
+  // Authoritative pending approvals count for badge (Bug 2)
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number>(0);
+
+  const syncPendingApprovals = useCallback(async () => {
+    try {
+      const pendingList = await approvalsApi.getPendingApprovals();
+      setPendingApprovalsCount(pendingList.length);
+    } catch {
+      // Retain previous or empty count gracefully without crashing
+    }
+  }, []);
+
+  useEffect(() => {
+    syncPendingApprovals();
+
+    // Re-check whenever approvals change across app or tabs
+    const handleUpdate = () => {
+      syncPendingApprovals();
+    };
+
+    window.addEventListener('servigen-approvals-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('servigen-approvals-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [syncPendingApprovals, location.pathname]);
+
   // QA-RBAC-01: Filter sidebar items by user role.
   // Administrators see all items. End users are restricted from CMDB, Change Requests, Organisations, Article Drafts, etc.
   const visibleNavItems = useMemo(() => {
@@ -372,6 +402,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
             ? item.matchActive(location.pathname)
             : location.pathname.startsWith(item.to);
 
+          const isApprovalsItem = item.to === '/approvals';
+
           return (
             <NavLink
               key={item.to}
@@ -383,8 +415,16 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
               title={item.label}
               data-active={isActive ? 'true' : undefined}
             >
-              <div className="relative flex items-center justify-center">
+              <div className="sidebar-icon-container relative flex items-center justify-center">
                 <Icon className="sidebar-nav-icon" />
+                {isApprovalsItem && pendingApprovalsCount > 0 && (
+                  <span
+                    className="sidebar-nav-badge"
+                    aria-label={`${pendingApprovalsCount} pending approvals`}
+                  >
+                    {pendingApprovalsCount > 99 ? '99+' : pendingApprovalsCount}
+                  </span>
+                )}
               </div>
               {item.line1 ? (
                 <span className="nav-label">

@@ -122,14 +122,20 @@ export default function ApprovalsPage() {
 
   /**
    * Reject a single approval request via PATCH /api/approvals/:approvalId/reject
+   * Requires mandatory justification/reason of at least 5 non-whitespace characters.
    */
-  const handleReject = async (id: string, reason = 'Rejected by approver') => {
+  const handleReject = async (id: string, reason?: string) => {
     if (actionLoadingId) return; // Prevent duplicate submission
+    const trimmed = reason ? reason.trim() : '';
+    if (!trimmed || trimmed.length < 5) {
+      showToast('Validation Error: A mandatory rejection reason (min 5 characters) is required.', 'error');
+      return;
+    }
     const item = approvals.find((a) => a.id === id);
 
     setActionLoadingId(id);
     try {
-      const updated = await approvalsApi.rejectRequest(id, reason);
+      const updated = await approvalsApi.rejectRequest(id, trimmed);
       setApprovals((prev) => prev.map((a) => (a.id === id ? updated : a)));
       showToast(`Request ${item?.ticketNumber || id} rejected.`, 'info');
       setTimeout(() => {
@@ -183,9 +189,13 @@ export default function ApprovalsPage() {
       return;
     }
 
-    const reason = window.prompt('Please enter a rejection reason for all pending requests:');
+    const reason = window.prompt('Please enter a mandatory rejection reason for all pending requests:');
     if (reason === null) return; // User cancelled
-    const trimmedReason = reason.trim() || 'Bulk rejection by user';
+    const trimmedReason = reason.trim();
+    if (!trimmedReason || trimmedReason.length < 5) {
+      showToast('Validation Error: Rejection reason must be at least 5 characters long.', 'error');
+      return;
+    }
 
     setIsBatchLoading(true);
     try {
