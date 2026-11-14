@@ -4,6 +4,8 @@ const {
     getProjectById,
     getSubtasksByProject,
     createSubtaskRecord,
+    updateSubtaskRecord,
+    updateProjectRecord,
     findProjectOwner,
     getProjectResources,
     createProjectRecord,
@@ -11,6 +13,17 @@ const {
     createProjectDependencyRecord,
     getProjectSubtaskForDependency,
 } = require('./projects.model');
+
+const normalizeSubtaskStatus = (status) => {
+    if (!status || typeof status !== 'string') return null;
+    const s = status.trim().toLowerCase();
+    if (s === 'todo' || s === 'pending') return 'PENDING';
+    if (s === 'in_progress' || s === 'in progress' || s === 'doing') return 'IN_PROGRESS';
+    if (s === 'done' || s === 'completed') return 'COMPLETED';
+    const upper = status.trim().toUpperCase();
+    if (['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(upper)) return upper;
+    return null;
+};
 
 const calculateCompletionPercentage = (subtasks = []) => {
     if (!Array.isArray(subtasks) || subtasks.length === 0) {
@@ -64,16 +77,16 @@ const createProjectSubtask = async (projectId, organisationId, subtaskData) => {
     if (!subtaskData || typeof subtaskData !== 'object') {
         throw new Error('Subtask data is required');
     }
-    const { title, status = 'PENDING' } = subtaskData;
+    const { title, status = 'PENDING', assigneeId, assignee, dueDate, dependsOnTaskId, hoursEstimate } = subtaskData;
     if (typeof title !== 'string' || !title.trim()) {
         throw new Error('Subtask title is required');
     }
     if (title.trim().length > 255) {
         throw new Error('Subtask title cannot exceed 255 characters');
     }
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'];
-    if (!validStatuses.includes(status)) {
-        throw new Error(`Subtask status must be one of: ${validStatuses.join(', ')}`);
+    const normalizedStatus = normalizeSubtaskStatus(status);
+    if (!normalizedStatus) {
+        throw new Error('Subtask status must be one of: todo, in_progress, done (or PENDING, IN_PROGRESS, COMPLETED)');
     }
 
     const project = await getProjectDetail(projectId, organisationId);
@@ -86,8 +99,137 @@ const createProjectSubtask = async (projectId, organisationId, subtaskData) => {
     return createSubtaskRecord({
         projectId,
         title: title.trim(),
-        status,
+        status: normalizedStatus,
+        assigneeId: assigneeId || assignee || null,
+        dueDate: dueDate || null,
+        dependsOnTaskId: dependsOnTaskId || null,
+        hoursEstimate: hoursEstimate !== undefined ? Number(hoursEstimate) : null,
     });
+};
+
+const updateProjectSubtask = async (projectId, subtaskId, organisationId, patch = {}) => {
+    if (!projectId || !subtaskId || !organisationId) {
+        throw new Error('Project ID, subtask ID, and organisation are required');
+    }
+
+    const project = await getProjectDetail(projectId, organisationId);
+    if (!project) {
+        const error = new Error('Project not found');
+        error.code = 'PROJECT_NOT_FOUND';
+        throw error;
+    }
+
+    const cleanPatch = {};
+
+    if (patch.status !== undefined) {
+        const norm = normalizeSubtaskStatus(patch.status);
+        if (!norm) {
+            throw new Error('Subtask status must be one of: todo, in_progress, done (or PENDING, IN_PROGRESS, COMPLETED)');
+        }
+        cleanPatch.status = norm;
+    }
+
+    if (patch.done !== undefined) {
+        cleanPatch.status = Boolean(patch.done) ? 'COMPLETED' : 'PENDING';
+    }
+
+    if (patch.title !== undefined) {
+        if (typeof patch.title !== 'string' || !patch.title.trim()) {
+            throw new Error('Subtask title cannot be empty');
+        }
+        if (patch.title.trim().length > 255) {
+            throw new Error('Subtask title cannot exceed 255 characters');
+        }
+        cleanPatch.title = patch.title.trim();
+    }
+
+    if (patch.assignee !== undefined || patch.assigneeId !== undefined) {
+        cleanPatch.assigneeId = patch.assigneeId || patch.assignee || null;
+    }
+
+    if (patch.dueDate !== undefined) {
+        cleanPatch.dueDate = patch.dueDate;
+    }
+
+    const updatedSubtask = await updateSubtaskRecord(projectId, subtaskId, organisationId, cleanPatch);
+    if (!updatedSubtask) {
+        const error = new Error('Subtask not found in project');
+        error.code = 'SUBTASK_NOT_FOUND';
+        throw error;
+    }
+
+    const allSubtasks = await getSubtasksByProject(projectId, organisationId);
+    const completionPercentage = calculateCompletionPercentage(allSubtasks);
+
+    return {
+        subtask: updatedSubtask,
+        completionPercentage,
+    };
+};
+
+const updateProject = async (projectId, organisationId, patch = {}) => {
+    if (!projectId || !organisationId) {
+        throw new Error('Project ID and organisation are required');
+    }
+
+    const existing = await getProjectDetail(projectId, organisationId);
+    if (!existing) {
+        const error = new Error('Project not found');
+        error.code = 'PROJECT_NOT_FOUND';
+        throw error;
+    }
+
+    const cleanPatch = {};
+    const nameOrTitle = patch.name || patch.title;
+    if (nameOrTitle !== undefined) {
+        if (typeof nameOrTitle !== 'string' || !nameOrTitle.trim()) {
+            throw new Error('Project title cannot be empty');
+        }
+        if (nameOrTitle.trim().length > 255) {
+            throw new Error('Project title cannot exceed 255 characters');
+        }
+        cleanPatch.name = nameOrTitle.trim();
+    }
+
+    if (patch.description !== undefined) {
+        if (patch.description && (typeof patch.description !== 'string' || patch.description.length > 10000)) {
+            throw new Error('Description cannot exceed 10000 characters');
+        }
+        cleanPatch.description = patch.description || null;
+    }
+
+    if (patch.status !== undefined) {
+        cleanPatch.status = String(patch.status).toUpperCase();
+    }
+
+    if (patch.priority !== undefined) {
+        cleanPatch.priority = String(patch.priority).toUpperCase();
+    }
+
+    if (patch.startDate !== undefined) {
+        cleanPatch.startDate = patch.startDate;
+    }
+
+    const targetEnd = patch.targetEndDate || patch.targetDate || patch.endDate;
+    if (targetEnd !== undefined) {
+        cleanPatch.endDate = targetEnd;
+    }
+
+    if (patch.hoursBudget !== undefined || patch.budgetHours !== undefined) {
+        const b = patch.hoursBudget !== undefined ? patch.hoursBudget : patch.budgetHours;
+        cleanPatch.hoursBudget = b !== null ? Number(b) : null;
+    }
+
+    if (patch.progressPercentage !== undefined || patch.progress !== undefined) {
+        const p = patch.progressPercentage !== undefined ? patch.progressPercentage : patch.progress;
+        cleanPatch.progressPercentage = Number(p);
+    }
+
+    const updated = await updateProjectRecord(projectId, organisationId, cleanPatch);
+    return {
+        ...updated,
+        completionPercentage: calculateCompletionPercentage(updated.subtasks),
+    };
 };
 
 const createProject = async (projectData) => {
@@ -95,16 +237,16 @@ const createProject = async (projectData) => {
         throw new Error('Project data is required');
     }
 
+    const title = projectData.title || projectData.name;
+    const targetEndDate = projectData.targetEndDate || projectData.targetDate || projectData.endDate;
+    const ownerId = projectData.ownerId || projectData.owner;
     const {
         organisationId,
-        title,
         description,
-        code,
         status,
         priority,
         startDate,
-        targetEndDate,
-        ownerId,
+        hoursBudget,
     } = projectData;
 
     if (!organisationId) {
@@ -121,15 +263,11 @@ const createProject = async (projectData) => {
 
     if (description !== undefined && description !== null) {
         if (typeof description !== 'string' || description.length > 10000) {
-        throw new Error('Description cannot exceed 10000 characters');
+            throw new Error('Description cannot exceed 10000 characters');
         }
     }
 
-    if (code !== undefined && code !== null) {
-        if (typeof code !== 'string' || !code.trim() || code.length > 50) {
-        throw new Error('Invalid project code');
-        }
-    }
+    const code = projectData.code?.trim() || `PRJ-${title.trim().replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
     if (status !== undefined && typeof status !== 'string') {
         throw new Error('Invalid project status');
@@ -150,27 +288,28 @@ const createProject = async (projectData) => {
 
     if (startDate && targetEndDate &&
         new Date(targetEndDate) < new Date(startDate)) {
-    throw new Error('Target end date cannot be before start date');
+        throw new Error('Target end date cannot be before start date');
     }
 
     if (ownerId !== undefined && ownerId !== null) {
-    if (typeof ownerId !== 'string' || !ownerId.trim()) {
-        throw new Error('Invalid project owner');
-    }
+        if (typeof ownerId !== 'string' || !ownerId.trim()) {
+            throw new Error('Invalid project owner');
+        }
 
-    const owner = await findProjectOwner(ownerId.trim(), organisationId);
+        const owner = await findProjectOwner(ownerId.trim(), organisationId);
 
-    if (!owner) {
-        throw new Error('Project owner not found in this organisation');
-    }
+        if (!owner) {
+            throw new Error('Project owner not found in this organisation');
+        }
     }
 
     const project = await createProjectRecord({
-    ...projectData,
-    title: title.trim(),
-    code: code?.trim() || null,
-    organisationId,
-    ownerId: ownerId?.trim() || null,
+        ...projectData,
+        title: title.trim(),
+        code,
+        organisationId,
+        ownerId: ownerId?.trim() || null,
+        hoursBudget: hoursBudget !== undefined ? Number(hoursBudget) : null,
     });
 
     return {
@@ -389,7 +528,9 @@ module.exports = {
     getProjectDetail,
     getProjectSubtasks,
     createProjectSubtask,
+    updateProjectSubtask,
     createProject,
+    updateProject,
     getProjectDependenciesData,
     createProjectDependency,
     getProjectResourcesData,

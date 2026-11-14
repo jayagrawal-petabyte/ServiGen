@@ -47,6 +47,7 @@ const ticketsRouter = require('./modules/tickets/tickets.routes');
 const usersRouter = require('./modules/users/users.routes');
 const problemsRouter = require('./modules/problems/problems.routes');
 const reportsRouter = require('./modules/reports/reports.routes');
+const contractsRouter = require('./modules/contracts/contracts.routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -178,6 +179,7 @@ app.use('/api/tickets', restrictTo(...PERMISSIONS.STAFF), ticketsRouter);
 app.use('/api/users', restrictTo(...PERMISSIONS.USERS), usersRouter);
 app.use('/api/problems', restrictTo(...PERMISSIONS.STAFF));
 app.use('/api', problemsRouter);
+app.use('/api/contracts', restrictTo(...PERMISSIONS.STAFF), contractsRouter);
 app.use('/api/reports', restrictTo(...PERMISSIONS.STAFF));
 app.use('/api', reportsRouter);
 app.use('/api/ai-core/intent', intentRouter);

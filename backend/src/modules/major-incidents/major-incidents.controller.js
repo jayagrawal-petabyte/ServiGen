@@ -89,7 +89,9 @@ const addMajorIncidentUpdate = async (req, res) => {
     if (!existing || isCrossTenant(existing, req.user)) {
       return res.status(404).json({ success: false, message: 'Major incident not found' });
     }
-    const author = req.user?.email || req.user?.id || 'Unassigned';
+    const author = (typeof req.body?.author === 'string' && req.body.author.trim())
+      ? req.body.author.trim()
+      : (req.user?.name || req.user?.email || req.user?.id || 'Unassigned');
     const incident = await createIncidentUpdate(
       req.params.incidentId,
       req.body,

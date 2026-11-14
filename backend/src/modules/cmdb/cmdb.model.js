@@ -405,6 +405,97 @@ const getCiImpactData = async (ciId, organisationId = null) => {
   };
 };
 
+const deleteCiDependencyRecord = async (sourceCiId, targetCiId, organisationId = null) => {
+  const idx = mockDependencies.findIndex(
+    (dep) =>
+      dep.sourceCiId === sourceCiId &&
+      dep.targetCiId === targetCiId &&
+      (!organisationId || !dep.organisationId || dep.organisationId === organisationId)
+  );
+  if (idx === -1) return null;
+  const removed = mockDependencies.splice(idx, 1)[0];
+  return removed;
+};
+
+const getCiTopology = async (ciId, organisationId = null) => {
+  const rootCi = await getConfigurationItemById(ciId, organisationId);
+  if (!rootCi) return null;
+
+  const allCis = await getConfigurationItems({ organisationId });
+  const ciMap = new Map(allCis.map((c) => [c.id, c]));
+
+  const orgDeps = mockDependencies.filter(
+    (dep) => !organisationId || !dep.organisationId || dep.organisationId === organisationId
+  );
+
+  const nodes = new Map();
+  const edges = [];
+  const visited = new Set();
+
+  const traverse = (currentId, depth = 0) => {
+    if (depth > 10 || visited.has(currentId)) return;
+    visited.add(currentId);
+
+    const ci = ciMap.get(currentId);
+    if (ci && !nodes.has(ci.id)) {
+      nodes.set(ci.id, {
+        id: ci.id,
+        name: ci.name,
+        type: ci.type,
+        tag: ci.tag,
+        status: ci.status,
+        lifecycleStatus: ci.lifecycleStatus,
+        environment: ci.environment,
+      });
+    }
+
+    // Upstream (this CI depends on target)
+    const upstreamDeps = orgDeps.filter((d) => d.sourceCiId === currentId);
+    for (const dep of upstreamDeps) {
+      if (!edges.some((e) => e.source === dep.sourceCiId && e.target === dep.targetCiId)) {
+        edges.push({
+          id: dep.id,
+          source: dep.sourceCiId,
+          target: dep.targetCiId,
+          relationType: dep.relationType,
+          impactLevel: dep.impactLevel,
+          direction: 'upstream',
+        });
+      }
+      traverse(dep.targetCiId, depth + 1);
+    }
+
+    // Downstream (source depends on this CI)
+    const downstreamDeps = orgDeps.filter((d) => d.targetCiId === currentId);
+    for (const dep of downstreamDeps) {
+      if (!edges.some((e) => e.source === dep.sourceCiId && e.target === dep.targetCiId)) {
+        edges.push({
+          id: dep.id,
+          source: dep.sourceCiId,
+          target: dep.targetCiId,
+          relationType: dep.relationType,
+          impactLevel: dep.impactLevel,
+          direction: 'downstream',
+        });
+      }
+      traverse(dep.sourceCiId, depth + 1);
+    }
+  };
+
+  traverse(rootCi.id, 0);
+
+  return {
+    rootCi: {
+      id: rootCi.id,
+      name: rootCi.name,
+      type: rootCi.type,
+      tag: rootCi.tag,
+    },
+    nodes: Array.from(nodes.values()),
+    edges,
+  };
+};
+
 module.exports = {
   getConfigurationItems,
   getConfigurationItemsByType,
@@ -413,5 +504,7 @@ module.exports = {
   updateConfigurationItemRecord,
   getCiDependencies,
   createCiDependencyRecord,
+  deleteCiDependencyRecord,
+  getCiTopology,
   getCiImpactData,
 };

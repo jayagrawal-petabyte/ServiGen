@@ -9,6 +9,8 @@ const {
   updateConfigurationItemRecord,
   getCiDependencies,
   createCiDependencyRecord,
+  deleteCiDependencyRecord,
+  getCiTopology,
   getCiImpactData,
 } = require('./cmdb.model');
 const AppError = require('../../shared/utils/app-error');
@@ -275,6 +277,44 @@ const getCiImpactAnalysis = async (ciId, organisationId = null) => {
   return getCiImpactData(existing.id, organisationId);
 };
 
+const deleteCiRelationship = async (sourceCiId, targetCiId, organisationId = null) => {
+  if (!sourceCiId || typeof sourceCiId !== 'string') {
+    throw new AppError('Valid source configuration item ID is required', HTTP_STATUS.BAD_REQUEST);
+  }
+  if (!targetCiId || typeof targetCiId !== 'string') {
+    throw new AppError('Valid target configuration item ID is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existingSource = await getConfigurationItemDetail(sourceCiId.trim(), organisationId);
+  if (!existingSource) {
+    throw new AppError('Source configuration item not found in this organisation', HTTP_STATUS.NOT_FOUND);
+  }
+
+  const removed = await deleteCiDependencyRecord(existingSource.id, targetCiId.trim(), organisationId);
+  if (!removed) {
+    throw new AppError('Dependency link not found between these configuration items', HTTP_STATUS.NOT_FOUND);
+  }
+
+  return {
+    success: true,
+    message: 'Relationship dependency removed successfully',
+    deletedDependency: removed,
+  };
+};
+
+const getCiTopologyTree = async (ciId, organisationId = null) => {
+  if (!ciId || typeof ciId !== 'string') {
+    throw new AppError('Valid configuration item ID is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getConfigurationItemDetail(ciId.trim(), organisationId);
+  if (!existing) {
+    throw new AppError('Configuration item not found in this organisation', HTTP_STATUS.NOT_FOUND);
+  }
+
+  return getCiTopology(existing.id, organisationId);
+};
+
 module.exports = {
   VALID_LIFECYCLE_STATUSES,
   ALLOWED_LIFECYCLE_TRANSITIONS,
@@ -285,5 +325,7 @@ module.exports = {
   updateCi,
   getCiRelationships,
   createCiRelationship,
+  deleteCiRelationship,
+  getCiTopologyTree,
   getCiImpactAnalysis,
 };

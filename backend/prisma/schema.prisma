@@ -38,6 +38,7 @@ model Organisation {
   ticketLinks           TicketLink[]
   ticketTimeEntries TicketTimeEntry[]
   problems              Problem[]
+  contracts             Contract[]
   @@map("organisations")
 }
 
@@ -276,6 +277,7 @@ model ConfigurationItem {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   ticketLinks TicketLink[]
+  contractLinks ContractCiLink[]
   @@index([organisationId, status])
   @@map("configuration_items")
 }
@@ -592,4 +594,47 @@ model Problem {
   @@index([organisationId, status])
   @@index([assignedAgentId])
   @@map("problems")
+}
+
+// ─── Contracts Management ──────────────────────────────────────────────────
+
+model Contract {
+  id             String           @id @default(uuid())
+  contractNumber String?
+  title          String
+  vendorName     String
+  vendorEmail    String?
+  type           String           @default("SLA") // SLA, Maintenance, License, Underpinning, Warranty
+  status         String           @default("Draft") // Active, Expired, Pending Renewal, Draft
+  startDate      DateTime?
+  endDate        DateTime?
+  renewalDate    DateTime?
+  autoRenew      Boolean          @default(false)
+  contractValue  Float?
+  currency       String           @default("USD")
+  notes          String?          @db.Text
+  organisationId String?
+  organisation   Organisation?    @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  linkedCis      ContractCiLink[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organisationId, status])
+  @@index([vendorName])
+  @@map("contracts")
+}
+
+model ContractCiLink {
+  id                  String             @id @default(uuid())
+  contractId          String
+  contract            Contract           @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  configurationItemId String
+  configurationItem   ConfigurationItem  @relation(fields: [configurationItemId], references: [id], onDelete: Cascade)
+  notes               String?
+  createdAt           DateTime           @default(now())
+
+  @@unique([contractId, configurationItemId])
+  @@index([contractId])
+  @@index([configurationItemId])
+  @@map("contract_ci_links")
 }

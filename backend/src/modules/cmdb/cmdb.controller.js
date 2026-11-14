@@ -8,6 +8,8 @@ const {
   updateCi,
   getCiRelationships,
   createCiRelationship,
+  deleteCiRelationship,
+  getCiTopologyTree,
   getCiImpactAnalysis,
 } = require('./cmdb.service');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
@@ -190,6 +192,37 @@ const getServiceCis = async (req, res, next) => {
   }
 };
 
+const deleteCiRelationshipHandler = async (req, res, next) => {
+  try {
+    const { id, targetId } = req.params;
+    const organisationId = getEffectiveOrgId(req);
+    const result = await deleteCiRelationship(id, targetId, organisationId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Relationship removed successfully',
+      data: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getCiTopologyHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const organisationId = getEffectiveOrgId(req);
+    const topology = await getCiTopologyTree(id, organisationId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: topology,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getConfigurationItems,
   getConfigurationItemsByType,
@@ -198,6 +231,8 @@ module.exports = {
   updateConfigurationItem,
   getCiRelationshipsHandler,
   createCiRelationshipHandler,
+  deleteCiRelationshipHandler,
+  getCiTopologyHandler,
   getCiImpactHandler,
   getServiceCis,
 };

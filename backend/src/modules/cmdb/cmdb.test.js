@@ -128,5 +128,33 @@ test.describe('CMDB & Assets Service', () => {
     assert.equal(typeof impact.impactScore, 'number');
     assert.ok(['Low', 'Medium', 'High', 'Critical'].includes(impact.riskLevel));
   });
+
+  test('returns recursive dependency topology tree with cycle prevention', async () => {
+    const topology = await cmdbService.getCiTopologyTree('CI-001', 'org-001');
+    assert.ok(topology.rootCi);
+    assert.equal(topology.rootCi.id, 'CI-001');
+    assert.ok(Array.isArray(topology.nodes));
+    assert.ok(Array.isArray(topology.edges));
+    assert.ok(topology.nodes.some((n) => n.id === 'CI-001'));
+    assert.ok(topology.nodes.some((n) => n.id === 'CI-002'));
+    assert.ok(topology.edges.some((e) => e.source === 'CI-001' && e.target === 'CI-002'));
+
+    // IDOR check
+    await assert.rejects(
+      cmdbService.getCiTopologyTree('CI-001', 'org-999'),
+      (err) => err instanceof AppError && err.statusCode === 404
+    );
+  });
+
+  test('removes CI dependency relationship link', async () => {
+    const removeResult = await cmdbService.deleteCiRelationship('CI-001', 'CI-002', 'org-001');
+    assert.equal(removeResult.success, true);
+
+    // After removal, should return 404
+    await assert.rejects(
+      cmdbService.deleteCiRelationship('CI-001', 'CI-002', 'org-001'),
+      (err) => err instanceof AppError && err.statusCode === 404
+    );
+  });
 });
 

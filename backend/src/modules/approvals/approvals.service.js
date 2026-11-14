@@ -31,7 +31,7 @@ const fetchApprovalById = async (approvalId) => {
 };
 
 const updateApprovalStatus = async (approvalId, status, payload = {}, user = {}) => {
-  const rawComments = payload.comments || payload.decisionReason || '';
+  const rawComments = payload.comments || payload.decisionReason || payload.reason || '';
   validateComments(rawComments);
 
   const comments = sanitizeInputText(rawComments);

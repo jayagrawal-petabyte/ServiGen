@@ -15,6 +15,7 @@ const folders = [
   'src/modules/ai-core/escalation', 'src/modules/problems',
   'src/modules/reports', 'src/modules/cmdb',
   'src/modules/organisations', 'src/modules/auth',
+  'src/modules/contracts',
 ];
 const files = folders.flatMap(folder => readdirSync(path.join(root, folder))
   .filter(file => file.endsWith('.test.js')).map(file => path.join(root, folder, file)));

@@ -6,7 +6,12 @@ const {
   getProblemById,
   createProblemRecord,
   updateProblemRecord,
+  deleteProblemRecord,
   linkIncidentsToProblem,
+  unlinkIncidentFromProblem,
+  linkCiToProblemRecord,
+  unlinkCiFromProblemRecord,
+  addProblemLogEntry,
 } = require('./problems.model');
 const AppError = require('../../shared/utils/app-error');
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
@@ -19,7 +24,16 @@ const VALID_STATUSES = [
   'Closed',
 ];
 
+const VALID_STAGES = [
+  'Investigation',
+  'Workaround',
+  'Known Error Review',
+  'Resolved',
+  'Closed',
+];
+
 const VALID_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const sanitizeText = (str) => {
   if (typeof str !== 'string') return '';
@@ -61,7 +75,9 @@ const createProblem = async (payload = {}, organisationId) => {
     workaround,
     knownError = false,
     assignedAgentId,
+    team,
     incidentIds = [],
+    ciIds = [],
   } = payload;
 
   if (!summary || typeof summary !== 'string' || !summary.trim()) {
@@ -101,12 +117,16 @@ const createProblem = async (payload = {}, organisationId) => {
     urgency,
     impact,
     status: cleanWorkaround ? 'Workaround Found' : 'Open',
+    stage: cleanWorkaround ? 'Workaround' : 'Investigation',
+    team: team ? sanitizeText(team) : null,
+    causeStatus: cleanRootCause ? 'Identified' : 'Unknown',
     rootCause: cleanRootCause,
     workaround: cleanWorkaround,
     knownError: Boolean(knownError || cleanWorkaround),
     assignedAgentId: assignedAgentId ? String(assignedAgentId).trim() : null,
     organisationId,
     incidentIds: Array.isArray(incidentIds) ? incidentIds.map(String) : [],
+    ciIds: Array.isArray(ciIds) ? ciIds.map(String) : [],
   });
 };
 
@@ -115,10 +135,7 @@ const updateProblem = async (id, organisationId, patch = {}) => {
     throw new AppError('Valid problem ID is required', HTTP_STATUS.BAD_REQUEST);
   }
 
-  const existing = await getProblemById(id.trim(), organisationId);
-  if (!existing) {
-    throw new AppError('Problem not found', HTTP_STATUS.NOT_FOUND);
-  }
+  const existing = await getProblemDetail(id, organisationId);
 
   const cleanPatch = {};
 
@@ -146,6 +163,13 @@ const updateProblem = async (id, organisationId, patch = {}) => {
     cleanPatch.status = patch.status;
   }
 
+  if (patch.stage !== undefined) {
+    if (!VALID_STAGES.includes(patch.stage)) {
+      throw new AppError(`Stage must be one of: ${VALID_STAGES.join(', ')}`, HTTP_STATUS.BAD_REQUEST);
+    }
+    cleanPatch.stage = patch.stage;
+  }
+
   if (patch.priority !== undefined) {
     if (!VALID_PRIORITIES.includes(patch.priority)) {
       throw new AppError(`Priority must be one of: ${VALID_PRIORITIES.join(', ')}`, HTTP_STATUS.BAD_REQUEST);
@@ -158,6 +182,7 @@ const updateProblem = async (id, organisationId, patch = {}) => {
       throw new AppError('Root cause cannot exceed 10000 characters', HTTP_STATUS.BAD_REQUEST);
     }
     cleanPatch.rootCause = sanitizeText(patch.rootCause);
+    cleanPatch.causeStatus = cleanPatch.rootCause ? 'Identified' : 'Unknown';
   }
 
   if (patch.workaround !== undefined) {
@@ -172,11 +197,73 @@ const updateProblem = async (id, organisationId, patch = {}) => {
     cleanPatch.category = sanitizeText(patch.category);
   }
 
-  if (patch.assignedAgentId !== undefined) {
-    cleanPatch.assignedAgentId = patch.assignedAgentId ? String(patch.assignedAgentId).trim() : null;
+  if (patch.team !== undefined) {
+    cleanPatch.team = patch.team ? sanitizeText(patch.team) : null;
   }
 
-  return updateProblemRecord(id.trim(), organisationId, cleanPatch);
+  const agent = patch.agent || patch.assignedAgentId;
+  if (agent !== undefined) {
+    cleanPatch.assignedAgentId = agent ? String(agent).trim() : null;
+  }
+
+  return updateProblemRecord(existing.id, organisationId, cleanPatch);
+};
+
+const updateProblemStage = async (id, organisationId, payload = {}) => {
+  const { stage } = payload;
+  if (!stage || !VALID_STAGES.includes(stage)) {
+    throw new AppError(`Stage is required and must be one of: ${VALID_STAGES.join(', ')}`, HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(id, organisationId);
+
+  const stageToStatus = {
+    Investigation: 'Under Investigation',
+    Workaround: 'Workaround Found',
+    'Known Error Review': 'Workaround Found',
+    Resolved: 'Resolved',
+    Closed: 'Closed',
+  };
+
+  const status = stageToStatus[stage] || existing.status;
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Stage updated from "${existing.stage || 'Investigation'}" to "${stage}".`,
+    type: 'system',
+  });
+
+  return updateProblemRecord(existing.id, organisationId, {
+    stage,
+    status,
+  });
+};
+
+const reassignProblem = async (id, organisationId, payload = {}) => {
+  const agent = payload.assignedAgentId || payload.agent;
+  const team = payload.team;
+
+  if (!agent && !team) {
+    throw new AppError('Either assignedAgentId or team is required for reassignment', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(id, organisationId);
+  const patch = {};
+
+  if (agent !== undefined) {
+    patch.assignedAgentId = agent ? String(agent).trim() : null;
+  }
+  if (team !== undefined) {
+    patch.team = team ? sanitizeText(team) : null;
+  }
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Reassigned: agent="${patch.assignedAgentId || existing.assignedAgentId}", team="${patch.team || existing.team}".`,
+    type: 'system',
+  });
+
+  return updateProblemRecord(existing.id, organisationId, patch);
 };
 
 const addWorkaround = async (id, organisationId, payload = {}) => {
@@ -195,17 +282,58 @@ const addWorkaround = async (id, organisationId, payload = {}) => {
     ? 'Workaround Found'
     : existing.status;
 
-  return updateProblemRecord(id.trim(), organisationId, {
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: payload.author || 'System',
+    content: `Workaround added/updated: ${cleanWorkaround.slice(0, 80)}...`,
+    type: 'note',
+  });
+
+  return updateProblemRecord(existing.id, organisationId, {
     workaround: cleanWorkaround,
     knownError: Boolean(knownError),
     status,
+    stage: existing.stage === 'Investigation' ? 'Workaround' : existing.stage,
   });
 };
 
+const updateRootCause = async (id, organisationId, payload = {}) => {
+  const { causeStatus = 'Identified', rootCause } = payload;
+  if (!['Identified', 'Unknown'].includes(causeStatus)) {
+    throw new AppError('causeStatus must be "Identified" or "Unknown"', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (causeStatus === 'Identified' && (!rootCause || typeof rootCause !== 'string' || !rootCause.trim())) {
+    throw new AppError('rootCause description is required when causeStatus is "Identified"', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const cleanRootCause = rootCause ? sanitizeText(rootCause) : null;
+  const existing = await getProblemDetail(id, organisationId);
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: payload.author || 'System',
+    content: `Cause status updated to ${causeStatus}.`,
+    type: 'system',
+  });
+
+  return updateProblemRecord(existing.id, organisationId, {
+    causeStatus,
+    rootCause: cleanRootCause,
+  });
+};
+
+const getLinkedIncidents = async (id, organisationId) => {
+  const problem = await getProblemDetail(id, organisationId);
+  return problem.linkedIncidentIds || [];
+};
+
 const linkIncidents = async (problemId, organisationId, payload = {}) => {
-  const { incidentIds } = payload;
+  let incidentIds = payload.incidentIds;
+  if (!incidentIds && payload.incidentId) {
+    incidentIds = [payload.incidentId];
+  }
+
   if (!Array.isArray(incidentIds) || incidentIds.length === 0) {
-    throw new AppError('incidentIds array is required', HTTP_STATUS.BAD_REQUEST);
+    throw new AppError('incidentIds array or incidentId is required', HTTP_STATUS.BAD_REQUEST);
   }
 
   const cleanIds = incidentIds.map((id) => String(id).trim()).filter(Boolean);
@@ -214,16 +342,188 @@ const linkIncidents = async (problemId, organisationId, payload = {}) => {
   }
 
   const existing = await getProblemDetail(problemId, organisationId);
-  return linkIncidentsToProblem(existing.id, organisationId, cleanIds);
+  const updated = await linkIncidentsToProblem(existing.id, organisationId, cleanIds);
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Linked child incidents: ${cleanIds.join(', ')}`,
+    type: 'system',
+  });
+
+  return updated;
+};
+
+const unlinkIncident = async (problemId, organisationId, incidentId) => {
+  if (!incidentId || typeof incidentId !== 'string' || !incidentId.trim()) {
+    throw new AppError('Valid incidentId is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(problemId, organisationId);
+  const updated = await unlinkIncidentFromProblem(existing.id, organisationId, incidentId.trim());
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Unlinked child incident: ${incidentId.trim()}`,
+    type: 'system',
+  });
+
+  return updated;
+};
+
+const bulkResolveChildIncidents = async (problemId, organisationId, payload = {}) => {
+  const existing = await getProblemDetail(problemId, organisationId);
+  const resolutionNote = payload.resolutionNote || existing.workaround || 'Resolved via root problem resolution.';
+
+  const resolvedIds = [...(existing.linkedIncidentIds || [])];
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: payload.author || 'System',
+    content: `Bulk resolved ${resolvedIds.length} child incident(s): ${resolutionNote.slice(0, 100)}`,
+    type: 'system',
+  });
+
+  return {
+    success: true,
+    problemId: existing.id,
+    resolvedIncidentCount: resolvedIds.length,
+    resolvedIncidentIds: resolvedIds,
+    resolutionNote: sanitizeText(resolutionNote),
+  };
+};
+
+const getLinkedCis = async (id, organisationId) => {
+  const problem = await getProblemDetail(id, organisationId);
+  return problem.linkedCiIds || [];
+};
+
+const linkCi = async (problemId, organisationId, payload = {}) => {
+  const ciId = payload.ciId || payload.configurationItemId;
+  if (!ciId || typeof ciId !== 'string' || !ciId.trim()) {
+    throw new AppError('ciId is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(problemId, organisationId);
+  const updated = await linkCiToProblemRecord(existing.id, organisationId, ciId.trim());
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Linked CMDB CI: ${ciId.trim()}`,
+    type: 'system',
+  });
+
+  return updated;
+};
+
+const unlinkCi = async (problemId, organisationId, ciId) => {
+  if (!ciId || typeof ciId !== 'string' || !ciId.trim()) {
+    throw new AppError('Valid ciId is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(problemId, organisationId);
+  const updated = await unlinkCiFromProblemRecord(existing.id, organisationId, ciId.trim());
+
+  await addProblemLogEntry(existing.id, organisationId, {
+    author: 'System',
+    content: `Unlinked CMDB CI: ${ciId.trim()}`,
+    type: 'system',
+  });
+
+  return updated;
+};
+
+const getProblemLogs = async (id, organisationId) => {
+  const problem = await getProblemDetail(id, organisationId);
+  return problem.logs || [];
+};
+
+const postProblemLog = async (id, organisationId, payload = {}) => {
+  const { author = 'Agent', content, type = 'note' } = payload;
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    throw new AppError('Log content is required', HTTP_STATUS.BAD_REQUEST);
+  }
+  if (content.length > 10000) {
+    throw new AppError('Log content cannot exceed 10000 characters', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const cleanContent = sanitizeText(content);
+  const cleanAuthor = sanitizeText(author) || 'Agent';
+
+  const existing = await getProblemDetail(id, organisationId);
+  return addProblemLogEntry(existing.id, organisationId, {
+    author: cleanAuthor,
+    content: cleanContent,
+    type: ['note', 'system', 'email'].includes(type) ? type : 'note',
+  });
+};
+
+const sendProblemEmail = async (id, organisationId, payload = {}) => {
+  const to = payload.to || payload.recipient;
+  const subject = payload.subject;
+  const body = payload.body || payload.message;
+
+  if (!to || typeof to !== 'string' || !EMAIL_REGEX.test(to.trim())) {
+    throw new AppError('Valid recipient email address is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (!subject || typeof subject !== 'string' || !subject.trim()) {
+    throw new AppError('Email subject is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (!body || typeof body !== 'string' || !body.trim()) {
+    throw new AppError('Email body is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const cleanSubject = sanitizeText(subject);
+  const cleanBody = sanitizeText(body);
+  const cleanTo = sanitizeText(to);
+
+  const existing = await getProblemDetail(id, organisationId);
+
+  const logEntry = await addProblemLogEntry(existing.id, organisationId, {
+    author: payload.author || 'Service Desk',
+    content: `Email sent to ${cleanTo} | Subject: ${cleanSubject}\n\n${cleanBody}`,
+    type: 'email',
+  });
+
+  return {
+    success: true,
+    messageId: `msg-${Date.now()}`,
+    to: cleanTo,
+    subject: cleanSubject,
+    logId: logEntry.id,
+  };
+};
+
+const deleteProblem = async (id, organisationId) => {
+  if (!id || typeof id !== 'string') {
+    throw new AppError('Valid problem ID is required', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const existing = await getProblemDetail(id, organisationId);
+  return deleteProblemRecord(existing.id, organisationId);
 };
 
 module.exports = {
   VALID_STATUSES,
+  VALID_STAGES,
   VALID_PRIORITIES,
   listProblems,
   getProblemDetail,
   createProblem,
   updateProblem,
+  updateProblemStage,
+  reassignProblem,
   addWorkaround,
+  updateRootCause,
+  getLinkedIncidents,
   linkIncidents,
+  unlinkIncident,
+  bulkResolveChildIncidents,
+  getLinkedCis,
+  linkCi,
+  unlinkCi,
+  getProblemLogs,
+  postProblemLog,
+  sendProblemEmail,
+  deleteProblem,
 };

@@ -57,6 +57,7 @@ describe('Projects Service & Controller Logic', () => {
       code,
       status: 'ACTIVE',
       priority: 'HIGH',
+      hoursBudget: 120,
     });
     assert.equal(created.name, 'Infrastructure Scaling');
     assert.equal(created.code, code);
@@ -71,5 +72,41 @@ describe('Projects Service & Controller Logic', () => {
       (err) => err.code === 'P2002'
     );
   });
-});
 
+  it('supports Kanban drag & drop subtask status updates and recalculates completion %', async () => {
+    // Drag card to in_progress
+    const resProgress = await projectsService.updateProjectSubtask('P-001', 'ST-002', 'org-001', {
+      status: 'in_progress',
+    });
+    assert.equal(resProgress.subtask.status, 'IN_PROGRESS');
+
+    // Drag card to done
+    const resDone = await projectsService.updateProjectSubtask('P-001', 'ST-002', 'org-001', {
+      status: 'done',
+    });
+    assert.equal(resDone.subtask.status, 'COMPLETED');
+    assert.equal(typeof resDone.completionPercentage, 'number');
+
+    // Reject cross-tenant update
+    await assert.rejects(
+      projectsService.updateProjectSubtask('P-001', 'ST-002', 'org-002', {
+        status: 'todo',
+      }),
+      (err) => err.code === 'PROJECT_NOT_FOUND'
+    );
+  });
+
+  it('updates project details and enforces tenant isolation', async () => {
+    const updated = await projectsService.updateProject('P-001', 'org-001', {
+      name: 'Network Upgrade 2.0',
+      hoursBudget: 150,
+      priority: 'CRITICAL',
+    });
+    assert.equal(updated.name, 'Network Upgrade 2.0');
+
+    await assert.rejects(
+      projectsService.updateProject('P-001', 'org-002', { name: 'Hacked Title' }),
+      (err) => err.code === 'PROJECT_NOT_FOUND'
+    );
+  });
+});

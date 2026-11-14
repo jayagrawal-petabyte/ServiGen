@@ -7,7 +7,9 @@ const {
   getProjectResourcesData,
   getProjectSubtasks: getProjectSubtasksService,
   createProjectSubtask: createProjectSubtaskService,
+  updateProjectSubtask: updateProjectSubtaskService,
   createProject: createProjectService,
+  updateProject: updateProjectService,
 } = require('./projects.service');
 
 
@@ -382,14 +384,103 @@ const getProjectResources = async (req, res) => {
   }
 };
 
+const updateProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    if (!projectId || projectId.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID format',
+      });
+    }
+
+    const organisationId = getEffectiveOrgId(req, res);
+    if (organisationId === undefined) return;
+
+    const updated = await updateProjectService(projectId.trim(), organisationId, req.body);
+    return res.status(200).json({
+      success: true,
+      message: 'Project updated successfully',
+      data: updated,
+    });
+  } catch (error) {
+    if (error.code === 'PROJECT_NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found',
+      });
+    }
+    if (error.message) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update project',
+    });
+  }
+};
+
+const updateProjectSubtask = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const subtaskId = req.params.taskId || req.params.subtaskId;
+
+    if (!projectId || projectId.length > 50 || !subtaskId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid project ID or subtask ID',
+      });
+    }
+
+    const organisationId = getEffectiveOrgId(req, res);
+    if (organisationId === undefined) return;
+
+    const result = await updateProjectSubtaskService(
+      projectId.trim(),
+      subtaskId.trim(),
+      organisationId,
+      req.body
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Subtask updated successfully',
+      data: result.subtask,
+      completionPercentage: result.completionPercentage,
+    });
+  } catch (error) {
+    if (error.code === 'PROJECT_NOT_FOUND' || error.code === 'SUBTASK_NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: error.message || 'Resource not found',
+      });
+    }
+    if (error.message) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update subtask',
+    });
+  }
+};
+
 module.exports = {
   getProjects,
   getActiveProjects,
   getProjectById,
+  updateProject,
   getProjectDependencies,
   addProjectDependency,
   getProjectSubtasks,
   createProjectSubtask,
+  updateProjectSubtask,
   createProject,
   getProjectResources,
 };

@@ -630,12 +630,115 @@ const getProjectResources = async (projectId, organisationId = null) => {
   }
 };
 
+const updateSubtaskRecord = async (projectId, subtaskId, organisationId, patch) => {
+  if (useMockData) {
+    const project = mockProjects.find((p) => p.id === projectId);
+    if (!project) return null;
+    if (organisationId && project.organisationId !== organisationId) return null;
+
+    const subtask = (project.subtasks || []).find((s) => s.id === subtaskId);
+    if (!subtask) return null;
+
+    Object.assign(subtask, patch);
+    return subtask;
+  }
+
+  try {
+    const project = await db.project.findFirst({
+      where: {
+        id: projectId,
+        ...(organisationId ? { organisationId } : {}),
+      },
+      select: { id: true },
+    });
+    if (!project) return null;
+
+    const updated = await db.projectSubtask.update({
+      where: { id: subtaskId },
+      data: {
+        ...(patch.title ? { title: patch.title } : {}),
+        ...(patch.status ? { status: patch.status } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+      },
+    });
+    return updated;
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = mockProjects.find((p) => p.id === projectId);
+      if (!project || (organisationId && project.organisationId !== organisationId)) return null;
+      const subtask = (project.subtasks || []).find((s) => s.id === subtaskId);
+      if (!subtask) return null;
+      Object.assign(subtask, patch);
+      return subtask;
+    }
+    throw error;
+  }
+};
+
+const updateProjectRecord = async (projectId, organisationId, patch) => {
+  if (useMockData) {
+    const project = mockProjects.find((p) => p.id === projectId);
+    if (!project) return null;
+    if (organisationId && project.organisationId !== organisationId) return null;
+
+    if (patch.name) project.name = patch.name;
+    if (patch.description !== undefined) project.description = patch.description;
+    if (patch.status) project.status = patch.status;
+    if (patch.priority !== undefined) project.priority = patch.priority;
+    if (patch.startDate !== undefined) project.startDate = patch.startDate;
+    if (patch.endDate !== undefined) project.endDate = patch.endDate;
+    if (patch.hoursBudget !== undefined) project.hoursBudget = patch.hoursBudget;
+    if (patch.progressPercentage !== undefined) project.progressPercentage = patch.progressPercentage;
+
+    return formatProject(project);
+  }
+
+  try {
+    const where = { id: projectId };
+    if (organisationId) where.organisationId = organisationId;
+
+    const existing = await db.project.findFirst({ where });
+    if (!existing) return null;
+
+    const updated = await db.project.update({
+      where: { id: projectId },
+      data: {
+        ...(patch.name ? { name: patch.name } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.status ? { status: patch.status } : {}),
+        ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+        ...(patch.startDate ? { startDate: new Date(patch.startDate) } : {}),
+        ...(patch.endDate ? { endDate: new Date(patch.endDate) } : {}),
+      },
+      include: {
+        subtasks: true,
+      },
+    });
+
+    return formatProject(updated);
+  } catch (error) {
+    if (allowOfflineMocks) {
+      const project = mockProjects.find((p) => p.id === projectId);
+      if (!project || (organisationId && project.organisationId !== organisationId)) return null;
+      Object.assign(project, patch);
+      return formatProject(project);
+    }
+    throw error;
+  }
+};
+
 module.exports = {
   getProjects,
   getActiveProjects,
   getProjectById,
   getSubtasksByProject,
   createSubtaskRecord,
+  updateSubtaskRecord,
+  updateProjectRecord,
   findProjectOwner,
   createProjectRecord,
   getProjectDependencies,
