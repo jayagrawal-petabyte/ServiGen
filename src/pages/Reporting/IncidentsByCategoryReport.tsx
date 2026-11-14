@@ -402,6 +402,65 @@ export default function IncidentsByCategoryReport() {
     });
   }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters]);
 
+  // Sorting state for report table
+  type SortField = 'category' | 'id' | 'summary' | 'createdAt' | 'site' | 'team' | 'priority' | 'agent' | 'status' | 'slaResolutionMet';
+  const [sortField, setSortField] = useState<SortField>('category');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedTickets = useMemo(() => {
+    return [...filteredTickets].sort((a, b) => {
+      let aVal: any = '';
+      let bVal: any = '';
+
+      if (sortField === 'category') {
+        aVal = a.category || '';
+        bVal = b.category || '';
+      } else if (sortField === 'id') {
+        aVal = a.id || '';
+        bVal = b.id || '';
+      } else if (sortField === 'summary') {
+        aVal = a.summary || '';
+        bVal = b.summary || '';
+      } else if (sortField === 'createdAt') {
+        aVal = a.createdAt || '';
+        bVal = b.createdAt || '';
+      } else if (sortField === 'site') {
+        aVal = a.site || '';
+        bVal = b.site || '';
+      } else if (sortField === 'team') {
+        aVal = a.team || '';
+        bVal = b.team || '';
+      } else if (sortField === 'priority') {
+        const pOrder: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+        aVal = pOrder[a.priority] || 0;
+        bVal = pOrder[b.priority] || 0;
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      } else if (sortField === 'agent') {
+        aVal = a.agent || '';
+        bVal = b.agent || '';
+      } else if (sortField === 'status') {
+        aVal = a.status || '';
+        bVal = b.status || '';
+      } else if (sortField === 'slaResolutionMet') {
+        aVal = a.slaResolutionMet ?? 0;
+        bVal = b.slaResolutionMet ?? 0;
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      const cmp = String(aVal).localeCompare(String(bVal));
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredTickets, sortField, sortOrder]);
+
   // SLA Metrics
   const slaMetrics = useMemo(() => {
     const total = tickets.length;
@@ -1115,10 +1174,16 @@ export default function IncidentsByCategoryReport() {
             <table className="report-data-table">
               <thead>
                 <tr>
-                  <th className="sortable-th" title="Click to sort by Category">
+                  <th
+                    className="sortable-th cursor-pointer select-none hover:bg-slate-100 transition-colors"
+                    onClick={() => handleSort('category')}
+                    title="Click to toggle sort order by Category"
+                  >
                     <div className="flex items-center gap-1.5">
                       <span>Category</span>
-                      <span className="text-[10px]">▲</span>
+                      <span className="text-[11px] font-bold text-[#C96F55]">
+                        {sortField === 'category' ? (sortOrder === 'asc' ? '▲' : '▼') : '▲'}
+                      </span>
                     </div>
                   </th>
                   <th>Ticket ID</th>
@@ -1133,13 +1198,19 @@ export default function IncidentsByCategoryReport() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTickets.map((t, idx) => (
+                {sortedTickets.map((t, idx) => (
                   <tr
                     key={t.id}
                     onClick={() => setSelectedTicket(t)}
                     title={`View ticket #${t.id} details`}
                   >
-                    <td>{idx === 0 || t.category !== filteredTickets[idx - 1]?.category ? t.category : ''}</td>
+                    <td className="font-semibold text-slate-800">
+                      {sortField === 'category'
+                        ? idx === 0 || t.category !== sortedTickets[idx - 1]?.category
+                          ? t.category
+                          : ''
+                        : t.category}
+                    </td>
                     <td>
                       <button
                         type="button"
