@@ -232,6 +232,17 @@ export const AppLayout: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setProfileMenuOpen(false);
+                      navigate('/portal');
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#263B5E] hover:bg-[#263B5E]/5 font-semibold transition-colors cursor-pointer text-left"
+                  >
+                    <span>🌐</span>
+                    <span>Switch to End-User Portal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
                       navigate('/my-work');
                     }}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
@@ -250,6 +261,19 @@ export const AppLayout: React.FC = () => {
                     <span>🏢</span>
                     <span>Organisation & Sites</span>
                   </button>
+                  {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate('/admin');
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <span>⚙️</span>
+                      <span>Admin Settings</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {

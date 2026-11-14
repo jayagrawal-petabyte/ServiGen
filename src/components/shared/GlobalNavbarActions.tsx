@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, ExternalLink, ShieldCheck, Settings } from 'lucide-react';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
@@ -1255,6 +1255,20 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
       {/* ─── FLYOUT 6: USER PROFILE & PRESENCE MENU ─── */}
       {activeFlyout === 'profile' && (
         <div className="global-flyout-dropdown global-profile-flyout">
+          {/* Header Row with Close button matching reference design */}
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-1 px-1">
+            <span className="text-xs font-bold text-slate-800">My account</span>
+            <button
+              type="button"
+              onClick={() => setActiveFlyout(null)}
+              className="text-xs text-slate-400 hover:text-slate-700 font-bold p-1 cursor-pointer"
+              title="Close"
+              aria-label="Close profile menu"
+            >
+              ✕
+            </button>
+          </div>
+
           <div className="global-profile-header-card">
             <div className="flex items-center justify-between gap-2">
               <div className="global-profile-name truncate">{user?.fullName || 'Agent'}</div>
@@ -1309,6 +1323,19 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           </div>
 
           <div className="global-profile-menu-links">
+            {/* Switch to End-User Portal (Prominent Navigation Item) */}
+            <button
+              type="button"
+              className="global-profile-link-item font-semibold text-[#263B5E] hover:bg-[#263B5E]/5"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/portal');
+              }}
+            >
+              <ExternalLink className="w-4 h-4 text-[#C96F55] shrink-0" />
+              <span className="flex-1">Switch to End-User Portal</span>
+            </button>
+
             <button
               type="button"
               className="global-profile-link-item"
@@ -1320,6 +1347,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               <span>📋</span>
               <span>My Work & Tasks</span>
             </button>
+
             <button
               type="button"
               className="global-profile-link-item"
@@ -1331,6 +1359,21 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               <span>🏢</span>
               <span>Organisation & Sites</span>
             </button>
+
+            {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
+              <button
+                type="button"
+                className="global-profile-link-item"
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/admin');
+                }}
+              >
+                <Settings className="w-4 h-4 text-slate-500 shrink-0" />
+                <span>Admin Settings</span>
+              </button>
+            )}
+
             <button
               type="button"
               className="global-profile-link-item logout"
