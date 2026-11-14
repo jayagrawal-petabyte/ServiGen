@@ -302,20 +302,20 @@ const mockConfigurationItems = [
 const findCiRecord = (idOrTag) => {
   if (!idOrTag || typeof idOrTag !== 'string') return null;
   const needle = idOrTag.trim().toLowerCase();
-  if (needle === 'ci-001') {
-    return mockConfigurationItems[0];
-  }
-  if (needle === 'ci-002') {
-    return mockConfigurationItems[1];
-  }
-  if (needle === 'ci-003') {
-    return mockConfigurationItems[2];
-  }
+
+  // Resolve Prisma-seeded alias IDs to canonical tags/IDs
+  let effectiveNeedle = needle;
+  if (needle === 'ci-001') effectiveNeedle = 'pay-001';
+  else if (needle === 'ci-002') effectiveNeedle = 'db-001';
+  else if (needle === 'ci-003') effectiveNeedle = 'net-001';
+
   return (
     mockConfigurationItems.find(
       (ci) =>
-        (ci.id && ci.id.toLowerCase() === needle) ||
-        (ci.tag && ci.tag.toLowerCase() === needle)
+        (ci.tag && ci.tag.toLowerCase() === effectiveNeedle) ||
+        (ci.id && ci.id.toLowerCase() === effectiveNeedle) ||
+        (ci.tag && ci.tag.toLowerCase() === needle) ||
+        (ci.id && ci.id.toLowerCase() === needle)
     ) || null
   );
 };
@@ -710,48 +710,101 @@ const getCiTopology = async (id, organisationId = null) => {
   const edges = [];
   const queue = [root];
   visited.add(root.id);
+  if (root.tag) visited.add(root.tag);
 
   while (queue.length > 0) {
     const current = queue.shift();
-    nodes.push({
-      id: current.id,
-      name: current.name,
-      tag: current.tag,
-      type: current.type,
-      status: current.status,
-      lifecycleState: current.lifecycleState || 'Deployed',
-      site: current.site || current.siteName,
-      businessOwner: current.businessOwner,
-      technicalContact: current.technicalContact,
-      criticality: current.criticality || 'Tier 2 - Business Operational',
-    });
+    if (!nodes.some((n) => n.id === current.id || (n.tag && current.tag && n.tag === current.tag))) {
+      nodes.push({
+        id: current.id,
+        name: current.name,
+        tag: current.tag,
+        type: current.type,
+        status: current.status,
+        lifecycleState: current.lifecycleState || 'Deployed',
+        site: current.site || current.siteName,
+        businessOwner: current.businessOwner,
+        technicalContact: current.technicalContact,
+        criticality: current.criticality || 'Tier 2 - Business Operational',
+        warrantyExpiry: current.warrantyExpiry,
+      });
+    }
 
+    // 1. Traverse outgoing direct relationships configured on current CI
     const rels = current.relationships || [];
     for (const rel of rels) {
       const targetIdKey = rel.targetCiId || rel.targetCiTag;
       const target = findCiRecord(targetIdKey);
       const targetId = target ? target.id : targetIdKey;
+      const targetTag = target ? target.tag : targetIdKey;
 
       const edgeAlreadyAdded = edges.some(
         (e) =>
-          e.source === current.id &&
-          e.target === targetId &&
-          e.type === rel.type &&
-          e.direction === rel.direction
+          ((e.source === current.id || e.source === current.tag) &&
+            (e.target === targetId || e.target === targetTag) &&
+            e.type === rel.type &&
+            e.direction === rel.direction) ||
+          ((e.source === targetId || e.source === targetTag) &&
+            (e.target === current.id || e.target === current.tag) &&
+            e.type === rel.type &&
+            e.direction === rel.direction)
       );
 
       if (!edgeAlreadyAdded) {
         edges.push({
-          source: current.id,
-          target: targetId,
-          type: rel.type,
-          direction: rel.direction,
+          source: current.tag || current.id,
+          target: targetTag || targetId,
+          sourceId: current.id,
+          targetId: targetId,
+          type: rel.type || 'depends_on',
+          direction: rel.direction || 'downstream',
         });
       }
 
-      if (target && !visited.has(target.id)) {
+      if (target && !visited.has(target.id) && !visited.has(target.tag)) {
         visited.add(target.id);
+        if (target.tag) visited.add(target.tag);
         queue.push(target);
+      }
+    }
+
+    // 2. Discover incoming relationships from other CIs (Upstream Callers / Consumers)
+    for (const otherCi of mockConfigurationItems) {
+      if (otherCi.id === current.id || otherCi.tag === current.tag) continue;
+      const otherRels = otherCi.relationships || [];
+      for (const rel of otherRels) {
+        const isPointingToCurrent =
+          rel.targetCiId === current.id ||
+          rel.targetCiTag === current.tag ||
+          rel.targetCiId === current.tag ||
+          rel.targetCiTag === current.id;
+
+        if (isPointingToCurrent) {
+          const edgeAlreadyAdded = edges.some(
+            (e) =>
+              ((e.source === otherCi.id || e.source === otherCi.tag) &&
+                (e.target === current.id || e.target === current.tag)) ||
+              ((e.source === current.id || e.source === current.tag) &&
+                (e.target === otherCi.id || e.target === otherCi.tag))
+          );
+
+          if (!edgeAlreadyAdded) {
+            edges.push({
+              source: otherCi.tag || otherCi.id,
+              target: current.tag || current.id,
+              sourceId: otherCi.id,
+              targetId: current.id,
+              type: rel.type || 'runs_on',
+              direction: 'upstream',
+            });
+          }
+
+          if (!visited.has(otherCi.id) && !visited.has(otherCi.tag)) {
+            visited.add(otherCi.id);
+            if (otherCi.tag) visited.add(otherCi.tag);
+            queue.push(otherCi);
+          }
+        }
       }
     }
   }

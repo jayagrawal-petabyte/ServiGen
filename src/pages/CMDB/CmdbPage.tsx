@@ -166,7 +166,8 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     if (!selectedTopologyRootCi) return;
     setIsLoadingTopology(true);
     try {
-      const res = await fetchCiTopology(selectedTopologyRootCi.id);
+      const lookupKey = selectedTopologyRootCi.tag || selectedTopologyRootCi.id;
+      const res = await fetchCiTopology(lookupKey);
       setTopologyGraph(res.data);
     } catch (err: any) {
       console.warn('Topology fetch notice:', err);

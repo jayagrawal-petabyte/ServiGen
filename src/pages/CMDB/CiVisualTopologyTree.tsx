@@ -110,12 +110,16 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
     const rawNodes = topologyGraph?.nodes || [];
     const rawEdges = topologyGraph?.edges || [];
 
-    // Map of nodes
+    // Map of nodes indexed by both id and tag (lowercase for case-insensitive lookup)
     const nodeMap = new Map<string, CiTopologyNode>();
-    rawNodes.forEach((n) => nodeMap.set(n.id.toLowerCase(), n));
+    rawNodes.forEach((n) => {
+      if (n.id) nodeMap.set(n.id.toLowerCase(), n);
+      if (n.tag) nodeMap.set(n.tag.toLowerCase(), n);
+    });
+
     if (rawNodes.length === 0) {
       // Fall back to rootCi itself
-      nodeMap.set(rootCi.id.toLowerCase(), {
+      const rootNode: CiTopologyNode = {
         id: rootCi.id,
         name: rootCi.name,
         tag: rootCi.tag,
@@ -125,31 +129,67 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
         site: rootCi.site,
         businessOwner: rootCi.businessOwner,
         criticality: rootCi.criticality,
-      });
+      };
+      if (rootCi.id) nodeMap.set(rootCi.id.toLowerCase(), rootNode);
+      if (rootCi.tag) nodeMap.set(rootCi.tag.toLowerCase(), rootNode);
     }
 
     const upNodes: CiTopologyNode[] = [];
     const downNodes: CiTopologyNode[] = [];
 
-    const rootLowerId = rootCi.id.toLowerCase();
+    const rootLowerId = (rootCi.id || '').toLowerCase();
     const rootLowerTag = (rootCi.tag || '').toLowerCase();
 
-    // From edges or rootCi.relationships
+    // From edges or direct relationships
     const edgesList: CiTopologyEdge[] = [...rawEdges];
-    if (edgesList.length === 0 && Array.isArray(rootCi.relationships)) {
-      rootCi.relationships.forEach((r) => {
-        edgesList.push({
-          source: rootCi.id,
-          target: r.targetCiId || r.targetCiTag,
-          type: r.type,
-          direction: r.direction,
+    if (edgesList.length === 0) {
+      // 1. Outgoing direct dependencies from rootCi
+      if (Array.isArray(rootCi.relationships)) {
+        rootCi.relationships.forEach((r) => {
+          edgesList.push({
+            source: rootCi.tag || rootCi.id,
+            target: r.targetCiTag || r.targetCiId,
+            type: r.type || 'depends_on',
+            direction: r.direction || 'downstream',
+          });
         });
-      });
+      }
+      // 2. Inbound links from other CIs in allCis pointing to rootCi
+      if (Array.isArray(allCis)) {
+        allCis.forEach((other) => {
+          if (
+            other.id.toLowerCase() === rootLowerId ||
+            (other.tag && other.tag.toLowerCase() === rootLowerTag)
+          ) {
+            return;
+          }
+          if (Array.isArray(other.relationships)) {
+            other.relationships.forEach((r) => {
+              const targetKey = (r.targetCiTag || r.targetCiId || '').toLowerCase();
+              if (targetKey === rootLowerId || targetKey === rootLowerTag) {
+                edgesList.push({
+                  source: other.tag || other.id,
+                  target: rootCi.tag || rootCi.id,
+                  type: r.type || 'runs_on',
+                  direction: 'upstream',
+                });
+              }
+            });
+          }
+        });
+      }
     }
 
     edgesList.forEach((edge) => {
-      const isSourceRoot = edge.source.toLowerCase() === rootLowerId || edge.source.toLowerCase() === rootLowerTag;
-      const isTargetRoot = edge.target.toLowerCase() === rootLowerId || edge.target.toLowerCase() === rootLowerTag;
+      const src = (edge.source || '').toLowerCase();
+      const tgt = (edge.target || '').toLowerCase();
+      const isSourceRoot = src === rootLowerId || src === rootLowerTag;
+      const isTargetRoot = tgt === rootLowerId || tgt === rootLowerTag;
+
+      if (!isSourceRoot && !isTargetRoot) {
+        // Edge is between two external CIs; do not link directly to root focal CI
+        return;
+      }
 
       const otherKey = isSourceRoot ? edge.target : edge.source;
       const otherLower = otherKey.toLowerCase();
@@ -158,7 +198,9 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
       if (!node) {
         // Try to match from allCis
         const matched = allCis.find(
-          (c) => c.id.toLowerCase() === otherLower || (c.tag && c.tag.toLowerCase() === otherLower)
+          (c) =>
+            c.id.toLowerCase() === otherLower ||
+            (c.tag && c.tag.toLowerCase() === otherLower)
         );
         if (matched) {
           node = {
@@ -172,6 +214,8 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
             businessOwner: matched.businessOwner,
           };
           nodeMap.set(otherLower, node);
+          if (matched.id) nodeMap.set(matched.id.toLowerCase(), node);
+          if (matched.tag) nodeMap.set(matched.tag.toLowerCase(), node);
         } else {
           // Synthetic node placeholder
           node = {
@@ -185,20 +229,31 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
         }
       }
 
-      if (edge.direction === 'upstream') {
-        if (!upNodes.some((n) => n.id.toLowerCase() === node!.id.toLowerCase())) {
-          upNodes.push(node);
-        }
-      } else {
-        if (!downNodes.some((n) => n.id.toLowerCase() === node!.id.toLowerCase())) {
-          downNodes.push(node);
-        }
+      const isUpstream =
+        edge.direction === 'upstream'
+          ? isTargetRoot || !isSourceRoot
+          : !isSourceRoot && isTargetRoot;
+
+      const targetList = isUpstream ? upNodes : downNodes;
+      const alreadyPresent = targetList.some(
+        (n) =>
+          n.id.toLowerCase() === node!.id.toLowerCase() ||
+          (n.tag && node!.tag && n.tag.toLowerCase() === node!.tag.toLowerCase())
+      );
+      if (!alreadyPresent) {
+        targetList.push(node);
       }
     });
 
-    const activeNodes = Array.from(nodeMap.values());
+    const activeNodes = Array.from(new Set(nodeMap.values()));
 
     const edges = edgesList.filter((e) => {
+      const src = (e.source || '').toLowerCase();
+      const tgt = (e.target || '').toLowerCase();
+      const connectsToRoot =
+        src === rootLowerId || src === rootLowerTag || tgt === rootLowerId || tgt === rootLowerTag;
+      if (!connectsToRoot) return false;
+
       if (selectedDirectionFilter === 'all') return true;
       return e.direction === selectedDirectionFilter;
     });
@@ -259,7 +314,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              All Links ({filteredEdges.length})
+              All Links ({upstreamNodes.length + downstreamNodes.length})
             </button>
             <button
               onClick={() => setSelectedDirectionFilter('upstream')}
