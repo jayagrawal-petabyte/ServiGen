@@ -597,6 +597,7 @@
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 1px 4px rgba(28, 37, 65, 0.08);
+  opacity: 1 !important;
 }
 
 .pj-board-card:hover {

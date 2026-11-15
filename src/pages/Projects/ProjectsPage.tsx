@@ -674,7 +674,8 @@ export default function ProjectsPage() {
                     <div
                       key={p.id}
                       draggable={true}
-                      className={`pj-board-card ${draggingId === p.id ? "pj-dragging" : ""}`}
+                      className="pj-board-card"
+                      style={{ opacity: 1 }}
                       onDragStart={(e) => {
                         isDraggingRef.current = true;
                         e.dataTransfer.effectAllowed = "move";
@@ -801,7 +802,8 @@ export default function ProjectsPage() {
                     <div
                       key={`${t.project.id}-${t.id}`}
                       draggable={true}
-                      className={`pj-board-card ${draggingId === t.id ? "pj-dragging" : ""}`}
+                      className="pj-board-card"
+                      style={{ opacity: 1 }}
                       onDragStart={(e) => {
                         isDraggingRef.current = true;
                         e.dataTransfer.effectAllowed = "move";
