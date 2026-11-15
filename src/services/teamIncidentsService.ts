@@ -104,6 +104,15 @@ export function normalizeSupportIncident(
     slaFormatted: raw.slaFormatted || slaStr,
     resolutionTargetAt: raw.resolutionTargetAt,
     responseTargetAt: raw.responseTargetAt,
+    slaTimeRemainingSeconds: raw.slaTimeRemainingSeconds,
+    responseTimeRemainingSeconds: raw.responseTimeRemainingSeconds,
+    isBreached: raw.isBreached,
+    responseBreached: raw.responseBreached,
+    slaPaused: raw.slaPaused,
+    responseTargetMet: raw.responseTargetMet,
+    resolutionTargetMet: raw.resolutionTargetMet,
+    holdStartedAt: raw.holdStartedAt,
+    resolvedAt: raw.resolvedAt,
     createdAt: raw.createdAt,
     organisation: raw.organisation || raw.organisationName || raw.org || raw.organization,
     requester: raw.requester || raw.requesterName || raw.endUser || (raw.assignedAgent ? `${raw.assignedAgent.firstName || ''} ${raw.assignedAgent.lastName || ''}`.trim() : agentName !== 'Unassigned' ? agentName : undefined),
@@ -308,6 +317,8 @@ export async function fetchAllTeamIncidents(forceRefresh = false): Promise<AllTe
   return inFlightTeamIncidentsPromise;
 }
 
+import { ticketEvents } from './ticketEvents';
+
 /**
  * Update ticket status via PATCH /api/tickets/:id/status
  */
@@ -321,8 +332,12 @@ export async function updateSupportIncidentStatus(
     const payload: { status: string; holdReason?: string; assignedTeam?: string } = { status };
     if (holdReason) payload.holdReason = holdReason;
     if (assignedTeam) payload.assignedTeam = assignedTeam;
-    await api.patch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, payload);
+    const res = await api.patch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, payload);
     invalidateTeamIncidentsCache();
+    const updated = res?.data || res;
+    if (updated && (updated.id || updated.ticketId)) {
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: updated });
+    }
     return true;
   } catch (err) {
     console.warn(`[teamIncidentsService] PATCH status for ${ticketId} failed:`, err);

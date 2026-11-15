@@ -5,6 +5,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../pages/Auth/AuthContext';
 import { getStoredToken } from '../services/apiClient';
 import ErrorBoundary from '../components/shared/ErrorBoundary';
+import {
+  LayoutDashboard,
+  ExternalLink,
+  Settings,
+  ClipboardList,
+  Sparkles,
+  Building2,
+  LogOut,
+} from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -69,7 +78,10 @@ export const AppLayout: React.FC = () => {
 
   // QA-RBAC-01: End Users cannot directly access restricted administrative/agent routes; redirect to Self-Service Portal
   if (user?.role === 'End User') {
-    const isPortalRoute = location.pathname.startsWith('/portal') || location.pathname === '/self-service';
+    const isPortalRoute =
+      location.pathname.startsWith('/portal') ||
+      location.pathname === '/self-service' ||
+      location.pathname.startsWith('/services-catalogue');
     if (!isPortalRoute) {
       return <Navigate to="/portal" replace />;
     }
@@ -236,7 +248,7 @@ export const AppLayout: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span>📊</span>
+                        <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
                         <span>Agent Console</span>
                       </div>
                       {!location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin') && (
@@ -260,8 +272,8 @@ export const AppLayout: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span>🌐</span>
-                      <span>Switch to End-User Portal</span>
+                      <ExternalLink className="w-4 h-4 text-slate-500 shrink-0" />
+                      <span>User Console</span>
                     </div>
                     {location.pathname.startsWith('/portal') && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
@@ -284,7 +296,7 @@ export const AppLayout: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span>⚙️</span>
+                        <Settings className="w-4 h-4 text-slate-500 shrink-0" />
                         <span>Administration</span>
                       </div>
                       {location.pathname.startsWith('/admin') && (
@@ -310,10 +322,23 @@ export const AppLayout: React.FC = () => {
                       }}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
                     >
-                      <span>📋</span>
+                      <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
                       <span>My Work &amp; Tasks</span>
                     </button>
                   )}
+                  {/* Welcome Splash Screen */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate('/auth?tab=splash');
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <Sparkles className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span>Welcome Splash Screen</span>
+                  </button>
+
                   {(user?.role === 'Administrator' || user?.role === 'System Manager') && (
                     <button
                       type="button"
@@ -323,7 +348,7 @@ export const AppLayout: React.FC = () => {
                       }}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
                     >
-                      <span>🏢</span>
+                      <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
                       <span>Organisation &amp; Sites</span>
                     </button>
                   )}
@@ -336,7 +361,7 @@ export const AppLayout: React.FC = () => {
                     }}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-bold transition-colors cursor-pointer text-left mt-1 border-t border-slate-100"
                   >
-                    <span>🚪</span>
+                    <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
                     <span>Sign Out</span>
                   </button>
                 </div>

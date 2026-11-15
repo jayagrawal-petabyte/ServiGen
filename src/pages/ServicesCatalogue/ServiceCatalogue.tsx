@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import "./ServiceCatalogue.css";
 import {
   fetchServices,
@@ -53,6 +54,7 @@ function ServiceCard({ service, onDetails, onRequest }: ServiceCardProps) {
 }
 
 export default function ServiceCatalogue() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [servicesList, setServicesList] = useState<ServiceItem[]>([]);
   const [categories, setCategories] = useState<string[]>([
@@ -184,9 +186,15 @@ export default function ServiceCatalogue() {
       {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
-          <span>Service Desk</span>
+          <button
+            type="button"
+            onClick={() => navigate(user?.role === 'End User' ? '/portal' : '/dashboard')}
+            className="hover:text-[#C96F55] transition-colors cursor-pointer"
+          >
+            {user?.role === 'End User' ? 'User Console' : 'Service Desk'}
+          </button>
           <span>/</span>
-          <span className="text-gray-900">Services Catalogue</span>
+          <span className="text-gray-900 font-extrabold">Services Catalogue</span>
         </div>
         <GlobalNavbarActions
           onNewTicket={() => openRequest(servicesList[0])}

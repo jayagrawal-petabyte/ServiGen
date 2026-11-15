@@ -437,7 +437,9 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
                                   ticketId={ticket.id}
                                   slaTimeLeft={ticket.slaTimeLeft}
                                   slaFormatted={ticket.slaFormatted}
+                                  resolutionTargetAt={(ticket as any).resolutionTargetAt}
                                   priority={ticket.priority}
+                                  status={ticket.status}
                                   variant="restrained"
                                 />
                               </td>

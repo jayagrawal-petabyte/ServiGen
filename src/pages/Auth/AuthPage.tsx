@@ -11,16 +11,23 @@ import './auth.css';
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, loading: authLoading, user } = useAuth();
   
-  const rawRedirect = searchParams.get('redirect') || searchParams.get('from') || '/dashboard';
+  const defaultRoute = user?.role === 'End User' ? '/portal' : '/dashboard';
+  const rawRedirect = searchParams.get('redirect') || searchParams.get('from') || defaultRoute;
   const redirectTarget = !rawRedirect || rawRedirect === '/auth' || rawRedirect === '/login' || rawRedirect.startsWith('/auth')
-    ? '/dashboard'
+    ? defaultRoute
     : rawRedirect;
   const initialTab: AuthTab = searchParams.get('tab') === 'users' ? 'users' : searchParams.get('tab') === 'splash' ? 'splash' : 'login';
   const [currentTab, setCurrentTab] = useState<AuthTab>(initialTab);
-  const [loggedInUser, setLoggedInUser] = useState<string>('admin001');
+  const [loggedInUser, setLoggedInUser] = useState<string>(user?.fullName || user?.username || 'admin001');
   const isLoggingInRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (user?.fullName || user?.username) {
+      setLoggedInUser(user.fullName || user.username);
+    }
+  }, [user]);
 
   // If already authenticated and not verifying, redirect directly to intended page
   // (unless user is currently performing login or viewing the splash screen)

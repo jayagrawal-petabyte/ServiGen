@@ -200,24 +200,50 @@ export interface NavItemConfig {
   roles?: User['role'][];
 }
 
+const AGENT_ROLES: User['role'][] = ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'];
+
 const NAV_ITEMS: NavItemConfig[] = [
+  // User console
+  {
+    to: '/portal',
+    label: 'User Console',
+    line1: 'User',
+    line2: 'Console',
+    icon: PortalNavIcon,
+    matchActive: (path) => path.startsWith('/portal') || path.startsWith('/self-service'),
+    roles: ['End User'],
+  },
+  {
+    to: '/services-catalogue',
+    label: 'Services Catalogue',
+    line1: 'Services',
+    line2: 'Catalogue',
+    icon: RequestsIcon,
+    matchActive: (path) => path.startsWith('/services-catalogue'),
+    roles: ['End User'],
+  },
+
+  // Agent workspace
   {
     to: '/dashboard',
     label: 'Dashboard',
     icon: DashboardIcon,
     matchActive: (path) => path === '/' || path === '/dashboard',
+    roles: AGENT_ROLES,
   },
   {
     to: '/my-work',
     label: 'My Work',
     icon: MyWorkIcon,
     matchActive: (path) => path.startsWith('/my-work'),
+    roles: AGENT_ROLES,
   },
   {
     to: '/incidents',
     label: 'Incidents',
     icon: IncidentsIcon,
     matchActive: (path) => path === '/incidents' || path.startsWith('/team'),
+    roles: AGENT_ROLES,
   },
   {
     to: '/major-incidents',
@@ -226,20 +252,21 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Incidents',
     icon: MajorIncidentsIcon,
     matchActive: (path) => path.startsWith('/major-incidents'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/problems',
     label: 'Problems',
     icon: ProblemsIcon,
     matchActive: (path) => path.startsWith('/problems'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/requests',
     label: 'Requests',
     icon: RequestsIcon,
     matchActive: (path) => path.startsWith('/requests') || path.startsWith('/services-catalogue'),
+    roles: AGENT_ROLES,
   },
   {
     to: '/change-requests',
@@ -248,14 +275,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Requests',
     icon: ChangeRequestsIcon,
     matchActive: (path) => path.startsWith('/change-requests'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/projects',
     label: 'Projects',
     icon: ProjectsIcon,
     matchActive: (path) => path.startsWith('/projects'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/article-drafts',
@@ -264,13 +291,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     line2: 'Drafts',
     icon: ArticleDraftsIcon,
     matchActive: (path) => path.startsWith('/article-drafts'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/calendar',
     label: 'Calendar',
     icon: CalendarNavIcon,
     matchActive: (path) => path.startsWith('/calendar'),
+    roles: AGENT_ROLES,
   },
   {
     to: '/organisations',
@@ -284,13 +312,14 @@ const NAV_ITEMS: NavItemConfig[] = [
     label: 'CMDB',
     icon: CmdbIcon,
     matchActive: (path) => path.startsWith('/cmdb'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
   {
     to: '/contracts',
     label: 'Contracts',
     icon: ContractsIcon,
     matchActive: (path) => path.startsWith('/contracts'),
+    roles: AGENT_ROLES,
   },
   {
     to: '/approvals',
@@ -306,7 +335,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     label: 'Reporting',
     icon: ReportingNavIcon,
     matchActive: (path) => path.startsWith('/reporting') || path.startsWith('/reports'),
-    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
+    roles: AGENT_ROLES,
   },
 ];
 
@@ -364,13 +393,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
       {/* Brand Logo */}
       <div className="sidebar-logo">
         <NavLink
-          to="/dashboard"
+          to={currentRole === 'End User' ? '/portal' : '/dashboard'}
           onClick={onCloseMobile}
-          onMouseEnter={() => prefetchRoute('/dashboard')}
-          onFocus={() => prefetchRoute('/dashboard')}
+          onMouseEnter={() => prefetchRoute(currentRole === 'End User' ? '/portal' : '/dashboard')}
+          onFocus={() => prefetchRoute(currentRole === 'End User' ? '/portal' : '/dashboard')}
           className="flex items-center justify-center transition-transform hover:scale-105"
           style={{ textDecoration: 'none' }}
-          title="ServiGen Dashboard"
+          title={currentRole === 'End User' ? 'ServiGen User Console' : 'ServiGen Dashboard'}
         >
           <BrandLogo size={32} />
         </NavLink>

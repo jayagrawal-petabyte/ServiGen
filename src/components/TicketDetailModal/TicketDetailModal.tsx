@@ -6,15 +6,14 @@ import {
   User, Zap, FileText, Phone, MapPin, Building2, Lightbulb,
   AlertCircle, ArrowRight, Send, Loader2, Check, BookOpen, Sparkles,
   Bold, Italic, Code, List, Quote, Image as ImageIcon, Paperclip, Trash2, Plus,
-  RotateCcw,
+  RotateCcw, PauseCircle,
 } from 'lucide-react';
 import { type FullTicket, type TicketPriority, type TicketNote } from './ticketDetails.data';
 import { api } from '../../services/apiClient';
 import { ticketEvents } from '../../services/ticketEvents';
 import { getTicketSlaTarget } from '../shared/SlaBadge';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
+// Types
 interface TicketDetailModalProps {
   ticket: {
     id: string;
@@ -74,8 +73,7 @@ interface TicketDetailModalProps {
   onUpdateTicket?: (updated: FullTicket) => void;
 }
 
-// ─── Status badge colour map ──────────────────────────────────────────────────
-
+// Status badge colors
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   New:               { bg: '#14532d', color: '#fff' },
   Active:            { bg: '#14532d', color: '#fff' },
@@ -104,8 +102,7 @@ function getInitials(name?: string): string {
     : name.slice(0, 2).toUpperCase();
 }
 
-// ─── Toast Component ─────────────────────────────────────────────────────────
-
+// Toast
 function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'error' | 'info' }) {
   const bg = type === 'success' ? '#15803d' : type === 'error' ? '#dc2626' : '#1e3a8a';
   const cleanMsg = msg.replace(/^[✓✗✔✕\s]+/, '').trim();
@@ -126,17 +123,60 @@ function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'err
   );
 }
 
-// ─── Halo-style SLA Card ─────────────────────────────────────────────────────
+// SLA Clock & Card
 
-function SlaClock({ targetTime }: { targetTime: number }) {
-  const [secs, setSecs] = useState(() => Math.round((targetTime - Date.now()) / 1000));
+function SlaClock({
+  targetTime,
+  isPaused,
+  isCompleted,
+  holdStartedAt,
+  slaTimeRemainingSeconds,
+}: {
+  targetTime: number;
+  isPaused?: boolean;
+  isCompleted?: boolean;
+  holdStartedAt?: string | null;
+  slaTimeRemainingSeconds?: number | null;
+}) {
+  const computeSecs = () => {
+    if (isPaused) {
+      if (holdStartedAt) {
+        const holdTime = new Date(holdStartedAt).getTime();
+        if (!isNaN(holdTime)) return Math.round((targetTime - holdTime) / 1000);
+      }
+      if (typeof slaTimeRemainingSeconds === 'number') {
+        return slaTimeRemainingSeconds;
+      }
+    }
+    return Math.round((targetTime - Date.now()) / 1000);
+  };
+
+  const [secs, setSecs] = useState<number>(computeSecs);
 
   useEffect(() => {
+    if (isPaused || isCompleted) {
+      setSecs(computeSecs());
+      return;
+    }
+
     const update = () => setSecs(Math.round((targetTime - Date.now()) / 1000));
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
-  }, [targetTime]);
+  }, [targetTime, isPaused, isCompleted, holdStartedAt, slaTimeRemainingSeconds]);
+
+  if (isCompleted) {
+    return <>Completed</>;
+  }
+
+  if (isPaused) {
+    const abs = Math.abs(secs);
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = abs % 60;
+    const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
+    return <>Paused ({timeStr})</>;
+  }
 
   const abs = Math.abs(secs);
   const h = Math.floor(abs / 3600);
@@ -150,7 +190,6 @@ function SlaClock({ targetTime }: { targetTime: number }) {
 function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalProps['ticket']>; onNotify?: (msg: string, type?: 'success' | 'info') => void }) {
   const ticketId = ticket.id;
 
-  // Use the EXACT SAME target timestamp resolution as SlaBadge so modal and table match 100%!
   const [targetTimestamp, setTargetTimestamp] = useState<number>(() => {
     return getTicketSlaTarget(
       ticketId,
@@ -173,9 +212,10 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
         ticket.priority
       )
     );
-  }, [ticketId, (ticket as any).slaTimeLeft, (ticket as any).slaFormatted, ticket.targetSla, ticket.createdAt, ticket.priority]);
+  }, [ticketId, (ticket as any).slaTimeLeft, (ticket as any).slaFormatted, (ticket as any).resolutionTargetAt, ticket.targetSla, ticket.createdAt, ticket.priority]);
 
-  const overdue = (targetTimestamp - Date.now()) < 0;
+  const isTicketResolved = (ticket.status || '').toLowerCase() === 'resolved' || (ticket.status || '').toLowerCase() === 'closed';
+  const isPaused = Boolean((ticket as any).slaPaused || (ticket.status || '').toLowerCase() === 'on hold');
   const priority = ticket.priority || 'Medium';
 
   // Helper to parse dates flexibly (supports DD/MM/YYYY, ISO, timestamps)
@@ -238,25 +278,34 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     ? formatDisplayDate(new Date(targetTimestamp))
     : formatDisplayDate(new Date(createdDate.getTime() + 4 * 3600 * 1000));
 
-  // Status-aware Response & Resolution met state with click-to-toggle interactivity!
-  const isTicketResolved = (ticket.status || '').toLowerCase() === 'resolved' || (ticket.status || '').toLowerCase() === 'closed';
-
+  // Status-aware Response & Resolution met state with backend alignment
   const [respMet, setRespMet] = useState<boolean>(() => {
-    try {
-      const v = localStorage.getItem(`servigen_sla_resp_met_${ticketId}`);
-      if (v !== null) return v === 'true';
-    } catch {}
-    return (ticket as any).responseTargetMet !== false;
+    if ((ticket as any).responseMetAt != null) return true;
+    if ((ticket as any).responseTargetMet !== undefined) return Boolean((ticket as any).responseTargetMet);
+    if ((ticket as any).responseBreached === true) return false;
+    return true;
   });
 
   const [resMet, setResMet] = useState<boolean>(() => {
     if (isTicketResolved) return true;
-    try {
-      const v = localStorage.getItem(`servigen_sla_res_met_${ticketId}`);
-      if (v !== null) return v === 'true';
-    } catch {}
-    return (ticket as any).resolutionTargetMet === true;
+    if ((ticket as any).resolvedAt != null) return true;
+    if ((ticket as any).resolutionTargetMet !== undefined) return Boolean((ticket as any).resolutionTargetMet);
+    if ((ticket as any).isBreached === true) return false;
+    return false;
   });
+
+  useEffect(() => {
+    if ((ticket as any).responseMetAt != null) setRespMet(true);
+    else if ((ticket as any).responseTargetMet !== undefined) setRespMet(Boolean((ticket as any).responseTargetMet));
+    else if ((ticket as any).responseBreached === true) setRespMet(false);
+
+    if (isTicketResolved || (ticket as any).resolvedAt != null) setResMet(true);
+    else if ((ticket as any).resolutionTargetMet !== undefined) setResMet(Boolean((ticket as any).resolutionTargetMet));
+    else if ((ticket as any).isBreached === true) setResMet(false);
+  }, [ticket, isTicketResolved]);
+
+  const isCompleted = isTicketResolved || resMet;
+  const overdue = !isCompleted && !isPaused && (targetTimestamp - Date.now()) < 0;
 
   const [inlineMsg, setInlineMsg] = useState<{ text: string; type: 'success' | 'breach' } | null>(null);
   const msgTimerRef = useRef<any>(null);
@@ -271,13 +320,20 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     e.stopPropagation();
     const next = !respMet;
     setRespMet(next);
-    const msg = next ? 'Response SLA Met — saved to backend' : 'Response SLA Breached — saved to backend';
-    showInline(next ? 'Response SLA Met (Saved)' : 'Response SLA Breached (Saved)', next ? 'success' : 'breach');
-    try { localStorage.setItem(`servigen_sla_resp_met_${ticketId}`, String(next)); } catch {}
+    const msg = next ? 'Response SLA marked as met' : 'Response SLA marked as breached';
+    showInline(next ? 'Response SLA Met' : 'Response SLA Breached', next ? 'success' : 'breach');
     try {
       await api.patch(`/api/tickets/${ticketId}`, { responseTargetMet: next });
     } catch {}
-    ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticketId, responseTargetMet: next } });
+    ticketEvents.emit({
+      type: 'TICKET_UPDATED',
+      ticket: {
+        id: ticketId,
+        responseTargetMet: next,
+        responseMetAt: next ? new Date().toISOString() : null,
+        responseBreached: !next,
+      }
+    });
     if (onNotify) {
       onNotify(msg, next ? 'success' : 'info');
     }
@@ -287,13 +343,21 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     e.stopPropagation();
     const next = !resMet;
     setResMet(next);
-    const msg = next ? 'Resolution SLA Met — saved to backend' : 'Resolution SLA Breached — saved to backend';
-    showInline(next ? 'Resolution SLA Met (Saved)' : 'Resolution SLA Breached (Saved)', next ? 'success' : 'breach');
-    try { localStorage.setItem(`servigen_sla_res_met_${ticketId}`, String(next)); } catch {}
+    const msg = next ? 'Resolution SLA marked as met' : 'Resolution SLA marked as breached';
+    showInline(next ? 'Resolution SLA Met' : 'Resolution SLA Breached', next ? 'success' : 'breach');
     try {
       await api.patch(`/api/tickets/${ticketId}`, { resolutionTargetMet: next });
     } catch {}
-    ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticketId, resolutionTargetMet: next } });
+    ticketEvents.emit({
+      type: 'TICKET_UPDATED',
+      ticket: {
+        id: ticketId,
+        resolutionTargetMet: next,
+        resolvedAt: next ? new Date().toISOString() : null,
+        isBreached: !next,
+        slaFormatted: next ? 'Completed' : 'SLA Breached',
+      }
+    });
     if (onNotify) {
       onNotify(msg, next ? 'success' : 'info');
     }
@@ -312,9 +376,19 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#d1fae5', marginTop: 1 }}>{priority}</div>
       </div>
-      <div style={{ background: overdue ? '#b91c1c' : '#C96F55', padding: '8px 12px', textAlign: 'center' }}>
+      <div style={{
+        background: isCompleted ? '#15803d' : isPaused ? '#475569' : overdue ? '#b91c1c' : '#C96F55',
+        padding: '8px 12px',
+        textAlign: 'center'
+      }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>
-          <SlaClock targetTime={targetTimestamp} />
+          <SlaClock
+            targetTime={targetTimestamp}
+            isPaused={isPaused}
+            isCompleted={isCompleted}
+            holdStartedAt={(ticket as any).holdStartedAt}
+            slaTimeRemainingSeconds={(ticket as any).slaTimeRemainingSeconds}
+          />
         </div>
       </div>
       <div style={{ background: '#f9fafb', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -347,25 +421,29 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#374151' }}>
           <span>Resolution Target: <span style={{ fontWeight: 600 }}>{resolutionDate}</span></span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: (isTicketResolved || resMet) ? '#15803d' : overdue ? '#b91c1c' : '#1d4ed8' }}>
-              {(isTicketResolved || resMet) ? 'Met' : overdue ? 'Breached' : 'In Progress'}
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: isCompleted ? '#15803d' : isPaused ? '#64748b' : overdue ? '#b91c1c' : '#1d4ed8'
+            }}>
+              {isCompleted ? 'Met' : isPaused ? 'Paused' : overdue ? 'Breached' : 'In Progress'}
             </span>
             <button
               type="button"
               onClick={toggleRes}
-              aria-label={(isTicketResolved || resMet) ? 'Resolution SLA Met (Click to mark Breached)' : 'Resolution SLA Breached (Click to mark Met)'}
-              title={(isTicketResolved || resMet) ? 'Resolution SLA Met (Click to mark Breached & save to backend)' : 'Resolution SLA Breached (Click to mark Met & save to backend)'}
+              aria-label={isCompleted ? 'Resolution SLA Met (Click to mark Breached)' : 'Resolution SLA Breached (Click to mark Met)'}
+              title={isCompleted ? 'Resolution SLA Met (Click to mark Breached & save to backend)' : 'Resolution SLA Breached (Click to mark Met & save to backend)'}
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: 22, height: 22, borderRadius: '50%',
-                background: (isTicketResolved || resMet) ? '#16a34a' : overdue ? '#dc2626' : '#2563eb',
+                background: isCompleted ? '#16a34a' : isPaused ? '#64748b' : overdue ? '#dc2626' : '#2563eb',
                 color: '#ffffff', fontSize: 12, fontWeight: 800, flexShrink: 0,
                 border: 'none', cursor: 'pointer',
-                boxShadow: (isTicketResolved || resMet) ? '0 1px 3px rgba(22, 163, 74, 0.45)' : overdue ? '0 1px 3px rgba(220, 38, 38, 0.45)' : '0 1px 3px rgba(37, 99, 235, 0.45)',
+                boxShadow: isCompleted ? '0 1px 3px rgba(22, 163, 74, 0.45)' : isPaused ? '0 1px 3px rgba(100, 116, 139, 0.45)' : overdue ? '0 1px 3px rgba(220, 38, 38, 0.45)' : '0 1px 3px rgba(37, 99, 235, 0.45)',
                 transition: 'all 0.15s ease',
               }}
             >
-              {(isTicketResolved || resMet) ? '✓' : overdue ? '✕' : '⏳'}
+              {isCompleted ? '✓' : isPaused ? '⏸' : overdue ? '✕' : '⏳'}
             </button>
           </div>
         </div>
@@ -393,7 +471,7 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
   );
 }
 
-// ─── Lifecycle Chevron Row ────────────────────────────────────────────────────
+// Lifecycle Chevron Row
 
 function PipelineChevrons({ stage, date, status }: { stage?: string; date?: string; status?: string }) {
   const activeLabel = stage || 'Request Fulfilment';
@@ -430,7 +508,7 @@ function PipelineChevrons({ stage, date, status }: { stage?: string; date?: stri
   );
 }
 
-// ─── Activity Feed Entry ──────────────────────────────────────────────────────
+// Activity Feed Entry
 
 function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?: string }) {
   const badge = getStatusBadge(ticketStatus || 'New');
@@ -517,7 +595,7 @@ function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?
   );
 }
 
-// ─── Re-Assign Modal ──────────────────────────────────────────────────────────
+// Re-Assign Modal
 
 function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   ticketId: string;
@@ -663,7 +741,7 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   );
 }
 
-// ─── Create Appointment Modal ─────────────────────────────────────────────────
+// Create Appointment Modal
 
 function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }: {
   ticketId: string;
@@ -754,7 +832,7 @@ function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }:
   );
 }
 
-// ─── In-App Email User Modal ─────────────────────────────────────────────────
+// In-App Email User Modal
 
 function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClose }: {
   ticketId: string;
@@ -901,7 +979,7 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
   );
 }
 
-// ─── Log To Supplier Modal ───────────────────────────────────────────────────
+// Log To Supplier Modal
 
 function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
   ticketId: string;
@@ -1039,7 +1117,7 @@ function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component
 
 type TabId = 'progress' | 'ai-insights' | 'additional-fields' | 'audit-log' | 'view-log' | 'notification-log';
 
@@ -1213,7 +1291,7 @@ function matchArticlesForTicket(ticket: any, pool: KBArticle[]): KBArticle[] {
   return scored.slice(0, 3);
 }
 
-// ─── Article Preview Modal ──────────────────────────────────────────────────
+// Article Preview Modal
 
 function ArticlePreviewModal({
   article,
@@ -2006,29 +2084,99 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   };
 
+  const [savingHold, setSavingHold] = useState(false);
+
+  const handleToggleHold = async () => {
+    if (savingHold) return;
+    const nextStatus = localStatus === 'On Hold' ? 'Active' : 'On Hold';
+    setSavingHold(true);
+    try {
+      const res = await api.patch(`/api/tickets/${ticket.id}/status`, {
+        status: nextStatus,
+        holdReason: nextStatus === 'On Hold' ? 'Customer pending clarification' : null,
+      });
+      const updated = res?.data || res;
+      setLocalStatus(nextStatus);
+      setIsResolved(false);
+      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), ...updated, status: nextStatus });
+      ticketEvents.emit({
+        type: 'TICKET_UPDATED',
+        ticket: {
+          id: ticket.id,
+          ...updated,
+          status: nextStatus,
+          slaPaused: nextStatus === 'On Hold',
+        }
+      });
+      showToast(nextStatus === 'On Hold' ? 'Ticket placed On Hold — SLA clock paused' : 'Ticket resumed — SLA clock active with extended deadline');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Could not change ticket status', 'error');
+    } finally {
+      setSavingHold(false);
+    }
+  };
+
+  const handleStatusSelect = async (newStat: string) => {
+    if (newStat === localStatus) return;
+    try {
+      const res = await api.patch(`/api/tickets/${ticket.id}/status`, {
+        status: newStat,
+        holdReason: newStat === 'On Hold' ? 'Investigation on hold' : null,
+      });
+      const updated = res?.data || res;
+      setLocalStatus(newStat);
+      setIsResolved(newStat === 'Resolved' || newStat === 'Closed');
+      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), ...updated, status: newStat });
+      ticketEvents.emit({
+        type: 'TICKET_UPDATED',
+        ticket: {
+          id: ticket.id,
+          ...updated,
+          status: newStat,
+          slaPaused: newStat === 'On Hold',
+        }
+      });
+      showToast(`Status changed to ${newStat}`);
+    } catch (err) {
+      showToast('Failed to update status', 'error');
+    }
+  };
+
   const handleResolve = async () => {
     const nextStatus = isResolved ? 'Active' : 'Resolved';
     setSavingResolve(true);
     try {
+      let updatedData: any = null;
       if (nextStatus === 'Resolved') {
         try {
-          await api.post(`/api/tickets/${ticket.id}/resolve`, {
+          const res = await api.post(`/api/tickets/${ticket.id}/resolve`, {
             resolutionCode: 'Resolved by First Line Support',
             resolutionNotes: 'Issue investigated and operational resolution verified with the user.',
             rootCauseSummary: 'Standard operational troubleshooting and configuration remedy.',
           });
+          updatedData = res?.data || res;
         } catch (resolveErr) {
           // If specialized resolve endpoint fails (e.g. for service requests or custom types), fallback to status update
           console.warn('[TicketDetailModal] /resolve endpoint error, attempting /status fallback:', resolveErr);
-          await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Resolved' });
+          const res = await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Resolved' });
+          updatedData = res?.data || res;
         }
       } else {
-        await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Active' });
+        const res = await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Active' });
+        updatedData = res?.data || res;
       }
       setLocalStatus(nextStatus);
       setIsResolved(nextStatus === 'Resolved');
-      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), status: nextStatus });
-      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, status: nextStatus } });
+      if (onUpdateTicket) onUpdateTicket({ ...(ticket as FullTicket), ...(updatedData || {}), status: nextStatus });
+      ticketEvents.emit({
+        type: 'TICKET_UPDATED',
+        ticket: {
+          id: ticket.id,
+          ...(updatedData || {}),
+          status: nextStatus,
+          resolutionTargetMet: nextStatus === 'Resolved',
+        }
+      });
       showToast(nextStatus === 'Resolved' ? 'Ticket resolved successfully' : 'Ticket reopened successfully');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'The ticket could not be resolved. Please try again.', 'error');
@@ -2564,7 +2712,21 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   Log to Supplier
                 </button>
 
-                {/* Resolve Ticket — PATCH /api/tickets/:id/status */}
+                <button
+                  className="halo-action-btn"
+                  onClick={handleToggleHold}
+                  disabled={savingHold || savingResolve}
+                  title={localStatus === 'On Hold' ? 'Resume ticket SLA' : 'Place ticket on hold'}
+                  style={{
+                    background: localStatus === 'On Hold' ? '#fef3c7' : undefined,
+                    color: localStatus === 'On Hold' ? '#b45309' : undefined,
+                    borderColor: localStatus === 'On Hold' ? '#fde68a' : undefined,
+                  }}
+                >
+                  <PauseCircle style={{ width: 14, height: 14, color: localStatus === 'On Hold' ? '#d97706' : '#64748b' }} />
+                  {localStatus === 'On Hold' ? 'Resume SLA' : 'Pause SLA'}
+                </button>
+
                 <button
                   className="halo-action-btn resolve"
                   onClick={handleResolve}
@@ -3444,14 +3606,29 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
                     <div className="halo-sidebar-field">
                       <div className="halo-sidebar-field-label">Status</div>
-                      <span style={{
-                        display: 'inline-block', fontSize: 11, fontWeight: 700,
-                        padding: '2px 10px', borderRadius: 4,
-                        background: getStatusBadge(localStatus).bg,
-                        color: getStatusBadge(localStatus).color,
-                      }}>
-                        {localStatus}
-                      </span>
+                      <select
+                        value={localStatus}
+                        onChange={(e) => handleStatusSelect(e.target.value)}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: 4,
+                          background: getStatusBadge(localStatus).bg,
+                          color: getStatusBadge(localStatus).color,
+                          border: 'none',
+                          cursor: 'pointer',
+                          outline: 'none',
+                        }}
+                        aria-label="Change ticket status"
+                      >
+                        <option value="Active" style={{ background: '#fff', color: '#111827' }}>Active</option>
+                        <option value="Pending" style={{ background: '#fff', color: '#111827' }}>Pending</option>
+                        <option value="Actioned" style={{ background: '#fff', color: '#111827' }}>Actioned</option>
+                        <option value="On Hold" style={{ background: '#fff', color: '#111827' }}>On Hold</option>
+                        <option value="Resolved" style={{ background: '#fff', color: '#111827' }}>Resolved</option>
+                        <option value="Closed" style={{ background: '#fff', color: '#111827' }}>Closed</option>
+                      </select>
                     </div>
 
                     <div className="halo-sidebar-field">

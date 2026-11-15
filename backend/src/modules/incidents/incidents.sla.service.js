@@ -247,6 +247,17 @@ const calculateSlaStatus = (ticket, now = new Date()) => {
     isBreached: isResolutionBreached,
   });
 
+  const isOnHold = ticket.status === 'On Hold';
+  const isResolvedOrClosed = ['Resolved', 'Closed'].includes(ticket.status);
+  const responseMet = Boolean(responseMetAt || ticket.responseTargetMet === true);
+  const resolutionMet = Boolean(ticket.resolvedAt || (isResolvedOrClosed && !isResolutionBreached) || ticket.resolutionTargetMet === true);
+
+  const rawMinutes = typeof ticket.slaTimeLeft === 'number' && Number.isFinite(ticket.slaTimeLeft)
+    ? ticket.slaTimeLeft
+    : Math.round(resolutionSeconds / 60);
+
+  const slaFormatted = ticket.slaFormatted || formatIncidentSla(rawMinutes);
+
   return {
     responseTargetAt: deadlines.responseTargetAt,
     resolutionTargetAt: deadlines.resolutionTargetAt,
@@ -256,17 +267,19 @@ const calculateSlaStatus = (ticket, now = new Date()) => {
 
     responseTimeRemainingSeconds: responseSeconds,
     slaTimeRemainingSeconds: resolutionSeconds,
-    slaTimeLeft: Math.round(resolutionSeconds / 60),
+    slaTimeLeft: rawMinutes,
 
     responseBreached:
-      !responseMetAt &&
-      clockTime.getTime() >= deadlines.responseTargetAt.getTime(),
+      !responseMet &&
+      (clockTime.getTime() >= deadlines.responseTargetAt.getTime() || ticket.responseTargetMet === false),
 
-    isBreached: isResolutionBreached,
+    isBreached: (isResolutionBreached || ticket.resolutionTargetMet === false) && !resolutionMet,
+    slaBreach: (isResolutionBreached || ticket.resolutionTargetMet === false || rawMinutes <= 0) && !resolutionMet,
 
-    slaPaused: ticket.status === 'On Hold',
-    responseTargetMet: Boolean(responseMetAt || ticket.responseTargetMet),
-    resolutionTargetMet: Boolean(ticket.resolvedAt || ['Resolved', 'Closed'].includes(ticket.status) || ticket.resolutionTargetMet),
+    slaPaused: isOnHold,
+    responseTargetMet: responseMet,
+    resolutionTargetMet: resolutionMet,
+    slaFormatted,
 
     aiRisk: aiRiskData.aiRisk,
     aiRiskScore: aiRiskData.aiRiskScore,

@@ -244,8 +244,9 @@ const updateTicketStatus = async (req, res, next) => {
 
     const hasSlaUpdate = body.responseTargetMet !== undefined || body.resolutionTargetMet !== undefined;
     const hasAssignmentUpdate = body.assignedTeam !== undefined || body.agentId !== undefined || body.assignedAgentId !== undefined;
+    const hasPriorityUpdate = body.priority !== undefined;
 
-    if (status === undefined && holdReason === undefined && !hasSlaUpdate && !hasAssignmentUpdate) {
+    if (status === undefined && holdReason === undefined && !hasSlaUpdate && !hasAssignmentUpdate && !hasPriorityUpdate) {
       return res.status(400).json({
         success: false,
         message: 'No ticket status changes were provided',
@@ -278,6 +279,8 @@ const updateTicketStatus = async (req, res, next) => {
         message: `Ticket ${id} not found`,
       });
     }
+
+    const data = {};
 
     if (normalizedStatus !== undefined && existing.ticketType === 'Incident') {
       if (
@@ -320,6 +323,15 @@ const updateTicketStatus = async (req, res, next) => {
 
       if (isReopening) {
         data.reopenCount = { increment: 1 };
+        if (existing.resolvedAt && existing.resolutionTargetAt) {
+          const pausedMs = Math.max(0, new Date().getTime() - new Date(existing.resolvedAt).getTime());
+          data.resolutionTargetAt = new Date(new Date(existing.resolutionTargetAt).getTime() + pausedMs);
+        }
+        data.resolvedAt = null;
+        data.closedAt = null;
+        data.resolutionCode = null;
+        data.resolutionNotes = null;
+        data.rootCauseSummary = null;
       }
 
       if (
@@ -344,8 +356,6 @@ const updateTicketStatus = async (req, res, next) => {
         }
       }
     }
-
-    const data = {};
 
     if (status !== undefined) {
       const nextStatus = normalizedStatus;
@@ -387,6 +397,15 @@ const updateTicketStatus = async (req, res, next) => {
 
     if (body.resolutionTargetMet !== undefined) {
       data.resolvedAt = body.resolutionTargetMet ? new Date() : null;
+    }
+
+    if (body.priority !== undefined) {
+      data.priority = body.priority;
+      try {
+        const newDeadlines = createSlaDeadlines(body.priority, existing.createdAt || new Date());
+        data.responseTargetAt = newDeadlines.responseTargetAt;
+        data.resolutionTargetAt = newDeadlines.resolutionTargetAt;
+      } catch {}
     }
 
     const updated = await prisma.ticket.update({

@@ -1,8 +1,6 @@
 /**
- * ServiGen Offline Mock API Handler
- * Intercepts requests when the backend (Render) is offline, sleeping, or returning 5xx errors.
- * Provides realistic in-memory state mutations (stage updates, feed updates, ticket status, time logs)
- * so the frontend behaves as a fully functional, self-sufficient application for demos.
+ * Mock API request handler.
+ * Provides fallback in-memory state when network or backend services are unavailable.
  */
 
 import {
@@ -30,6 +28,98 @@ import {
 } from './mockData';
 import { STAGE_LABELS, StageLabel } from '../majorIncidents.lifecycle';
 import type { MajorIncident } from '../../pages/MajorIncidents/types/majorIncident.types';
+import { ticketEvents } from '../ticketEvents';
+
+const MOCK_SLA_POLICIES: Record<string, { responseSeconds: number; resolutionSeconds: number }> = {
+  Critical: { responseSeconds: 3600, resolutionSeconds: 4 * 3600 },
+  High: { responseSeconds: 2 * 3600, resolutionSeconds: 8 * 3600 },
+  Medium: { responseSeconds: 4 * 3600, resolutionSeconds: 24 * 3600 },
+  Low: { responseSeconds: 8 * 3600, resolutionSeconds: 48 * 3600 },
+  P1: { responseSeconds: 3600, resolutionSeconds: 4 * 3600 },
+  P2: { responseSeconds: 2 * 3600, resolutionSeconds: 8 * 3600 },
+  P3: { responseSeconds: 4 * 3600, resolutionSeconds: 24 * 3600 },
+  P4: { responseSeconds: 8 * 3600, resolutionSeconds: 48 * 3600 },
+};
+
+export function enrichTicketWithSla(ticket: any): any {
+  if (!ticket) return ticket;
+  const pri = ticket.priority || 'Medium';
+  const policy = MOCK_SLA_POLICIES[pri] || MOCK_SLA_POLICIES['Medium'];
+  const created = ticket.createdAt ? new Date(ticket.createdAt).getTime() : Date.now();
+
+  let resTargetTime: number;
+  if (ticket.resolutionTargetAt) {
+    resTargetTime = new Date(ticket.resolutionTargetAt).getTime();
+  } else if (typeof ticket.slaTimeLeft === 'number') {
+    resTargetTime = Date.now() + ticket.slaTimeLeft * 60 * 1000;
+  } else {
+    resTargetTime = created + policy.resolutionSeconds * 1000;
+  }
+
+  let respTargetTime: number;
+  if (ticket.responseTargetAt) {
+    respTargetTime = new Date(ticket.responseTargetAt).getTime();
+  } else {
+    respTargetTime = created + policy.responseSeconds * 1000;
+  }
+
+  const resolutionTargetAt = new Date(resTargetTime).toISOString();
+  const responseTargetAt = new Date(respTargetTime).toISOString();
+
+  let clockTime = Date.now();
+  const isOnHold = ticket.status === 'On Hold';
+  const isResolved = ['Resolved', 'Closed'].includes(ticket.status);
+
+  if (isOnHold && ticket.holdStartedAt) {
+    const holdTime = new Date(ticket.holdStartedAt).getTime();
+    if (!isNaN(holdTime)) clockTime = holdTime;
+  } else if (isResolved && ticket.resolvedAt) {
+    const resTime = new Date(ticket.resolvedAt).getTime();
+    if (!isNaN(resTime)) clockTime = resTime;
+  }
+
+  const responseMet = Boolean(ticket.responseMetAt || ticket.responseTargetMet === true);
+  const respRemainingSec = responseMet ? 0 : Math.ceil((respTargetTime - clockTime) / 1000);
+  const respBreached = !responseMet && clockTime >= respTargetTime;
+
+  const resRemainingSec = Math.ceil((resTargetTime - clockTime) / 1000);
+  const resBreached = clockTime >= resTargetTime;
+  const resolutionMet = Boolean(ticket.resolvedAt || (isResolved && !resBreached) || ticket.resolutionTargetMet === true);
+
+  let slaFormatted = 'N/A';
+  if (isResolved || ticket.resolutionTargetMet === true) {
+    slaFormatted = 'Completed';
+  } else if (isOnHold) {
+    slaFormatted = 'Paused (On Hold)';
+  } else if (resBreached || ticket.resolutionTargetMet === false) {
+    const abs = Math.abs(resRemainingSec);
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    slaFormatted = `-${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} (Breached)`;
+  } else {
+    const minutes = Math.round(resRemainingSec / 60);
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    slaFormatted = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  return {
+    ...ticket,
+    resolutionTargetAt,
+    responseTargetAt,
+    slaTargetAt: resolutionTargetAt,
+    slaTimeRemainingSeconds: resRemainingSec,
+    responseTimeRemainingSeconds: respRemainingSec,
+    slaTimeLeft: Math.round(resRemainingSec / 60),
+    isBreached: (resBreached || ticket.resolutionTargetMet === false) && !resolutionMet,
+    slaBreach: (resBreached || ticket.resolutionTargetMet === false) && !resolutionMet,
+    responseBreached: respBreached,
+    slaPaused: isOnHold,
+    responseTargetMet: responseMet,
+    resolutionTargetMet: resolutionMet,
+    slaFormatted,
+  };
+}
 
 // In-memory state containers initialized with fixtures
 let mutableMajorIncidents: MajorIncident[] = JSON.parse(JSON.stringify(MOCK_MAJOR_INCIDENTS));
@@ -172,7 +262,7 @@ export function handleOfflineRequest(
   if (path === '/api/tickets' || path === '/api/incidents') {
     if (upperMethod === 'POST') {
       const newId = `INC-2024-${String(mutableTickets.length + 1).padStart(3, '0')}`;
-      const newTicket = {
+      const newTicket = enrichTicketWithSla({
         id: newId,
         ticketType: parsedBody?.ticketType || 'Incident',
         summary: parsedBody?.summary || parsedBody?.title || 'New Incident',
@@ -184,14 +274,13 @@ export function handleOfflineRequest(
         assignedAgent: parsedBody?.assignedAgent || { id: 'USR-001', firstName: 'Alex', lastName: 'Rivera', fullName: 'Alex Rivera' },
         createdAt: new Date().toISOString(),
         description: parsedBody?.description || '',
-        slaTimeLeft: 120,
-        slaFormatted: '2h SLA',
-      };
+      });
       mutableTickets = [newTicket, ...mutableTickets];
+      ticketEvents.emit({ type: 'TICKET_CREATED', ticket: newTicket });
       return { success: true, data: newTicket };
     }
 
-    let filtered = mutableTickets;
+    let filtered = mutableTickets.map(enrichTicketWithSla);
     if (params?.ticketType) {
       filtered = filtered.filter(
         (t) => t.ticketType?.toLowerCase() === String(params.ticketType).toLowerCase()
@@ -213,6 +302,24 @@ export function handleOfflineRequest(
     };
   }
 
+  // Single Ticket / Incident: /api/tickets/:id or /api/incidents/:id (GET)
+  const singleTicketGetMatch = path.match(/^\/api\/(?:tickets|incidents)\/([^/]+)$/);
+  if (singleTicketGetMatch && upperMethod === 'GET') {
+    const rawId = decodeURIComponent(singleTicketGetMatch[1]);
+    const cleanId = rawId.replace(/^#?tk-?/i, '').toLowerCase();
+    const found = mutableTickets.find(
+      (t) =>
+        t.id?.toLowerCase() === rawId.toLowerCase() ||
+        t.id?.toLowerCase() === `#${rawId.toLowerCase()}` ||
+        t.id?.toLowerCase().replace(/^#?tk-?/i, '') === cleanId ||
+        t.id?.replace(/\D/g, '') === cleanId.replace(/\D/g, '')
+    );
+    if (found) {
+      const enriched = enrichTicketWithSla(found);
+      return { success: true, data: enriched };
+    }
+  }
+
   // Ticket status PATCH: /api/tickets/:id/status
   const ticketStatusMatch = path.match(/^\/api\/tickets\/([^/]+)\/status$/);
   if (ticketStatusMatch && upperMethod === 'PATCH') {
@@ -220,7 +327,56 @@ export function handleOfflineRequest(
     const newStatus = parsedBody?.status || 'Active';
     const found = mutableTickets.find((t) => t.id === ticketId);
     if (found) {
+      const prevStatus = found.status;
+      const isReopening = ['Resolved', 'Closed'].includes(prevStatus) && newStatus === 'Active';
+
+      // 1. Entering On Hold
+      if (prevStatus !== 'On Hold' && newStatus === 'On Hold') {
+        found.holdStartedAt = new Date().toISOString();
+        found.slaPaused = true;
+      }
+      // 2. Leaving On Hold
+      else if (prevStatus === 'On Hold' && newStatus !== 'On Hold') {
+        if (found.holdStartedAt && found.resolutionTargetAt) {
+          const pausedMs = Math.max(0, Date.now() - new Date(found.holdStartedAt).getTime());
+          found.resolutionTargetAt = new Date(new Date(found.resolutionTargetAt).getTime() + pausedMs).toISOString();
+          if (found.responseTargetAt) {
+            found.responseTargetAt = new Date(new Date(found.responseTargetAt).getTime() + pausedMs).toISOString();
+          }
+        }
+        found.holdStartedAt = null;
+        found.slaPaused = false;
+      }
+
+      // 3. Reopening from Resolved/Closed to Active
+      if (isReopening) {
+        found.reopenCount = (found.reopenCount || 0) + 1;
+        if (found.resolvedAt && found.resolutionTargetAt) {
+          const pausedMs = Math.max(0, Date.now() - new Date(found.resolvedAt).getTime());
+          found.resolutionTargetAt = new Date(new Date(found.resolutionTargetAt).getTime() + pausedMs).toISOString();
+        }
+        found.resolvedAt = null;
+        found.closedAt = null;
+        found.resolutionTargetMet = false;
+        found.resolutionCode = null;
+        found.resolutionNotes = null;
+      }
+
       found.status = newStatus;
+      if (parsedBody?.holdReason !== undefined) found.holdReason = parsedBody.holdReason;
+      if (parsedBody?.responseTargetMet !== undefined) {
+        found.responseTargetMet = parsedBody.responseTargetMet;
+        found.responseMetAt = parsedBody.responseTargetMet ? new Date().toISOString() : null;
+      }
+      if (parsedBody?.resolutionTargetMet !== undefined) {
+        found.resolutionTargetMet = parsedBody.resolutionTargetMet;
+        found.resolvedAt = parsedBody.resolutionTargetMet ? new Date().toISOString() : null;
+      }
+
+      const enriched = enrichTicketWithSla(found);
+      Object.assign(found, enriched);
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: enriched });
+      return { success: true, data: enriched };
     }
     return { success: true, data: { id: ticketId, status: newStatus } };
   }
@@ -232,19 +388,29 @@ export function handleOfflineRequest(
     const found = mutableTickets.find((t) => t.id === ticketId);
     if (found) {
       found.status = 'Resolved';
-      (found as any).resolutionCode = parsedBody?.resolutionCode || 'Resolved by First Line Support';
-      (found as any).resolutionNotes = parsedBody?.resolutionNotes || '';
-      (found as any).rootCauseSummary = parsedBody?.rootCauseSummary || '';
-      (found as any).resolvedAt = new Date().toISOString();
+      found.resolutionCode = parsedBody?.resolutionCode || 'Resolved by First Line Support';
+      found.resolutionNotes = parsedBody?.resolutionNotes || '';
+      found.rootCauseSummary = parsedBody?.rootCauseSummary || '';
+      found.resolvedAt = new Date().toISOString();
+      found.resolutionTargetMet = true;
+      const enriched = enrichTicketWithSla(found);
+      Object.assign(found, enriched);
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: enriched });
+      return {
+        success: true,
+        message: 'Incident resolved successfully',
+        data: enriched,
+      };
     }
     return {
       success: true,
       message: 'Incident resolved successfully',
-      data: found || {
+      data: {
         id: ticketId,
         status: 'Resolved',
         ...parsedBody,
         resolvedAt: new Date().toISOString(),
+        resolutionTargetMet: true,
       },
     };
   }
@@ -260,6 +426,10 @@ export function handleOfflineRequest(
       found.assignedAgent = typeof agentName === 'string'
         ? { id: parsedBody?.agentId || agentName, fullName: agentName }
         : agentName;
+      const enriched = enrichTicketWithSla(found);
+      Object.assign(found, enriched);
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: enriched });
+      return { success: true, data: enriched };
     }
     return { success: true, data: { id: ticketId, agent: agentName } };
   }
@@ -270,9 +440,24 @@ export function handleOfflineRequest(
     const found = mutableTickets.find((t) => t.id === ticketId);
     if (found) {
       Object.assign(found, parsedBody || {});
-      if (parsedBody?.priority) found.priority = parsedBody.priority;
-      if (parsedBody?.responseTargetMet !== undefined) found.responseTargetMet = parsedBody.responseTargetMet;
-      if (parsedBody?.resolutionTargetMet !== undefined) found.resolutionTargetMet = parsedBody.resolutionTargetMet;
+      if (parsedBody?.priority) {
+        found.priority = parsedBody.priority;
+        const pol = MOCK_SLA_POLICIES[parsedBody.priority] || MOCK_SLA_POLICIES['Medium'];
+        found.resolutionTargetAt = new Date(Date.now() + pol.resolutionSeconds * 1000).toISOString();
+        found.responseTargetAt = new Date(Date.now() + pol.responseSeconds * 1000).toISOString();
+      }
+      if (parsedBody?.responseTargetMet !== undefined) {
+        found.responseTargetMet = parsedBody.responseTargetMet;
+        found.responseMetAt = parsedBody.responseTargetMet ? new Date().toISOString() : null;
+      }
+      if (parsedBody?.resolutionTargetMet !== undefined) {
+        found.resolutionTargetMet = parsedBody.resolutionTargetMet;
+        found.resolvedAt = parsedBody.resolutionTargetMet ? new Date().toISOString() : null;
+      }
+      const enriched = enrichTicketWithSla(found);
+      Object.assign(found, enriched);
+      ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: enriched });
+      return { success: true, data: enriched };
     }
     return { success: true, data: { id: ticketId, ...(parsedBody || {}) } };
   }
@@ -312,13 +497,14 @@ export function handleOfflineRequest(
       const items = mutableTickets.filter(
         (t) => (t.assignedTeam || t.team) === targetTeam || (!t.assignedTeam && !isSecond)
       );
-      const formatted = items.map((t) => ({
-        ...t,
-        ticketId: t.id,
-        assignedTeam: targetTeam,
-        slaTimeLeft: typeof t.slaTimeLeft === 'number' ? t.slaTimeLeft : 60,
-        slaFormatted: t.slaFormatted || '1h SLA',
-      }));
+      const formatted = items.map((t) => {
+        const enriched = enrichTicketWithSla(t);
+        return {
+          ...enriched,
+          ticketId: enriched.id,
+          assignedTeam: targetTeam,
+        };
+      });
       return {
         success: true,
         incidents: formatted,
@@ -345,7 +531,8 @@ export function handleOfflineRequest(
       return { success: true, data: MOCK_CATEGORY_INCIDENTS };
     }
     if (path.includes('recent') || path.includes('new')) {
-      return { success: true, data: mutableTickets.slice(0, 5), items: mutableTickets.slice(0, 5) };
+      const enriched = mutableTickets.slice(0, 5).map(enrichTicketWithSla);
+      return { success: true, data: enriched, items: enriched };
     }
   }
 

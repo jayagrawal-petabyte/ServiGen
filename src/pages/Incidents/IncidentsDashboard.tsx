@@ -718,7 +718,15 @@ export default function IncidentsDashboard() {
               <div className="incident-detail-item">
                 <span>SLA Time Left</span>
                 <div>
-                  <SlaBadge slaTimeLeft={selectedIncident.slaTimeLeft} />
+                  <SlaBadge
+                    ticketId={selectedIncident.id}
+                    slaTimeLeft={selectedIncident.slaTimeLeft}
+                    slaFormatted={(selectedIncident as any).slaFormatted}
+                    resolutionTargetAt={(selectedIncident as any).resolutionTargetAt}
+                    createdAt={(selectedIncident as any).createdAt}
+                    priority={selectedIncident.priority}
+                    status={selectedIncident.status}
+                  />
                 </div>
               </div>
             </div>

@@ -10,6 +10,10 @@
  */
 
 const db = require('../../config/db');
+const {
+  calculateSlaStatus,
+  addIncidentSlaDetails,
+} = require('./incidents.sla.service');
 
 const incidents = [
   {
@@ -170,38 +174,55 @@ const toIsoString = (value) => {
  * Convert a Prisma Ticket record and its related Incident into
  * the response shape expected by the Incidents service.
  */
-const mapTicketToIncident = (ticket) => ({
-  id: ticket.id,
-  summary: ticket.summary,
-  description: ticket.description,
-  ticketType: ticket.ticketType,
-  priority: ticket.priority,
-  status: ticket.status,
+const mapTicketToIncident = (ticket) => {
+  const mapped = {
+    id: ticket.id,
+    summary: ticket.summary,
+    description: ticket.description,
+    ticketType: ticket.ticketType,
+    priority: ticket.priority,
+    status: ticket.status,
 
-  organisation: ticket.organisation?.name ?? null,
-  organisationId: ticket.organisationId ?? null,
-  siteName: ticket.siteName ?? null,
+    organisation: ticket.organisation?.name ?? null,
+    organisationId: ticket.organisationId ?? null,
+    siteName: ticket.siteName ?? null,
 
-  requesterId: ticket.requesterId ?? null,
-  assignedAgentId: ticket.assignedAgentId ?? null,
-  teamId: ticket.teamId ?? null,
-  assignedTeam: ticket.assignedTeam || ticket.team?.name || null,
+    requesterId: ticket.requesterId ?? null,
+    assignedAgentId: ticket.assignedAgentId ?? null,
+    teamId: ticket.teamId ?? null,
+    assignedTeam: ticket.assignedTeam || ticket.team?.name || null,
 
-  slaTimeLeft: ticket.slaTimeLeft ?? null,
-  timeRecord: ticket.timeRecord ?? 0,
+    slaTimeLeft: ticket.slaTimeLeft ?? null,
+    timeRecord: ticket.timeRecord ?? 0,
+    reopenCount: ticket.reopenCount ?? 0,
 
-  incident: ticket.incident
-    ? {
-        id: ticket.incident.id,
-        category: ticket.incident.category,
-        impact: ticket.incident.impact,
-        urgency: ticket.incident.urgency,
-      }
-    : null,
+    holdReason: ticket.holdReason ?? null,
+    holdStartedAt: toIsoString(ticket.holdStartedAt),
+    responseTargetAt: toIsoString(ticket.responseTargetAt),
+    resolutionTargetAt: toIsoString(ticket.resolutionTargetAt),
+    responseMetAt: toIsoString(ticket.responseMetAt),
+    resolvedAt: toIsoString(ticket.resolvedAt),
+    closedAt: toIsoString(ticket.closedAt),
 
-  createdAt: toIsoString(ticket.createdAt),
-  updatedAt: toIsoString(ticket.updatedAt),
-});
+    incident: ticket.incident
+      ? {
+          id: ticket.incident.id,
+          category: ticket.incident.category,
+          impact: ticket.incident.impact,
+          urgency: ticket.incident.urgency,
+        }
+      : null,
+
+    createdAt: toIsoString(ticket.createdAt),
+    updatedAt: toIsoString(ticket.updatedAt),
+  };
+
+  return {
+    ...mapped,
+    ...addIncidentSlaDetails(mapped),
+    ...calculateSlaStatus(mapped),
+  };
+};
 
 /**
  * Retrieve all incident tickets.

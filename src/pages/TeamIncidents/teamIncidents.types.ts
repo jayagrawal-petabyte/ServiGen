@@ -19,6 +19,15 @@ export interface TeamIncident {
   slaFormatted?: string;
   resolutionTargetAt?: string;
   responseTargetAt?: string;
+  slaTimeRemainingSeconds?: number;
+  responseTimeRemainingSeconds?: number;
+  isBreached?: boolean;
+  responseBreached?: boolean;
+  slaPaused?: boolean;
+  responseTargetMet?: boolean;
+  resolutionTargetMet?: boolean;
+  holdStartedAt?: string;
+  resolvedAt?: string;
   createdAt?: string;
   organisation?: string;
   requester?: string;

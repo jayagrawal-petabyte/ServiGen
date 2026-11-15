@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, ExternalLink, ShieldCheck, Settings, LayoutDashboard } from 'lucide-react';
+import {
+  Plus,
+  ExternalLink,
+  ShieldCheck,
+  Settings,
+  LayoutDashboard,
+  ClipboardList,
+  BarChart3,
+  Sparkles,
+  Building2,
+  LogOut,
+} from 'lucide-react';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import { TimesheetPopover } from './TimesheetPopover';
 import { AgentKpiDrawer } from './AgentKpiDrawer';
@@ -681,36 +692,40 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         </svg>
       </button>
 
-      {/* 4. Speedometer / Gauge -> Timesheet & Hours */}
-      <button
-        type="button"
-        className={`global-nav-icon-btn ${activeFlyout === 'timesheet' ? 'is-active' : ''}`}
-        title="Timesheet & Hours Log"
-        onClick={() => toggleFlyout('timesheet')}
-        aria-label="Timesheet"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2a10 10 0 1 0 10 10" />
-          <path d="M12 12 18 6" strokeLinecap="round" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-        </svg>
-      </button>
+      {/* 4. Speedometer / Gauge -> Timesheet & Hours (Agent only) */}
+      {canAccessAgent && (
+        <button
+          type="button"
+          className={`global-nav-icon-btn ${activeFlyout === 'timesheet' ? 'is-active' : ''}`}
+          title="Timesheet & Hours Log"
+          onClick={() => toggleFlyout('timesheet')}
+          aria-label="Timesheet"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2a10 10 0 1 0 10 10" />
+            <path d="M12 12 18 6" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+          </svg>
+        </button>
+      )}
 
-      {/* 5. Broadcast Waves -> Agent KPI Dashboard */}
-      <button
-        type="button"
-        className={`global-nav-icon-btn ${activeFlyout === 'kpi' ? 'is-active' : ''}`}
-        title="Agent KPI Dashboard"
-        onClick={() => toggleFlyout('kpi')}
-        aria-label="Agent KPI Dashboard"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-          <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-        </svg>
-      </button>
+      {/* 5. Broadcast Waves -> Agent KPI Dashboard (Agent only) */}
+      {canAccessAgent && (
+        <button
+          type="button"
+          className={`global-nav-icon-btn ${activeFlyout === 'kpi' ? 'is-active' : ''}`}
+          title="Agent KPI Dashboard"
+          onClick={() => toggleFlyout('kpi')}
+          aria-label="Agent KPI Dashboard"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      )}
 
       {/* 6. Clock -> Live Activity Feed */}
       <button
@@ -1222,19 +1237,21 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             )}
           </div>
 
-          <div className="global-todo-footer">
-            <button
-              type="button"
-              className="global-todo-mywork-link"
-              onClick={() => {
-                setActiveFlyout(null);
-                navigate('/my-work');
-              }}
-            >
-              <span>Go to My Work full checklist</span>
-              <span>→</span>
-            </button>
-          </div>
+          {canAccessAgent && (
+            <div className="global-todo-footer">
+              <button
+                type="button"
+                className="global-todo-mywork-link"
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/my-work');
+                }}
+              >
+                <span>Go to My Work full checklist</span>
+                <span>→</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1352,7 +1369,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               </button>
             )}
 
-            {/* 2. Switch to End-User Portal */}
+            {/* 2. User Console (End-User Portal) */}
             <button
               type="button"
               className={`global-profile-link-item ${isPortal ? 'is-active' : ''}`}
@@ -1362,7 +1379,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               }}
             >
               <ExternalLink className={`w-4 h-4 shrink-0 ${isPortal ? 'text-[#C96F55]' : 'text-slate-500'}`} />
-              <span className="flex-1">Switch to End-User Portal</span>
+              <span className="flex-1">User Console</span>
               {isPortal && <span className="global-profile-badge">Current</span>}
             </button>
 
@@ -1396,23 +1413,25 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                   navigate('/my-work');
                 }}
               >
-                <span>📋</span>
+                <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>My Work &amp; Tasks</span>
               </button>
             )}
 
             {/* Reporting & Analytics */}
-            <button
-              type="button"
-              className="global-profile-link-item"
-              onClick={() => {
-                setActiveFlyout(null);
-                navigate('/reporting');
-              }}
-            >
-              <span>📊</span>
-              <span>Reporting &amp; Analytics</span>
-            </button>
+            {canAccessAgent && (
+              <button
+                type="button"
+                className="global-profile-link-item"
+                onClick={() => {
+                  setActiveFlyout(null);
+                  navigate('/reporting');
+                }}
+              >
+                <BarChart3 className="w-4 h-4 text-slate-500 shrink-0" />
+                <span>Reporting &amp; Analytics</span>
+              </button>
+            )}
 
             {/* Welcome Splash Screen */}
             <button
@@ -1423,7 +1442,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 navigate('/auth?tab=splash');
               }}
             >
-              <span>✨</span>
+              <Sparkles className="w-4 h-4 text-slate-500 shrink-0" />
               <span>Welcome Splash Screen</span>
             </button>
 
@@ -1436,7 +1455,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                   navigate('/organisations');
                 }}
               >
-                <span>🏢</span>
+                <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>Organisation &amp; Sites</span>
               </button>
             )}
@@ -1450,7 +1469,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 navigate('/auth');
               }}
             >
-              <span>🚪</span>
+              <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
               <span>Sign Out</span>
             </button>
           </div>

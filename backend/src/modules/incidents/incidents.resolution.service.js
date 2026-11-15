@@ -229,7 +229,12 @@ const resolveIncident = async (ticketId, input, user) => {
       },
     });
 
-    return updated;
+    const slaDetails = require('./incidents.sla.service').calculateSlaStatus(updated);
+
+    return {
+      ...updated,
+      ...slaDetails,
+    };
   });
 };
 

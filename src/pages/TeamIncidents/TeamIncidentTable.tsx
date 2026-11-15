@@ -170,6 +170,13 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
           slaTimeLeft={incident.slaTimeLeft}
           slaFormatted={incident.slaFormatted || incident.sla}
           resolutionTargetAt={incident.resolutionTargetAt}
+          responseTargetAt={incident.responseTargetAt}
+          slaTimeRemainingSeconds={incident.slaTimeRemainingSeconds}
+          responseTimeRemainingSeconds={incident.responseTimeRemainingSeconds}
+          isBreached={incident.isBreached}
+          slaPaused={incident.slaPaused}
+          holdStartedAt={incident.holdStartedAt}
+          resolutionTargetMet={incident.resolutionTargetMet}
           createdAt={incident.createdAt}
           priority={incident.priority}
           status={incident.status}
@@ -382,22 +389,35 @@ function TeamIncidentTable({
     const unsubscribe = ticketEvents.subscribe((event) => {
       if (event.type === 'TICKET_UPDATED') {
         const u = event.ticket;
+        const mergeSla = (prevInc: any) => ({
+          ...prevInc,
+          ...u,
+          status: (u.status as string) || prevInc.status,
+          priority: (u.priority as any) || prevInc.priority,
+          category: (u.category as string) || prevInc.category,
+          agent: (u.agent as string) !== undefined ? (u.agent as string) : prevInc.agent,
+          team: (u.team as TeamIncident['team']) || prevInc.team,
+          escalatedToTier2: u.escalatedToTier2 !== undefined ? (u.escalatedToTier2 as boolean) : prevInc.escalatedToTier2,
+          aiRisk: (u.aiRisk as any) || prevInc.aiRisk,
+          slaTimeLeft: (u as any).slaTimeLeft !== undefined ? (u as any).slaTimeLeft : prevInc.slaTimeLeft,
+          slaFormatted: (u as any).slaFormatted !== undefined ? (u as any).slaFormatted : prevInc.slaFormatted,
+          resolutionTargetAt: (u as any).resolutionTargetAt !== undefined ? (u as any).resolutionTargetAt : prevInc.resolutionTargetAt,
+          responseTargetAt: (u as any).responseTargetAt !== undefined ? (u as any).responseTargetAt : prevInc.responseTargetAt,
+          slaTimeRemainingSeconds: (u as any).slaTimeRemainingSeconds !== undefined ? (u as any).slaTimeRemainingSeconds : prevInc.slaTimeRemainingSeconds,
+          responseTimeRemainingSeconds: (u as any).responseTimeRemainingSeconds !== undefined ? (u as any).responseTimeRemainingSeconds : prevInc.responseTimeRemainingSeconds,
+          isBreached: (u as any).isBreached !== undefined ? (u as any).isBreached : prevInc.isBreached,
+          responseBreached: (u as any).responseBreached !== undefined ? (u as any).responseBreached : prevInc.responseBreached,
+          slaPaused: (u as any).slaPaused !== undefined ? (u as any).slaPaused : prevInc.slaPaused,
+          holdStartedAt: (u as any).holdStartedAt !== undefined ? (u as any).holdStartedAt : prevInc.holdStartedAt,
+          resolvedAt: (u as any).resolvedAt !== undefined ? (u as any).resolvedAt : prevInc.resolvedAt,
+          responseTargetMet: (u as any).responseTargetMet !== undefined ? (u as any).responseTargetMet : prevInc.responseTargetMet,
+          resolutionTargetMet: (u as any).resolutionTargetMet !== undefined ? (u as any).resolutionTargetMet : prevInc.resolutionTargetMet,
+        });
+
         setIncidents((prev) =>
-          prev.map((inc) =>
-            inc.id === u.id
-              ? {
-                  ...inc,
-                  status: (u.status as string) || inc.status,
-                  priority: (u.priority as any) || inc.priority,
-                  category: (u.category as string) || inc.category,
-                  agent: (u.agent as string) !== undefined ? (u.agent as string) : inc.agent,
-                  team: (u.team as TeamIncident['team']) || inc.team,
-                  escalatedToTier2: u.escalatedToTier2 !== undefined ? (u.escalatedToTier2 as boolean) : inc.escalatedToTier2,
-                  aiRisk: (u.aiRisk as any) || inc.aiRisk,
-                }
-              : inc
-          )
+          prev.map((inc) => (inc.id === u.id ? mergeSla(inc) : inc))
         );
+        setSelectedIncident((prev) => (prev && prev.id === u.id ? mergeSla(prev) : prev));
       } else if (event.type === 'TICKET_CREATED') {
         const newInc = event.ticket as unknown as TeamIncident;
         setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== newInc.id)]);
@@ -1692,6 +1712,15 @@ function TeamIncidentTable({
             slaFormatted: selectedIncident.slaFormatted || selectedIncident.sla,
             resolutionTargetAt: selectedIncident.resolutionTargetAt,
             responseTargetAt: selectedIncident.responseTargetAt,
+            slaTimeRemainingSeconds: selectedIncident.slaTimeRemainingSeconds,
+            responseTimeRemainingSeconds: selectedIncident.responseTimeRemainingSeconds,
+            isBreached: selectedIncident.isBreached,
+            responseBreached: selectedIncident.responseBreached,
+            slaPaused: selectedIncident.slaPaused,
+            holdStartedAt: selectedIncident.holdStartedAt,
+            resolvedAt: selectedIncident.resolvedAt,
+            responseTargetMet: selectedIncident.responseTargetMet,
+            resolutionTargetMet: selectedIncident.resolutionTargetMet,
             createdAt: selectedIncident.createdAt || selectedIncident.dateLogged,
             organisation: selectedIncident.organisation,
             organisationName: selectedIncident.organisation,

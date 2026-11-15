@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 export type SlaUrgency = 'safe' | 'warning' | 'overdue' | 'paused';
 
-/**
- * Parses numeric minutes or formatted string to calculate initial seconds remaining.
- */
 export function parseInitialSeconds(
   slaTimeLeft?: number | string | null,
   slaFormatted?: string | null
@@ -13,7 +10,6 @@ export function parseInitialSeconds(
     return 0;
   }
 
-  // 1. Numeric time left (minutes) - check FIRST!
   if (typeof slaTimeLeft === 'number') {
     return Math.round(slaTimeLeft * 60);
   }
@@ -21,7 +17,6 @@ export function parseInitialSeconds(
   let rawStr = String(slaFormatted || (typeof slaTimeLeft === 'string' ? slaTimeLeft : '')).trim();
   rawStr = rawStr.replace(/^Target\s+SLA\s*:\s*/i, '').trim();
 
-  // Negative / overdue string patterns (e.g. "-00:15", "-01:38", "Overdue SLA", "Breached")
   if (
     rawStr.startsWith('-') ||
     rawStr.toLowerCase().includes('overdue') ||
@@ -31,17 +26,15 @@ export function parseInitialSeconds(
     if (colonMatch) {
       const part1 = parseInt(colonMatch[1], 10);
       const part2 = parseInt(colonMatch[2], 10);
-      // formatSla outputs HH:MM (hours:mins)
       return -(part1 * 3600 + part2 * 60);
     }
     const minMatch = rawStr.match(/-?(\d+)\s*m/i);
     if (minMatch) {
       return -(parseInt(minMatch[1], 10) * 60);
     }
-    return -900; // default -15m breach
+    return -900;
   }
 
-  // String parsing for days/hours/minutes (e.g. "3h 45m", "1h left", "0h left", "45m left", "5h SLA")
   if (rawStr) {
     let totalSec = 0;
     const dayMatch = rawStr.match(/(\d+)\s*d/i);
@@ -52,19 +45,16 @@ export function parseInitialSeconds(
     if (hourMatch) totalSec += parseInt(hourMatch[1], 10) * 3600;
     if (minMatch) totalSec += parseInt(minMatch[1], 10) * 60;
 
-    // Special case: "0h left" means under an hour left, default to ~42m if no minutes specified
     if (hourMatch && parseInt(hourMatch[1], 10) === 0 && !minMatch) {
-      totalSec = 42 * 60; // 42 minutes left (<1h, yellow approaching breach!)
+      totalSec = 42 * 60;
     }
 
     if (totalSec > 0) return totalSec;
 
-    // Pattern like "05:00" (HH:MM from formatSla)
     const colonMatch = rawStr.match(/^(\d+):(\d+)$/);
     if (colonMatch) {
       const part1 = parseInt(colonMatch[1], 10);
       const part2 = parseInt(colonMatch[2], 10);
-      // In formatSla, format is hours:mins
       return part1 * 3600 + part2 * 60;
     }
   }
@@ -72,14 +62,7 @@ export function parseInitialSeconds(
   return 0;
 }
 
-/**
- * Converts remaining seconds into human-readable countdown text and SLA urgency state:
- * - Safe (> 1h remaining): Green (#16a34a / emerald)
- * - Approaching breach (< 1h remaining): Yellow / Amber (#d97706 / amber)
- * - Breached (<= 0s remaining): Pulsing Red (#e11d48 / rose)
- */
 export function formatSecondsToSla(seconds: number): { text: string; urgency: SlaUrgency } {
-  // Breached / Overdue: Negative ticker
   if (seconds <= 0) {
     const abs = Math.abs(seconds);
     const h = Math.floor(abs / 3600);
@@ -97,7 +80,6 @@ export function formatSecondsToSla(seconds: number): { text: string; urgency: Sl
     };
   }
 
-  // Approaching Breach (< 1 hour): Turn Yellow with live mm:ss ticking countdown
   if (seconds < 3600) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -107,7 +89,6 @@ export function formatSecondsToSla(seconds: number): { text: string; urgency: Sl
     };
   }
 
-  // Safe (> 1 hour up to 24h): Green theme with live ticking countdown
   if (seconds <= 86400) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -116,19 +97,14 @@ export function formatSecondsToSla(seconds: number): { text: string; urgency: Sl
     return { text, urgency: 'safe' };
   }
 
-  // Safe (> 24 hours)
   const days = Math.floor(seconds / 86400);
   const remHours = Math.floor((seconds % 86400) / 3600);
   const text = remHours > 0 ? `${days}d ${remHours}h left` : `${days}d left`;
   return { text, urgency: 'safe' };
 }
 
-/**
- * Resolves or anchors an absolute target epoch timestamp for a ticket's SLA.
- * This guarantees:
- * 1. Time continuously progresses as wall-clock time passes and NEVER resets on tab switch, filter change, or re-render.
- * 2. The SLA countdown inside the ticket detail modal and outside in tables/badges match down to the exact second.
- */
+const sessionTargetCache = new Map<string, number>();
+
 export function getTicketSlaTarget(
   ticketId?: string,
   slaTimeLeft?: number | string | null,
@@ -137,54 +113,25 @@ export function getTicketSlaTarget(
   createdAt?: string | null,
   priority?: string | null
 ): number {
-  const storageKey = ticketId ? `servigen_sla_target_${ticketId}` : null;
-
-  // 1. If explicit resolutionTargetAt is provided from backend DB
   if (resolutionTargetAt) {
     const t = new Date(resolutionTargetAt).getTime();
     if (!isNaN(t) && t > 0) {
-      if (storageKey) {
-        try { localStorage.setItem(storageKey, String(t)); } catch {}
-      }
+      if (ticketId) sessionTargetCache.set(ticketId, t);
       return t;
     }
   }
 
-  // 2. Check localStorage for an existing anchored target timestamp
-  if (storageKey) {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          // Invalidate legacy buggy default 3-hour entries if the ticket is actually breached
-          const isBreached =
-            (typeof slaTimeLeft === 'number' && slaTimeLeft <= 0) ||
-            (typeof slaFormatted === 'string' &&
-              (slaFormatted.includes('-') ||
-                slaFormatted.toLowerCase().includes('breach') ||
-                slaFormatted.toLowerCase().includes('overdue')));
-          const isFarFuture = parsed > Date.now() + 1800 * 1000;
-
-          if (!(isBreached && isFarFuture)) {
-            return parsed;
-          }
-        }
-      }
-    } catch {}
+  if (ticketId && sessionTargetCache.has(ticketId)) {
+    return sessionTargetCache.get(ticketId)!;
   }
 
-  // 3. Compute target timestamp from initial seconds remaining relative to Date.now()
   const initialSec = parseInitialSeconds(slaTimeLeft, slaFormatted);
   if (initialSec !== 0 || slaTimeLeft != null || slaFormatted) {
     const target = Date.now() + initialSec * 1000;
-    if (storageKey) {
-      try { localStorage.setItem(storageKey, String(target)); } catch {}
-    }
+    if (ticketId) sessionTargetCache.set(ticketId, target);
     return target;
   }
 
-  // 4. Fallback based on priority & createdAt
   const baseTime = createdAt ? new Date(createdAt).getTime() : Date.now();
   let offsetHours = 4;
   const pri = (priority || '').toLowerCase();
@@ -194,9 +141,7 @@ export function getTicketSlaTarget(
   else if (pri.includes('low') || pri.includes('p4')) offsetHours = 8;
 
   const target = baseTime + offsetHours * 3600 * 1000;
-  if (storageKey) {
-    try { localStorage.setItem(storageKey, String(target)); } catch {}
-  }
+  if (ticketId) sessionTargetCache.set(ticketId, target);
   return target;
 }
 
@@ -205,6 +150,13 @@ export interface SlaBadgeProps {
   slaTimeLeft?: number | string | null;
   slaFormatted?: string | null;
   resolutionTargetAt?: string | null;
+  responseTargetAt?: string | null;
+  slaTimeRemainingSeconds?: number | null;
+  responseTimeRemainingSeconds?: number | null;
+  isBreached?: boolean;
+  slaPaused?: boolean;
+  holdStartedAt?: string | null;
+  resolutionTargetMet?: boolean;
   createdAt?: string | null;
   priority?: string | null;
   status?: string;
@@ -217,6 +169,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   slaTimeLeft,
   slaFormatted,
   resolutionTargetAt,
+  responseTargetAt,
+  slaTimeRemainingSeconds,
+  isBreached,
+  slaPaused,
+  holdStartedAt,
+  resolutionTargetMet,
   createdAt,
   priority,
   status,
@@ -224,10 +182,11 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   variant = 'restrained',
 }) => {
   const isOnHold = Boolean(
-    status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused'))
+    slaPaused || (status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused')))
   );
 
   const isCompleted = Boolean(
+    resolutionTargetMet === true ||
     (slaFormatted && (slaFormatted.toLowerCase().includes('complete') || slaFormatted.toLowerCase().includes('met'))) ||
     (status && (status.toLowerCase() === 'resolved' || status.toLowerCase() === 'closed')) ||
     (status?.toLowerCase() === 'actioned' && (slaTimeLeft === 0 || slaFormatted?.toLowerCase().includes('complete')))
@@ -244,13 +203,26 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     );
   }, [ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority]);
 
-  const [secondsLeft, setSecondsLeft] = useState<number>(() =>
-    Math.round((targetTimestamp - Date.now()) / 1000)
-  );
+  const computeCurrentSeconds = () => {
+    if (isOnHold && holdStartedAt) {
+      const holdTime = new Date(holdStartedAt).getTime();
+      if (!isNaN(holdTime)) {
+        return Math.round((targetTimestamp - holdTime) / 1000);
+      }
+    }
+    if (isOnHold && typeof slaTimeRemainingSeconds === 'number') {
+      return slaTimeRemainingSeconds;
+    }
+    return Math.round((targetTimestamp - Date.now()) / 1000);
+  };
 
-  // 1-second live ticking countdown timer anchored to absolute target timestamp
+  const [secondsLeft, setSecondsLeft] = useState<number>(computeCurrentSeconds);
+
   useEffect(() => {
-    if (isOnHold || isCompleted) return;
+    if (isOnHold || isCompleted) {
+      setSecondsLeft(computeCurrentSeconds());
+      return;
+    }
 
     const tick = () => {
       setSecondsLeft(Math.round((targetTimestamp - Date.now()) / 1000));
@@ -259,13 +231,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [isOnHold, isCompleted, targetTimestamp]);
+  }, [isOnHold, isCompleted, targetTimestamp, holdStartedAt, slaTimeRemainingSeconds]);
 
-  if (slaTimeLeft == null && !slaFormatted) {
+  if (slaTimeLeft == null && !slaFormatted && !resolutionTargetAt) {
     return <span className="text-slate-400 text-xs">—</span>;
   }
 
-  // Completed when resolved, closed, or SLA marked complete
   if (isCompleted) {
     return (
       <span
@@ -280,7 +251,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
           borderColor: '#a7f3d0',
           boxShadow: 'none',
         }}
-        title="SLA completed on time"
+        title="SLA completed"
       >
         <span
           className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"
@@ -291,7 +262,6 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     );
   }
 
-  // Paused when On Hold
   if (isOnHold) {
     return (
       <span
@@ -301,15 +271,20 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
             : 'bg-slate-100 text-slate-700 border-slate-300 shadow-sm'
         } ${className}`}
         style={{ boxShadow: 'none' }}
-        title="SLA clock paused while ticket is on hold"
+        title="SLA clock paused"
       >
-        <span className="text-[10px]">⏸</span>
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0"
+          style={{ display: 'inline-block' }}
+        />
         <span>Paused (On Hold)</span>
       </span>
     );
   }
 
-  const { text, urgency } = formatSecondsToSla(secondsLeft);
+  const { text: formattedText, urgency: computedUrgency } = formatSecondsToSla(secondsLeft);
+  const urgency: SlaUrgency = (isBreached && secondsLeft > 0) ? 'overdue' : computedUrgency;
+  const text = (isBreached && secondsLeft > 0) ? 'Breached' : formattedText;
 
   let badgeClasses = '';
   let dotClasses = '';
@@ -412,10 +387,10 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
       style={customStyle}
       title={
         urgency === 'overdue'
-          ? 'Contractual SLA breached!'
+          ? 'SLA breached'
           : urgency === 'warning'
-          ? 'Approaching SLA target (< 1h remaining)'
-          : 'SLA on track (> 1h remaining)'
+          ? 'Approaching SLA target'
+          : 'SLA on track'
       }
     >
       <span className={`w-1.5 h-1.5 rounded-full inline-block shrink-0 ${dotClasses}`} style={dotStyle} />
