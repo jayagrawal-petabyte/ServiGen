@@ -797,7 +797,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       </header>
 
       {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
-      <div className="flex flex-1 h-full min-h-0 w-full min-w-0 flex-col lg:flex-row overflow-hidden pt-3 px-3 sm:px-[18px] pb-4 sm:pb-6 gap-3 sm:gap-4">
+      <div className="flex flex-1 h-full min-h-0 w-full min-w-0 flex-row items-stretch overflow-hidden pt-3 px-3 sm:px-[18px] pb-4 sm:pb-6 gap-3 sm:gap-4">
         {/* Left Module Sidebar */}
         <ModuleSidebar
           title="CMDB Repository"
@@ -811,8 +811,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           selectedId={selectedViewId}
           onSelectId={handleSelectSidebarView}
           hideZeroCountBadges
-          width="w-full lg:w-[250px] lg:min-w-[250px]"
-          className="max-h-[42vh] lg:max-h-none"
           onResetTitle={() => handleSelectSidebarView('all-cis')}
           resetTitleTooltip="Reset to All Configuration Items"
           footer={
