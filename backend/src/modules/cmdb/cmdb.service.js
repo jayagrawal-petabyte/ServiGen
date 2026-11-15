@@ -85,17 +85,31 @@ const createCi = async (payload = {}, organisationId) => {
     throw new AppError('Name cannot exceed 255 characters', HTTP_STATUS.BAD_REQUEST);
   }
 
-  if (!type || typeof type !== 'string' || !type.trim()) {
+  const effectiveType = (typeof type === 'string' && type.trim())
+    ? type.trim()
+    : ((typeof payload.category === 'string' && payload.category.trim())
+      ? payload.category.trim()
+      : ((typeof payload.ciType === 'string' && payload.ciType.trim())
+        ? payload.ciType.trim()
+        : null));
+
+  if (!effectiveType) {
     throw new AppError('Type is required', HTTP_STATUS.BAD_REQUEST);
   }
-  if (type.trim().length > 100) {
+  if (effectiveType.length > 100) {
     throw new AppError('Type cannot exceed 100 characters', HTTP_STATUS.BAD_REQUEST);
   }
 
-  if (!tag || typeof tag !== 'string' || !tag.trim()) {
+  const effectiveTag = (typeof tag === 'string' && tag.trim())
+    ? tag.trim()
+    : ((typeof payload.ciTag === 'string' && payload.ciTag.trim())
+      ? payload.ciTag.trim()
+      : `CI-${(effectiveType || 'SRV').slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}`);
+
+  if (!effectiveTag) {
     throw new AppError('Tag is required', HTTP_STATUS.BAD_REQUEST);
   }
-  if (tag.trim().length > 50) {
+  if (effectiveTag.length > 50) {
     throw new AppError('Tag cannot exceed 50 characters', HTTP_STATUS.BAD_REQUEST);
   }
 
@@ -108,15 +122,15 @@ const createCi = async (payload = {}, organisationId) => {
   }
 
   // Check unique tag within organisation
-  const existingWithTag = await getConfigurationItemById(tag.trim(), organisationId);
+  const existingWithTag = await getConfigurationItemById(effectiveTag.trim(), organisationId);
   if (existingWithTag) {
-    throw new AppError(`A configuration item with tag "${tag.trim()}" already exists`, HTTP_STATUS.CONFLICT);
+    throw new AppError(`A configuration item with tag "${effectiveTag.trim()}" already exists`, HTTP_STATUS.CONFLICT);
   }
 
   return createConfigurationItemRecord({
     name: sanitizeText(name),
-    type: sanitizeText(type),
-    tag: tag.trim().toUpperCase(),
+    type: sanitizeText(effectiveType),
+    tag: effectiveTag.trim().toUpperCase(),
     site: sanitizeText(site),
     status: sanitizeText(status),
     lifecycleStatus,

@@ -13,10 +13,14 @@ const {
     updateProjectSubtask,
     createProject,
     getProjectResources,
+    getProjectLists,
+    createProjectList,
 } = require('./projects.controller');
 
 const router = express.Router();
 
+router.get('/projects/lists', getProjectLists);
+router.post('/projects/lists', createProjectList);
 router.post('/projects', createProject);
 router.get('/projects', getProjects);
 router.get('/projects/active', getActiveProjects);

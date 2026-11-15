@@ -75,30 +75,55 @@ const createNewChangeRequest = async (body, organisationId) => {
     preImplementationTestingNotes = null,
   } = body;
 
-  // ─── Validation ─────────────────────────────────────────────────────────────────
-  if (!summary || typeof summary !== 'string' || !summary.trim()) {
+  // ─── Validation & Field Normalization ───────────────────────────────────────────
+  const effectiveSummary = (typeof summary === 'string' && summary.trim())
+    ? summary.trim()
+    : ((typeof body?.title === 'string' && body.title.trim())
+      ? body.title.trim()
+      : ((typeof body?.changeTitle === 'string' && body.changeTitle.trim())
+        ? body.changeTitle.trim()
+        : null));
+
+  if (!effectiveSummary) {
     throw new Error('summary is required and must be a non-empty string');
   }
-  if (summary.trim().length > 500) {
+  if (effectiveSummary.length > 500) {
     throw new Error('summary must not exceed 500 characters');
   }
-  if (!changeType || !VALID_CHANGE_TYPES.includes(changeType)) {
+
+  let normalizedChangeType = changeType;
+  if (typeof changeType === 'string') {
+    const match = VALID_CHANGE_TYPES.find((t) => t.toLowerCase() === changeType.trim().toLowerCase());
+    if (match) normalizedChangeType = match;
+  }
+  if (!normalizedChangeType || !VALID_CHANGE_TYPES.includes(normalizedChangeType)) {
     throw new Error(`changeType must be one of: ${VALID_CHANGE_TYPES.join(', ')}`);
   }
-  if (startDate && isNaN(Date.parse(startDate))) {
+
+  const effectiveStartDate = startDate || body?.scheduledStart || body?.startTime || null;
+  const effectiveEndDate = endDate || body?.scheduledEnd || body?.endTime || null;
+
+  if (effectiveStartDate && isNaN(Date.parse(effectiveStartDate))) {
     throw new Error('startDate must be a valid ISO 8601 date string');
   }
-  if (endDate && isNaN(Date.parse(endDate))) {
+  if (effectiveEndDate && isNaN(Date.parse(effectiveEndDate))) {
     throw new Error('endDate must be a valid ISO 8601 date string');
   }
-  if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+  if (effectiveStartDate && effectiveEndDate && new Date(effectiveStartDate) > new Date(effectiveEndDate)) {
     throw new Error('startDate must not be after endDate');
   }
 
-  if (rollbackPlan && typeof rollbackPlan === 'string' && rollbackPlan.length > 10000) {
+  const effectiveRollback = rollbackPlan || body?.rollbackStrategy || body?.backoutStrategy || body?.rollbackAndBackoutStrategy || null;
+  const effectivePreNotes = preImplementationTestingNotes || body?.testingNotes || body?.preImplementationNotes || null;
+
+  const effectiveCiId = ciId || body?.targetCi || body?.targetCI || null;
+  const effectiveCiTag = ciTag || body?.targetCiTag || (typeof effectiveCiId === 'string' && !effectiveCiId.startsWith('ci-') ? effectiveCiId : null);
+  const effectiveOrgId = organisationId || body?.organisationId || body?.organisation_id || 'org-001';
+
+  if (effectiveRollback && typeof effectiveRollback === 'string' && effectiveRollback.length > 10000) {
     throw new Error('rollbackPlan must not exceed 10000 characters');
   }
-  if (preImplementationTestingNotes && typeof preImplementationTestingNotes === 'string' && preImplementationTestingNotes.length > 10000) {
+  if (effectivePreNotes && typeof effectivePreNotes === 'string' && effectivePreNotes.length > 10000) {
     throw new Error('preImplementationTestingNotes must not exceed 10000 characters');
   }
 
@@ -110,7 +135,12 @@ const createNewChangeRequest = async (body, organisationId) => {
     }
   }
 
-  const { riskScore, riskLevel } = calculateRisk({ changeType, impact, urgency, relatedService });
+  const { riskScore, riskLevel } = calculateRisk({
+    changeType: normalizedChangeType,
+    impact,
+    urgency,
+    relatedService,
+  });
 
   const sanitizedSteps = Array.isArray(implementationSteps)
     ? implementationSteps.map((step, idx) => ({
@@ -123,20 +153,20 @@ const createNewChangeRequest = async (body, organisationId) => {
     : [];
 
   return createChangeRequest({
-    summary: sanitizeInputText(summary),
-    changeType,
-    ciId: ciId || null,
-    ciTag: ciTag ? sanitizeInputText(ciTag) : null,
+    summary: sanitizeInputText(effectiveSummary),
+    changeType: normalizedChangeType,
+    ciId: effectiveCiId || null,
+    ciTag: effectiveCiTag ? sanitizeInputText(effectiveCiTag) : null,
     assignedAgentId: assignedAgentId || null,
     relatedService: relatedService ? sanitizeInputText(relatedService) : null,
-    startDate: startDate || null,
-    endDate: endDate || null,
-    organisationId: organisationId || null,
+    startDate: effectiveStartDate || null,
+    endDate: effectiveEndDate || null,
+    organisationId: effectiveOrgId || null,
     riskScore,
     riskLevel,
     implementationSteps: sanitizedSteps,
-    rollbackPlan: rollbackPlan ? sanitizeInputText(rollbackPlan) : null,
-    preImplementationTestingNotes: preImplementationTestingNotes ? sanitizeInputText(preImplementationTestingNotes) : null,
+    rollbackPlan: effectiveRollback ? sanitizeInputText(effectiveRollback) : null,
+    preImplementationTestingNotes: effectivePreNotes ? sanitizeInputText(effectivePreNotes) : null,
   });
 };
 

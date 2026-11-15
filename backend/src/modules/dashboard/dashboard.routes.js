@@ -31,6 +31,7 @@ router.get('/workload', getWorkloadHandler);
 router.get('/new-tickets', getNewTicketsHandler);
 
 // SCR-002 — Personalized dashboard summary
+router.get('/', getSummaryHandler);
 router.get('/summary', getSummaryHandler);
 
 module.exports = router;

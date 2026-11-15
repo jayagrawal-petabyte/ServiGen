@@ -1,4 +1,4 @@
-﻿ALTER TABLE "tickets"
+ALTER TABLE "tickets"
     ADD COLUMN IF NOT EXISTS "resolutionCode" TEXT,
     ADD COLUMN IF NOT EXISTS "resolutionNotes" TEXT,
     ADD COLUMN IF NOT EXISTS "rootCauseSummary" TEXT,

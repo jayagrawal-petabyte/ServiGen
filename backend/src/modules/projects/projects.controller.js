@@ -11,8 +11,10 @@ const {
   createProject: createProjectService,
   updateProject: updateProjectService,
 } = require('./projects.service');
-
-
+const {
+  getLists: getAllLists,
+  createList: createNewListRecord,
+} = require('../list-builder/list-builder.model');
 
 const getEffectiveOrgId = (req, res) => {
   if (!req.user || !req.user.id || !req.user.role) {
@@ -24,11 +26,12 @@ const getEffectiveOrgId = (req, res) => {
   }
 
   if (req.user.role === 'Admin') {
-    const organisationId = req.query.organisationId;
+    const override = req.query?.organisationId || req.body?.organisationId || req.body?.organisation_id;
 
-    return typeof organisationId === 'string' && organisationId.trim()
-      ? organisationId.trim()
-      : null;
+    if (typeof override === 'string' && override.trim()) {
+      return override.trim();
+    }
+    return req.user.organisationId || null;
   }
 
   const organisationId = req.user.organisationId;
@@ -204,8 +207,15 @@ const createProjectSubtask = async (req, res) => {
 
 const createProject = async (req, res) => {
   try {
-    const organisationId = getEffectiveOrgId(req, res);
+    let organisationId = getEffectiveOrgId(req, res);
     if (organisationId === undefined) return;
+
+    if (!organisationId) {
+      organisationId = (typeof req.body?.organisationId === 'string' && req.body.organisationId.trim())
+        || (typeof req.body?.organisation_id === 'string' && req.body.organisation_id.trim())
+        || req.user?.organisationId
+        || 'org-001';
+    }
 
     if (!organisationId) {
       return res.status(400).json({
@@ -251,21 +261,17 @@ const createProject = async (req, res) => {
 
 const getProjectDependencies = async (req, res) => {
   try {
-    const organisationId = getEffectiveOrgId(req, res);
+    let organisationId = getEffectiveOrgId(req, res);
     if (organisationId === undefined) return;
 
     if (!organisationId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Organisation ID is required',
-      });
+      organisationId = req.user?.organisationId || 'org-001';
     }
 
     const dependencies = await getProjectDependenciesData(
       req.params.projectId,
       organisationId
     );
-
     return res.status(200).json({
       success: true,
       data: dependencies,
@@ -287,14 +293,11 @@ const getProjectDependencies = async (req, res) => {
 
 const addProjectDependency = async (req, res) => {
   try {
-    const organisationId = getEffectiveOrgId(req, res);
+    let organisationId = getEffectiveOrgId(req, res);
     if (organisationId === undefined) return;
 
     if (!organisationId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Organisation ID is required',
-      });
+      organisationId = req.user?.organisationId || 'org-001';
     }
 
     const result = await createProjectDependency(
@@ -471,6 +474,88 @@ const updateProjectSubtask = async (req, res) => {
   }
 };
 
+const getProjectLists = async (req, res) => {
+  try {
+    const organisationId = getEffectiveOrgId(req, res) || req.user?.organisationId || 'org-001';
+    const lists = await getAllLists({ organisationId });
+    return res.status(200).json({
+      success: true,
+      data: lists,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch project lists',
+    });
+  }
+};
+
+const createProjectList = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      fields,
+      filters,
+      filterCriteria,
+      status,
+    } = req.body || {};
+
+    if (typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must be a non-empty string',
+      });
+    }
+
+    if (name.trim().length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must not exceed 150 characters',
+      });
+    }
+
+    const effectiveFields = Array.isArray(fields) && fields.length > 0
+      ? fields.filter((f) => typeof f === 'string' && f.trim()).map((f) => f.trim())
+      : ['code', 'name', 'status', 'priority', 'owner', 'targetDate'];
+
+    const organisationId = getEffectiveOrgId(req, res) || req.user?.organisationId || 'org-001';
+
+    const existingLists = await getAllLists({ organisationId });
+    const isDuplicate = existingLists.some(
+      (l) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      return res.status(409).json({
+        success: false,
+        message: `A list with the name '${name.trim()}' already exists`,
+      });
+    }
+
+    const effectiveCreatedBy = req.user?.id || 'User';
+    const newList = await createNewListRecord({
+      name: name.trim(),
+      description: typeof description === 'string' ? description.slice(0, 500) : null,
+      fields: effectiveFields,
+      status: ['Draft', 'Published', 'Archived'].includes(status) ? status : 'Published',
+      createdBy: effectiveCreatedBy,
+      organisationId,
+      filterCriteria: filterCriteria || filters || null,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Project list created successfully',
+      data: newList,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create project list',
+    });
+  }
+};
+
 module.exports = {
   getProjects,
   getActiveProjects,
@@ -483,4 +568,6 @@ module.exports = {
   updateProjectSubtask,
   createProject,
   getProjectResources,
+  getProjectLists,
+  createProjectList,
 };

@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS "ticket_notes" (
+CREATE TABLE IF NOT EXISTS "ticket_notes" (
     "id" TEXT NOT NULL,
     "ticketId" TEXT NOT NULL,
     "organisationId" TEXT,

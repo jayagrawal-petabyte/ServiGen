@@ -19,7 +19,7 @@ const getSlaEvents = async (options = {}) => {
   // Multi-tenant boundary
   if (organisationId) {
     incidents = incidents.filter(
-      (inc) => !inc.organisationId || inc.organisationId === organisationId
+      (inc) => inc.organisationId === organisationId
     );
   }
 

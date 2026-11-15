@@ -1,4 +1,4 @@
-﻿CREATE TABLE "ticket_links" (
+CREATE TABLE "ticket_links" (
     "id" TEXT NOT NULL,
     "ticketId" TEXT NOT NULL,
     "relatedTicketId" TEXT,

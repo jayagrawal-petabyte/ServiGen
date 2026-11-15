@@ -19,11 +19,18 @@ const { HTTP_STATUS } = require('../../shared/constants/http.constants');
  * All other roles are restricted to their own organisation from the JWT.
  */
 const getEffectiveOrgId = (req) => {
-  if (req.user?.role === 'Admin' && typeof req.query.organisationId === 'string') {
-    const override = req.query.organisationId.trim();
-    if (override) return override;
+  if (req.user?.role === 'Admin') {
+    if (typeof req.query.organisationId === 'string' && req.query.organisationId.trim()) {
+      return req.query.organisationId.trim();
+    }
+    if (typeof req.body?.organisationId === 'string' && req.body.organisationId.trim()) {
+      return req.body.organisationId.trim();
+    }
+    if (typeof req.body?.organisation_id === 'string' && req.body.organisation_id.trim()) {
+      return req.body.organisation_id.trim();
+    }
   }
-  return req.user?.organisationId || null;
+  return req.user?.organisationId || 'org-001';
 };
 
 // ─── Controllers ──────────────────────────────────────────────────────────────

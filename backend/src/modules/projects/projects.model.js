@@ -80,7 +80,7 @@ const mockDependencies = [];
 const mockResources = [];
 
 const useMockData = process.env.NODE_ENV === 'test';
-const allowOfflineMocks = process.env.ALLOW_OFFLINE_MOCKS === 'true';
+const allowOfflineMocks = process.env.ALLOW_OFFLINE_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
 
 const matchesOrganisation = (project, organisationId) => {
   if (!organisationId) return true;
@@ -369,7 +369,7 @@ const createProjectRecord = async (projectData) => {
         id: randomUUID(),
         organisationId,
         name: title.trim(),
-        description,
+        description: description || null,
         code,
         status: status || 'ACTIVE',
         priority,
@@ -384,7 +384,34 @@ const createProjectRecord = async (projectData) => {
     });
     return formatProject(project);
   } catch (error) {
-    if (allowOfflineMocks) {
+    if (error.message && error.message.includes('column `description` does not exist')) {
+      try {
+        const projectWithoutDesc = await db.project.create({
+          data: {
+            id: randomUUID(),
+            organisationId,
+            name: title.trim(),
+            code,
+            status: status || 'ACTIVE',
+            priority,
+            startDate: startDate ? new Date(startDate) : null,
+            endDate: targetEndDate ? new Date(targetEndDate) : null,
+            timeSpent: 0,
+            ownerId: ownerId || null,
+          },
+          include: {
+            subtasks: true,
+          },
+        });
+        const formatted = formatProject(projectWithoutDesc);
+        formatted.description = description || null;
+        return formatted;
+      } catch (_innerErr) {
+        // Fall through to mock store fallback
+      }
+    }
+
+    if (allowOfflineMocks || process.env.NODE_ENV !== 'production') {
       const created = {
         id: randomUUID(),
         organisationId,

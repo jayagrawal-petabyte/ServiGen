@@ -66,7 +66,7 @@ const mockContracts = [
 ];
 
 const useMockData = process.env.NODE_ENV === 'test';
-const allowOfflineMocks = process.env.ALLOW_OFFLINE_MOCKS === 'true';
+const allowOfflineMocks = process.env.ALLOW_OFFLINE_MOCKS === 'true' || process.env.NODE_ENV !== 'production';
 
 const formatContract = (c) => ({
   id: c.id,

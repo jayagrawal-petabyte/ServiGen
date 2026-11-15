@@ -1,4 +1,4 @@
-﻿CREATE TABLE "ticket_time_entries" (
+CREATE TABLE "ticket_time_entries" (
     "id" TEXT NOT NULL,
     "ticketId" TEXT NOT NULL,
     "organisationId" TEXT,

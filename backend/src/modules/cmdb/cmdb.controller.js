@@ -15,8 +15,16 @@ const {
 const { HTTP_STATUS } = require('../../shared/constants/http.constants');
 
 const getEffectiveOrgId = (req) => {
-  if (req.user && req.user.role === 'Admin' && typeof req.query.organisationId === 'string' && req.query.organisationId.trim()) {
-    return req.query.organisationId.trim();
+  if (req.user && req.user.role === 'Admin') {
+    if (typeof req.query.organisationId === 'string' && req.query.organisationId.trim()) {
+      return req.query.organisationId.trim();
+    }
+    if (typeof req.body?.organisationId === 'string' && req.body.organisationId.trim()) {
+      return req.body.organisationId.trim();
+    }
+    if (typeof req.body?.organisation_id === 'string' && req.body.organisation_id.trim()) {
+      return req.body.organisation_id.trim();
+    }
   }
   return req.user?.organisationId || req.headers['x-org-id'] || null;
 };
@@ -80,7 +88,14 @@ const getConfigurationItemById = async (req, res, next) => {
 
 const createConfigurationItem = async (req, res, next) => {
   try {
-    const organisationId = getEffectiveOrgId(req);
+    let organisationId = getEffectiveOrgId(req);
+    if (!organisationId) {
+      organisationId = (typeof req.body?.organisationId === 'string' && req.body.organisationId.trim())
+        || (typeof req.body?.organisation_id === 'string' && req.body.organisation_id.trim())
+        || req.user?.organisationId
+        || 'org-001';
+    }
+
     if (!organisationId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,

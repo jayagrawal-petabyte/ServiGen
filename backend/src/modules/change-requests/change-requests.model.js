@@ -253,10 +253,13 @@ const createChangeRequest = async (payload) => {
     preImplementationTestingNotes = null,
   } = payload;
 
+  const generatedId = `CR-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 900 + 100)}`;
+
   if (process.env.NODE_ENV !== 'test') {
     try {
       const cr = await db.changeRequest.create({
         data: {
+          id: generatedId,
           summary,
           changeType,
           status: 'Draft',

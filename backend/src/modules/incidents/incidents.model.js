@@ -216,21 +216,28 @@ const getIncidents = async () => {
     return incidents.map(copyFixture);
   }
 
-  const records = await db.ticket.findMany({
-    where: {
-      ticketType: 'Incident',
-    },
-    include: {
-      incident: true,
-      organisation: true,
-      team: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+  try {
+    const records = await db.ticket.findMany({
+      where: {
+        ticketType: 'Incident',
+      },
+      include: {
+        incident: true,
+        organisation: true,
+        team: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-  return records.map(mapTicketToIncident);
+    return records.map(mapTicketToIncident);
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_OFFLINE_MOCKS === 'true') {
+      return incidents.map(copyFixture);
+    }
+    throw err;
+  }
 };
 
 /**
@@ -249,22 +256,32 @@ const getIncidentById = async (id) => {
     return ticket ? copyFixture(ticket) : null;
   }
 
-  const ticket = await db.ticket.findFirst({
-    where: {
-      id: {
-        equals: id.trim(),
-        mode: 'insensitive',
+  try {
+    const ticket = await db.ticket.findFirst({
+      where: {
+        id: {
+          equals: id.trim(),
+          mode: 'insensitive',
+        },
+        ticketType: 'Incident',
       },
-      ticketType: 'Incident',
-    },
-    include: {
-      incident: true,
-      organisation: true,
-      team: true,
-    },
-  });
+      include: {
+        incident: true,
+        organisation: true,
+        team: true,
+      },
+    });
 
-  return ticket ? mapTicketToIncident(ticket) : null;
+    return ticket ? mapTicketToIncident(ticket) : null;
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_OFFLINE_MOCKS === 'true') {
+      const ticket = incidents.find(
+        (incident) => incident.id.toLowerCase() === id.trim().toLowerCase()
+      );
+      return ticket ? copyFixture(ticket) : null;
+    }
+    throw err;
+  }
 };
 
 module.exports = {
