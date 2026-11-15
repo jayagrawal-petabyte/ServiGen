@@ -2168,20 +2168,125 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     .halo-textarea:focus { border-color:#3b82f6; }
     .halo-kb-item { display:flex; align-items:center; gap:8px; padding:5px 7px; margin-bottom:4px; background:#fff; border:1px solid #e5e7eb; border-radius:6px; cursor:pointer; transition:background 0.12s; }
     .halo-kb-item:hover { background:#eff6ff; }
+    .ticket-detail-overlay-container {
+      padding: 20px 16px 16px;
+    }
+    .ticket-modal-sticky-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: #263B5E;
+      color: #ffffff;
+      border-bottom: 1px solid #1c2b3d;
+      flex-shrink: 0;
+    }
+    .ticket-modal-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #e2e8f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .ticket-modal-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+    .ticket-modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .ticket-modal-close-btn:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .ticket-detail-action-bar {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #dee5ef;
+      background: #f8fafc;
+      flex-shrink: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 4px 8px;
+      gap: 6px;
+    }
+    .ticket-detail-action-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .ticket-detail-action-bar .halo-action-btn {
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+      height: 30px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+    .ticket-detail-tabs-bar {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #dee5ef;
+      padding: 0 16px;
+      flex-shrink: 0;
+      background: #ffffff;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .ticket-detail-tabs-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .ticket-detail-tabs-bar .halo-tab {
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+    }
     @media (max-width: 1024px) {
       .ticket-detail-body { flex-direction:column !important; overflow-y:auto !important; }
-      .ticket-detail-main { flex:0 0 auto !important; overflow:visible !important; }
+      .ticket-detail-main { flex:0 0 auto !important; overflow:visible !important; width:100% !important; }
       .ticket-detail-sidebar {
-        width:100% !important; max-height:320px; flex:0 0 auto !important;
+        width:100% !important; max-height:none !important; flex:0 0 auto !important;
         border-left:none !important; border-top:1px solid #dee5ef;
       }
     }
-    @media (max-width: 720px) {
-      .ticket-detail-action-bar > .halo-action-btn { flex:1 1 auto; justify-content:center; }
-      .ticket-detail-toolbar-actions { margin-left:0 !important; width:100%; border-left:none !important; border-top:1px solid #dee5ef; }
-      .ticket-detail-toolbar-actions > .halo-action-btn { flex:1; justify-content:center; }
-      .ticket-sla-card { width:100% !important; margin-top:8px; }
-      .ticket-detail-header-row { flex-direction:column !important; gap:12px !important; }
+    @media (max-width: 768px) {
+      .ticket-detail-overlay-container {
+        padding: 0 !important;
+      }
+      .ticket-detail-shell {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 0 !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+      }
+      .ticket-detail-header-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      .ticket-sla-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 8px;
+      }
     }
   `;
 
@@ -2198,10 +2303,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           }}
         />
         <div
+          className="ticket-detail-overlay-container"
           style={{
             position: 'fixed', inset: 0, zIndex: 99999,
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-            padding: '20px 16px 16px', pointerEvents: 'none',
+            pointerEvents: 'none',
             overflowY: 'auto',
           }}
         >
@@ -2372,13 +2478,54 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               <Dialog.Description className="sr-only">{ticket.summary || 'Ticket details, notes, and activity timeline'}</Dialog.Description>
 
               {/* ════════════════════════════════════════
-                  TOP ACTION BAR
+                  STICKY TOP TITLE BAR (Always visible close button)
                   ════════════════════════════════════════ */}
-              <div className="ticket-detail-action-bar" style={{
-                display: 'flex', alignItems: 'stretch',
-                borderBottom: '1px solid #dee5ef',
-                background: '#f8fafc', flexShrink: 0,
-              }}>
+              <div className="ticket-modal-sticky-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+                  <span style={{
+                    background: '#C96F55', color: '#fff', padding: '2px 8px',
+                    borderRadius: 4, fontSize: 11, fontWeight: 700, flexShrink: 0,
+                  }}>
+                    {ticket.type || 'Incident'}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#f8fafc', whiteSpace: 'nowrap' }}>
+                    {ticket.id}
+                  </span>
+                  {ticket.priority && (
+                    <span style={{
+                      fontSize: 10.5, padding: '2px 7px', borderRadius: 9999,
+                      background: ticket.priority === 'Critical' ? '#fee2e2' : ticket.priority === 'High' ? '#ffedd5' : '#f1f5f9',
+                      color: ticket.priority === 'Critical' ? '#b91c1c' : ticket.priority === 'High' ? '#c2410c' : '#475569',
+                      fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {ticket.priority}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  <button onClick={handleCopy} className="ticket-modal-icon-btn" title="Copy ticket summary">
+                    <Copy style={{ width: 14, height: 14 }} />
+                  </button>
+                  <button onClick={handleDownload} className="ticket-modal-icon-btn" title="Download JSON export">
+                    <Download style={{ width: 14, height: 14 }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="ticket-modal-close-btn"
+                    title="Close (Esc)"
+                    aria-label="Close modal"
+                  >
+                    <X style={{ width: 18, height: 18, strokeWidth: 2.5 }} />
+                  </button>
+                </div>
+              </div>
+
+              {/* ════════════════════════════════════════
+                  TOP ACTION BAR (Horizontally swipeable on mobile)
+                  ════════════════════════════════════════ */}
+              <div className="ticket-detail-action-bar">
                 {/* Email User — opens in-app composer modal */}
                 <button
                   className="halo-action-btn"
@@ -2433,11 +2580,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   marginLeft: 'auto',
-                  borderLeft: '1px solid #dee5ef',
                   height: '100%',
                   padding: '0 8px',
                   gap: 8,
-                  background: effectiveRiskLevel === 'High Risk' ? '#fff5f5' : '#f8fafc',
+                  flexShrink: 0,
                 }}>
                   {/* AI Risk Score Pill */}
                   <span
@@ -2534,30 +2680,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </button>
                     </div>
                   )}
-                </div>
-
-                {/* Right toolbar actions */}
-                <div className="ticket-detail-toolbar-actions" style={{
-                  display: 'flex', alignItems: 'center',
-                  marginLeft: 0,
-                  borderLeft: '1px solid #dee5ef',
-                }}>
-                  <button onClick={handleCopy} className="halo-action-btn" style={{ padding: '0 10px', height: '100%', borderRight: '1px solid #dee5ef' }} title="Copy ticket summary">
-                    <Copy style={{ width: 14, height: 14, color: '#6b7280' }} />
-                  </button>
-                  <button onClick={handleDownload} className="halo-action-btn" style={{ padding: '0 10px', height: '100%', borderRight: '1px solid #dee5ef' }} title="Download JSON export">
-                    <Download style={{ width: 14, height: 14, color: '#6b7280' }} />
-                  </button>
-                  <button
-                    onClick={onClose}
-                    style={{
-                      padding: '0 14px', border: 'none', background: 'none',
-                      cursor: 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', height: '100%',
-                    }}
-                    title="Close (Esc)"
-                  >
-                    <X style={{ width: 16, height: 16 }} />
-                  </button>
                 </div>
               </div>
 
@@ -2788,12 +2910,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   )}
 
                   {/* Navigation Tabs */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center',
-                    borderBottom: '1px solid #dee5ef',
-                    padding: '0 20px', flexShrink: 0,
-                    background: '#fff',
-                  }}>
+                  <div className="ticket-detail-tabs-bar">
                     {TABS.map(tab => (
                       <button
                         key={tab.id}

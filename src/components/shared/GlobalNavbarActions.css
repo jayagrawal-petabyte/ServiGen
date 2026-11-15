@@ -1216,3 +1216,58 @@
   text-decoration: underline;
 }
 
+/* ============================================================
+   RESPONSIVE MOBILE STYLES (< 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  .global-nav-actions-wrap {
+    gap: 6px;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .global-nav-actions-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .global-nav-leading-actions {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .global-nav-get-started-btn {
+    display: none !important;
+  }
+
+  .global-nav-pill-btn {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 11.5px;
+  }
+
+  .global-nav-icons-group {
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .global-nav-icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .global-nav-icon-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .global-nav-avatar-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+}
+
+

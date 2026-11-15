@@ -438,7 +438,7 @@ function TeamIncidentTable({
   // Popover & Drawer States
   const [showKpiDrawer, setShowKpiDrawer] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [statusFilter, setStatusFilter] = useState<string>("Open incidents");
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState<boolean>(false);
   const statusMenuRef = useRef<HTMLDivElement>(null);
@@ -1341,6 +1341,16 @@ function TeamIncidentTable({
           {/* Table Toolbar */}
           <div className="team-table-toolbar-row">
             <div className="team-toolbar-left-group flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+                className="md:hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 cursor-pointer"
+                title="Toggle Queues view"
+              >
+                <span>👥</span>
+                <span>{selectedView.kind === "team" ? selectedView.team : selectedView.kind === "breaching-sla" ? "Breaching SLA" : selectedView.agent}</span>
+                <span className="text-[10px] text-slate-500">{isSidebarCollapsed ? "▾" : "▴"}</span>
+              </button>
               <span className="text-sm font-semibold text-slate-800 tracking-tight">
                 {selectedView.kind === "team" ? `${selectedView.team} Incidents` : selectedView.kind === "breaching-sla" ? "Breaching SLA" : "Incidents"}
               </span>
