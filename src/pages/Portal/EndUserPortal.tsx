@@ -31,7 +31,16 @@ interface PortalTicket {
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   createdAt: string;
   targetResolution?: string;
-  assignedAgent?: string;
+  assignedAgent?: string | { id?: string; firstName?: string; lastName?: string; fullName?: string };
+}
+
+function getAgentDisplayName(agent: any): string {
+  if (!agent) return '1st Line Triage Pool';
+  if (typeof agent === 'string') return agent.trim() || '1st Line Triage Pool';
+  if (typeof agent === 'object') {
+    return agent.fullName || `${agent.firstName || ''} ${agent.lastName || ''}`.trim() || agent.name || '1st Line Triage Pool';
+  }
+  return String(agent);
 }
 
 interface FaqArticle {
@@ -168,7 +177,7 @@ export const EndUserPortal: React.FC = () => {
             priority: t.priority || 'Medium',
             createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : '14/11/2026',
             targetResolution: t.targetResolution || 'Within 4 business hours',
-            assignedAgent: t.assignedAgent || t.agent || '1st Line Triage Pool',
+            assignedAgent: getAgentDisplayName(t.assignedAgent || t.agent),
           }));
           setMyTickets(mapped);
         }
@@ -561,7 +570,7 @@ export const EndUserPortal: React.FC = () => {
                           <StatusBadge status={t.status} size="sm" />
                         </td>
                         <td className="portal-cell-resolution">{t.targetResolution}</td>
-                        <td className="portal-cell-agent">{t.assignedAgent}</td>
+                        <td className="portal-cell-agent">{getAgentDisplayName(t.assignedAgent)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -629,7 +638,7 @@ export const EndUserPortal: React.FC = () => {
                       </td>
                       <td className="portal-cell-date">{t.createdAt}</td>
                       <td className="portal-cell-resolution">{t.targetResolution}</td>
-                      <td className="portal-cell-agent">{t.assignedAgent}</td>
+                      <td className="portal-cell-agent">{getAgentDisplayName(t.assignedAgent)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -781,7 +790,7 @@ export const EndUserPortal: React.FC = () => {
                 </div>
                 <div>
                   <span className="portal-detail-label">Assigned Agent:</span>
-                  <span className="portal-detail-value">{selectedTicket.assignedAgent}</span>
+                  <span className="portal-detail-value">{getAgentDisplayName(selectedTicket.assignedAgent)}</span>
                 </div>
                 <div>
                   <span className="portal-detail-label">Estimated SLA:</span>
@@ -809,7 +818,7 @@ export const EndUserPortal: React.FC = () => {
                     <div>
                       <span className="portal-timeline-heading">Assigned to Engineer</span>
                       <span className="portal-timeline-desc">
-                        Triage complete; assigned to {selectedTicket.assignedAgent}
+                        Triage complete; assigned to {getAgentDisplayName(selectedTicket.assignedAgent)}
                       </span>
                     </div>
                   </div>

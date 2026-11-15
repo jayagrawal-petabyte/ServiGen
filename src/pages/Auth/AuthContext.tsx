@@ -3,11 +3,22 @@ import { User, AuthState, LoginCredentials } from './types';
 import {
   api,
   setStoredToken,
+  setAuthToken,
   getStoredToken,
   setStoredUser,
   getStoredUser,
   isOfflineFallbackToken,
 } from '../../services/apiClient';
+
+/** Store a session token, using sessionStorage for End Users so their session
+ *  is never persisted across browser restarts (the sign-in page opens fresh). */
+const storeToken = (token: string, user: { role?: string }) => {
+  if (user?.role === 'End User') {
+    setAuthToken(token, false); // sessionStorage only
+  } else {
+    setStoredToken(token);       // localStorage (persisted)
+  }
+};
 
 interface AuthContextType extends AuthState {
   token: string | null;
@@ -595,7 +606,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const backendUserData = successfulRes.data?.user || successfulRes.data || successfulRes;
       const normalized = normalizeUser(backendUserData);
 
-      setStoredToken(authToken);
+      storeToken(authToken, normalized);
       setStoredUser(normalized);
       setToken(authToken);
       setBackendConnected(true);
@@ -615,7 +626,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const fallbackUser = resolveFallbackUser(cleanUsername);
       const fallbackToken = generateFallbackToken(fallbackUser);
 
-      setStoredToken(fallbackToken);
+      storeToken(fallbackToken, fallbackUser);
       setStoredUser(fallbackUser);
       setToken(fallbackToken);
       setBackendConnected(false);
@@ -635,7 +646,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const fallbackUser = resolveFallbackUser(cleanUsername);
       const fallbackToken = generateFallbackToken(fallbackUser);
 
-      setStoredToken(fallbackToken);
+      storeToken(fallbackToken, fallbackUser);
       setStoredUser(fallbackUser);
       setToken(fallbackToken);
       setBackendConnected(false);
@@ -652,7 +663,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fallbackUser = resolveFallbackUser(cleanUsername);
     const fallbackToken = generateFallbackToken(fallbackUser);
 
-    setStoredToken(fallbackToken);
+    storeToken(fallbackToken, fallbackUser);
     setStoredUser(fallbackUser);
     setToken(fallbackToken);
     setBackendConnected(false);

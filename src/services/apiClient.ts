@@ -128,6 +128,12 @@ export function clearAuthToken(): void {
 
 export const getStoredUser = (): any | null => {
   try {
+    // End User sessions are stored in sessionStorage only (tab-scoped, not persisted across restarts)
+    const session = sessionStorage.getItem(USER_KEY);
+    if (session) {
+      const parsed = JSON.parse(session);
+      if (parsed?.role === 'End User') return parsed;
+    }
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
@@ -138,9 +144,18 @@ export const getStoredUser = (): any | null => {
 export const setStoredUser = (user: any | null): void => {
   try {
     if (user) {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      if (user.role === 'End User') {
+        // End User sessions are tab-scoped only — never persist to localStorage
+        // so the sign-in page always opens fresh on the next visit.
+        sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+        localStorage.removeItem(USER_KEY); // clear any stale End User entry
+      } else {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        sessionStorage.removeItem(USER_KEY);
+      }
     } else {
       localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(USER_KEY);
     }
   } catch (err) {
     console.warn('Failed to update stored user:', err);
