@@ -101,18 +101,19 @@ function getInitials(name?: string): string {
 // ─── Toast Component ─────────────────────────────────────────────────────────
 
 function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'error' | 'info' }) {
-  const bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#263B5E';
+  const bg = type === 'success' ? '#15803d' : type === 'error' ? '#dc2626' : '#1e3a8a';
   return (
     <div style={{
-      position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100005,
-      background: bg, color: '#fff', padding: '10px 20px',
-      borderRadius: 9999, fontSize: 13, fontWeight: 700,
-      boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
-      display: 'flex', alignItems: 'center', gap: 8,
-      animation: 'haloSlideIn 0.15s ease-out',
+      position: 'fixed', top: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 999999,
+      background: bg, color: '#fff', padding: '11px 22px',
+      borderRadius: 9999, fontSize: 13.5, fontWeight: 700,
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.35), 0 8px 10px -6px rgba(0,0,0,0.2)',
+      display: 'flex', alignItems: 'center', gap: 9,
+      pointerEvents: 'auto',
+      letterSpacing: '0.01em',
     }}>
-      {type === 'success' && <Check style={{ width: 16, height: 16 }} />}
-      {type === 'error' && <AlertCircle style={{ width: 16, height: 16 }} />}
+      {type === 'success' && <Check style={{ width: 18, height: 18, strokeWidth: 2.5 }} />}
+      {type === 'error' && <AlertCircle style={{ width: 18, height: 18, strokeWidth: 2.5 }} />}
       <span>{msg}</span>
     </div>
   );
@@ -206,17 +207,28 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     return (ticket as any).resolutionTargetMet === true;
   });
 
+  const [inlineMsg, setInlineMsg] = useState<{ text: string; type: 'success' | 'breach' } | null>(null);
+  const msgTimerRef = useRef<any>(null);
+
+  const showInline = (text: string, type: 'success' | 'breach') => {
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    setInlineMsg({ text, type });
+    msgTimerRef.current = setTimeout(() => setInlineMsg(null), 3500);
+  };
+
   const toggleResp = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const next = !respMet;
     setRespMet(next);
+    const msg = next ? '✓ Response SLA Met — saved to backend' : '✗ Response SLA Breached — saved to backend';
+    showInline(next ? '✓ Response SLA Met (Saved)' : '✗ Response SLA Breached (Saved)', next ? 'success' : 'breach');
     try { localStorage.setItem(`servigen_sla_resp_met_${ticketId}`, String(next)); } catch {}
     try {
       await api.patch(`/api/tickets/${ticketId}`, { responseTargetMet: next });
     } catch {}
     ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticketId, responseTargetMet: next } });
     if (onNotify) {
-      onNotify(next ? '✓ Response SLA Met — saved to backend' : '✗ Response SLA Breached — saved to backend', next ? 'success' : 'info');
+      onNotify(msg, next ? 'success' : 'info');
     }
   };
 
@@ -224,13 +236,15 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     e.stopPropagation();
     const next = !resMet;
     setResMet(next);
+    const msg = next ? '✓ Resolution SLA Met — saved to backend' : '✗ Resolution SLA Breached — saved to backend';
+    showInline(next ? '✓ Resolution SLA Met (Saved)' : '✗ Resolution SLA Breached (Saved)', next ? 'success' : 'breach');
     try { localStorage.setItem(`servigen_sla_res_met_${ticketId}`, String(next)); } catch {}
     try {
       await api.patch(`/api/tickets/${ticketId}`, { resolutionTargetMet: next });
     } catch {}
     ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticketId, resolutionTargetMet: next } });
     if (onNotify) {
-      onNotify(next ? '✓ Resolution SLA Met — saved to backend' : 'Resolution SLA updated — saved to backend', next ? 'success' : 'info');
+      onNotify(msg, next ? 'success' : 'info');
     }
   };
 
@@ -255,50 +269,74 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
       <div style={{ background: '#f9fafb', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#374151' }}>
           <span>Response Target: <span style={{ fontWeight: 600 }}>{responseDate}</span></span>
-          <button
-            type="button"
-            onClick={toggleResp}
-            title={respMet ? 'Response SLA Met (Click to toggle & save to backend)' : 'Response SLA Breached (Click to toggle & save to backend)'}
-            style={{
-              padding: '2px 8px', borderRadius: 12,
-              background: respMet ? '#dcfce7' : '#fee2e2',
-              color: respMet ? '#15803d' : '#b91c1c',
-              border: respMet ? '1px solid #bbf7d0' : '1px solid #fecaca',
-              fontSize: 10.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {respMet ? '✓ Met' : '✗ Breached'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: respMet ? '#15803d' : '#b91c1c' }}>
+              {respMet ? 'Met' : 'Breached'}
+            </span>
+            <button
+              type="button"
+              onClick={toggleResp}
+              aria-label={respMet ? 'Response SLA Met (Click to mark Breached)' : 'Response SLA Breached (Click to mark Met)'}
+              title={respMet ? 'Response SLA Met (Click to mark Breached & save to backend)' : 'Response SLA Breached (Click to mark Met & save to backend)'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 22, height: 22, borderRadius: '50%',
+                background: respMet ? '#16a34a' : '#dc2626',
+                color: '#ffffff', fontSize: 12, fontWeight: 800, flexShrink: 0,
+                border: 'none', cursor: 'pointer',
+                boxShadow: respMet ? '0 1px 3px rgba(22, 163, 74, 0.45)' : '0 1px 3px rgba(220, 38, 38, 0.45)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {respMet ? '✓' : '✕'}
+            </button>
+          </div>
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#374151' }}>
           <span>Resolution Target: <span style={{ fontWeight: 600 }}>{resolutionDate}</span></span>
-          <button
-            type="button"
-            onClick={toggleRes}
-            title={
-              (isTicketResolved || resMet)
-                ? 'Resolution SLA Met (Click to toggle & save to backend)'
-                : overdue
-                ? 'Resolution SLA Breached (Click to toggle & save to backend)'
-                : 'Resolution SLA In Progress (Click to toggle & save to backend)'
-            }
-            style={{
-              padding: '2px 8px', borderRadius: 12,
-              background: (isTicketResolved || resMet) ? '#dcfce7' : overdue ? '#fee2e2' : '#eff6ff',
-              color: (isTicketResolved || resMet) ? '#15803d' : overdue ? '#b91c1c' : '#1d4ed8',
-              border: (isTicketResolved || resMet) ? '1px solid #bbf7d0' : overdue ? '1px solid #fecaca' : '1px solid #bfdbfe',
-              fontSize: 10.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {(isTicketResolved || resMet) ? '✓ Met' : overdue ? '✗ Breached' : '⏳ In Progress'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: (isTicketResolved || resMet) ? '#15803d' : overdue ? '#b91c1c' : '#1d4ed8' }}>
+              {(isTicketResolved || resMet) ? 'Met' : overdue ? 'Breached' : 'In Progress'}
+            </span>
+            <button
+              type="button"
+              onClick={toggleRes}
+              aria-label={(isTicketResolved || resMet) ? 'Resolution SLA Met (Click to mark Breached)' : 'Resolution SLA Breached (Click to mark Met)'}
+              title={(isTicketResolved || resMet) ? 'Resolution SLA Met (Click to mark Breached & save to backend)' : 'Resolution SLA Breached (Click to mark Met & save to backend)'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 22, height: 22, borderRadius: '50%',
+                background: (isTicketResolved || resMet) ? '#16a34a' : overdue ? '#dc2626' : '#2563eb',
+                color: '#ffffff', fontSize: 12, fontWeight: 800, flexShrink: 0,
+                border: 'none', cursor: 'pointer',
+                boxShadow: (isTicketResolved || resMet) ? '0 1px 3px rgba(22, 163, 74, 0.45)' : overdue ? '0 1px 3px rgba(220, 38, 38, 0.45)' : '0 1px 3px rgba(37, 99, 235, 0.45)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {(isTicketResolved || resMet) ? '✓' : overdue ? '✕' : '⏳'}
+            </button>
+          </div>
         </div>
+
+        {inlineMsg && (
+          <div style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: inlineMsg.type === 'breach' ? '#991b1b' : '#166534',
+            background: inlineMsg.type === 'breach' ? '#fee2e2' : '#dcfce7',
+            border: inlineMsg.type === 'breach' ? '1px solid #fecaca' : '1px solid #bbf7d0',
+            borderRadius: 4,
+            padding: '3px 6px',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+          }}>
+            {inlineMsg.text}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1537,9 +1575,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pastedAttachments, setPastedAttachments] = useState<Array<{ id: string; name: string; url: string; size: string }>>([]);
 
+  const toastTimerRef = useRef<any>(null);
   const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
   };
 
   useEffect(() => {

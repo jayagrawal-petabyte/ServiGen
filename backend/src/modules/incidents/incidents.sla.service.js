@@ -170,6 +170,8 @@ const calculateSlaStatus = (ticket, now = new Date()) => {
       clockTime.getTime() >= deadlines.resolutionTargetAt.getTime(),
 
     slaPaused: ticket.status === 'On Hold',
+    responseTargetMet: Boolean(responseMetAt || ticket.responseTargetMet),
+    resolutionTargetMet: Boolean(ticket.resolvedAt || ['Resolved', 'Closed'].includes(ticket.status) || ticket.resolutionTargetMet),
   };
 };
 

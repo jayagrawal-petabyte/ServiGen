@@ -271,6 +271,8 @@ export function handleOfflineRequest(
     if (found) {
       Object.assign(found, parsedBody || {});
       if (parsedBody?.priority) found.priority = parsedBody.priority;
+      if (parsedBody?.responseTargetMet !== undefined) found.responseTargetMet = parsedBody.responseTargetMet;
+      if (parsedBody?.resolutionTargetMet !== undefined) found.resolutionTargetMet = parsedBody.resolutionTargetMet;
     }
     return { success: true, data: { id: ticketId, ...(parsedBody || {}) } };
   }

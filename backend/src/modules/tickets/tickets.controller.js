@@ -242,7 +242,10 @@ const updateTicketStatus = async (req, res, next) => {
       });
     }
 
-    if (status === undefined && holdReason === undefined) {
+    const hasSlaUpdate = body.responseTargetMet !== undefined || body.resolutionTargetMet !== undefined;
+    const hasAssignmentUpdate = body.assignedTeam !== undefined || body.agentId !== undefined || body.assignedAgentId !== undefined;
+
+    if (status === undefined && holdReason === undefined && !hasSlaUpdate && !hasAssignmentUpdate) {
       return res.status(400).json({
         success: false,
         message: 'No ticket status changes were provided',
@@ -376,6 +379,14 @@ const updateTicketStatus = async (req, res, next) => {
 
     if (body.agentId !== undefined || body.assignedAgentId !== undefined) {
       data.assignedAgentId = body.agentId || body.assignedAgentId || null;
+    }
+
+    if (body.responseTargetMet !== undefined) {
+      data.responseMetAt = body.responseTargetMet ? new Date() : null;
+    }
+
+    if (body.resolutionTargetMet !== undefined) {
+      data.resolvedAt = body.resolutionTargetMet ? new Date() : null;
     }
 
     const updated = await prisma.ticket.update({
