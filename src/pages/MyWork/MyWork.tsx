@@ -558,8 +558,12 @@ export default function MyWork() {
                 </p>
                 <div className="mt-1">
                   <SlaBadge
+                    ticketId={selectedTicket.id}
                     slaTimeLeft={selectedTicket.slaTimeLeft}
                     slaFormatted={selectedTicket.slaFormatted}
+                    resolutionTargetAt={(selectedTicket as any).resolutionTargetAt}
+                    createdAt={selectedTicket.createdAt}
+                    priority={selectedTicket.priority}
                     status={selectedTicket.status}
                     variant="restrained"
                   />
@@ -1014,8 +1018,12 @@ export default function MyWork() {
 
                         <td className="whitespace-nowrap px-4 py-3">
                           <SlaBadge
+                            ticketId={ticket.id}
                             slaTimeLeft={ticket.slaTimeLeft}
                             slaFormatted={ticket.slaFormatted}
+                            resolutionTargetAt={(ticket as any).resolutionTargetAt}
+                            createdAt={ticket.createdAt}
+                            priority={ticket.priority}
                             status={ticket.status}
                             variant="restrained"
                           />

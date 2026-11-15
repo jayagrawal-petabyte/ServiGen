@@ -109,17 +109,102 @@ export function formatSecondsToSla(seconds: number): { text: string; urgency: Sl
   return { text, urgency: 'safe' };
 }
 
+/**
+ * Resolves or anchors an absolute target epoch timestamp for a ticket's SLA.
+ * This guarantees:
+ * 1. Time continuously progresses as wall-clock time passes and NEVER resets on tab switch, filter change, or re-render.
+ * 2. The SLA countdown inside the ticket detail modal and outside in tables/badges match down to the exact second.
+ */
+export function getTicketSlaTarget(
+  ticketId?: string,
+  slaTimeLeft?: number | string | null,
+  slaFormatted?: string | null,
+  resolutionTargetAt?: string | null,
+  createdAt?: string | null,
+  priority?: string | null
+): number {
+  const storageKey = ticketId ? `servigen_sla_target_${ticketId}` : null;
+
+  // 1. If explicit resolutionTargetAt is provided from backend DB
+  if (resolutionTargetAt) {
+    const t = new Date(resolutionTargetAt).getTime();
+    if (!isNaN(t) && t > 0) {
+      if (storageKey) {
+        try { localStorage.setItem(storageKey, String(t)); } catch {}
+      }
+      return t;
+    }
+  }
+
+  // 2. Check localStorage for an existing anchored target timestamp
+  if (storageKey) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          // Invalidate legacy buggy default 3-hour entries if the ticket is actually breached
+          const isBreached =
+            (typeof slaTimeLeft === 'number' && slaTimeLeft <= 0) ||
+            (typeof slaFormatted === 'string' &&
+              (slaFormatted.includes('-') ||
+                slaFormatted.toLowerCase().includes('breach') ||
+                slaFormatted.toLowerCase().includes('overdue')));
+          const isFarFuture = parsed > Date.now() + 1800 * 1000;
+
+          if (!(isBreached && isFarFuture)) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Compute target timestamp from initial seconds remaining relative to Date.now()
+  const initialSec = parseInitialSeconds(slaTimeLeft, slaFormatted);
+  if (initialSec !== 0 || slaTimeLeft != null || slaFormatted) {
+    const target = Date.now() + initialSec * 1000;
+    if (storageKey) {
+      try { localStorage.setItem(storageKey, String(target)); } catch {}
+    }
+    return target;
+  }
+
+  // 4. Fallback based on priority & createdAt
+  const baseTime = createdAt ? new Date(createdAt).getTime() : Date.now();
+  let offsetHours = 4;
+  const pri = (priority || '').toLowerCase();
+  if (pri.includes('critical') || pri.includes('p1')) offsetHours = 1;
+  else if (pri.includes('high') || pri.includes('p2')) offsetHours = 2;
+  else if (pri.includes('medium') || pri.includes('p3')) offsetHours = 4;
+  else if (pri.includes('low') || pri.includes('p4')) offsetHours = 8;
+
+  const target = baseTime + offsetHours * 3600 * 1000;
+  if (storageKey) {
+    try { localStorage.setItem(storageKey, String(target)); } catch {}
+  }
+  return target;
+}
+
 export interface SlaBadgeProps {
+  ticketId?: string;
   slaTimeLeft?: number | string | null;
   slaFormatted?: string | null;
+  resolutionTargetAt?: string | null;
+  createdAt?: string | null;
+  priority?: string | null;
   status?: string;
   className?: string;
   variant?: 'standard' | 'restrained';
 }
 
 export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
+  ticketId,
   slaTimeLeft,
   slaFormatted,
+  resolutionTargetAt,
+  createdAt,
+  priority,
   status,
   className = '',
   variant = 'restrained',
@@ -128,24 +213,33 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused'))
   );
 
-  const initialSec = parseInitialSeconds(slaTimeLeft, slaFormatted);
-  const [secondsLeft, setSecondsLeft] = useState<number>(initialSec);
+  const [targetTimestamp, setTargetTimestamp] = useState<number>(() =>
+    getTicketSlaTarget(ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority)
+  );
 
   // Sync state if props change
   useEffect(() => {
-    setSecondsLeft(parseInitialSeconds(slaTimeLeft, slaFormatted));
-  }, [slaTimeLeft, slaFormatted]);
+    setTargetTimestamp(
+      getTicketSlaTarget(ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority)
+    );
+  }, [ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority]);
 
-  // 1-second live ticking countdown timer
+  const [secondsLeft, setSecondsLeft] = useState<number>(() =>
+    Math.round((targetTimestamp - Date.now()) / 1000)
+  );
+
+  // 1-second live ticking countdown timer anchored to absolute target timestamp
   useEffect(() => {
-    if (isOnHold || secondsLeft <= -86400) return;
+    if (isOnHold) return;
 
-    const timer = setInterval(() => {
-      setSecondsLeft((prev) => prev - 1);
-    }, 1000);
+    const tick = () => {
+      setSecondsLeft(Math.round((targetTimestamp - Date.now()) / 1000));
+    };
 
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [isOnHold, secondsLeft]);
+  }, [isOnHold, targetTimestamp]);
 
   if (slaTimeLeft == null && !slaFormatted) {
     return <span className="text-slate-400 text-xs">—</span>;

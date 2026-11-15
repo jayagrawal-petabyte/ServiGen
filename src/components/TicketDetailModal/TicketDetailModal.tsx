@@ -11,6 +11,7 @@ import {
 import { type FullTicket, type TicketPriority, type TicketNote } from './ticketDetails.data';
 import { api } from '../../services/apiClient';
 import { ticketEvents } from '../../services/ticketEvents';
+import { getTicketSlaTarget } from '../shared/SlaBadge';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -142,36 +143,59 @@ function SlaClock({ targetTime }: { targetTime: number }) {
 
 function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalProps['ticket']>; onNotify?: (msg: string, type?: 'success' | 'info') => void }) {
   const ticketId = ticket.id;
-  const rawSla = (ticket as any).slaTime || ticket.targetSla || '';
 
-  // Get or persist absolute target timestamp so the time NEVER restarts on close/reopen!
-  const storageKey = `servigen_sla_target_${ticketId}`;
-  const [targetTimestamp] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed > 0) return parsed;
-      }
-    } catch {}
-
-    let durationSecs = 3 * 3600; // default 3h
-    const hm = rawSla.match(/(\d+)\s*h\s*(\d+)?\s*m?/i);
-    if (hm) durationSecs = parseInt(hm[1]) * 3600 + (hm[2] ? parseInt(hm[2]) * 60 : 0);
-    if (rawSla.toLowerCase().includes('overdue') || rawSla.toLowerCase().includes('breach')) {
-      durationSecs = -1920;
-    }
-    const target = Date.now() + durationSecs * 1000;
-    try { localStorage.setItem(storageKey, String(target)); } catch {}
-    return target;
+  // Use the EXACT SAME target timestamp resolution as SlaBadge so modal and table match 100%!
+  const [targetTimestamp, setTargetTimestamp] = useState<number>(() => {
+    return getTicketSlaTarget(
+      ticketId,
+      (ticket as any).slaTimeLeft,
+      (ticket as any).slaFormatted || ticket.targetSla || (ticket as any).slaTime,
+      (ticket as any).resolutionTargetAt || (ticket as any).resolutionTarget,
+      ticket.createdAt,
+      ticket.priority
+    );
   });
+
+  useEffect(() => {
+    setTargetTimestamp(
+      getTicketSlaTarget(
+        ticketId,
+        (ticket as any).slaTimeLeft,
+        (ticket as any).slaFormatted || ticket.targetSla || (ticket as any).slaTime,
+        (ticket as any).resolutionTargetAt || (ticket as any).resolutionTarget,
+        ticket.createdAt,
+        ticket.priority
+      )
+    );
+  }, [ticketId, (ticket as any).slaTimeLeft, (ticket as any).slaFormatted, ticket.targetSla, ticket.createdAt, ticket.priority]);
 
   const overdue = (targetTimestamp - Date.now()) < 0;
   const priority = ticket.priority || 'Medium';
 
   // Format realistic Response Target & Resolution Target dates
   const formatSlaDate = (dateVal?: string, offsetHours = 4) => {
-    if (dateVal && dateVal !== 'Target not set' && !dateVal.includes('—') && !dateVal.includes('Target SLA') && !dateVal.includes('-00:')) return dateVal;
+    if (
+      dateVal &&
+      dateVal !== 'Target not set' &&
+      !dateVal.includes('—') &&
+      !dateVal.includes('Target SLA') &&
+      !dateVal.includes('-00:') &&
+      !dateVal.includes('Breached') &&
+      !dateVal.includes('left')
+    ) {
+      const parsed = new Date(dateVal);
+      if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 2000) {
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const year = parsed.getFullYear();
+        let hours = parsed.getHours();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const mins = String(parsed.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${mins} ${ampm}`;
+      }
+      return dateVal;
+    }
     const base = ticket.createdAt ? new Date(ticket.createdAt) : new Date();
     const d = new Date(base.getTime() + offsetHours * 3600 * 1000);
     const day = String(d.getDate()).padStart(2, '0');
@@ -185,7 +209,10 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
   };
 
   const responseDate = formatSlaDate(ticket.responseTarget || (ticket as any).responseTargetAt, 1);
-  const resolutionDate = formatSlaDate(ticket.resolutionTarget || (ticket as any).resolutionTargetAt, 4);
+  const resolutionDate = formatSlaDate(
+    ticket.resolutionTarget || (ticket as any).resolutionTargetAt,
+    targetTimestamp ? Math.max(1, Math.round((targetTimestamp - (ticket.createdAt ? new Date(ticket.createdAt).getTime() : Date.now())) / 3600000)) : 4
+  );
 
   // Status-aware Response & Resolution met state with click-to-toggle interactivity!
   const isTicketResolved = (ticket.status || '').toLowerCase() === 'resolved' || (ticket.status || '').toLowerCase() === 'closed';
