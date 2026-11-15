@@ -15,4 +15,16 @@ export interface TeamIncident {
   aiRisk?: AiRiskLevel;
   aiRiskScore?: number;
   escalatedToTier2?: boolean;
+  slaTimeLeft?: number;
+  slaFormatted?: string;
+  resolutionTargetAt?: string;
+  responseTargetAt?: string;
+  createdAt?: string;
+  organisation?: string;
+  requester?: string;
+  site?: string;
+  email?: string;
+  phoneNumber?: string;
+  description?: string;
+  raw?: any;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
-import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, BookOpen, Sliders, ShieldAlert, Database, Sparkles } from 'lucide-react';
+import { Download, Clock, SlidersHorizontal, Star, BarChart3, Users, CheckCircle2, BookOpen, Sliders, ShieldAlert, Database, Sparkles, Trash2, Play } from 'lucide-react';
 import { TicketDetailModal } from '../../components/TicketDetailModal';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { ModalShell } from '../../components/shared/ModalShell';
@@ -234,6 +234,13 @@ export default function IncidentsByCategoryReport() {
   });
 
   useEffect(() => {
+    const templateParam = searchParams.get('template');
+    if (templateParam) {
+      const match = PRE_BUILT_REPORTS.find((r) => r.id.toLowerCase() === templateParam.toLowerCase());
+      if (match) {
+        setActiveCatalogReport(match);
+      }
+    }
     const r = (searchParams.get('report') || searchParams.get('tab')) as ReportType;
     if (r && ['category', 'sla', 'agents', 'fcr', 'changes', 'assets', 'custom'].includes(r)) {
       setActiveReport(r);
@@ -242,7 +249,10 @@ export default function IncidentsByCategoryReport() {
     }
   }, [searchParams]);
 
-  const handleSelectReport = (report: ReportType) => {
+  const handleSelectReport = (report: ReportType, clearCatalog = true) => {
+    if (clearCatalog) {
+      setActiveCatalogReport(null);
+    }
     setActiveReport(report);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -251,6 +261,9 @@ export default function IncidentsByCategoryReport() {
         next.delete('tab');
       } else {
         next.set('report', report);
+      }
+      if (clearCatalog) {
+        next.delete('template');
       }
       return next;
     });
@@ -278,8 +291,29 @@ export default function IncidentsByCategoryReport() {
   // Catalog and No-Code Query Builder states
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isQueryBuilderOpen, setIsQueryBuilderOpen] = useState(false);
-  const [customQueryConfig, setCustomQueryConfig] = useState<CustomQueryConfig | null>(null);
+  const [customQueryConfig, setCustomQueryConfig] = useState<CustomQueryConfig | null>(() => {
+    try {
+      const saved = localStorage.getItem('servigen_reporting_custom_query');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeCatalogReport, setActiveCatalogReport] = useState<PreBuiltReportItem | null>(null);
+
+  const handleDeleteCustomQuery = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setCustomQueryConfig(null);
+    try {
+      localStorage.removeItem('servigen_reporting_custom_query');
+    } catch {}
+    handleSelectReport('category', true);
+    setStatusMessage('Custom report view deleted');
+    setTimeout(() => setStatusMessage(null), 2500);
+  };
 
   const reportingSidebarItems: ModuleSidebarItem[] = useMemo(() => [
     { id: 'category', label: 'Incidents by Category', icon: <BarChart3 className="w-3.5 h-3.5" /> },
@@ -292,8 +326,22 @@ export default function IncidentsByCategoryReport() {
       ? [
           {
             id: 'custom',
-            label: `Custom: ${customQueryConfig.title.slice(0, 18)}...`,
+            label: `Custom: ${customQueryConfig.title.length > 18 ? customQueryConfig.title.slice(0, 18) + '...' : customQueryConfig.title}`,
             icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
+            action: (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteCustomQuery(e);
+                }}
+                className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors"
+                title="Delete custom view"
+              >
+                <Trash2 className="w-3 h-3" />
+              </span>
+            ),
           },
         ]
       : []),
@@ -301,8 +349,14 @@ export default function IncidentsByCategoryReport() {
 
   const handleSelectCatalogReport = (report: PreBuiltReportItem) => {
     setActiveCatalogReport(report);
-    handleSelectReport(report.targetView);
-    if (report.category === 'incidents' || report.category === 'requests') {
+    handleSelectReport(report.targetView, false);
+
+    // Apply specific contextual filters according to template definition
+    if (report.id === 'REP-INC-03') {
+      setActiveCategoryTag(null);
+    } else if (report.id === 'REP-INC-04') {
+      setActiveCategoryTag(null);
+    } else if (report.category === 'incidents' || report.category === 'requests') {
       if (report.title.toLowerCase().includes('hardware')) setActiveCategoryTag('Hardware');
       else if (report.title.toLowerCase().includes('network') || report.title.toLowerCase().includes('vpn')) setActiveCategoryTag('Network');
       else if (report.title.toLowerCase().includes('software') || report.title.toLowerCase().includes('teams') || report.title.toLowerCase().includes('mfa')) setActiveCategoryTag('Office Applications');
@@ -310,13 +364,29 @@ export default function IncidentsByCategoryReport() {
     } else {
       setActiveCategoryTag(null);
     }
-    setStatusMessage(`Loaded pre-built report: ${report.title} (${report.id})`);
-    setTimeout(() => setStatusMessage(null), 2500);
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (report.targetView === 'category') {
+        next.delete('report');
+        next.delete('tab');
+      } else {
+        next.set('report', report.targetView);
+      }
+      next.set('template', report.id);
+      return next;
+    });
+
+    setStatusMessage(`▶ Running report: ${report.title} (${report.id})`);
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   const handleExecuteCustomQuery = (config: CustomQueryConfig) => {
     setCustomQueryConfig(config);
-    handleSelectReport('custom');
+    try {
+      localStorage.setItem('servigen_reporting_custom_query', JSON.stringify(config));
+    } catch {}
+    handleSelectReport('custom', true);
     setStatusMessage(`Executed custom query: "${config.title}"`);
     setTimeout(() => setStatusMessage(null), 2500);
   };
@@ -498,6 +568,17 @@ export default function IncidentsByCategoryReport() {
         if (slaFilterMode === 'breached' && t.slaResolutionMet !== 0) return false;
         if (slaFilterMode === 'met' && t.slaResolutionMet !== 1) return false;
       }
+      if (activeCatalogReport) {
+        if (activeCatalogReport.id === 'REP-INC-03' && !['Critical', 'High'].includes(t.priority)) {
+          return false;
+        }
+        if (activeCatalogReport.id === 'REP-INC-04' && t.agent && t.agent !== 'Unassigned' && t.status !== 'New') {
+          return false;
+        }
+        if (activeCatalogReport.id === 'REP-SLA-03' && t.slaResolutionMet !== 0) {
+          return false;
+        }
+      }
       // Check custom condition rows
       for (const f of filters) {
         let fieldVal = '';
@@ -524,7 +605,7 @@ export default function IncidentsByCategoryReport() {
       }
       return true;
     });
-  }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters, period]);
+  }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters, period, activeCatalogReport]);
 
   // Sorting state for report table
   type SortField = 'category' | 'id' | 'summary' | 'createdAt' | 'site' | 'team' | 'priority' | 'agent' | 'status' | 'slaResolutionMet';
@@ -804,31 +885,55 @@ export default function IncidentsByCategoryReport() {
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl font-bold text-[#332B28] tracking-tight m-0">
-                {activeReport === 'category' && 'Incidents by Category'}
-                {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
-                {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
-                {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
-                {activeReport === 'changes' && 'Change Management & CAB Risk Analytics'}
-                {activeReport === 'assets' && 'CMDB Asset Lifecycle & Expiring Warranties'}
-                {activeReport === 'custom' && (customQueryConfig?.title || 'Custom Ad-Hoc Report')}
+                {activeCatalogReport ? (
+                  activeCatalogReport.title
+                ) : (
+                  <>
+                    {activeReport === 'category' && 'Incidents by Category'}
+                    {activeReport === 'sla' && 'SLA Compliance & Breach Analysis'}
+                    {activeReport === 'agents' && 'Agent Performance & Workload Metrics'}
+                    {activeReport === 'fcr' && 'First Contact Resolution (FCR) Rate'}
+                    {activeReport === 'changes' && 'Change Management & CAB Risk Analytics'}
+                    {activeReport === 'assets' && 'CMDB Asset Lifecycle & Expiring Warranties'}
+                    {activeReport === 'custom' && (customQueryConfig?.title || 'Custom Ad-Hoc Report')}
+                  </>
+                )}
               </h1>
               <span className="text-[11px] font-bold text-[#C96F55] bg-[#FFF9F5] border border-[#ebdcd3] px-3 py-0.5 rounded-full">
                 {activeCatalogReport ? `Template: ${activeCatalogReport.id}` : activeReport === 'category' ? 'INC-01 (Daily/Weekly)' : activeReport === 'sla' ? 'SLA-04 (Contractual)' : activeReport === 'agents' ? 'OPS-02 (Team KPI)' : activeReport === 'fcr' ? 'CSAT-03 (Quality)' : activeReport === 'changes' ? 'CHG-01 (ITIL V4)' : activeReport === 'assets' ? 'AST-08 (Inventory)' : 'AD-HOC (Custom)'}
               </span>
             </div>
             <p className="text-xs text-[#332B28]/70 mt-1 mb-0">
-              {activeReport === 'category' && 'Distribution of incident tickets, response times, and team assignments across technical classifications.'}
-              {activeReport === 'sla' && 'Contractual SLA response and resolution performance, breach durations, and target threshold metrics.'}
-              {activeReport === 'agents' && 'First-line and second-line engineer throughput, ticket close rates, average handling time, and team SLA adherence.'}
-              {activeReport === 'fcr' && 'Percentage of customer issues resolved upon initial touchpoint without escalation or handoff overhead.'}
-              {activeReport === 'changes' && 'Production RFC throughput, CAB approval velocity, risk profiles, and implementation success rates.'}
-              {activeReport === 'assets' && 'Asset distribution across environments, hardware lifecycle states, warranty expirations, and reserve inventory.'}
-              {activeReport === 'custom' && `Custom multi-dimensional query evaluating ${customQueryConfig?.entity || 'records'} grouped by ${customQueryConfig?.groupBy || 'dimension'}.`}
+              {activeCatalogReport ? (
+                activeCatalogReport.description
+              ) : (
+                <>
+                  {activeReport === 'category' && 'Distribution of incident tickets, response times, and team assignments across technical classifications.'}
+                  {activeReport === 'sla' && 'Contractual SLA response and resolution performance, breach durations, and target threshold metrics.'}
+                  {activeReport === 'agents' && 'First-line and second-line engineer throughput, ticket close rates, average handling time, and team SLA adherence.'}
+                  {activeReport === 'fcr' && 'Percentage of customer issues resolved upon initial touchpoint without escalation or handoff overhead.'}
+                  {activeReport === 'changes' && 'Production RFC throughput, CAB approval velocity, risk profiles, and implementation success rates.'}
+                  {activeReport === 'assets' && 'Asset distribution across environments, hardware lifecycle states, warranty expirations, and reserve inventory.'}
+                  {activeReport === 'custom' && `Custom multi-dimensional query evaluating ${customQueryConfig?.entity || 'records'} grouped by ${customQueryConfig?.groupBy || 'dimension'}.`}
+                </>
+              )}
             </p>
           </div>
 
           {/* Contextual Action Toolbar */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {activeReport === 'custom' && (
+              <button
+                type="button"
+                className="px-3.5 py-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+                onClick={handleDeleteCustomQuery}
+                title="Delete this custom report view"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete View</span>
+              </button>
+            )}
+
             <button
               type="button"
               className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
@@ -944,6 +1049,63 @@ export default function IncidentsByCategoryReport() {
             </button>
           </div>
         </div>
+
+        {/* Running Catalog Template Banner */}
+        {activeCatalogReport && (
+          <div className="bg-gradient-to-r from-[#FFF9F5] via-white to-[#FFF9F5] border border-[#ebdcd3] rounded-2xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#C96F55]/15 text-[#C96F55] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <Play className="w-4 h-4 fill-current" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C96F55]">
+                    Active Report Template
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                    {activeCatalogReport.id}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                    {activeCatalogReport.frequency}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#C96F55] bg-[#F7C4B3]/30 px-2 py-0.5 rounded">
+                    Target Metric: {activeCatalogReport.sampleMetric}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#332B28] mt-1 truncate">
+                  {activeCatalogReport.title}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <button
+                type="button"
+                onClick={() => setIsCatalogOpen(true)}
+                className="px-3 py-1.5 text-xs font-bold text-[#C96F55] bg-white border border-[#ebdcd3] hover:bg-[#FFF9F5] rounded-full transition-colors cursor-pointer shadow-2xs"
+              >
+                Change Template
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveCatalogReport(null);
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('template');
+                    return next;
+                  });
+                  setStatusMessage('Template reset to standard view');
+                  setTimeout(() => setStatusMessage(null), 2000);
+                }}
+                className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
+                title="Close template and return to standard view"
+              >
+                ✕ Close Template
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Level 3: Active Report Content & Data ── */}
 
@@ -1793,13 +1955,25 @@ export default function IncidentsByCategoryReport() {
                   Entity: <strong>{customQueryConfig.entity}</strong> · Metric: <strong>{customQueryConfig.metric}</strong> · Grouped by: <strong>{customQueryConfig.groupBy}</strong> · Window: <strong>{customQueryConfig.timeRange}</strong>
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsQueryBuilderOpen(true)}
-                className="px-4 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all self-start sm:self-center"
-              >
-                Modify Query
-              </button>
+              <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
+                <button
+                  type="button"
+                  onClick={() => setIsQueryBuilderOpen(true)}
+                  className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Modify Query</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteCustomQuery}
+                  className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-full shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
+                  title="Delete this custom report view"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete View</span>
+                </button>
+              </div>
             </div>
 
             {/* Custom Aggregation Table */}

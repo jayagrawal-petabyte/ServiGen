@@ -140,7 +140,11 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                 return (
                   <div
                     key={report.id}
-                    className={`bg-white rounded-xl border p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-slate-300 ${
+                    onClick={() => {
+                      onSelectReport(report);
+                      onClose();
+                    }}
+                    className={`bg-white rounded-xl border p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-slate-300 cursor-pointer group ${
                       isActive ? 'border-[#C96F55] ring-1 ring-[#C96F55]/30 bg-[#F7C4B3]/20' : 'border-[#ebdcd3]'
                     }`}
                   >
@@ -185,11 +189,12 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onSelectReport(report);
                           onClose();
                         }}
-                        className="px-3 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                        className="px-3.5 py-1.5 bg-[#C96F55] hover:bg-[#b55f46] text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                       >
                         <span>▶ Run Report</span>
                         <ArrowRight className="w-3 h-3" />

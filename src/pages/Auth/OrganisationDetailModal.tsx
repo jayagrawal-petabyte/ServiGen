@@ -192,9 +192,10 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-          {/* Modal Header */}
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in" />
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-5 md:p-6 overflow-y-auto pointer-events-none">
+          <Dialog.Content className="w-full max-w-4xl max-h-[calc(100vh-48px)] my-2 sm:my-4 overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col pointer-events-auto animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
           <div className="bg-slate-50/80 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-11 h-11 rounded-xl bg-[#13273e] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm border border-slate-700/20">
@@ -652,7 +653,8 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
             </button>
           </div>
         </Dialog.Content>
-      </Dialog.Portal>
+      </div>
+    </Dialog.Portal>
     </Dialog.Root>
   );
 };

@@ -250,7 +250,10 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                         )}
                         <span className="truncate leading-tight">{item.label}</span>
                       </div>
-                      {item.countBadge || renderBadge(item.count, isActive)}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.countBadge || renderBadge(item.count, isActive)}
+                        {item.action}
+                      </div>
                     </button>
                   );
                 })}

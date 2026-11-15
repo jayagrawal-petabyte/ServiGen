@@ -57,18 +57,34 @@ export interface TimeLog {
 /**
  * Format minutes into readable "Xh Ym" string
  */
-export function formatMinutes(minutes: number | string): string {
+export function formatMinutes(minutes: number | string | undefined | null): string {
+  if (minutes == null) return '0m';
   if (typeof minutes === 'string') {
-    if (minutes.includes('h') || minutes.includes('m') || minutes.includes(':')) {
-      return minutes;
+    const trimmed = minutes.trim();
+    if (
+      trimmed.toLowerCase().includes('nan') ||
+      trimmed === '' ||
+      trimmed === 'undefined' ||
+      trimmed === 'null'
+    ) {
+      return '0m';
     }
-    const parsed = parseFloat(minutes);
+    // Clean string format like "2h 30m", "2h", "45m", "01:30"
+    if (
+      /^\d+\s*h(\s*\d+\s*m)?$/i.test(trimmed) ||
+      /^\d+\s*m$/i.test(trimmed) ||
+      /^\d+:\d+$/.test(trimmed)
+    ) {
+      return trimmed;
+    }
+    const parsed = parseFloat(trimmed);
     if (isNaN(parsed) || parsed <= 0) return '0m';
     minutes = parsed;
   }
-  if (!minutes || minutes <= 0) return '0m';
-  const hours = Math.floor(minutes / 60);
-  const remaining = Math.round(minutes % 60);
+  const num = Number(minutes);
+  if (isNaN(num) || num <= 0) return '0m';
+  const hours = Math.floor(num / 60);
+  const remaining = Math.round(num % 60);
   if (hours > 0 && remaining > 0) return `${hours}h ${remaining}m`;
   if (hours > 0) return `${hours}h`;
   return `${remaining}m`;
@@ -194,7 +210,11 @@ export const myWorkService = {
           timeRecord: formatMinutes(t.timeRecord || t.timeRecordedMinutes || t.timeRecorded || 0),
           status: t.status || 'Active',
           holdReason: t.holdReason || null,
-          slaFormatted: t.slaFormatted || `${typeof t.slaTimeLeft === 'number' ? Math.abs(t.slaTimeLeft) + 'm' : 'Within SLA'}`,
+          slaFormatted:
+            t.slaFormatted ||
+            (typeof t.slaTimeLeft === 'number' && !isNaN(t.slaTimeLeft)
+              ? `${Math.abs(t.slaTimeLeft)}m`
+              : 'Within SLA'),
           slaTimeLeft: typeof t.slaTimeLeft === 'number' ? t.slaTimeLeft : 60,
           needsEscalation: Boolean(t.needsEscalation),
           assignedAgent: typeof t.assignedAgent === 'string'

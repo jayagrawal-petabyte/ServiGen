@@ -97,6 +97,21 @@ export function normalizeSupportIncident(
     team: teamVal,
     isStarred: Boolean(raw.isStarred),
     dateLogged: dateFormatted,
+    aiRisk: raw.aiRisk,
+    aiRiskScore: raw.aiRiskScore,
+    escalatedToTier2: raw.escalatedToTier2 || teamVal === '2nd Line Support',
+    slaTimeLeft: typeof raw.slaTimeLeft === 'number' ? raw.slaTimeLeft : undefined,
+    slaFormatted: raw.slaFormatted || slaStr,
+    resolutionTargetAt: raw.resolutionTargetAt,
+    responseTargetAt: raw.responseTargetAt,
+    createdAt: raw.createdAt,
+    organisation: raw.organisation || raw.organisationName || raw.org || raw.organization,
+    requester: raw.requester || raw.requesterName || raw.endUser || (raw.assignedAgent ? `${raw.assignedAgent.firstName || ''} ${raw.assignedAgent.lastName || ''}`.trim() : agentName !== 'Unassigned' ? agentName : undefined),
+    site: raw.site || raw.siteName || 'Corporate IT',
+    email: raw.email || raw.requesterEmail,
+    phoneNumber: raw.phone || raw.phoneNumber,
+    description: raw.description,
+    raw,
   };
 }
 

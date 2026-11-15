@@ -50,8 +50,8 @@ const DEFAULT_ORGANISATIONS: OrganisationItem[] = [
     tier: 'Enterprise',
     region: 'APAC',
     primarySite: 'Bangalore HQ',
-    openTickets: 5,
-    contactCount: 14,
+    openTickets: 3,
+    contactCount: 5,
     status: 'Active',
   },
   {
@@ -62,7 +62,7 @@ const DEFAULT_ORGANISATIONS: OrganisationItem[] = [
     region: 'EMEA',
     primarySite: 'London UK Branch',
     openTickets: 2,
-    contactCount: 8,
+    contactCount: 4,
     status: 'Active',
   },
   {
@@ -187,6 +187,30 @@ export const OrganisationsScreen: React.FC = () => {
   const [selectedOrgForModal, setSelectedOrgForModal] = useState<OrganisationItem | null>(null);
   const [orgModalInitialTab, setOrgModalInitialTab] = useState<'tickets' | 'contacts' | 'overview'>('tickets');
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<any | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orgId = params.get('org') || params.get('orgId') || params.get('id');
+    const tab = params.get('tab');
+    const showModal = params.get('modal') === 'true' || params.get('tickets') === 'true';
+
+    if (orgId) {
+      const match = organisations.find(
+        (o) => o.id.toLowerCase() === orgId.toLowerCase() || o.name.toLowerCase().includes(orgId.toLowerCase())
+      );
+      if (match) {
+        setSelectedOrgForModal(match);
+        if (tab === 'contacts' || tab === 'tickets' || tab === 'overview') {
+          setOrgModalInitialTab(tab);
+        } else {
+          setOrgModalInitialTab('tickets');
+        }
+      }
+    } else if (showModal && organisations.length > 0) {
+      setSelectedOrgForModal(organisations[0]);
+      setOrgModalInitialTab(tab === 'contacts' ? 'contacts' : 'tickets');
+    }
+  }, [organisations]);
 
   const filteredOrganisations = useMemo(() => {
     return organisations.filter((org) => {
@@ -371,7 +395,7 @@ export const OrganisationsScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsSiteDropdownOpen((prev) => !prev)}
-                className="w-full flex items-center justify-between gap-2 rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[12.5px] font-medium text-slate-700 outline-none hover:border-slate-300 hover:bg-slate-50/70 focus:border-[#C96F55] focus:ring-2 focus:ring-[#C96F55]/15 cursor-pointer transition-all shadow-2xs"
+                className="w-full flex items-center justify-between gap-2 rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[12.5px] font-medium text-slate-700 outline-none hover:border-slate-300 hover:bg-slate-50/70 focus:border-[#C96F55] cursor-pointer transition-all"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <MapPin size={14} className="text-slate-400 shrink-0" />
@@ -473,6 +497,21 @@ export const OrganisationsScreen: React.FC = () => {
               <span className="org-main-range">
                 Showing {filteredOrganisations.length} of {organisations.length} organisations
               </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C96F55] text-white hover:bg-[#b55d44] transition-colors shadow-2xs cursor-pointer"
+                onClick={() => {
+                  const target = filteredOrganisations[0] || organisations[0];
+                  if (target) {
+                    setSelectedOrgForModal(target);
+                    setOrgModalInitialTab('tickets');
+                  }
+                }}
+                title="Open organisation tickets modal"
+              >
+                <Ticket className="w-3.5 h-3.5" />
+                <span>Open Tickets Modal</span>
+              </button>
               <RefreshButton
                 onClick={handleResetFilters}
                 title="Refresh organisations directory"

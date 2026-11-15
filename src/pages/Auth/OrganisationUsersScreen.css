@@ -478,6 +478,22 @@
    Organisations Directory - Sidebar & Main Layout
    ======================================================== */
 
+@media (max-width: 900px) {
+  .org-page-layout {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .org-side {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+  .org-main {
+    height: auto;
+    min-height: 0;
+  }
+}
+
 .org-page-layout {
   display: flex;
   flex-direction: row;

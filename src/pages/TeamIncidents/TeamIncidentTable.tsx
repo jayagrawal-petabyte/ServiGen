@@ -165,7 +165,16 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
         {incident.id}
       </td>
       <td className="whitespace-nowrap">
-        <SlaBadge slaTimeLeft={incident.sla} status={incident.status} variant="restrained" />
+        <SlaBadge
+          ticketId={incident.id}
+          slaTimeLeft={incident.slaTimeLeft}
+          slaFormatted={incident.slaFormatted || incident.sla}
+          resolutionTargetAt={incident.resolutionTargetAt}
+          createdAt={incident.createdAt}
+          priority={incident.priority}
+          status={incident.status}
+          variant="restrained"
+        />
       </td>
       <td className="team-table-summary-link font-medium leading-snug max-w-[460px] truncate" title={incident.summary}>
         {incident.summary}
@@ -1668,7 +1677,20 @@ function TeamIncidentTable({
             priority: (selectedIncident.priority as TicketPriority) || "Medium",
             status: selectedIncident.status,
             category: selectedIncident.category,
-            targetSla: `Target SLA: ${selectedIncident.sla}`,
+            targetSla: selectedIncident.slaFormatted || `Target SLA: ${selectedIncident.sla}`,
+            slaTimeLeft: selectedIncident.slaTimeLeft,
+            slaFormatted: selectedIncident.slaFormatted || selectedIncident.sla,
+            resolutionTargetAt: selectedIncident.resolutionTargetAt,
+            responseTargetAt: selectedIncident.responseTargetAt,
+            createdAt: selectedIncident.createdAt || selectedIncident.dateLogged,
+            organisation: selectedIncident.organisation,
+            organisationName: selectedIncident.organisation,
+            requester: selectedIncident.requester,
+            site: selectedIncident.site || 'Corporate IT',
+            email: selectedIncident.email,
+            phoneNumber: selectedIncident.phoneNumber,
+            description: selectedIncident.description,
+            ...(selectedIncident.raw || {}),
           }}
           currentUser={user?.fullName || "Service Agent"}
           aiRisk={selectedIncident.aiRisk || computeAiRisk(selectedIncident).level}

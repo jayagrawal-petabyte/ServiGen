@@ -13,9 +13,15 @@ export function parseInitialSeconds(
     return 0;
   }
 
-  const rawStr = String(slaFormatted || (typeof slaTimeLeft === 'string' ? slaTimeLeft : '')).trim();
+  // 1. Numeric time left (minutes) - check FIRST!
+  if (typeof slaTimeLeft === 'number') {
+    return Math.round(slaTimeLeft * 60);
+  }
 
-  // Negative / overdue string patterns (e.g. "-00:15", "Overdue SLA", "Breached")
+  let rawStr = String(slaFormatted || (typeof slaTimeLeft === 'string' ? slaTimeLeft : '')).trim();
+  rawStr = rawStr.replace(/^Target\s+SLA\s*:\s*/i, '').trim();
+
+  // Negative / overdue string patterns (e.g. "-00:15", "-01:38", "Overdue SLA", "Breached")
   if (
     rawStr.startsWith('-') ||
     rawStr.toLowerCase().includes('overdue') ||
@@ -23,19 +29,19 @@ export function parseInitialSeconds(
   ) {
     const colonMatch = rawStr.match(/-(\d+):(\d+)/);
     if (colonMatch) {
-      const mins = parseInt(colonMatch[1], 10);
-      const secs = parseInt(colonMatch[2], 10);
-      return -(mins * 60 + secs);
+      const part1 = parseInt(colonMatch[1], 10);
+      const part2 = parseInt(colonMatch[2], 10);
+      // formatSla outputs HH:MM (hours:mins)
+      return -(part1 * 3600 + part2 * 60);
+    }
+    const minMatch = rawStr.match(/-?(\d+)\s*m/i);
+    if (minMatch) {
+      return -(parseInt(minMatch[1], 10) * 60);
     }
     return -900; // default -15m breach
   }
 
-  // Numeric time left (minutes)
-  if (typeof slaTimeLeft === 'number') {
-    return Math.round(slaTimeLeft * 60);
-  }
-
-  // String parsing for days/hours/minutes (e.g. "3h 45m", "1h left", "0h left", "45m left")
+  // String parsing for days/hours/minutes (e.g. "3h 45m", "1h left", "0h left", "45m left", "5h SLA")
   if (rawStr) {
     let totalSec = 0;
     const dayMatch = rawStr.match(/(\d+)\s*d/i);
@@ -53,12 +59,13 @@ export function parseInitialSeconds(
 
     if (totalSec > 0) return totalSec;
 
-    // Pattern like "05:05" (mm:ss or hh:mm)
+    // Pattern like "05:00" (HH:MM from formatSla)
     const colonMatch = rawStr.match(/^(\d+):(\d+)$/);
     if (colonMatch) {
       const part1 = parseInt(colonMatch[1], 10);
       const part2 = parseInt(colonMatch[2], 10);
-      return part1 * 60 + part2;
+      // In formatSla, format is hours:mins
+      return part1 * 3600 + part2 * 60;
     }
   }
 
@@ -72,11 +79,18 @@ export function parseInitialSeconds(
  * - Breached (<= 0s remaining): Pulsing Red (#e11d48 / rose)
  */
 export function formatSecondsToSla(seconds: number): { text: string; urgency: SlaUrgency } {
-  // Breached / Overdue: Pulse Red with negative ticker
+  // Breached / Overdue: Negative ticker
   if (seconds <= 0) {
     const abs = Math.abs(seconds);
-    const m = Math.floor(abs / 60);
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
     const s = abs % 60;
+    if (h > 0) {
+      return {
+        text: `Breached (-${h}h ${m}m ${String(s).padStart(2, '0')}s)`,
+        urgency: 'overdue',
+      };
+    }
     return {
       text: abs > 0 ? `Breached (-${m}m ${String(s).padStart(2, '0')}s)` : 'Overdue SLA',
       urgency: 'overdue',
@@ -213,6 +227,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused'))
   );
 
+  const isCompleted = Boolean(
+    (slaFormatted && (slaFormatted.toLowerCase().includes('complete') || slaFormatted.toLowerCase().includes('met'))) ||
+    (status && (status.toLowerCase() === 'resolved' || status.toLowerCase() === 'closed')) ||
+    (status?.toLowerCase() === 'actioned' && (slaTimeLeft === 0 || slaFormatted?.toLowerCase().includes('complete')))
+  );
+
   const [targetTimestamp, setTargetTimestamp] = useState<number>(() =>
     getTicketSlaTarget(ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority)
   );
@@ -230,7 +250,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
 
   // 1-second live ticking countdown timer anchored to absolute target timestamp
   useEffect(() => {
-    if (isOnHold) return;
+    if (isOnHold || isCompleted) return;
 
     const tick = () => {
       setSecondsLeft(Math.round((targetTimestamp - Date.now()) / 1000));
@@ -239,10 +259,36 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [isOnHold, targetTimestamp]);
+  }, [isOnHold, isCompleted, targetTimestamp]);
 
   if (slaTimeLeft == null && !slaFormatted) {
     return <span className="text-slate-400 text-xs">—</span>;
+  }
+
+  // Completed when resolved, closed, or SLA marked complete
+  if (isCompleted) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap shrink-0 ${
+          variant === 'restrained'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm'
+        } ${className}`}
+        style={{
+          backgroundColor: '#ecfdf5',
+          color: '#065f46',
+          borderColor: '#a7f3d0',
+          boxShadow: 'none',
+        }}
+        title="SLA completed on time"
+      >
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"
+          style={{ backgroundColor: '#059669', opacity: 1, display: 'inline-block' }}
+        />
+        <span>Completed</span>
+      </span>
+    );
   }
 
   // Paused when On Hold
@@ -254,6 +300,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
             ? 'bg-slate-100 text-slate-700 border-slate-200'
             : 'bg-slate-100 text-slate-700 border-slate-300 shadow-sm'
         } ${className}`}
+        style={{ boxShadow: 'none' }}
         title="SLA clock paused while ticket is on hold"
       >
         <span className="text-[10px]">⏸</span>
@@ -277,9 +324,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#fff1f2',
         color: '#be123c',
         borderColor: '#fecdd3',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#e11d48',
+        opacity: 1,
+        display: 'inline-block',
       };
     } else if (urgency === 'warning') {
       badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
@@ -288,9 +338,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#fffbeb',
         color: '#92400e',
         borderColor: '#fde68a',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#d97706',
+        opacity: 1,
+        display: 'inline-block',
       };
     } else {
       badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
@@ -299,9 +352,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#ecfdf5',
         color: '#065f46',
         borderColor: '#a7f3d0',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#059669',
+        opacity: 1,
+        display: 'inline-block',
       };
     }
   } else {
@@ -312,9 +368,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#fff1f2',
         color: '#be123c',
         borderColor: '#fecdd3',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#e11d48',
+        opacity: 1,
+        display: 'inline-block',
       };
     } else if (urgency === 'warning') {
       badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
@@ -323,9 +382,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#fffbeb',
         color: '#92400e',
         borderColor: '#fde68a',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#d97706',
+        opacity: 1,
+        display: 'inline-block',
       };
     } else {
       badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
@@ -334,9 +396,12 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
         backgroundColor: '#ecfdf5',
         color: '#065f46',
         borderColor: '#a7f3d0',
+        boxShadow: 'none',
       };
       dotStyle = {
         backgroundColor: '#059669',
+        opacity: 1,
+        display: 'inline-block',
       };
     }
   }
