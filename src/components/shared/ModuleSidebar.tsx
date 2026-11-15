@@ -157,7 +157,9 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                 aria-label={item.label}
               >
                 {item.icon ? (
-                  <span className="shrink-0">{item.icon}</span>
+                  <span className={`shrink-0 flex items-center justify-center ${isActive ? 'text-white [&>svg]:!text-white [&>svg]:!stroke-white [&_*]:!text-white [&_*]:!stroke-white' : ''}`}>
+                    {item.icon}
+                  </span>
                 ) : (
                   <span className="text-xs font-bold">{item.label.slice(0, 1)}</span>
                 )}
@@ -241,7 +243,11 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        {item.icon && <span className="shrink-0">{item.icon}</span>}
+                        {item.icon && (
+                          <span className={`shrink-0 flex items-center justify-center ${isActive ? 'text-white [&>svg]:!text-white [&>svg]:!stroke-white [&_*]:!text-white [&_*]:!stroke-white' : ''}`}>
+                            {item.icon}
+                          </span>
+                        )}
                         <span className="truncate leading-tight">{item.label}</span>
                       </div>
                       {item.countBadge || renderBadge(item.count, isActive)}
@@ -309,7 +315,11 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                                {item.icon && (
+                                  <span className={`shrink-0 flex items-center justify-center ${isActive ? 'text-white [&>svg]:!text-white [&>svg]:!stroke-white [&_*]:!text-white [&_*]:!stroke-white' : ''}`}>
+                                    {item.icon}
+                                  </span>
+                                )}
                                 <span className="truncate leading-tight">{item.label}</span>
                               </div>
                               {item.action || item.countBadge || renderBadge(item.count, isActive)}
