@@ -18,11 +18,16 @@ import {
   X,
   RotateCcw,
   ChevronDown,
+  Users,
+  Ticket,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { RefreshButton } from '../../components/shared/RefreshButton';
+import { OrganisationDetailModal } from './OrganisationDetailModal';
+import { TicketDetailModal, type TicketPriority } from '../../components/TicketDetailModal';
 import './OrganisationUsersScreen.css';
 
 export interface OrganisationItem {
@@ -177,6 +182,11 @@ export const OrganisationsScreen: React.FC = () => {
     selectedTier !== 'ALL' ||
     selectedSite !== 'ALL' ||
     selectedStatus !== 'ALL';
+
+  // Organisation Detail & Ticket Modal State
+  const [selectedOrgForModal, setSelectedOrgForModal] = useState<OrganisationItem | null>(null);
+  const [orgModalInitialTab, setOrgModalInitialTab] = useState<'tickets' | 'contacts' | 'overview'>('tickets');
+  const [selectedTicketForModal, setSelectedTicketForModal] = useState<any | null>(null);
 
   const filteredOrganisations = useMemo(() => {
     return organisations.filter((org) => {
@@ -494,6 +504,7 @@ export const OrganisationsScreen: React.FC = () => {
                   <th>REGISTERED CONTACTS</th>
                   <th>OPEN TICKETS</th>
                   <th>STATUS</th>
+                  <th style={{ width: 90, textAlign: 'right' }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -501,12 +512,19 @@ export const OrganisationsScreen: React.FC = () => {
                   filteredOrganisations.map((org) => {
                     const initials = org.name.slice(0, 2).toUpperCase();
                     return (
-                      <tr key={org.id}>
+                      <tr
+                        key={org.id}
+                        className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                        onClick={() => {
+                          setSelectedOrgForModal(org);
+                          setOrgModalInitialTab('overview');
+                        }}
+                      >
                         <td>
                           <div className="org-user-identity">
                             <div className="org-user-avatar">{initials}</div>
                             <div className="org-user-name-box">
-                              <span className="org-user-fullname">{org.name}</span>
+                              <span className="org-user-fullname group-hover:text-[#C96F55] transition-colors">{org.name}</span>
                               <span className="org-user-handle">@{org.id}</span>
                             </div>
                           </div>
@@ -519,19 +537,62 @@ export const OrganisationsScreen: React.FC = () => {
                         </td>
                         <td>{org.primarySite}</td>
                         <td>{org.region}</td>
-                        <td>{org.contactCount} Contacts</td>
-                        <td>{org.openTickets} Open</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedOrgForModal(org);
+                              setOrgModalInitialTab('contacts');
+                            }}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96F55] hover:underline"
+                            title={`View contacts for ${org.name}`}
+                          >
+                            <Users size={13} className="text-[#C96F55]/80" />
+                            <span>{org.contactCount} Contacts</span>
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedOrgForModal(org);
+                              setOrgModalInitialTab('tickets');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+                            title={`View open tickets for ${org.name}`}
+                          >
+                            <Ticket size={12} className="text-amber-600" />
+                            <span>{org.openTickets} Open</span>
+                          </button>
+                        </td>
                         <td>
                           <span className={`org-status-pill ${org.status.toLowerCase()}`}>
                             {org.status}
                           </span>
+                        </td>
+                        <td className="text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedOrgForModal(org);
+                              setOrgModalInitialTab('tickets');
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#C96F55] hover:text-[#b55d44] hover:underline"
+                            title={`View details for ${org.name}`}
+                          >
+                            <span>View</span>
+                            <ArrowRight size={13} />
+                          </button>
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 14, fontWeight: 600 }}>No organisations match the current filters.</span>
                         <button
@@ -640,6 +701,42 @@ export const OrganisationsScreen: React.FC = () => {
               </form>
             </div>
           </div>
+        )}
+        {/* Organisation Detail Modal */}
+        {selectedOrgForModal && (
+          <OrganisationDetailModal
+            isOpen={Boolean(selectedOrgForModal)}
+            onClose={() => setSelectedOrgForModal(null)}
+            organisation={selectedOrgForModal}
+            initialTab={orgModalInitialTab}
+            onSelectTicket={(ticket) => {
+              setSelectedTicketForModal(ticket);
+            }}
+          />
+        )}
+
+        {/* Full Ticket Detail Modal */}
+        {selectedTicketForModal && (
+          <TicketDetailModal
+            ticket={{
+              id: selectedTicketForModal.id,
+              type: selectedTicketForModal.ticketType || selectedTicketForModal.type || 'Incident',
+              summary: selectedTicketForModal.summary,
+              agent: typeof selectedTicketForModal.assignedAgent === 'object'
+                ? selectedTicketForModal.assignedAgent?.fullName
+                : selectedTicketForModal.assignedAgent || selectedTicketForModal.assignedAgentId || 'Alex Rivera',
+              priority: (selectedTicketForModal.priority as TicketPriority) || 'Medium',
+              status: selectedTicketForModal.status || 'Active',
+              category: selectedTicketForModal.category || 'General Support',
+              targetSla: selectedTicketForModal.slaFormatted || '2h SLA',
+              organisationName: selectedOrgForModal?.name || selectedTicketForModal.organisation,
+              site: selectedOrgForModal?.primarySite,
+              createdAt: selectedTicketForModal.createdAt,
+              description: selectedTicketForModal.description || selectedTicketForModal.summary,
+            }}
+            currentUser={currentUser?.fullName || 'Administrator'}
+            onClose={() => setSelectedTicketForModal(null)}
+          />
         )}
       </div>
     </div>
