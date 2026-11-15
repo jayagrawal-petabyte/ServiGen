@@ -306,6 +306,7 @@ const NAV_ITEMS: NavItemConfig[] = [
     label: 'Reporting',
     icon: ReportingNavIcon,
     matchActive: (path) => path.startsWith('/reporting') || path.startsWith('/reports'),
+    roles: ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'],
   },
 ];
 

@@ -1401,6 +1401,32 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               </button>
             )}
 
+            {/* Reporting & Analytics */}
+            <button
+              type="button"
+              className="global-profile-link-item"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/reporting');
+              }}
+            >
+              <span>📊</span>
+              <span>Reporting &amp; Analytics</span>
+            </button>
+
+            {/* Welcome Splash Screen */}
+            <button
+              type="button"
+              className="global-profile-link-item"
+              onClick={() => {
+                setActiveFlyout(null);
+                navigate('/auth?tab=splash');
+              }}
+            >
+              <span>✨</span>
+              <span>Welcome Splash Screen</span>
+            </button>
+
             {canAccessAdmin && (
               <button
                 type="button"
