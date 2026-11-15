@@ -8,6 +8,7 @@ import { usePersistentState } from "../../utils/persistentState";
 import {
   myWorkService,
   parseDurationToMinutes,
+  formatMinutes,
   type TicketStatus,
   type MyWorkTicket,
 } from "../../services/myWorkService";
@@ -15,7 +16,16 @@ import { MOCK_MY_WORK_TICKETS } from "../../services/fallback/mockData";
 import { GlobalNavbarActions } from "../../components/shared/GlobalNavbarActions";
 import { SlaBadge } from "../../components/shared/SlaBadge";
 import { StatusPill } from "../../components/shared/StatusBadge";
-import { SegmentedTabs, FilterToolbar, SearchInput } from "../../components/shared";
+import { SearchInput } from "../../components/shared";
+import {
+  Inbox,
+  User,
+  Users,
+  Layers,
+  Activity,
+  ListFilter,
+  RotateCcw,
+} from "lucide-react";
 
 export type Ticket = MyWorkTicket;
 
@@ -25,7 +35,6 @@ export type TimeLog = {
   duration: string;
   note: string;
 };
-
 
 const PRIORITY_STYLES: Record<string, string> = {
   "P1 - Critical": "bg-rose-50 text-rose-700 border-rose-200",
@@ -41,11 +50,13 @@ const PRIORITY_ORDER = [
   "P4 - Low",
 ];
 
-const STATUS_TABS: TicketStatus[] = [
-  "Active",
-  "Pending",
-  "Actioned",
-  "On Hold",
+const STATUS_FILTERS = [
+  { id: "All", label: "All Statuses" },
+  { id: "Active", label: "Active" },
+  { id: "Pending", label: "Pending" },
+  { id: "Actioned", label: "Actioned" },
+  { id: "On Hold", label: "On Hold" },
+  { id: "Resolved", label: "Resolved" },
 ];
 
 type PriorityPillProps = {
@@ -69,74 +80,19 @@ function PriorityPill({ priority }: PriorityPillProps) {
   );
 }
 
-
 interface ViewOption {
   id: string;
   label: string;
-  icon: (active: boolean) => React.ReactNode;
+  Icon: React.ComponentType<{ size?: number | string; className?: string; strokeWidth?: number | string }>;
 }
 
 const VIEW_OPTIONS: ViewOption[] = [
-  {
-    id: "my-list",
-    label: "My List",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
-        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
-      </svg>
-    ),
-  },
-  {
-    id: "tickets-agents",
-    label: "Tickets by Agents",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-      </svg>
-    ),
-  },
-  {
-    id: "tickets-team",
-    label: "Tickets by Team",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="shrink-0">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-      </svg>
-    ),
-  },
-  {
-    id: "tickets-type",
-    label: "Tickets by Type",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <line x1="8" y1="12" x2="16" y2="12" />
-        <line x1="8" y1="8" x2="16" y2="8" />
-        <line x1="8" y1="16" x2="12" y2="16" />
-      </svg>
-    ),
-  },
-  {
-    id: "tickets-status",
-    label: "Tickets by Status",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="16" x2="12" y2="12" />
-        <line x1="12" y1="8" x2="12.01" y2="8" />
-      </svg>
-    ),
-  },
-  {
-    id: "all-tickets",
-    label: "All Tickets",
-    icon: () => (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-        <circle cx="11" cy="11" r="8" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-    ),
-  },
+  { id: "my-list", label: "My List", Icon: Inbox },
+  { id: "tickets-agents", label: "Tickets by Agents", Icon: User },
+  { id: "tickets-team", label: "Tickets by Team", Icon: Users },
+  { id: "tickets-type", label: "Tickets by Type", Icon: Layers },
+  { id: "tickets-status", label: "Tickets by Status", Icon: Activity },
+  { id: "all-tickets", label: "All Tickets", Icon: ListFilter },
 ];
 
 export default function MyWork() {
@@ -145,8 +101,11 @@ export default function MyWork() {
   const [activeView, setActiveView] = useState<string>("My List");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [query, setQuery] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("All");
-  const [activeTab, setActiveTab] = useState<TicketStatus>("Active");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [priorityFilter, setPriorityFilter] = useState<string>("All");
+  const [agentFilter, setAgentFilter] = useState<string>("All");
+  const [teamFilter, setTeamFilter] = useState<string>("All");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [tickets, setTickets] = usePersistentState<Ticket[]>(
     "servigen_my_work_tickets_v1",
@@ -166,7 +125,7 @@ export default function MyWork() {
   const loadTickets = useCallback(async () => {
     setIsFetchingTickets(true);
     try {
-      const live = await myWorkService.getMyWorkTickets();
+      const live = await myWorkService.getAllTickets();
       // An empty queue is a valid answer; show it rather than stale rows.
       setServerTickets(Array.isArray(live) ? live : []);
       setLoadError(null);
@@ -187,29 +146,169 @@ export default function MyWork() {
     return Array.from(map.values());
   }, [serverTickets]);
 
+  // Available options for contextual filters
+  const availableAgents = useMemo(() => {
+    const set = new Set<string>();
+    allTickets.forEach((t) => {
+      if (t.assignedAgent && t.assignedAgent !== "Unassigned") set.add(t.assignedAgent);
+    });
+    return Array.from(set).sort();
+  }, [allTickets]);
+
+  const availableTeams = useMemo(() => {
+    const set = new Set<string>();
+    allTickets.forEach((t) => {
+      if (t.assignedTeam) set.add(t.assignedTeam);
+    });
+    return Array.from(set).sort();
+  }, [allTickets]);
+
+  const availableTypes = useMemo(() => {
+    const set = new Set<string>();
+    allTickets.forEach((t) => {
+      if (t.ticketType) set.add(t.ticketType);
+    });
+    return Array.from(set).sort();
+  }, [allTickets]);
+
+  // Counts for each view in the primary navigation
+  const viewCounts = useMemo(() => {
+    const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
+    const myList = allTickets.filter((t) => {
+      const ag = (t.assignedAgent || "").toLowerCase();
+      return t.id.startsWith("MYW-") || ag.includes(currentUserName) || ag.includes("adam");
+    }).length;
+
+    const agentsCount = allTickets.filter((t) => Boolean(t.assignedAgent) && t.assignedAgent !== "Unassigned").length;
+    const teamCount = allTickets.filter((t) => Boolean(t.assignedTeam)).length;
+    const typeCount = allTickets.filter((t) => Boolean(t.ticketType)).length;
+    const statusCount = allTickets.filter((t) => ["Active", "Pending"].includes(t.status)).length;
+    const allCount = allTickets.length;
+
+    return {
+      "My List": myList,
+      "Tickets by Agents": agentsCount,
+      "Tickets by Team": teamCount,
+      "Tickets by Type": typeCount,
+      "Tickets by Status": statusCount,
+      "All Tickets": allCount,
+    };
+  }, [allTickets, user]);
+
+  // Base tickets matching the active view (to compute accurate status counts)
+  const baseViewTickets = useMemo(() => {
+    const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
+    return allTickets.filter((t) => {
+      if (activeView === "My List") {
+        const ag = (t.assignedAgent || "").toLowerCase();
+        return t.id.startsWith("MYW-") || ag.includes(currentUserName) || ag.includes("adam");
+      }
+      return true;
+    });
+  }, [allTickets, activeView, user]);
+
+  // Counts for shifted status filter
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      All: baseViewTickets.length,
+      Active: 0,
+      Pending: 0,
+      Actioned: 0,
+      "On Hold": 0,
+      Resolved: 0,
+    };
+    baseViewTickets.forEach((t) => {
+      const st = t.status;
+      if (st === "Active") counts.Active = (counts.Active || 0) + 1;
+      else if (st === "Pending") counts.Pending = (counts.Pending || 0) + 1;
+      else if (st === "Actioned") counts.Actioned = (counts.Actioned || 0) + 1;
+      else if (st === "On Hold") counts["On Hold"] = (counts["On Hold"] || 0) + 1;
+      else if (st === "Resolved" || st === "Closed") counts.Resolved = (counts.Resolved || 0) + 1;
+    });
+    return counts;
+  }, [baseViewTickets]);
+
+  const viewSubtitle = useMemo(() => {
+    switch (activeView) {
+      case "My List":
+        return (
+          <>
+            Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || "Adam Admin"}</span>, sorted by priority.
+          </>
+        );
+      case "All Tickets":
+        return <>All organisation tickets across all teams, types, and agents, sorted by priority.</>;
+      case "Tickets by Agents":
+        return <>Tickets grouped and filtered by assigned agent across service desks.</>;
+      case "Tickets by Team":
+        return <>Tickets distributed across 1st Line, 2nd Line, and specialist support teams.</>;
+      case "Tickets by Type":
+        return <>Tickets categorized by Incidents, Service Requests, Problems, and Changes.</>;
+      case "Tickets by Status":
+        return <>Tickets tracked by workflow lifecycle status (Active, Pending, Actioned, On Hold, Resolved).</>;
+      default:
+        return <>Tickets sorted by priority.</>;
+    }
+  }, [activeView, user]);
+
   const filteredTickets = useMemo(() => {
     const searchText = query.trim().toLowerCase();
+    const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
 
     return allTickets.filter((ticket) => {
-      const matchesStatus = ticket.status === activeTab;
+      // 1. View-level filtering
+      if (activeView === "My List") {
+        const agentName = (ticket.assignedAgent || "").toLowerCase();
+        const isMyTicket = ticket.id.startsWith("MYW-") || agentName.includes(currentUserName) || agentName.includes("adam");
+        if (!isMyTicket) return false;
+      } else if (activeView === "Tickets by Agents") {
+        if (agentFilter !== "All" && ticket.assignedAgent !== agentFilter) {
+          return false;
+        }
+      } else if (activeView === "Tickets by Team") {
+        if (teamFilter !== "All" && ticket.assignedTeam !== teamFilter) {
+          return false;
+        }
+      } else if (activeView === "Tickets by Type") {
+        if (typeFilter !== "All" && ticket.ticketType?.toLowerCase() !== typeFilter.toLowerCase()) {
+          return false;
+        }
+      }
 
-      const matchesPriority =
-        priorityFilter === "All" ||
-        ticket.priority === priorityFilter;
+      // 2. Status filter
+      if (statusFilter !== "All") {
+        const stLower = (ticket.status || "").toLowerCase();
+        if (statusFilter === "Resolved") {
+          if (stLower !== "resolved" && stLower !== "closed") return false;
+        } else if (stLower !== statusFilter.toLowerCase()) {
+          return false;
+        }
+      }
 
-      const matchesSearch =
-        searchText.length === 0 ||
-        ticket.id.toLowerCase().includes(searchText) ||
-        ticket.organisation.toLowerCase().includes(searchText) ||
-        ticket.summary.toLowerCase().includes(searchText);
+      // 3. Priority filter
+      if (priorityFilter !== "All" && ticket.priority !== priorityFilter) {
+        return false;
+      }
 
-      return matchesStatus && matchesPriority && matchesSearch;
+      // 4. Search query
+      if (searchText.length > 0) {
+        const matchesSearch =
+          ticket.id.toLowerCase().includes(searchText) ||
+          ticket.organisation.toLowerCase().includes(searchText) ||
+          ticket.summary.toLowerCase().includes(searchText) ||
+          (ticket.assignedAgent && ticket.assignedAgent.toLowerCase().includes(searchText)) ||
+          (ticket.assignedTeam && ticket.assignedTeam.toLowerCase().includes(searchText)) ||
+          (ticket.ticketType && ticket.ticketType.toLowerCase().includes(searchText));
+        if (!matchesSearch) return false;
+      }
+
+      return true;
     }).sort(
       (a, b) =>
         PRIORITY_ORDER.indexOf(a.priority) -
         PRIORITY_ORDER.indexOf(b.priority)
     );
-  }, [allTickets, query, priorityFilter, activeTab]);
+  }, [allTickets, activeView, statusFilter, priorityFilter, agentFilter, teamFilter, typeFilter, query, user]);
 
   const handleSearchChange = (
     event: ChangeEvent<HTMLInputElement>
@@ -283,11 +382,17 @@ export default function MyWork() {
     }
   };
 
-  // Handle tab deep linking (e.g. /my-work?tab=Active)
+  // Handle tab/status deep linking (e.g. /my-work?tab=Active or /my-work?view=All%20Tickets)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && STATUS_TABS.includes(tabParam as TicketStatus)) {
-      setActiveTab(tabParam as TicketStatus);
+    if (tabParam) {
+      const match = STATUS_FILTERS.find((s) => s.id.toLowerCase() === tabParam.toLowerCase() || s.label.toLowerCase() === tabParam.toLowerCase());
+      if (match) setStatusFilter(match.id);
+    }
+    const viewParam = searchParams.get('view');
+    if (viewParam) {
+      const match = VIEW_OPTIONS.find((v) => v.label.toLowerCase() === viewParam.toLowerCase() || v.id.toLowerCase() === viewParam.toLowerCase());
+      if (match) setActiveView(match.label);
     }
   }, [searchParams]);
 
@@ -584,13 +689,13 @@ export default function MyWork() {
         {/* Left Sidebar Panel */}
         <aside
           className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] my-3 ml-3 overflow-hidden ${
-            isSidebarCollapsed ? "w-16 px-2" : "w-[250px] px-4"
+            isSidebarCollapsed ? "w-16 px-2" : "w-[260px] px-3.5"
           }`}
         >
           {/* Sidebar Header with Collapse Toggle */}
           <div
             className={
-              "flex items-center mb-4 pb-3 border-b border-slate-100 " +
+              "flex items-center mb-3.5 pb-2.5 border-b border-slate-100 " +
               (isSidebarCollapsed ? "justify-center" : "justify-between px-1")
             }
           >
@@ -612,7 +717,7 @@ export default function MyWork() {
 
           {/* Sidebar Record Search */}
           {!isSidebarCollapsed && (
-            <div className="mb-3 px-1">
+            <div className="mb-3 px-0.5">
               <SearchInput
                 size="sm"
                 value={query}
@@ -623,50 +728,209 @@ export default function MyWork() {
             </div>
           )}
 
-          {/* View Options List */}
-          <nav className="flex flex-col gap-1.5" aria-label="Views">
-            {VIEW_OPTIONS.map((item) => {
-              const isActive = activeView === item.label;
+          {/* Sidebar Body with Views & Shifted Filters */}
+          <div className="flex-1 overflow-y-auto pr-0.5 space-y-3">
+            {/* Primary Views Navigation */}
+            <nav className="flex flex-col gap-1" aria-label="Views">
+              {VIEW_OPTIONS.map((item) => {
+                const isActive = activeView === item.label;
+                const Icon = item.Icon;
+                const count = viewCounts[item.label as keyof typeof viewCounts] ?? 0;
 
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveView(item.label)}
-                  title={isSidebarCollapsed ? item.label : undefined}
-                  className={
-                    "flex items-center text-sm transition-all cursor-pointer " +
-                    (isSidebarCollapsed
-                      ? "justify-center w-10 h-10 mx-auto p-0 rounded-full "
-                      : "w-full gap-3 px-3 py-2.5 rounded-full ") +
-                    (isActive
-                      ? "bg-[#C96F55] text-white font-bold shadow-xs"
-                      : "text-slate-700 hover:bg-slate-100/80 font-medium")
-                  }
-                >
-                  <div className={`shrink-0 ${isActive ? "text-white" : "text-slate-500"}`}>
-                    {item.icon(isActive)}
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveView(item.label);
+                      setAgentFilter("All");
+                      setTeamFilter("All");
+                      setTypeFilter("All");
+                    }}
+                    title={isSidebarCollapsed ? `${item.label} (${count})` : undefined}
+                    className={
+                      "flex items-center text-xs transition-all cursor-pointer " +
+                      (isSidebarCollapsed
+                        ? "justify-center w-10 h-10 mx-auto p-0 rounded-full "
+                        : "w-full justify-between px-3 py-2 rounded-full ") +
+                      (isActive
+                        ? "bg-[#C96F55] text-white font-bold shadow-xs [&>div>div>svg]:!text-white [&>div>div>svg]:!stroke-white"
+                        : "text-slate-700 hover:bg-slate-100 font-medium")
+                    }
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`shrink-0 ${isActive ? "text-white" : "text-slate-500"}`}>
+                        <Icon size={16} strokeWidth={2.2} />
+                      </div>
+                      {!isSidebarCollapsed && (
+                        <span className="truncate">{item.label}</span>
+                      )}
+                    </div>
+                    {!isSidebarCollapsed && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isActive
+                            ? "bg-white/25 text-white"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {!isSidebarCollapsed && (
+              <>
+                <hr className="border-slate-100 my-2" />
+
+                {/* Shifted Status Filter Section */}
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">
+                    Status
                   </div>
-                  {!isSidebarCollapsed && (
-                    <span className="truncate">{item.label}</span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+                  <div className="flex flex-col gap-1">
+                    {STATUS_FILTERS.map((s) => {
+                      const isSelected = statusFilter === s.id;
+                      const count = statusCounts[s.id] ?? 0;
+
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setStatusFilter(s.id)}
+                          className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-[#FDE9E1] text-[#C96F55] font-bold"
+                              : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className="truncate">{s.label}</span>
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              isSelected
+                                ? "bg-[#C96F55] text-white"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Shifted Priority Filter Section */}
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
+                    Priority
+                  </div>
+                  <select
+                    value={priorityFilter}
+                    onChange={(e) => setPriorityFilter(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 cursor-pointer"
+                  >
+                    <option value="All">All Priorities</option>
+                    {PRIORITY_ORDER.map((priority) => (
+                      <option key={priority} value={priority}>
+                        {priority}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contextual Sub-Filters */}
+                {activeView === "Tickets by Agents" && availableAgents.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
+                      Agent
+                    </div>
+                    <select
+                      value={agentFilter}
+                      onChange={(e) => setAgentFilter(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 cursor-pointer"
+                    >
+                      <option value="All">All Agents</option>
+                      {availableAgents.map((ag) => (
+                        <option key={ag} value={ag}>{ag}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {activeView === "Tickets by Team" && availableTeams.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
+                      Team
+                    </div>
+                    <select
+                      value={teamFilter}
+                      onChange={(e) => setTeamFilter(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 cursor-pointer"
+                    >
+                      <option value="All">All Teams</option>
+                      {availableTeams.map((tm) => (
+                        <option key={tm} value={tm}>{tm}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {activeView === "Tickets by Type" && availableTypes.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
+                      Ticket Type
+                    </div>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55]/20 cursor-pointer"
+                    >
+                      <option value="All">All Types</option>
+                      {availableTypes.map((tp) => (
+                        <option key={tp} value={tp}>{tp}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Reset All Filters Button */}
+                {(statusFilter !== "All" || priorityFilter !== "All" || agentFilter !== "All" || teamFilter !== "All" || typeFilter !== "All" || query.trim() !== "") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("All");
+                      setPriorityFilter("All");
+                      setAgentFilter("All");
+                      setTeamFilter("All");
+                      setTypeFilter("All");
+                      setQuery("");
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 mt-2 py-1.5 text-xs font-bold text-[#C96F55] hover:bg-[#FDE9E1] rounded-lg transition-colors cursor-pointer border border-[#C96F55]/20"
+                  >
+                    <RotateCcw size={12} />
+                    Reset All Filters
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </aside>
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 px-6 py-6 overflow-y-auto">
           <div className="mx-auto max-w-6xl">
-            <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <header className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                   {activeView === "My List" ? "My Work" : activeView}
                 </h1>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Tickets currently assigned to <span className="font-semibold text-slate-700">{user?.fullName || ''}</span>, sorted by priority.
+                  {viewSubtitle}
                 </p>
               </div>
 
@@ -675,110 +939,99 @@ export default function MyWork() {
               </div>
             </header>
 
-            <div className="mb-4">
-              <SegmentedTabs<TicketStatus>
-                variant="underline"
-                tabs={STATUS_TABS.map((status) => ({
-                  id: status,
-                  label: status,
-                  count: allTickets.filter((ticket) => ticket.status === status).length,
-                }))}
-                activeTab={activeTab}
-                onChange={(status) => setActiveTab(status)}
-              />
+            {/* Shifted bar at top to sidebar — main area table begins directly */}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50">
+                  <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">Priority</th>
+                    <th className="px-4 py-3">Organisation</th>
+                    <th className="px-4 py-3">Summary</th>
+                    {activeView === "Tickets by Agents" && <th className="px-4 py-3">Assigned Agent</th>}
+                    {activeView === "Tickets by Team" && <th className="px-4 py-3">Team</th>}
+                    {activeView === "Tickets by Type" && <th className="px-4 py-3">Type</th>}
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">SLA Time Left</th>
+                    <th className="px-4 py-3">Time Record</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredTickets.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400">
+                        No tickets match the selected filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTickets.map((ticket) => (
+                      <tr
+                        key={ticket.id}
+                        className="cursor-pointer hover:bg-slate-50 transition-colors"
+                        onClick={() => setSelectedTicket(ticket)}
+                      >
+                        <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
+                          {ticket.id}
+                        </td>
+
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <PriorityPill priority={ticket.priority} />
+                        </td>
+
+                        <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                          {ticket.organisation}
+                        </td>
+
+                        <td className="px-4 py-3 text-slate-700 font-medium max-w-[280px] truncate">
+                          {ticket.summary}
+                        </td>
+
+                        {activeView === "Tickets by Agents" && (
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                            {ticket.assignedAgent || "Unassigned"}
+                          </td>
+                        )}
+
+                        {activeView === "Tickets by Team" && (
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                            {ticket.assignedTeam || "1st Line Support"}
+                          </td>
+                        )}
+
+                        {activeView === "Tickets by Type" && (
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                              {ticket.ticketType || "Incident"}
+                            </span>
+                          </td>
+                        )}
+
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <StatusPill status={ticket.status} />
+                        </td>
+
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <SlaBadge
+                            slaTimeLeft={ticket.slaTimeLeft}
+                            slaFormatted={ticket.slaFormatted}
+                            status={ticket.status}
+                          />
+                        </td>
+
+                        <td className="whitespace-nowrap px-4 py-3 text-slate-600 font-medium">
+                          {formatMinutes(ticket.timeRecord)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-
-            <FilterToolbar
-              className="mb-4"
-              filters={
-                <select
-                  value={priorityFilter}
-                  onChange={handlePriorityChange}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                >
-                  <option value="All">All priorities</option>
-                  {PRIORITY_ORDER.map((priority) => (
-                    <option key={priority} value={priority}>
-                      {priority}
-                    </option>
-                  ))}
-                </select>
-              }
-            />
-
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
-                <tr className="text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Priority</th>
-                  <th className="px-4 py-3">Organisation</th>
-                  <th className="px-4 py-3">Summary</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">SLA Time Left</th>
-                  <th className="px-4 py-3">Time Record</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {filteredTickets.map((ticket) => (
-                  <tr
-                    key={ticket.id}
-                    className="cursor-pointer hover:bg-slate-50"
-                    onClick={() => setSelectedTicket(ticket)}
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
-                      {ticket.id}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <PriorityPill priority={ticket.priority} />
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                      {ticket.organisation}
-                    </td>
-
-                    <td className="px-4 py-3 text-slate-700">
-                      {ticket.summary}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <StatusPill status={ticket.status} />
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <SlaBadge
-                        slaTimeLeft={ticket.slaTimeLeft}
-                        slaFormatted={ticket.slaFormatted}
-                        status={ticket.status}
-                      />
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                      {ticket.timeRecord}
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredTickets.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-10 text-center text-sm text-slate-400"
-                    >
-                      No {activeTab.toLowerCase()} tickets match your
-                      filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
-  </div>
-);
+  );
 }
 

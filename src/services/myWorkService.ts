@@ -5,7 +5,7 @@
  */
 
 import { api, logServiceError } from './apiClient';
-import { MOCK_MY_WORK_TICKETS } from './fallback/mockData';
+import { MOCK_MY_WORK_TICKETS, MOCK_TICKETS } from './fallback/mockData';
 
 export type TicketStatus = 'Active' | 'Pending' | 'Actioned' | 'On Hold';
 
@@ -35,11 +35,16 @@ export interface MyWorkTicket {
   organisation: string;
   summary: string;
   timeRecord: string;
-  status: TicketStatus;
+  status: TicketStatus | string;
   holdReason?: string | null;
   slaFormatted?: string;
   slaTimeLeft?: number;
   needsEscalation?: boolean;
+  assignedAgent?: string;
+  assignedAgentId?: string;
+  assignedTeam?: string;
+  ticketType?: string;
+  createdAt?: string;
 }
 
 export interface TimeLog {
@@ -52,10 +57,18 @@ export interface TimeLog {
 /**
  * Format minutes into readable "Xh Ym" string
  */
-export function formatMinutes(minutes: number): string {
+export function formatMinutes(minutes: number | string): string {
+  if (typeof minutes === 'string') {
+    if (minutes.includes('h') || minutes.includes('m') || minutes.includes(':')) {
+      return minutes;
+    }
+    const parsed = parseFloat(minutes);
+    if (isNaN(parsed) || parsed <= 0) return '0m';
+    minutes = parsed;
+  }
   if (!minutes || minutes <= 0) return '0m';
   const hours = Math.floor(minutes / 60);
-  const remaining = minutes % 60;
+  const remaining = Math.round(minutes % 60);
   if (hours > 0 && remaining > 0) return `${hours}h ${remaining}m`;
   if (hours > 0) return `${hours}h`;
   return `${remaining}m`;
@@ -154,6 +167,90 @@ export const myWorkService = {
     }
 
     return MOCK_MY_WORK_TICKETS;
+  },
+
+  /**
+   * Fetch all tickets across organization (combining /api/tickets and /api/my-work)
+   */
+  async getAllTickets(): Promise<MyWorkTicket[]> {
+    try {
+      const res = await api.get('/api/tickets');
+      const ticketList = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.tickets)
+        ? res.tickets
+        : Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res)
+        ? res
+        : null;
+
+      if (ticketList && ticketList.length > 0) {
+        const orgTickets: MyWorkTicket[] = ticketList.map((t: any) => ({
+          id: t.id,
+          priority: formatPriority(t.priority),
+          organisation: t.organisation || 'ServiGen Internal',
+          summary: t.summary || t.title || 'Untitled Ticket',
+          timeRecord: formatMinutes(t.timeRecord || t.timeRecordedMinutes || t.timeRecorded || 0),
+          status: t.status || 'Active',
+          holdReason: t.holdReason || null,
+          slaFormatted: t.slaFormatted || `${typeof t.slaTimeLeft === 'number' ? Math.abs(t.slaTimeLeft) + 'm' : 'Within SLA'}`,
+          slaTimeLeft: typeof t.slaTimeLeft === 'number' ? t.slaTimeLeft : 60,
+          needsEscalation: Boolean(t.needsEscalation),
+          assignedAgent: typeof t.assignedAgent === 'string'
+            ? t.assignedAgent
+            : t.assignedAgent?.fullName || t.assignedAgent?.name || 'Unassigned',
+          assignedAgentId: t.assignedAgentId || t.assignedAgent?.id,
+          assignedTeam: t.assignedTeam || '1st Line Support',
+          ticketType: t.ticketType || 'Incident',
+          createdAt: t.createdAt,
+        }));
+
+        try {
+          const myTickets = await this.getMyWorkTickets();
+          const map = new Map<string, MyWorkTicket>();
+          orgTickets.forEach((t) => map.set(t.id, t));
+          myTickets.forEach((t) => map.set(t.id, t));
+          return Array.from(map.values());
+        } catch {
+          return orgTickets;
+        }
+      }
+    } catch (error) {
+      logServiceError('myWork.getAllTickets', error);
+    }
+
+    // Fallback: merge MOCK_TICKETS with MOCK_MY_WORK_TICKETS
+    const fallbackOrg: MyWorkTicket[] = (MOCK_TICKETS || []).map((t: any) => ({
+      id: t.id,
+      priority: formatPriority(t.priority),
+      organisation: t.organisation || 'ServiGen Internal',
+      summary: t.summary || t.title || 'Untitled Ticket',
+      timeRecord: formatMinutes(t.timeRecord || 0),
+      status: t.status || 'Active',
+      holdReason: t.holdReason || null,
+      slaFormatted: t.slaFormatted || 'Within SLA',
+      slaTimeLeft: typeof t.slaTimeLeft === 'number' ? t.slaTimeLeft : 60,
+      needsEscalation: Boolean(t.needsEscalation),
+      assignedAgent: typeof t.assignedAgent === 'string'
+        ? t.assignedAgent
+        : t.assignedAgent?.fullName || 'Alex Rivera',
+      assignedTeam: t.assignedTeam || '1st Line Support',
+      ticketType: t.ticketType || 'Incident',
+      createdAt: t.createdAt,
+    }));
+
+    const map = new Map<string, MyWorkTicket>();
+    fallbackOrg.forEach((t) => map.set(t.id, t));
+    MOCK_MY_WORK_TICKETS.forEach((t: any) => {
+      map.set(t.id, {
+        ...t,
+        assignedAgent: 'Adam Admin',
+        assignedTeam: '1st Line Support',
+        ticketType: 'Service Request',
+      });
+    });
+    return Array.from(map.values());
   },
 
   /**
