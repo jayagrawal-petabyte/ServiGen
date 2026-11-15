@@ -1,11 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import {
+  Plus,
+  Globe,
+  Compass,
+  Building2,
+  Landmark,
+  Layers,
+  ShieldCheck,
+  Award,
+  Sparkles,
+  Activity,
+  CheckCircle2,
+  XCircle,
+  MapPin,
+  Search,
+  X,
+  RotateCcw,
+} from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 import { RefreshButton } from '../../components/shared/RefreshButton';
-import { ResetButton } from '../../components/shared/ResetButton';
 import './OrganisationUsersScreen.css';
 
 export interface OrganisationItem {
@@ -89,6 +105,26 @@ const DEFAULT_ORGANISATIONS: OrganisationItem[] = [
   },
 ];
 
+const REGION_ITEMS = [
+  { id: 'ALL', label: 'All Regions', Icon: Globe },
+  { id: 'APAC', label: 'APAC Region', Icon: Compass },
+  { id: 'EMEA', label: 'EMEA Region', Icon: Building2 },
+  { id: 'Americas', label: 'Americas Region', Icon: Landmark },
+] as const;
+
+const TIER_ITEMS = [
+  { id: 'ALL', label: 'All Service Tiers', Icon: Layers },
+  { id: 'Enterprise', label: 'Enterprise', Icon: ShieldCheck },
+  { id: 'Standard', label: 'Standard', Icon: Award },
+  { id: 'Premium', label: 'Premium', Icon: Sparkles },
+] as const;
+
+const STATUS_ITEMS = [
+  { id: 'ALL', label: 'All Statuses', Icon: Activity },
+  { id: 'Active', label: 'Active', Icon: CheckCircle2 },
+  { id: 'Inactive', label: 'Inactive', Icon: XCircle },
+] as const;
+
 export const OrganisationsScreen: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -120,6 +156,13 @@ export const OrganisationsScreen: React.FC = () => {
     const set = new Set(organisations.map((o) => o.primarySite));
     return Array.from(set);
   }, [organisations]);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    selectedRegion !== 'ALL' ||
+    selectedTier !== 'ALL' ||
+    selectedSite !== 'ALL' ||
+    selectedStatus !== 'ALL';
 
   const filteredOrganisations = useMemo(() => {
     return organisations.filter((org) => {
@@ -171,7 +214,7 @@ export const OrganisationsScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5]">
+    <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5] overflow-hidden">
       {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-40 min-h-[50px] sticky top-0 overflow-visible">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -182,18 +225,185 @@ export const OrganisationsScreen: React.FC = () => {
         <GlobalNavbarActions />
       </header>
 
-      <div className="org-users-page flex-1">
-        {/* Header Section */}
-        <div className="org-users-header-row">
-          <div className="org-users-title-col">
-            <h1>Organisations Directory</h1>
-            <p className="mt-1 text-xs text-gray-500">
-              Manage client organisations, company domains, service tiers, and sites across EMEA, APAC &amp; Americas
-            </p>
+      {/* ── Two-Column Layout with Left Sidebar & Right Content ── */}
+      <div className="org-page-layout">
+        {/* Left Sidebar */}
+        <aside className="org-side">
+          {/* Search box */}
+          <div className="org-side-search">
+            <input
+              type="text"
+              placeholder="Search organisations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="org-side-search-btn"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            ) : (
+              <span className="org-side-search-icon">
+                <Search size={14} />
+              </span>
+            )}
           </div>
 
-          <div className="org-users-header-right">
-            <div className="org-users-actions-row">
+          {/* Regions Nav */}
+          <div className="org-side-section">
+            <h3 className="org-side-heading">Regions</h3>
+            <div className="org-side-nav-group">
+              {REGION_ITEMS.map((item) => {
+                const Icon = item.Icon;
+                const isActive = selectedRegion === item.id;
+                const count =
+                  item.id === 'ALL'
+                    ? organisations.length
+                    : organisations.filter((o) => o.region === item.id).length;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`org-side-nav-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setSelectedRegion(item.id)}
+                  >
+                    <span className="org-side-nav-icon">
+                      <Icon size={16} strokeWidth={2.2} />
+                    </span>
+                    <span className="org-side-nav-label">{item.label}</span>
+                    <span className="org-side-nav-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Service Tiers Nav */}
+          <div className="org-side-section">
+            <h3 className="org-side-heading">Service Tiers</h3>
+            <div className="org-side-nav-group">
+              {TIER_ITEMS.map((item) => {
+                const Icon = item.Icon;
+                const isActive = selectedTier === item.id;
+                const count =
+                  item.id === 'ALL'
+                    ? organisations.length
+                    : organisations.filter((o) => o.tier === item.id).length;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`org-side-nav-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setSelectedTier(item.id)}
+                  >
+                    <span className="org-side-nav-icon">
+                      <Icon size={16} strokeWidth={2.2} />
+                    </span>
+                    <span className="org-side-nav-label">{item.label}</span>
+                    <span className="org-side-nav-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Status Nav */}
+          <div className="org-side-section">
+            <h3 className="org-side-heading">Status</h3>
+            <div className="org-side-nav-group">
+              {STATUS_ITEMS.map((item) => {
+                const Icon = item.Icon;
+                const isActive = selectedStatus === item.id;
+                const count =
+                  item.id === 'ALL'
+                    ? organisations.length
+                    : organisations.filter((o) => o.status === item.id).length;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`org-side-nav-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setSelectedStatus(item.id)}
+                  >
+                    <span className="org-side-nav-icon">
+                      <Icon size={16} strokeWidth={2.2} />
+                    </span>
+                    <span className="org-side-nav-label">{item.label}</span>
+                    <span className="org-side-nav-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Default Sites Dropdown */}
+          <div className="org-side-section">
+            <h3 className="org-side-heading">Default Site</h3>
+            <div className="org-side-select-wrap">
+              <MapPin size={14} className="org-side-select-icon" />
+              <select
+                className="org-side-select"
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
+              >
+                <option value="ALL">All Default Sites ({organisations.length})</option>
+                {primarySites.map((site) => {
+                  const count = organisations.filter((o) => o.primarySite === site).length;
+                  return (
+                    <option key={site} value={site}>
+                      {site} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          {/* Reset Filters Button */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="org-side-reset-btn"
+              onClick={handleResetFilters}
+            >
+              <RotateCcw size={13} />
+              <span>Reset All Filters</span>
+            </button>
+          )}
+
+          {/* Add Organisation Sidebar Button */}
+          {isAdmin && (
+            <button
+              type="button"
+              className="org-side-add-btn"
+              onClick={() => setIsAddOrgModalOpen(true)}
+              title="Add a new client organisation"
+            >
+              <Plus size={16} />
+              <span>Add Organisation</span>
+            </button>
+          )}
+        </aside>
+
+        {/* Right Main Content */}
+        <main className="org-main">
+          {/* Header Section */}
+          <div className="org-main-header">
+            <div>
+              <h1 className="org-main-title">Organisations Directory</h1>
+              <p className="org-main-subtitle">
+                Manage client organisations, company domains, service tiers, and sites across EMEA, APAC &amp; Americas
+              </p>
+            </div>
+
+            <div className="org-main-actions">
+              <span className="org-main-range">
+                Showing {filteredOrganisations.length} of {organisations.length} organisations
+              </span>
               <RefreshButton
                 onClick={handleResetFilters}
                 title="Refresh organisations directory"
@@ -201,7 +411,7 @@ export const OrganisationsScreen: React.FC = () => {
               {isAdmin && (
                 <button
                   type="button"
-                  className="org-btn-add-user"
+                  className="org-btn-add-primary"
                   onClick={() => setIsAddOrgModalOpen(true)}
                   title="Add a new client organisation"
                 >
@@ -211,127 +421,84 @@ export const OrganisationsScreen: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Region Tabs */}
-        <div className="org-region-tabs-row">
-          {['ALL', 'APAC', 'EMEA', 'Americas'].map((reg) => (
-            <button
-              key={reg}
-              type="button"
-              className={`org-region-tab-btn ${selectedRegion === reg ? 'active' : ''}`}
-              onClick={() => setSelectedRegion(reg)}
-            >
-              {reg === 'ALL' ? 'All Regions' : `${reg} Region`}
-            </button>
-          ))}
-        </div>
-
-        {/* Search & Filter Bar */}
-        <div className="org-filters-bar">
-          <div className="org-search-box">
-            <input
-              type="text"
-              className="org-search-input"
-              placeholder="Search by organisation name, domain, primary site, or ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <select
-            className="org-filter-select"
-            value={selectedTier}
-            onChange={(e) => setSelectedTier(e.target.value)}
-          >
-            <option value="ALL">All Service Tiers</option>
-            <option value="Enterprise">Enterprise</option>
-            <option value="Standard">Standard</option>
-            <option value="Premium">Premium</option>
-          </select>
-
-          <select
-            className="org-filter-select"
-            value={selectedSite}
-            onChange={(e) => setSelectedSite(e.target.value)}
-          >
-            <option value="ALL">All Default Sites</option>
-            {primarySites.map((site) => (
-              <option key={site} value={site}>
-                {site}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="org-filter-select"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
-
-        {/* Organisations Table matching Contacts image */}
-        <div className="org-table-wrapper">
-          <table className="org-users-table">
-            <thead>
-              <tr>
-                <th>ORGANISATION NAME</th>
-                <th>DOMAIN</th>
-                <th>SERVICE TIER</th>
-                <th>PRIMARY SITE / HQ</th>
-                <th>REGION</th>
-                <th>REGISTERED CONTACTS</th>
-                <th>OPEN TICKETS</th>
-                <th>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrganisations.length > 0 ? (
-                filteredOrganisations.map((org) => {
-                  const initials = org.name.slice(0, 2).toUpperCase();
-                  return (
-                    <tr key={org.id}>
-                      <td>
-                        <div className="org-user-identity">
-                          <div className="org-user-avatar">{initials}</div>
-                          <div className="org-user-name-box">
-                            <span className="org-user-fullname">{org.name}</span>
-                            <span className="org-user-handle">@{org.id}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{org.domain}</td>
-                      <td>
-                        <span className={`org-status-pill tier-${org.tier.toLowerCase()}`}>
-                          {org.tier}
-                        </span>
-                      </td>
-                      <td>{org.primarySite}</td>
-                      <td>{org.region}</td>
-                      <td>{org.contactCount} Contacts</td>
-                      <td>{org.openTickets} Open</td>
-                      <td>
-                        <span className={`org-status-pill ${org.status.toLowerCase()}`}>
-                          {org.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
+          {/* Organisations Table */}
+          <div className="org-table-wrapper">
+            <table className="org-users-table">
+              <thead>
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
-                    No organisations match the current filters.
-                  </td>
+                  <th>ORGANISATION NAME</th>
+                  <th>DOMAIN</th>
+                  <th>SERVICE TIER</th>
+                  <th>PRIMARY SITE / HQ</th>
+                  <th>REGION</th>
+                  <th>REGISTERED CONTACTS</th>
+                  <th>OPEN TICKETS</th>
+                  <th>STATUS</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredOrganisations.length > 0 ? (
+                  filteredOrganisations.map((org) => {
+                    const initials = org.name.slice(0, 2).toUpperCase();
+                    return (
+                      <tr key={org.id}>
+                        <td>
+                          <div className="org-user-identity">
+                            <div className="org-user-avatar">{initials}</div>
+                            <div className="org-user-name-box">
+                              <span className="org-user-fullname">{org.name}</span>
+                              <span className="org-user-handle">@{org.id}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{org.domain}</td>
+                        <td>
+                          <span className={`org-status-pill tier-${org.tier.toLowerCase()}`}>
+                            {org.tier}
+                          </span>
+                        </td>
+                        <td>{org.primarySite}</td>
+                        <td>{org.region}</td>
+                        <td>{org.contactCount} Contacts</td>
+                        <td>{org.openTickets} Open</td>
+                        <td>
+                          <span className={`org-status-pill ${org.status.toLowerCase()}`}>
+                            {org.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>No organisations match the current filters.</span>
+                        <button
+                          type="button"
+                          onClick={handleResetFilters}
+                          style={{
+                            background: '#C96F55',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 999,
+                            padding: '6px 14px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </main>
 
         {/* Add Organisation Modal */}
         {isAddOrgModalOpen && (
