@@ -76,18 +76,20 @@ export default function ApprovalDetailsModal({
     <ModalShell
       isOpen={Boolean(approval)}
       onClose={onClose}
-      size="lg"
+      size="xl"
+      className="max-w-3xl"
+      bodyClassName="p-6 space-y-5"
       description="Approval Request Details"
-      title={`${approval.ticketNumber} - ${approval.title}`}
+      title={`${approval.ticketNumber} – ${approval.title}`}
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
           <button
             type="button"
             className="btn-approval-action"
-            onClick={onClose}
+            onClick={showRejectInput ? () => setShowRejectInput(false) : onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            {showRejectInput ? 'Back' : 'Cancel'}
           </button>
 
           {approval.status === 'pending' && (
@@ -278,125 +280,62 @@ export default function ApprovalDetailsModal({
             </div>
           )}
 
-          {/* Details Table */}
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '13px',
-              marginBottom: '20px',
-            }}
-          >
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td
-                  style={{
-                    padding: '8px 0',
-                    color: '#64748b',
-                    width: '130px',
-                    fontWeight: 500,
-                  }}
-                >
-                  Requester
-                </td>
-
-                <td
-                  style={{
-                    padding: '8px 0',
-                    fontWeight: 600,
-                    color: '#1e293b',
-                  }}
-                >
-                  {approval.authorName}
-                </td>
-              </tr>
+          {/* Request Information Card */}
+          <div className="approval-ticket-details">
+            <div className="approval-details-header">
+              Approval Request Information
+            </div>
+            <div className="approval-details-grid">
+              <div className="detail-row-key">Requester</div>
+              <div className="detail-row-val font-semibold text-slate-800">
+                {approval.authorName}
+              </div>
 
               {approval.onBehalfOf && (
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td
-                    style={{
-                      padding: '8px 0',
-                      color: '#64748b',
-                      fontWeight: 500,
-                    }}
-                  >
-                    On Behalf Of
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '8px 0',
-                      fontWeight: 600,
-                      color: '#1d68c9',
-                    }}
-                  >
+                <>
+                  <div className="detail-row-key">On Behalf Of</div>
+                  <div className="detail-row-val font-semibold text-blue-600">
                     {approval.onBehalfOf}
-                  </td>
-                </tr>
+                  </div>
+                </>
               )}
 
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td
-                  style={{
-                    padding: '8px 0',
-                    color: '#64748b',
-                    fontWeight: 500,
-                  }}
-                >
-                  Category
-                </td>
+              <div className="detail-row-key">Category</div>
+              <div className="detail-row-val text-slate-700">
+                {approval.category || 'General'}
+              </div>
 
-                <td
-                  style={{
-                    padding: '8px 0',
-                    color: '#1e293b',
-                  }}
-                >
-                  {approval.category || 'General'}
-                </td>
-              </tr>
-
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td
-                  style={{
-                    padding: '8px 0',
-                    color: '#64748b',
-                    fontWeight: 500,
-                  }}
-                >
-                  Priority
-                </td>
-
-                <td
-                  style={{
-                    padding: '8px 0',
-                    color: '#1e293b',
-                  }}
+              <div className="detail-row-key">Priority</div>
+              <div className="detail-row-val">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                    approval.priority === 'Critical'
+                      ? 'bg-rose-100 text-rose-700'
+                      : approval.priority === 'High'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
                 >
                   {approval.priority || 'Normal'}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </span>
+              </div>
+            </div>
+          </div>
 
+          {/* Associated Ticket Metadata Card */}
           {approval.ticketDetails && (
-            <div
-              className="approval-ticket-details"
-              style={{ margin: '0 0 20px 0' }}
-            >
+            <div className="approval-ticket-details">
               <div className="approval-details-header">
                 Associated Ticket Metadata
               </div>
 
               <div className="approval-details-grid">
                 <div className="detail-row-key">Ticket ID</div>
-
-                <div className="detail-row-val">
+                <div className="detail-row-val font-mono font-medium text-slate-800">
                   {approval.ticketDetails.ticketId}
                 </div>
 
                 <div className="detail-row-key">Ticket Type</div>
-
                 <div className="detail-row-val">
                   <span className="ticket-type-badge">
                     {approval.ticketDetails.ticketType}
@@ -406,8 +345,7 @@ export default function ApprovalDetailsModal({
                 {approval.ticketDetails.department && (
                   <>
                     <div className="detail-row-key">Department</div>
-
-                    <div className="detail-row-val">
+                    <div className="detail-row-val text-slate-700">
                       {approval.ticketDetails.department}
                     </div>
                   </>
@@ -416,8 +354,7 @@ export default function ApprovalDetailsModal({
                 {approval.ticketDetails.fullName && (
                   <>
                     <div className="detail-row-key">Target User</div>
-
-                    <div className="detail-row-val">
+                    <div className="detail-row-val font-medium text-slate-800">
                       {approval.ticketDetails.fullName}
                     </div>
                   </>

@@ -225,6 +225,30 @@ export function handleOfflineRequest(
     return { success: true, data: { id: ticketId, status: newStatus } };
   }
 
+  // Ticket resolve POST: /api/tickets/:id/resolve
+  const ticketResolveMatch = path.match(/^\/api\/tickets\/([^/]+)\/resolve$/);
+  if (ticketResolveMatch && upperMethod === 'POST') {
+    const ticketId = decodeURIComponent(ticketResolveMatch[1]);
+    const found = mutableTickets.find((t) => t.id === ticketId);
+    if (found) {
+      found.status = 'Resolved';
+      (found as any).resolutionCode = parsedBody?.resolutionCode || 'Resolved by First Line Support';
+      (found as any).resolutionNotes = parsedBody?.resolutionNotes || '';
+      (found as any).rootCauseSummary = parsedBody?.rootCauseSummary || '';
+      (found as any).resolvedAt = new Date().toISOString();
+    }
+    return {
+      success: true,
+      message: 'Incident resolved successfully',
+      data: found || {
+        id: ticketId,
+        status: 'Resolved',
+        ...parsedBody,
+        resolvedAt: new Date().toISOString(),
+      },
+    };
+  }
+
   // Ticket mutations used by the Incidents page and detail modal.
   const ticketAssignMatch = path.match(/^\/api\/tickets\/([^/]+)\/assign$/);
   if (ticketAssignMatch && upperMethod === 'PATCH') {

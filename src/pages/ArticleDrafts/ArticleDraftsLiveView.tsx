@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-
 import type { ArticleDraft, ArticleDraftStatus } from './articleDrafts.types';
 import { SlaBadge } from '../../components/shared/SlaBadge';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -10,218 +9,174 @@ interface ArticleDraftsLiveViewProps {
   onUpdateStatus?: (id: string, newStatus: ArticleDraftStatus) => void;
 }
 
+function getInitials(name?: string): string {
+  if (!name) return 'UN';
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function ArticleDraftsLiveView({
   drafts,
   onOpenArticle,
-  onUpdateStatus,
 }: ArticleDraftsLiveViewProps) {
-  const [categoryFilter, setCategoryFilter] =
-    useState<string>('All');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
 
   const categories = useMemo(() => {
-    return [
-      'All',
-      ...Array.from(
-        new Set(
-          drafts.map(
-            (draft) => draft.category
-          )
-        )
-      ),
-    ];
+    const list = Array.from(new Set(drafts.map((d) => d.category).filter(Boolean)));
+    return ['All', ...list];
   }, [drafts]);
 
   const visibleDrafts = useMemo(() => {
     if (categoryFilter === 'All') {
       return drafts;
     }
-
-    return drafts.filter(
-      (draft) =>
-        draft.category === categoryFilter
-    );
+    return drafts.filter((draft) => draft.category === categoryFilter);
   }, [drafts, categoryFilter]);
 
   return (
-    <div style={{ marginTop: '12px' }}>
-
+    <div className="w-full">
       {/* Category filters */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          flexWrap: 'wrap',
-          marginBottom: '20px',
-        }}
-      >
-        {categories.map((category) => (
-          <button
-            key={category}
-            type="button"
-            onClick={() =>
-              setCategoryFilter(category)
-            }
-            style={{
-              padding: '6px 14px',
-              borderRadius: '999px',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              backgroundColor:
-                categoryFilter === category
-                  ? '#1e293b'
-                  : '#ffffff',
-              color:
-                categoryFilter === category
-                  ? '#ffffff'
-                  : '#64748b',
-              border:
-                '1px solid #e2e8f0',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            {category}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 flex-wrap mb-5">
+        {categories.map((category) => {
+          const isActive = categoryFilter === category;
+          return (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setCategoryFilter(category)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+                isActive
+                  ? 'bg-[#C96F55] text-white border-[#C96F55] shadow-xs font-bold'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              {category}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Article cards */}
+      {/* Article cards grid */}
       <div className="live-cards-grid">
+        {visibleDrafts.map((draft) => {
+          const formattedId = draft.id.startsWith('#') ? draft.id : `#${draft.id}`;
+          return (
+            <div
+              key={draft.id}
+              className="live-card group"
+              onClick={() => onOpenArticle(draft)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onOpenArticle(draft);
+                }
+              }}
+            >
+              {/* Top Section */}
+              <div>
+                <div className="live-card-top">
+                  <span className="live-card-id">{formattedId}</span>
 
-        {visibleDrafts.map((draft) => (
-          <div
-            key={draft.id}
-            className="live-card"
-            onClick={() =>
-              onOpenArticle(draft)
-            }
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (
-                event.key === 'Enter' ||
-                event.key === ' '
-              ) {
-                onOpenArticle(draft);
-              }
-            }}
-          >
-
-            {/* Top section */}
-            <div>
-
-              <div className="live-card-top">
-
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#1d68c9',
-                  }}
-                >
-                  {draft.id}
-                </span>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-
-                  <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
-
-                  <StatusBadge status={draft.status} size="sm" />
-
+                  <div className="live-card-badges">
+                    <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
+                    <StatusBadge status={draft.status} size="sm" />
+                  </div>
                 </div>
 
+                <h3 className="live-card-title">{draft.summaryTitle}</h3>
+
+                {draft.summarySubtitle && (
+                  <p className="live-card-subtitle">{draft.summarySubtitle}</p>
+                )}
               </div>
 
-              <h3>
-                {draft.summaryTitle}
-              </h3>
+              {/* Bottom Section */}
+              <div>
+                <div className="live-card-meta">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="live-card-category">{draft.category}</span>
+                    {draft.priority && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+                        style={{
+                          backgroundColor:
+                            draft.priority === 'Critical'
+                              ? '#fee2e2'
+                              : draft.priority === 'High'
+                              ? '#ffedd5'
+                              : '#f1f5f9',
+                          color:
+                            draft.priority === 'Critical'
+                              ? '#dc2626'
+                              : draft.priority === 'High'
+                              ? '#ea580c'
+                              : '#475569',
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{
+                            backgroundColor:
+                              draft.priorityColor ||
+                              (draft.priority === 'Critical'
+                                ? '#dc2626'
+                                : draft.priority === 'High'
+                                ? '#ea580c'
+                                : '#64748b'),
+                          }}
+                        />
+                        {draft.priority}
+                      </span>
+                    )}
+                  </div>
 
-              <p>
-                {draft.summarySubtitle}
-              </p>
+                  {draft.team && (
+                    <span className="live-card-team">{draft.team}</span>
+                  )}
+                </div>
 
+                <div className="live-card-footer">
+                  <div className="live-card-author">
+                    <span className="live-card-author-avatar">
+                      {getInitials(draft.author)}
+                    </span>
+                    <span>By {draft.author}</span>
+                  </div>
+
+                  <span className="live-card-link">
+                    <span>View details</span>
+                    <span className="inline-block transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
-
-            {/* Bottom section */}
-            <div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent:
-                    'space-between',
-                  alignItems: 'center',
-                  marginBottom: '10px',
-                }}
-              >
-
-                <span
-                  style={{
-                    fontSize: '11.5px',
-                    background: '#f1f5f9',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    color: '#475569',
-                    fontWeight: 500,
-                  }}
-                >
-                  {draft.category}
-                </span>
-
-                <span
-                  style={{
-                    fontSize: '11.5px',
-                    color: '#94a3b8',
-                  }}
-                >
-                  {draft.team}
-                </span>
-
-              </div>
-
-              <div className="live-card-footer">
-
-                <span>
-                  By {draft.author}
-                </span>
-
-                <span
-                  style={{
-                    color: '#1d68c9',
-                    fontWeight: 600,
-                  }}
-                >
-                  View details →
-                </span>
-
-              </div>
-
-            </div>
-
-          </div>
-        ))}
-
+          );
+        })}
       </div>
 
-      {/* Empty state */}
+      {/* Empty State */}
       {visibleDrafts.length === 0 && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '40px 20px',
-            color: '#64748b',
-          }}
-        >
-          No article drafts found.
+        <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center my-4">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-xl mb-3">
+            📄
+          </div>
+          <h4 className="text-sm font-bold text-slate-700 mb-1">No article drafts found</h4>
+          <p className="text-xs text-slate-400">
+            {categoryFilter !== 'All'
+              ? `No articles found in category "${categoryFilter}".`
+              : 'No draft articles match the current filter or search criteria.'}
+          </p>
         </div>
       )}
-
     </div>
   );
 }

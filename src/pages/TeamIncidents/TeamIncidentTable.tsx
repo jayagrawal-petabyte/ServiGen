@@ -250,10 +250,12 @@ function TeamIncidentTable({
   const { user } = useAuth();
   const isSecondLine = team.toLowerCase().includes("2nd");
 
-  const [incidents, setIncidents] = useState<TeamIncident[]>([]);
+  const [incidents, setIncidents] = useState<TeamIncident[]>(() =>
+    MOCK_TICKETS.map((t) => normalizeSupportIncident(t, (t as any).assignedTeam || '1st Line Support'))
+  );
   const [firstLineAgents, setFirstLineAgents] = useState<SupportAgent[]>([]);
   const [secondLineAgents, setSecondLineAgents] = useState<SupportAgent[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [escalatingId, setEscalatingId] = useState<string | null>(null);
   const [escalationToast, setEscalationToast] = useState<string | null>(null);
 
@@ -341,10 +343,21 @@ function TeamIncidentTable({
           setIncidents(res.incidents);
           setFirstLineAgents(res.firstLineAgents);
           setSecondLineAgents(res.secondLineAgents);
+        } else if (mounted) {
+          const fallbackList = MOCK_TICKETS.map((t) =>
+            normalizeSupportIncident(t, (t as any).assignedTeam || '1st Line Support')
+          );
+          setIncidents(fallbackList);
         }
       })
       .catch((err) => {
         console.error("[TeamIncidentTable] Live API fetch failed:", err);
+        if (mounted) {
+          const fallbackList = MOCK_TICKETS.map((t) =>
+            normalizeSupportIncident(t, (t as any).assignedTeam || '1st Line Support')
+          );
+          setIncidents(fallbackList);
+        }
       })
       .finally(() => {
         if (mounted) setIsLoading(false);

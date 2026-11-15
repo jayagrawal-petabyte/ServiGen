@@ -22,6 +22,7 @@ export interface ModalShellProps {
   hideCloseButton?: boolean;
   closeOnOutsideClick?: boolean;
   closeOnEsc?: boolean;
+  truncateTitle?: boolean;
   'aria-describedby'?: string;
 }
 
@@ -51,6 +52,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
   hideCloseButton = false,
   closeOnOutsideClick = true,
   closeOnEsc = true,
+  truncateTitle = false,
   'aria-describedby': ariaDescribedBy,
 }) => {
   return (
@@ -63,7 +65,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 transition-opacity animate-in fade-in duration-200" />
+        <Dialog.Overlay className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 transition-opacity animate-in fade-in duration-200" />
         <Dialog.Content
           onInteractOutside={(e) => {
             if (!closeOnOutsideClick) {
@@ -92,12 +94,12 @@ export const ModalShell: React.FC<ModalShellProps> = ({
                 <div className="min-w-0">
                   {title ? (
                     typeof title === 'string' ? (
-                      <Dialog.Title className="text-base sm:text-lg font-bold text-slate-900 leading-snug truncate">
+                      <Dialog.Title className={`text-base sm:text-lg font-bold text-slate-900 leading-snug ${truncateTitle ? 'truncate' : 'break-words'}`}>
                         {title}
                       </Dialog.Title>
                     ) : (
                       <Dialog.Title asChild>
-                        <div className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                        <div className={`text-base sm:text-lg font-bold text-slate-900 leading-snug ${truncateTitle ? 'truncate' : 'break-words'}`}>
                           {title}
                         </div>
                       </Dialog.Title>

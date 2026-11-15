@@ -15,7 +15,8 @@ const createOriginValidator = (allowedOrigins = []) => {
     const method = req.method ? req.method.toUpperCase() : 'GET';
 
     if (origin && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-      if (!allowedList.includes(origin)) {
+      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      if (!allowedList.includes(origin) && !(process.env.NODE_ENV !== 'production' && isLocalhost)) {
         return res.status(403).json({
           success: false,
           message: 'Forbidden: Request origin is not allowed',

@@ -2,6 +2,7 @@
 
 const { prisma } = require('../../shared');
 const sanitizeHtml = require('sanitize-html');
+const AppError = require('../../shared/utils/app-error');
 
 const MAX_RESOLUTION_CODE_LENGTH = 100;
 const MAX_RESOLUTION_TEXT_LENGTH = 10000;
@@ -19,10 +20,8 @@ const PLAIN_TEXT_OPTIONS = {
   allowedAttributes: {},
 };
 
-const createError = (message, statusCode) => {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
+const createError = (message, statusCode = 500) => {
+  return new AppError(message, statusCode);
 };
 
 const buildTicketScope = (ticketId, user) => {
@@ -151,22 +150,39 @@ const resolveIncident = async (ticketId, input, user) => {
 
     const resolvedAt = new Date();
 
+    let validResolvedById = user?.id || null;
+    if (transaction.user && typeof transaction.user.findUnique === 'function' && user?.id) {
+      try {
+        const userRecord = await transaction.user.findUnique({
+          where: { id: user.id },
+          select: { id: true },
+        });
+        validResolvedById = userRecord ? userRecord.id : null;
+      } catch {
+        validResolvedById = user?.id || null;
+      }
+    }
+
     const data = {
       status: 'Resolved',
       ...resolution,
       resolvedAt,
-      resolvedById: user.id,
+      resolvedById: validResolvedById,
     };
 
     // Extend SLA deadlines by the time spent On Hold before resolving.
-    Object.assign(
-      data,
-      require('./incidents.sla.service').prepareSlaStatusUpdate(
-        existing,
-        'Resolved',
-        resolvedAt
-      )
-    );
+    try {
+      Object.assign(
+        data,
+        require('./incidents.sla.service').prepareSlaStatusUpdate(
+          existing,
+          'Resolved',
+          resolvedAt
+        )
+      );
+    } catch (slaErr) {
+      // SLA calculation failure should not block resolution of the ticket
+    }
 
     // Ensure hold tracking is cleared even for unsupported SLA priorities.
     if (existing.status === 'On Hold') {

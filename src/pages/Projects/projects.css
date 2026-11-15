@@ -1243,3 +1243,222 @@
     display: none;
   }
 }
+
+/* ==========================================================================
+   Kanban Drag-and-Drop, Budget Tracker, & Interactive Gantt Extensions
+   ========================================================================== */
+
+/* Drag and Drop */
+.pj-board-card[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.pj-board-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.pj-board-card.pj-dragging {
+  opacity: 1 !important;
+  cursor: grabbing;
+  border: 1px solid #C96F55 !important;
+  box-shadow: 0 4px 12px rgba(201, 111, 85, 0.2);
+}
+
+.pj-board-col.drag-over {
+  background: #fce1d4 !important;
+  border: 2px dashed #C96F55 !important;
+  transition: background 0.15s ease;
+}
+
+/* While dragging, prevent children from capturing drag events to avoid flicker */
+.pj-board.is-dragging .pj-board-card * {
+  pointer-events: none;
+}
+
+.pj-board-toggle {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 14px;
+  width: fit-content;
+}
+
+.pj-board-toggle button {
+  padding: 5px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pj-board-toggle button.active {
+  background: #ffffff;
+  color: #C96F55;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+/* Progress Bar & Budget Hours Tracker Banner */
+.pj-tracker-banner {
+  background: #ffffff;
+  border: 1px solid #ebdcd3;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pj-tracker-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.pj-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pj-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pj-stat-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pj-stat-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.pj-tracker-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pj-tracker-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pj-tracker-bar-bg {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.pj-tracker-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #C96F55 0%, #16a34a 100%);
+  transition: width 0.3s ease;
+}
+
+/* Interactive Gantt Timeline with Subtasks */
+.pj-gantt-expand-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  padding: 2px 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pj-gantt-expand-btn:hover {
+  color: #C96F55;
+}
+
+.pj-gantt-subtask-row {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  min-height: 34px;
+  background: #fcfbf9;
+}
+
+.pj-gantt-subtask-name {
+  padding-left: 28px;
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pj-gantt-subtask-bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 14px;
+  border-radius: 4px;
+  background: #94a3b8;
+}
+
+.pj-gantt-subtask-bar.done {
+  background: #16a34a;
+}
+
+.pj-gantt-subtask-bar.overdue {
+  background: #ef4444;
+}
+
+/* Assignee Select and Log Hours */
+.pj-select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #ffffff;
+  color: #1e293b;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease;
+}
+
+.pj-select:focus {
+  border-color: #C96F55;
+  box-shadow: 0 0 0 2px rgba(201, 111, 85, 0.15);
+}
+
+.pj-log-hours-box {
+  background: #fff8f5;
+  border: 1px solid #fbdcd2;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+

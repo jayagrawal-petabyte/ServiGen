@@ -261,7 +261,7 @@ export async function createSubtask(projectId: string, body: CreateSubtaskBody):
 export async function updateSubtask(
   projectId: string,
   taskId: string,
-  body: Partial<{ done: boolean; assignee: string; dueDate: string; title: string }>
+  body: Partial<{ done: boolean; assignee: string; dueDate: string; title: string; status: string }>
 ): Promise<ProjectTask> {
   if (!projectId || !taskId) throw new Error("Validation Error: Project ID and Task ID are required.");
   const res = await api.patch(

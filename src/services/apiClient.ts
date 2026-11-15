@@ -153,7 +153,7 @@ export const setStoredUser = (user: any | null): void => {
  */
 export function getApiBaseUrl(): string {
   const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
-  const envUrl = env?.VITE_API_BASE_URL || env?.VITE_BACKEND_URL;
+  const envUrl = env?.VITE_API_BASE_URL;
   if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
     let clean = envUrl.trim().replace(/\/+$/, '');
     if (clean.includes('servigen-1.onrender.com')) {
@@ -391,13 +391,14 @@ async function executeRequest<T = any>(
   }
 
   // If backend returned a 5xx server error (e.g. database unreachable), unmounted route (404),
-  // or rejected a mock session token (401), fall back to mock demo fixtures
-  const isMockToken = Boolean(token?.startsWith('mock_'));
-  const isAuthFailureWithMock = response.status === 401 && isMockToken;
+  // origin constraint rejection (403), or rejected a mock session token (401), fall back to mock demo fixtures
+  const isMockToken = Boolean(token?.startsWith('mock_')) || isOfflineFallbackToken(token);
+  const isAuthFailureWithMock = (response.status === 401 || response.status === 403) && isMockToken;
   const isServerError = response.status >= 500;
+  const isOriginForbidden = response.status === 403 && !isPublicEndpoint(normalizedEndpoint);
   const isUnmountedRoute = response.status === 404 && !normalizedEndpoint.includes('/auth/login');
 
-  if (isServerError || isUnmountedRoute || isAuthFailureWithMock) {
+  if (isServerError || isUnmountedRoute || isAuthFailureWithMock || isOriginForbidden) {
     const mockRes = handleOfflineRequest(
       normalizedEndpoint,
       fetchOptions.method || 'GET',
