@@ -1,4 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FolderKanban,
+  LayoutGrid,
+  Calendar,
+  BarChart3,
+  CheckSquare,
+  CalendarCheck,
+  Clock,
+  PlusCircle,
+  Search,
+  X,
+} from "lucide-react";
 import { type Project, type ProjectPriority, type ProjectStatus, type ProjectTask, PROJECT_STATUSES, toDateKey } from "./types";
 import {
   getSessionUserName,
@@ -21,17 +33,23 @@ const PAGE_SIZE = 3;
 
 const NO_API = "Waiting for backend API (not in the API doc yet)";
 
-const MY_LISTS: { id: View; label: string; icon: string }[] = [
-  { id: "active", label: "Active Projects", icon: "▤" },
-  { id: "board", label: "Project Board", icon: "▦" },
-  { id: "task-calendar", label: "Task Calendar", icon: "▭" },
-  { id: "gantt", label: "Project Gantt View", icon: "≡" },
+interface SidebarNavItem {
+  id: View;
+  label: string;
+  Icon: React.ComponentType<{ size?: number | string; className?: string; strokeWidth?: number | string; style?: React.CSSProperties }>;
+}
+
+const MY_LISTS: SidebarNavItem[] = [
+  { id: "active", label: "Active Projects", Icon: FolderKanban },
+  { id: "board", label: "Project Board", Icon: LayoutGrid },
+  { id: "task-calendar", label: "Task Calendar", Icon: Calendar },
+  { id: "gantt", label: "Project Gantt View", Icon: BarChart3 },
 ];
 
-const MY_PROJECTS: { id: View; label: string; icon: string }[] = [
-  { id: "my-tasks", label: "My Tasks", icon: "☐" },
-  { id: "my-calendar", label: "My Calendar", icon: "▭" },
-  { id: "overdue", label: "Overdue Tasks", icon: "◷" },
+const MY_PROJECTS: SidebarNavItem[] = [
+  { id: "my-tasks", label: "My Tasks", Icon: CheckSquare },
+  { id: "my-calendar", label: "My Calendar", Icon: CalendarCheck },
+  { id: "overdue", label: "Overdue Tasks", Icon: Clock },
 ];
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -1193,39 +1211,50 @@ export default function ProjectsPage() {
               aria-label={search ? "Clear search" : "Search"}
               onClick={() => (search ? setSearch("") : searchRef.current?.focus())}
             >
-              {search ? "✕" : "⌕"}
+              {search ? <X size={15} /> : <Search size={15} />}
             </button>
           </div>
 
           <h3>My Lists</h3>
-          {MY_LISTS.map((item) => (
-            <button
-              key={item.id}
-              className={`pj-nav ${activeView === item.id ? "active" : ""}`}
-              onClick={() => setActiveView(item.id)}
-            >
-              <span className="pj-nav-icon">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+          {MY_LISTS.map((item) => {
+            const Icon = item.Icon;
+            return (
+              <button
+                key={item.id}
+                className={`pj-nav ${activeView === item.id ? "active" : ""}`}
+                onClick={() => setActiveView(item.id)}
+              >
+                <span className="pj-nav-icon">
+                  <Icon size={16} strokeWidth={2.2} />
+                </span>
+                {item.label}
+              </button>
+            );
+          })}
 
           <h3>My Projects</h3>
-          {MY_PROJECTS.map((item) => (
-            <button
-              key={item.id}
-              className={`pj-nav ${activeView === item.id ? "active" : ""}`}
-              onClick={() => setActiveView(item.id)}
-            >
-              <span className="pj-nav-icon">{item.icon}</span>
-              {item.label}
-              {item.id === "overdue" && overdueTasks.length > 0 && (
-                <span className="pj-nav-count">{overdueTasks.length}</span>
-              )}
-            </button>
-          ))}
+          {MY_PROJECTS.map((item) => {
+            const Icon = item.Icon;
+            return (
+              <button
+                key={item.id}
+                className={`pj-nav ${activeView === item.id ? "active" : ""}`}
+                onClick={() => setActiveView(item.id)}
+              >
+                <span className="pj-nav-icon">
+                  <Icon size={16} strokeWidth={2.2} />
+                </span>
+                {item.label}
+                {item.id === "overdue" && overdueTasks.length > 0 && (
+                  <span className="pj-nav-count">{overdueTasks.length}</span>
+                )}
+              </button>
+            );
+          })}
 
           <button className="pj-create-list" disabled title={NO_API}>
-            ↳ Create a New list
+            <PlusCircle size={15} />
+            <span>Create a New list</span>
           </button>
         </aside>
 

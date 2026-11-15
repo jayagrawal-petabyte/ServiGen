@@ -99,6 +99,9 @@
 }
 
 .pj-search button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   width: 28px;
@@ -106,6 +109,8 @@
   border-radius: 50%;
   font-size: 16px;
   color: var(--pj-accent-dark) !important;
+  cursor: pointer;
+  padding: 0;
 }
 
 .pj-search button:hover {
@@ -126,10 +131,12 @@
   border: none;
   background: transparent;
   text-align: left;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-size: 13px;
   color: var(--pj-ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .pj-nav:hover {
@@ -150,16 +157,26 @@
 }
 
 .pj-nav-icon {
-  width: 16px;
-  text-align: center;
-  color: #1c2541;
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.pj-nav:hover .pj-nav-icon {
+  color: #C96F55;
 }
 
 .pj-nav.active .pj-nav-icon {
-  visibility: hidden;
-  width: 0;
-  margin-left: 10px;
+  color: #ffffff !important;
+}
+
+.pj-nav.active:hover .pj-nav-icon {
+  color: #ffffff !important;
 }
 
 .pj-nav-count {
@@ -203,6 +220,10 @@
 }
 
 .pj-create-list {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   align-self: center;
   margin-top: 24px;
   border: none;
@@ -211,6 +232,8 @@
   border-radius: 999px;
   padding: 8px 18px;
   font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .pj-create-list:hover {
