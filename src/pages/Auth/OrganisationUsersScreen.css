@@ -655,34 +655,6 @@
   color: #C96F55;
 }
 
-.org-side-select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 2px 10px;
-}
-
-.org-side-select-icon {
-  color: #64748b;
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.org-side-select {
-  flex: 1;
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 12px;
-  color: #334155;
-  padding: 5px 0;
-  cursor: pointer;
-}
-
 .org-side-reset-btn {
   display: flex;
   align-items: center;

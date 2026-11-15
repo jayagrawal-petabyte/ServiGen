@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -17,6 +17,7 @@ import {
   Search,
   X,
   RotateCcw,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { usePersistentState } from '../../utils/persistentState';
@@ -156,6 +157,19 @@ export const OrganisationsScreen: React.FC = () => {
     const set = new Set(organisations.map((o) => o.primarySite));
     return Array.from(set);
   }, [organisations]);
+
+  const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
+  const siteDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (siteDropdownRef.current && !siteDropdownRef.current.contains(e.target as Node)) {
+        setIsSiteDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const hasActiveFilters =
     searchQuery.trim() !== '' ||
@@ -341,25 +355,70 @@ export const OrganisationsScreen: React.FC = () => {
           </div>
 
           {/* Default Sites Dropdown */}
-          <div className="org-side-section">
+          <div className="org-side-section" ref={siteDropdownRef}>
             <h3 className="org-side-heading">Default Site</h3>
-            <div className="org-side-select-wrap">
-              <MapPin size={14} className="org-side-select-icon" />
-              <select
-                className="org-side-select"
-                value={selectedSite}
-                onChange={(e) => setSelectedSite(e.target.value)}
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={() => setIsSiteDropdownOpen((prev) => !prev)}
+                className="w-full flex items-center justify-between gap-2 rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[12.5px] font-medium text-slate-700 outline-none hover:border-slate-300 hover:bg-slate-50/70 focus:border-[#C96F55] focus:ring-2 focus:ring-[#C96F55]/15 cursor-pointer transition-all shadow-2xs"
               >
-                <option value="ALL">All Default Sites ({organisations.length})</option>
-                {primarySites.map((site) => {
-                  const count = organisations.filter((o) => o.primarySite === site).length;
-                  return (
-                    <option key={site} value={site}>
-                      {site} ({count})
-                    </option>
-                  );
-                })}
-              </select>
+                <div className="flex items-center gap-2 min-w-0">
+                  <MapPin size={14} className="text-slate-400 shrink-0" />
+                  <span className="truncate">
+                    {selectedSite === 'ALL'
+                      ? `All Default Sites (${organisations.length})`
+                      : `${selectedSite} (${organisations.filter((o) => o.primarySite === selectedSite).length})`}
+                  </span>
+                </div>
+                <ChevronDown
+                  size={14}
+                  className={`text-slate-400 shrink-0 transition-transform duration-200 ${isSiteDropdownOpen ? 'rotate-180 text-[#C96F55]' : ''}`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isSiteDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-slate-200 bg-white p-1 shadow-lg ring-1 ring-black/5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSite('ALL');
+                      setIsSiteDropdownOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors ${
+                      selectedSite === 'ALL'
+                        ? 'bg-[#C96F55]/10 text-[#C96F55] font-semibold'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>All Default Sites</span>
+                    <span className="text-[11px] opacity-70">({organisations.length})</span>
+                  </button>
+                  {primarySites.map((site) => {
+                    const count = organisations.filter((o) => o.primarySite === site).length;
+                    const isSelected = selectedSite === site;
+                    return (
+                      <button
+                        key={site}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSite(site);
+                          setIsSiteDropdownOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors ${
+                          isSelected
+                            ? 'bg-[#C96F55]/10 text-[#C96F55] font-semibold'
+                            : 'text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span className="truncate">{site}</span>
+                        <span className="text-[11px] opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
