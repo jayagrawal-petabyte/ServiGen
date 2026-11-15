@@ -122,7 +122,7 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
   slaFormatted,
   status,
   className = '',
-  variant = 'standard',
+  variant = 'restrained',
 }) => {
   const isOnHold = Boolean(
     status && (status.toLowerCase().includes('hold') || status.toLowerCase().includes('paused'))
@@ -212,31 +212,28 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     }
   } else {
     if (urgency === 'overdue') {
-      // Breached: Pulse red with high-visibility alert border and glow
-      badgeClasses = 'bg-rose-100 text-rose-800 border-rose-300 shadow-[0_0_8px_rgba(225,29,72,0.35)] animate-pulse font-bold';
-      dotClasses = 'bg-rose-600 animate-ping';
+      badgeClasses = 'bg-rose-50 text-rose-700 border-rose-200 font-semibold';
+      dotClasses = 'bg-rose-600';
       customStyle = {
-        backgroundColor: '#ffe4e6',
+        backgroundColor: '#fff1f2',
         color: '#be123c',
-        borderColor: '#fca5a5',
+        borderColor: '#fecdd3',
       };
       dotStyle = {
         backgroundColor: '#e11d48',
       };
     } else if (urgency === 'warning') {
-      // Approaching breach (< 1h): Yellow / Amber theme
-      badgeClasses = 'bg-amber-100 text-amber-900 border-amber-300 shadow-sm font-semibold';
-      dotClasses = 'bg-amber-500 animate-pulse';
+      badgeClasses = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
+      dotClasses = 'bg-amber-500';
       customStyle = {
-        backgroundColor: '#fef3c7',
+        backgroundColor: '#fffbeb',
         color: '#92400e',
-        borderColor: '#fcd34d',
+        borderColor: '#fde68a',
       };
       dotStyle = {
         backgroundColor: '#d97706',
       };
     } else {
-      // Safe (> 1h): Green theme
       badgeClasses = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
       dotClasses = 'bg-emerald-600';
       customStyle = {

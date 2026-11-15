@@ -561,6 +561,7 @@ export default function MyWork() {
                     slaTimeLeft={selectedTicket.slaTimeLeft}
                     slaFormatted={selectedTicket.slaFormatted}
                     status={selectedTicket.status}
+                    variant="restrained"
                   />
                 </div>
               </div>
@@ -1016,6 +1017,7 @@ export default function MyWork() {
                             slaTimeLeft={ticket.slaTimeLeft}
                             slaFormatted={ticket.slaFormatted}
                             status={ticket.status}
+                            variant="restrained"
                           />
                         </td>
 
