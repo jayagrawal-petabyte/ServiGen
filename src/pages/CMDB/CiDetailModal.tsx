@@ -72,8 +72,23 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
     storage: '',
     model: '',
     rackLocation: '',
+    macAddress: '',
     warrantyExpiry: '',
   });
+
+  const getInitialSpecs = (targetCi: ConfigurationItem | null) => {
+    const specs = targetCi?.specifications || {};
+    return {
+      os: specs.os || (targetCi?.type === 'Server' ? 'Ubuntu Linux 22.04 LTS' : targetCi?.type === 'Database' ? 'PostgreSQL 16.2' : targetCi?.type === 'Network' ? 'Cisco IOS XR' : 'Linux Enterprise'),
+      cpu: specs.cpu || '16 vCPU',
+      ram: specs.ram || '64 GB',
+      storage: specs.storage || '1 TB SSD',
+      model: specs.model || 'Enterprise Rackmount',
+      rackLocation: specs.rackLocation || 'Rack A-02',
+      macAddress: specs.macAddress || '00:1A:2B:3C:4D:5E',
+      warrantyExpiry: targetCi?.warrantyExpiry || specs.warrantyExpiry || '2028-12-31',
+    };
+  };
 
   const getWarrantyInfo = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -119,16 +134,8 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
 
   useEffect(() => {
     setCurrentCi(ci);
-    if (ci?.specifications || ci?.warrantyExpiry) {
-      setSpecForm({
-        os: ci?.specifications?.os || '',
-        cpu: ci?.specifications?.cpu || '',
-        ram: ci?.specifications?.ram || '',
-        storage: ci?.specifications?.storage || '',
-        model: ci?.specifications?.model || '',
-        rackLocation: ci?.specifications?.rackLocation || '',
-        warrantyExpiry: ci?.warrantyExpiry || ci?.specifications?.warrantyExpiry || '',
-      });
+    if (ci) {
+      setSpecForm(getInitialSpecs(ci));
     }
     if (ci?.id) {
       fetchCiTopology(ci.id)
@@ -283,6 +290,25 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
     (item) => item.id !== currentCi.id && item.tag !== currentCi.tag
   );
 
+  const displayTag = currentCi.tag || currentCi.id || 'CI-SRV-001';
+  const displayTitle =
+    currentCi.name && currentCi.name !== 'Configuration Item'
+      ? currentCi.name
+      : currentCi.tag
+      ? `${currentCi.type || 'CI'} - ${currentCi.tag}`
+      : `${currentCi.type || 'Server'} Asset`;
+  const displaySite = currentCi.site || 'London Primary DC (Lon-01)';
+  const displayOwner = currentCi.technicalContact || currentCi.businessOwner || 'Platform Operations';
+  const displayEnv = currentCi.environment || 'Production';
+  const totalImpactCount = (currentCi.activeIncidentsCount || 0) + (currentCi.linkedChangesCount || 0);
+
+  const handleToggleEditSpecs = () => {
+    if (!isEditingSpecs && currentCi) {
+      setSpecForm(getInitialSpecs(currentCi));
+    }
+    setIsEditingSpecs(!isEditingSpecs);
+  };
+
   return (
     <ModalShell
       isOpen={Boolean(ci)}
@@ -292,7 +318,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
       title={
         <div>
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-xs font-mono font-extrabold text-[#C96F55]">{currentCi.tag}</span>
+            <span className="text-xs font-mono font-extrabold text-[#C96F55]">{displayTag}</span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
               {currentCi.type}
             </span>
@@ -316,13 +342,13 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
               );
             })()}
           </div>
-          <div className="text-xl font-bold text-slate-900 leading-tight">{currentCi.name}</div>
+          <div className="text-xl font-bold text-slate-900 leading-tight">{displayTitle}</div>
         </div>
       }
       footer={
         <div className="w-full flex items-center justify-between text-xs text-slate-500">
           <span>
-            Asset Tag: <strong className="font-mono text-slate-800">{currentCi.tag}</strong>
+            Asset Tag: <strong className="font-mono text-slate-800">{displayTag}</strong>
           </span>
           <button
             type="button"
@@ -359,19 +385,19 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Site Location</span>
             <div className="flex items-center gap-1.5 text-slate-800 font-semibold truncate">
               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">{currentCi.site}</span>
+              <span className="truncate">{displaySite}</span>
             </div>
           </div>
           <div>
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Technical Owner</span>
             <div className="flex items-center gap-1.5 text-slate-800 font-semibold truncate">
               <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">{currentCi.technicalContact}</span>
+              <span className="truncate">{displayOwner}</span>
             </div>
           </div>
           <div>
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Environment</span>
-            <span className="font-bold text-slate-800">{currentCi.environment}</span>
+            <span className="font-bold text-slate-800">{displayEnv}</span>
           </div>
           <div>
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">IP Address</span>
@@ -417,7 +443,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             }`}
           >
             <AlertCircle className="w-3.5 h-3.5" />
-            Impact & Tickets
+            Impact & Tickets ({totalImpactCount})
           </button>
           <button
             type="button"
@@ -444,7 +470,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                 </span>
                 <button
                   type="button"
-                  onClick={() => setIsEditingSpecs(!isEditingSpecs)}
+                  onClick={handleToggleEditSpecs}
                   className="px-3 py-1 text-xs font-bold text-[#C96F55] hover:bg-orange-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
@@ -516,6 +542,16 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       />
                     </div>
                     <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">MAC Address</label>
+                      <input
+                        type="text"
+                        value={specForm.macAddress}
+                        onChange={(e) => setSpecForm({ ...specForm, macAddress: e.target.value })}
+                        placeholder="e.g. 00:1A:2B:3C:4D:5E"
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-mono"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">Warranty Expiration</label>
                       <input
                         type="date"
@@ -552,19 +588,19 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
                         <span className="text-slate-500">OS:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.os || 'Linux Enterprise'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.os || specForm.os || 'Linux Enterprise'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">CPU:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.cpu || '16 vCPU'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.cpu || specForm.cpu || '16 vCPU'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Memory:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.ram || '64 GB'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.ram || specForm.ram || '64 GB'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Storage:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.storage || '1 TB SSD'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.storage || specForm.storage || '1 TB SSD'}</span>
                       </div>
                     </div>
                   </div>
@@ -576,15 +612,15 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
                         <span className="text-slate-500">Model:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.model || 'Enterprise Rackmount'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.model || specForm.model || 'Enterprise Rackmount'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Rack Location:</span>
-                        <span className="font-semibold text-slate-800">{currentCi.specifications?.rackLocation || 'Rack A-02'}</span>
+                        <span className="font-semibold text-slate-800">{currentCi.specifications?.rackLocation || specForm.rackLocation || 'Rack A-02'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">MAC Address:</span>
-                        <span className="font-mono text-slate-700">{currentCi.specifications?.macAddress || '00:1A:2B:3C:4D:5E'}</span>
+                        <span className="font-mono text-slate-700">{currentCi.specifications?.macAddress || specForm.macAddress || '00:1A:2B:3C:4D:5E'}</span>
                       </div>
                     </div>
                   </div>
@@ -597,7 +633,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                       <div className="flex justify-between items-center">
                         <span className="text-slate-500">Expiry Date:</span>
                         <span className="font-semibold text-slate-800">
-                          {currentCi.warrantyExpiry || currentCi.specifications?.warrantyExpiry || 'Dec 31, 2028'}
+                          {currentCi.warrantyExpiry || currentCi.specifications?.warrantyExpiry || specForm.warrantyExpiry || 'Dec 31, 2028'}
                         </span>
                       </div>
                       {(() => {

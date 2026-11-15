@@ -67,21 +67,39 @@ export function normalizeConfigurationItem(item: any): ConfigurationItem {
   let validCategory: CiType = 'Server';
   if (['Cloud Service', 'Database', 'Network', 'Application', 'Server', 'Security'].includes(rawType)) {
     validCategory = rawType as CiType;
+  } else if (rawType === 'Service') {
+    validCategory = 'Cloud Service';
+  } else if (rawType === 'Infrastructure') {
+    validCategory = 'Server';
   }
 
+  const rawTag = item.tag || item.id || '';
+  const resolvedTag = rawTag.trim() ? rawTag : (item.id ? `CI-${item.id}` : 'CI-101');
+  const resolvedName =
+    item.name && item.name !== 'Configuration Item'
+      ? item.name
+      : item.tag
+      ? `${validCategory} (${item.tag})`
+      : `${validCategory} Asset`;
+
+  const resolvedSite =
+    item.site ||
+    item.siteName ||
+    (item.environment === 'Production' ? 'London Primary DC (Lon-01)' : 'Staging DC (Lon-02)');
+
   return {
-    id: String(item.id || item.tag || ''),
-    name: item.name || item.tag || 'Configuration Item',
+    id: String(item.id || item.tag || resolvedTag),
+    name: resolvedName,
     type: validCategory,
-    tag: item.tag || item.id || '',
-    site: item.site || item.siteName || '',
+    tag: resolvedTag,
+    site: resolvedSite,
     status:
       item.status === 'Active' || item.status === 'Maintenance' || item.status === 'Deprecated'
         ? item.status
         : 'Active',
     lifecycleState: item.lifecycleState || 'Deployed',
-    businessOwner: item.businessOwner || 'Technology',
-    technicalContact: item.technicalContact || item.businessOwner || 'Platform Operations',
+    businessOwner: item.businessOwner || item.owner || 'Technology',
+    technicalContact: item.technicalContact || item.businessOwner || item.owner || 'Platform Operations',
     environment: item.environment || 'Production',
     activeIncidentsCount:
       typeof item.activeIncidentsCount === 'number' ? item.activeIncidentsCount : 0,

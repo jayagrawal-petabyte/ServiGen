@@ -4,6 +4,7 @@ import type { ConfigurationItem, CiType, GroupedConfigurationItems } from '../..
 import {
   fetchConfigurationItems,
   fetchConfigurationItemsGroupedByType,
+  fetchConfigurationItemById,
   createConfigurationItem,
   updateConfigurationItem,
   fetchCiTopology,
@@ -158,6 +159,43 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       setGroupedItems(groupCisByType(initialItems));
     }
   }, [initialItems, loadData]);
+
+  // Deep-link handling: automatically open CI modal when ?ci= or ?id= is present in URL
+  useEffect(() => {
+    const ciParam = searchParams.get('ci') || searchParams.get('id');
+    if (!ciParam) return;
+
+    if (items.length > 0) {
+      const found = items.find(
+        (c) =>
+          c.id === ciParam ||
+          c.tag?.toLowerCase() === ciParam.toLowerCase() ||
+          c.name?.toLowerCase() === ciParam.toLowerCase()
+      );
+      if (found) {
+        setSelectedCiForModal(found);
+        return;
+      }
+    }
+
+    fetchConfigurationItemById(ciParam)
+      .then((res) => {
+        if (res.data) {
+          setSelectedCiForModal(res.data);
+        }
+      })
+      .catch(() => {});
+  }, [searchParams, items]);
+
+  const handleCloseCiModal = () => {
+    setSelectedCiForModal(null);
+    if (searchParams.get('ci') || searchParams.get('id')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('ci');
+      newParams.delete('id');
+      navigate({ search: newParams.toString() ? `?${newParams.toString()}` : '' }, { replace: true });
+    }
+  };
 
   // Topology Tree Root CI resolution
   const selectedTopologyRootCi = useMemo(() => {
@@ -1018,7 +1056,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
       <CiDetailModal
         ci={selectedCiForModal}
         allCis={items}
-        onClose={() => setSelectedCiForModal(null)}
+        onClose={handleCloseCiModal}
         onUpdateCi={handleUpdateCi}
         onOpenCreateChange={(ci) => {
           setSelectedCiForModal(null);
