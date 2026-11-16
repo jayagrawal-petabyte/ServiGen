@@ -51,7 +51,7 @@ function formatTimeAgo(dateString?: string): string {
  * Preserves all UI design elements, ticket details, and metadata.
  */
 export function adaptBackendApproval(
-  backendItem: BackendApproval | Approval | any,
+  backendItem: BackendApproval | Approval | Record<string, unknown>,
   overrideRejectReason?: string
 ): Approval {
   if (!backendItem) {
@@ -74,7 +74,7 @@ export function adaptBackendApproval(
   }
 
   // If wrapped in an API envelope: { success: true, data: { ... } }
-  const raw: any = backendItem.data || backendItem;
+  const raw: any = (backendItem as any).data || backendItem;
 
   if ('ticketNumber' in raw && 'authorName' in raw) {
     const app = raw as Approval;

@@ -23,14 +23,32 @@ export default function ApprovalDetailsModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState(initialRejectMode);
 
-  // Prevent background page scrolling while modal is open (Bug 3 Requirement 9)
+  // Prevent background page scrolling while modal is open and handle Escape key
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [onClose]);
+
+  // Reset form and validation state whenever the inspected approval changes (prevents stale data)
+  useEffect(() => {
+    setRejectReason('');
+    setShowRejectInput(initialRejectMode);
+    setValidationError(null);
+    setTouched(initialRejectMode);
+    setIsSubmitting(false);
+  }, [approval?.id, initialRejectMode]);
 
   if (!approval) return null;
 

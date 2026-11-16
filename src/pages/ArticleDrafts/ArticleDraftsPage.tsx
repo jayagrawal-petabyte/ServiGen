@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   type ArticleDraft,
   type ArticleDraftStatus,
@@ -17,6 +18,7 @@ import { Table, LayoutGrid, Plus } from 'lucide-react';
 import './articleDrafts.css';
 
 export default function ArticleDraftsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [drafts, setDrafts] = useState<ArticleDraft[]>([]);
   const [activeSubnavView, setActiveSubnavView] = useState<ArticleDraftView>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -26,6 +28,7 @@ export default function ArticleDraftsPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<ArticleDraft | null>(null);
+  const [draftToDelete, setDraftToDelete] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [, setIsActionLoading] = useState<boolean>(false);
@@ -56,6 +59,43 @@ export default function ArticleDraftsPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Handle URL query parameter deep linking (view, search, page, create)
+  useEffect(() => {
+    const viewParam = searchParams.get('view') as ArticleDraftView | null;
+    if (viewParam && ['all', 'my-lists', 'by-agent', 'by-team', 'by-status'].includes(viewParam)) {
+      setActiveSubnavView(viewParam);
+    }
+    const qParam = searchParams.get('search') || searchParams.get('q');
+    if (qParam !== null && qParam !== undefined) {
+      setSearchQuery(qParam);
+    }
+    const pageParam = searchParams.get('page');
+    if (pageParam) {
+      const parsed = parseInt(pageParam, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        setCurrentPage(parsed);
+      }
+    }
+    if (searchParams.get('create') === 'true') {
+      setIsCreateModalOpen(true);
+    }
+  }, [searchParams]);
+
+  // Handle direct article draft deep linking (e.g. ?id=DRAFT-001 or ?id=uuid)
+  useEffect(() => {
+    const targetId = searchParams.get('id');
+    if (!targetId || drafts.length === 0) return;
+
+    if (selectedArticle && selectedArticle.id.toLowerCase() === targetId.toLowerCase()) {
+      return;
+    }
+
+    const matched = drafts.find((d) => d.id.toLowerCase() === targetId.toLowerCase());
+    if (matched) {
+      setSelectedArticle(matched);
+    }
+  }, [searchParams, drafts, selectedArticle]);
 
   // Filter drafts based on the selected sidebar view and search
   const filteredDrafts = useMemo(() => {
@@ -195,21 +235,42 @@ export default function ArticleDraftsPage() {
     }
   };
 
-  // Delete single article draft
-  const handleDeleteDraft = async (id: string) => {
-    if (window.confirm(`Are you sure you want to delete article draft #${id}?`)) {
-      setIsActionLoading(true);
-      try {
-        await articleDraftsApi.batchDelete([id]);
-        setDrafts((prev) => prev.filter((d) => d.id !== id));
-        setSelectedArticle(null);
-        setSelectedIds((prev) => prev.filter((item) => item !== id));
-        showToast(`Article draft #${id} was deleted successfully.`);
-      } catch (err: unknown) {
-        showToast(err instanceof Error ? err.message : 'Failed to delete article draft');
-      } finally {
-        setIsActionLoading(false);
+  const handleOpenArticle = (draft: ArticleDraft) => {
+    setSelectedArticle(draft);
+    const next = new URLSearchParams(searchParams);
+    next.set('id', draft.id);
+    setSearchParams(next, { replace: false });
+  };
+
+  const handleCloseArticle = () => {
+    setSelectedArticle(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('id');
+    setSearchParams(next, { replace: true });
+  };
+
+  // Delete article draft with React modal confirmation (replaces native browser confirmation dialog)
+  const handleDeleteDraft = (id: string) => {
+    setDraftToDelete(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!draftToDelete) return;
+    const id = draftToDelete;
+    setDraftToDelete(null);
+    setIsActionLoading(true);
+    try {
+      await articleDraftsApi.batchDelete([id]);
+      setDrafts((prev) => prev.filter((d) => d.id !== id));
+      if (selectedArticle && selectedArticle.id === id) {
+        handleCloseArticle();
       }
+      setSelectedIds((prev) => prev.filter((item) => item !== id));
+      showToast(`Article draft #${id} was deleted successfully.`);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete article draft');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -234,11 +295,26 @@ export default function ArticleDraftsPage() {
             setActiveSubnavView(v);
             setCurrentPage(1);
             setSelectedIds([]);
+            const next = new URLSearchParams(searchParams);
+            if (v === 'all') {
+              next.delete('view');
+            } else {
+              next.set('view', v);
+            }
+            setSearchParams(next, { replace: true });
           }}
           searchQuery={searchQuery}
           onSearchChange={(q) => {
             setSearchQuery(q);
             setCurrentPage(1);
+            const next = new URLSearchParams(searchParams);
+            if (q.trim()) {
+              next.set('search', q.trim());
+            } else {
+              next.delete('search');
+              next.delete('q');
+            }
+            setSearchParams(next, { replace: true });
           }}
         />
 
@@ -387,7 +463,7 @@ export default function ArticleDraftsPage() {
                 selectedIds={selectedIds}
                 onToggleSelect={handleToggleSelect}
                 onToggleSelectAll={handleToggleSelectAll}
-                onOpenArticle={(draft) => setSelectedArticle(draft)}
+                onOpenArticle={handleOpenArticle}
                 sortDirection={sortDirection}
                 onToggleSort={() =>
                   setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
@@ -397,7 +473,7 @@ export default function ArticleDraftsPage() {
             ) : (
               <ArticleDraftsLiveView
                 drafts={filteredDrafts}
-                onOpenArticle={(draft) => setSelectedArticle(draft)}
+                onOpenArticle={handleOpenArticle}
                 onUpdateStatus={handleUpdateStatus}
               />
             )}
@@ -409,11 +485,50 @@ export default function ArticleDraftsPage() {
       {selectedArticle && (
         <ArticleDraftDetailModal
           article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
+          onClose={handleCloseArticle}
           onSaveContent={handleSaveContent}
           onUpdateStatus={handleUpdateStatus}
           onDelete={handleDeleteDraft}
         />
+      )}
+
+      {/* Delete Confirmation React Modal */}
+      {draftToDelete && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 flex flex-col gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <span className="text-lg font-bold">⚠️</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-slate-900 m-0">Confirm Draft Deletion</h3>
+                <p className="text-sm text-slate-600 mt-1 m-0">
+                  Are you sure you want to permanently delete article draft #{draftToDelete}? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDraftToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleConfirmDelete}
+              >
+                Delete Draft
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Create Article Draft Modal */}

@@ -55,7 +55,41 @@ export default function ArticleDraftDetailModal({
   const [titleError, setTitleError] = useState<string | null>(null);
   const [subtitleError, setSubtitleError] = useState<string | null>(null);
   const [bodyError, setBodyError] = useState<string | null>(null);
+  const [statusValidationError, setStatusValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Lock body scroll and listen for Escape key
+  React.useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // Reset internal editing and validation state whenever the inspected article changes (prevents stale data)
+  React.useEffect(() => {
+    if (!article) return;
+    setIsEditing(false);
+    setEditedTitle(article.summaryTitle);
+    setEditedSubtitle(article.summarySubtitle);
+    setEditedCategory(article.category);
+    setEditedPriority(article.priority);
+    setEditedBody(article.body);
+    setTitleError(null);
+    setSubtitleError(null);
+    setBodyError(null);
+    setStatusValidationError(null);
+  }, [article?.id]);
 
   if (!article) return null;
 
@@ -126,15 +160,16 @@ export default function ArticleDraftDetailModal({
   const handleStatusTransition = async (newStatus: ArticleDraftStatus) => {
     if (newStatus === 'Awaiting Approval') {
       if (!article.summaryTitle || article.summaryTitle.trim().length < 3) {
-        alert('Validation Error: Article title must be at least 3 characters before submitting for approval.');
+        setStatusValidationError('Validation Error: Article title must be at least 3 characters before submitting for approval.');
         return;
       }
       if (!article.body || article.body.trim().length < 10) {
-        alert('Validation Error: Article draft content must be at least 10 characters before submitting for approval.');
+        setStatusValidationError('Validation Error: Article draft content must be at least 10 characters before submitting for approval.');
         return;
       }
     }
 
+    setStatusValidationError(null);
     setIsSubmitting(true);
     try {
       await onUpdateStatus(article.id, newStatus);
@@ -154,16 +189,35 @@ export default function ArticleDraftDetailModal({
       <div
         className="modal-content"
         style={{
+          width: '92%',
           maxWidth: '720px',
+          maxHeight: 'calc(100vh - 40px)',
           backgroundColor: '#ffffff',
           borderRadius: '18px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1)',
           overflow: 'hidden',
           border: '1px solid #f0ede8',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header" style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #f1f5f9' }}>
+        <div
+          className="modal-header"
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            flexShrink: 0,
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid #f1f5f9',
+            padding: '18px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -204,7 +258,57 @@ export default function ArticleDraftDetailModal({
           </button>
         </div>
 
-        <div className="modal-body">
+        <div
+          className="modal-body"
+          style={{
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '24px',
+          }}
+        >
+          {/* Status Validation Error Banner (Replaces native browser alert) */}
+          {statusValidationError && (
+            <div
+              style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                color: '#dc2626',
+                fontSize: '13px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+              }}
+              role="alert"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                <span>{statusValidationError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatusValidationError(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                }}
+                aria-label="Dismiss error"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Rejection Alert if rejected */}
           {(article.status === 'Rejected' || article.rejectReason) && (
             <div

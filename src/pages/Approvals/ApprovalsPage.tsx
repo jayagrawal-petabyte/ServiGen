@@ -24,6 +24,10 @@ export default function ApprovalsPage() {
   const [isBatchLoading, setIsBatchLoading] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null);
   const [modalRejectMode, setModalRejectMode] = useState(false);
+  const [isBatchAcceptModalOpen, setIsBatchAcceptModalOpen] = useState(false);
+  const [isBatchRejectModalOpen, setIsBatchRejectModalOpen] = useState(false);
+  const [batchRejectReason, setBatchRejectReason] = useState('');
+  const [batchRejectError, setBatchRejectError] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>('pending');
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,13 +158,22 @@ export default function ApprovalsPage() {
   };
 
   /**
-   * Batch approve pending requests
+   * Batch approve pending requests (React modal confirmation replaces direct execution)
    */
-  const handleAcceptAll = async () => {
-    if (isBatchLoading) return;
+  const handleOpenBatchAccept = () => {
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
       showToast('No pending approvals to accept.', 'info');
+      return;
+    }
+    setIsBatchAcceptModalOpen(true);
+  };
+
+  const handleConfirmBatchAccept = async () => {
+    if (isBatchLoading) return;
+    const pendingItems = approvals.filter((a) => a.status === 'pending');
+    if (pendingItems.length === 0) {
+      setIsBatchAcceptModalOpen(false);
       return;
     }
 
@@ -172,9 +185,10 @@ export default function ApprovalsPage() {
         prev.map((app) => (app.status === 'pending' ? { ...app, status: 'approved' } : app))
       );
       showToast(`Approved all ${pendingItems.length} pending request(s).`, 'success');
+      setIsBatchAcceptModalOpen(false);
       setTimeout(() => {
         loadData();
-      }, 1000);
+      }, 800);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Batch approve failed.', 'error');
     } finally {
@@ -183,24 +197,28 @@ export default function ApprovalsPage() {
   };
 
   /**
-   * Batch reject pending requests
+   * Batch reject pending requests (React modal dialog replaces window.prompt)
    */
-  const handleRejectAll = async () => {
-    if (isBatchLoading) return;
+  const handleOpenBatchReject = () => {
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
       showToast('No pending approvals to reject.', 'info');
       return;
     }
+    setBatchRejectReason('');
+    setBatchRejectError(null);
+    setIsBatchRejectModalOpen(true);
+  };
 
-    const reason = window.prompt('Please enter a mandatory rejection reason for all pending requests:');
-    if (reason === null) return; // User cancelled
-    const trimmedReason = reason.trim();
+  const handleConfirmBatchReject = async () => {
+    if (isBatchLoading) return;
+    const trimmedReason = batchRejectReason.trim();
     if (!trimmedReason || trimmedReason.length < 5) {
-      showToast('Validation Error: Rejection reason must be at least 5 characters long.', 'error');
+      setBatchRejectError('Validation Error: Rejection reason must be at least 5 characters long.');
       return;
     }
 
+    const pendingItems = approvals.filter((a) => a.status === 'pending');
     setIsBatchLoading(true);
     try {
       const pendingIds = pendingItems.map((a) => a.id);
@@ -209,15 +227,20 @@ export default function ApprovalsPage() {
         prev.map((app) => (app.status === 'pending' ? { ...app, status: 'rejected', rejectReason: trimmedReason } : app))
       );
       showToast(`Rejected all ${pendingItems.length} pending request(s).`, 'info');
+      setIsBatchRejectModalOpen(false);
+      setBatchRejectReason('');
+      setBatchRejectError(null);
       setTimeout(() => {
         loadData();
-      }, 1000);
+      }, 800);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Batch reject failed.', 'error');
     } finally {
       setIsBatchLoading(false);
     }
   };
+
+  const executeBatchReject = handleConfirmBatchReject;
 
   const handleRefresh = async () => {
     setIsLoading(true);
@@ -232,12 +255,19 @@ export default function ApprovalsPage() {
   };
 
   /**
-   * Open Approval Details Modal
+   * Open Approval Details Modal with URL query parameter synchronization
    * Loads specific approval details from GET /api/approvals/:approvalId
    */
   const handleOpenDetails = async (approval: Approval, defaultRejectMode = false) => {
     setSelectedApproval(approval);
     setModalRejectMode(defaultRejectMode);
+
+    const currentId = searchParams.get('id') || searchParams.get('approvalId') || searchParams.get('requestId');
+    if (currentId !== approval.id) {
+      const next = new URLSearchParams(searchParams);
+      next.set('id', approval.id);
+      setSearchParams(next, { replace: false });
+    }
 
     try {
       const fresh = await approvalsApi.getApprovalById(approval.id);
@@ -319,7 +349,7 @@ export default function ApprovalsPage() {
               variant="outline"
               size="sm"
               disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
-              onClick={handleAcceptAll}
+              onClick={handleOpenBatchAccept}
               isLoading={isBatchLoading}
               icon={<Check className="w-3.5 h-3.5 text-emerald-600" />}
               className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 font-semibold"
@@ -332,7 +362,7 @@ export default function ApprovalsPage() {
               variant="outline"
               size="sm"
               disabled={isBatchLoading || isLoading || pendingApprovalsCount === 0}
-              onClick={handleRejectAll}
+              onClick={handleOpenBatchReject}
               icon={<X className="w-3.5 h-3.5 text-rose-600" />}
               className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 font-semibold"
               title="Reject all pending approval requests"
@@ -376,15 +406,40 @@ export default function ApprovalsPage() {
               { id: 'all', label: 'All History', count: counts.all },
             ]}
             activeTab={currentTab}
-            onChange={(tab) => setCurrentTab(tab)}
+            onChange={(tab) => {
+              setCurrentTab(tab);
+              const next = new URLSearchParams(searchParams);
+              if (tab === 'pending') {
+                next.delete('tab');
+              } else {
+                next.set('tab', tab);
+              }
+              setSearchParams(next, { replace: true });
+            }}
           />
 
           <SearchInput
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={(val) => {
+              setSearchQuery(val);
+              const next = new URLSearchParams(searchParams);
+              if (val.trim()) {
+                next.set('search', val.trim());
+              } else {
+                next.delete('search');
+                next.delete('q');
+              }
+              setSearchParams(next, { replace: true });
+            }}
             placeholder="Search by ticket #, requester, title..."
             className="w-full sm:w-72 md:w-80"
-            onClear={() => setSearchQuery('')}
+            onClear={() => {
+              setSearchQuery('');
+              const next = new URLSearchParams(searchParams);
+              next.delete('search');
+              next.delete('q');
+              setSearchParams(next, { replace: true });
+            }}
           />
         </div>
 
@@ -503,6 +558,208 @@ export default function ApprovalsPage() {
             onApprove={handleApprove}
             onReject={handleReject}
           />
+        )}
+
+        {/* React Confirmation Modal for Batch Accept (Replaces native browser behavior) */}
+        {isBatchAcceptModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setIsBatchAcceptModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="modal-content"
+              style={{ maxWidth: '480px', padding: '24px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    backgroundColor: '#ecfdf5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#10b981',
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                    Accept All Pending Requests
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '13px', color: '#64748b' }}>
+                    Are you sure you want to approve all {counts.pending} pending request(s)?
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  className="btn-approval-action"
+                  onClick={() => setIsBatchAcceptModalOpen(false)}
+                  disabled={isBatchLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    backgroundColor: '#10b981',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 20px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: isBatchLoading ? 'not-allowed' : 'pointer',
+                    opacity: isBatchLoading ? 0.7 : 1,
+                    boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+                  }}
+                  onClick={handleConfirmBatchAccept}
+                  disabled={isBatchLoading}
+                >
+                  {isBatchLoading ? 'Approving...' : 'Confirm Approve All'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* React Modal for Batch Reject (Replaces window.prompt with validated React modal) */}
+        {isBatchRejectModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isBatchLoading) {
+                setIsBatchRejectModalOpen(false);
+                setBatchRejectReason('');
+                setBatchRejectError(null);
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="modal-content"
+              style={{ maxWidth: '520px', padding: '24px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    backgroundColor: '#fef2f2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ef4444',
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                    Reject All Pending Requests
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '13px', color: '#64748b' }}>
+                    This will reject all {counts.pending} pending request(s). A justification is required.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Rejection Justification <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={batchRejectReason}
+                  onChange={(e) => {
+                    setBatchRejectReason(e.target.value);
+                    if (batchRejectError && e.target.value.trim().length >= 5) {
+                      setBatchRejectError(null);
+                    }
+                  }}
+                  placeholder="State the justification or compliance reason for rejecting all pending requests..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: `1.5px solid ${batchRejectError ? '#ef4444' : '#cbd5e1'}`,
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    resize: 'none',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  autoFocus
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                  {batchRejectError ? (
+                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 500 }}>
+                      {batchRejectError}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      Minimum 5 characters required
+                    </span>
+                  )}
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    {batchRejectReason.trim().length} chars
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn-approval-action"
+                  onClick={() => {
+                    setIsBatchRejectModalOpen(false);
+                    setBatchRejectReason('');
+                    setBatchRejectError(null);
+                  }}
+                  disabled={isBatchLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 20px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: isBatchLoading || batchRejectReason.trim().length < 5 ? 'not-allowed' : 'pointer',
+                    opacity: isBatchLoading || batchRejectReason.trim().length < 5 ? 0.6 : 1,
+                    boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)',
+                  }}
+                  onClick={handleConfirmBatchReject}
+                  disabled={isBatchLoading || batchRejectReason.trim().length < 5}
+                >
+                  {isBatchLoading ? 'Rejecting...' : 'Confirm Reject All'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {toast && (
