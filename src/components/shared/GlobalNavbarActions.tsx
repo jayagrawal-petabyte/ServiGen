@@ -489,6 +489,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   }, [ticketList, query]);
 
   const matchingProblems = useMemo(() => {
+    if (isEndUser) return [];
     if (!query) return problemList.slice(0, 3);
     return problemList.filter(
       (p: any) =>
@@ -498,9 +499,10 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         (p.category && p.category.toLowerCase().includes(query)) ||
         (p.team && p.team.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [problemList, query]);
+  }, [problemList, query, isEndUser]);
 
   const matchingCis = useMemo(() => {
+    if (isEndUser) return [];
     if (!query) return ciList.slice(0, 3);
     return ciList.filter(
       (ci: any) =>
@@ -510,7 +512,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         (ci.site && ci.site.toLowerCase().includes(query)) ||
         (ci.businessOwner && ci.businessOwner.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [ciList, query]);
+  }, [ciList, query, isEndUser]);
 
   const matchingArticles = useMemo(() => {
     if (!query) return articleList.slice(0, 3);
@@ -524,6 +526,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   }, [articleList, query]);
 
   const matchingUsers = useMemo(() => {
+    if (isEndUser) return [];
     if (!query) return userList.slice(0, 3);
     return userList.filter(
       (u: any) =>
@@ -532,7 +535,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         (u.email && u.email.toLowerCase().includes(query)) ||
         (u.role && u.role.toLowerCase().includes(query))
     ).slice(0, 5);
-  }, [userList, query]);
+  }, [userList, query, isEndUser]);
 
   const totalResultsCount =
     matchingTickets.length +
@@ -727,19 +730,21 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         </button>
       )}
 
-      {/* 6. Clock -> Live Activity Feed */}
-      <button
-        type="button"
-        className={`global-nav-icon-btn ${activeFlyout === 'feed' ? 'is-active' : ''}`}
-        title="Live Activity Feed"
-        onClick={() => toggleFlyout('feed')}
-        aria-label="Live Activity Feed"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" strokeLinecap="round" />
-        </svg>
-      </button>
+      {/* 6. Clock -> Live Activity Feed (Agent only) */}
+      {canAccessAgent && (
+        <button
+          type="button"
+          className={`global-nav-icon-btn ${activeFlyout === 'feed' ? 'is-active' : ''}`}
+          title="Live Activity Feed"
+          onClick={() => toggleFlyout('feed')}
+          aria-label="Live Activity Feed"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
 
       {/* 7. Help / Guide */}
       <button
@@ -851,20 +856,24 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             >
               Tickets ({matchingTickets.length})
             </button>
-            <button
-              type="button"
-              className={`global-search-scope-tab ${searchScope === 'problems' ? 'is-active' : ''}`}
-              onClick={() => setSearchScope('problems')}
-            >
-              Problems ({matchingProblems.length})
-            </button>
-            <button
-              type="button"
-              className={`global-search-scope-tab ${searchScope === 'cmdb' ? 'is-active' : ''}`}
-              onClick={() => setSearchScope('cmdb')}
-            >
-              Assets / CIs ({matchingCis.length})
-            </button>
+            {canAccessAgent && (
+              <button
+                type="button"
+                className={`global-search-scope-tab ${searchScope === 'problems' ? 'is-active' : ''}`}
+                onClick={() => setSearchScope('problems')}
+              >
+                Problems ({matchingProblems.length})
+              </button>
+            )}
+            {canAccessAgent && (
+              <button
+                type="button"
+                className={`global-search-scope-tab ${searchScope === 'cmdb' ? 'is-active' : ''}`}
+                onClick={() => setSearchScope('cmdb')}
+              >
+                Assets / CIs ({matchingCis.length})
+              </button>
+            )}
             <button
               type="button"
               className={`global-search-scope-tab ${searchScope === 'articles' ? 'is-active' : ''}`}
@@ -872,13 +881,15 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             >
               Articles ({matchingArticles.length})
             </button>
-            <button
-              type="button"
-              className={`global-search-scope-tab ${searchScope === 'users' ? 'is-active' : ''}`}
-              onClick={() => setSearchScope('users')}
-            >
-              Users ({matchingUsers.length})
-            </button>
+            {canAccessAgent && (
+              <button
+                type="button"
+                className={`global-search-scope-tab ${searchScope === 'users' ? 'is-active' : ''}`}
+                onClick={() => setSearchScope('users')}
+              >
+                Users ({matchingUsers.length})
+              </button>
+            )}
           </div>
 
           {/* Results List */}

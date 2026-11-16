@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import AppLayout from './layouts/AppLayout'
+import PortalLayout from './layouts/PortalLayout'
+import { useAuth } from './pages/Auth'
 
 // Auth
 import { AuthProvider } from './pages/Auth'
@@ -202,6 +204,14 @@ function ChangeRequestsWrapper() {
   )
 }
 
+function RootRedirect() {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return null
+  }
+  return <Navigate to={user?.role === 'End User' ? '/portal' : '/dashboard'} replace />
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -221,9 +231,18 @@ export default function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
 
-            {/* All App Screens (Inside Figma Left Sidebar Shell) */}
+            {/* Root redirect */}
+            <Route path="/" element={<RootRedirect />} />
+
+            {/* End-User Portal (Dedicated layout - No Agent Console sidebar) */}
+            <Route element={<PortalLayout />}>
+              <Route path="/portal" element={<EndUserPortal />} />
+              <Route path="/self-service" element={<Navigate to="/portal" replace />} />
+              <Route path="/services-catalogue" element={<ServiceCatalogue />} />
+            </Route>
+
+            {/* Agent Console Screens (Inside AppLayout with Left Sidebar) */}
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/my-work" element={<MyWork />} />
@@ -237,7 +256,6 @@ export default function App() {
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/requests" element={<RequestsPage />} />
-              <Route path="/services-catalogue" element={<ServiceCatalogue />} />
               <Route path="/approvals" element={<ApprovalsPage />} />
               <Route path="/article-drafts" element={<ArticleDraftsPage />} />
               <Route path="/on-hold" element={<OnHoldTicketScreen />} />
@@ -254,11 +272,9 @@ export default function App() {
               <Route path="/change-requests" element={<ChangeRequestsWrapper />} />
               <Route path="/reports/incidents-by-category" element={<IncidentsByCategoryReport />} />
               <Route path="/reporting" element={<IncidentsByCategoryReport />} />
-              <Route path="/portal" element={<EndUserPortal />} />
-              <Route path="/self-service" element={<Navigate to="/portal" replace />} />
               <Route path="/admin" element={<AdminSettingsPage />} />
               <Route path="/settings" element={<Navigate to="/admin" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<RootRedirect />} />
             </Route>
           </Routes>
         </React.Suspense>

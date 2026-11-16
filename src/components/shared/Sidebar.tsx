@@ -203,27 +203,6 @@ export interface NavItemConfig {
 const AGENT_ROLES: User['role'][] = ['Administrator', 'System Manager', 'Team Lead', 'Support Agent'];
 
 const NAV_ITEMS: NavItemConfig[] = [
-  // User console
-  {
-    to: '/portal',
-    label: 'User Console',
-    line1: 'User',
-    line2: 'Console',
-    icon: PortalNavIcon,
-    matchActive: (path) => path.startsWith('/portal') || path.startsWith('/self-service'),
-    roles: ['End User'],
-  },
-  {
-    to: '/services-catalogue',
-    label: 'Services Catalogue',
-    line1: 'Services',
-    line2: 'Catalogue',
-    icon: RequestsIcon,
-    matchActive: (path) => path.startsWith('/services-catalogue'),
-    roles: ['End User'],
-  },
-
-  // Agent workspace
   {
     to: '/dashboard',
     label: 'Dashboard',
@@ -393,13 +372,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
       {/* Brand Logo */}
       <div className="sidebar-logo">
         <NavLink
-          to={currentRole === 'End User' ? '/portal' : '/dashboard'}
+          to="/dashboard"
           onClick={onCloseMobile}
-          onMouseEnter={() => prefetchRoute(currentRole === 'End User' ? '/portal' : '/dashboard')}
-          onFocus={() => prefetchRoute(currentRole === 'End User' ? '/portal' : '/dashboard')}
+          onMouseEnter={() => prefetchRoute('/dashboard')}
+          onFocus={() => prefetchRoute('/dashboard')}
           className="flex items-center justify-center transition-transform hover:scale-105"
           style={{ textDecoration: 'none' }}
-          title={currentRole === 'End User' ? 'ServiGen User Console' : 'ServiGen Dashboard'}
+          title="ServiGen Dashboard"
         >
           <BrandLogo size={32} />
         </NavLink>

@@ -267,7 +267,7 @@ export const EndUserPortal: React.FC = () => {
       )}
 
       {/* ── Standard Application Top Header (Shared Architecture) ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 min-h-[50px] sticky top-0 z-30">
+      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 min-h-[50px] sticky top-0 z-30">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           {user?.role !== 'End User' ? (
             <button

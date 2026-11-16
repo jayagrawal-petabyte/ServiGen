@@ -76,15 +76,9 @@ export const AppLayout: React.FC = () => {
     return <Navigate to={toUrl} replace />;
   }
 
-  // QA-RBAC-01: End Users cannot directly access restricted administrative/agent routes; redirect to Self-Service Portal
+  // End Users cannot access restricted administrative/agent routes; redirect to User Console
   if (user?.role === 'End User') {
-    const isPortalRoute =
-      location.pathname.startsWith('/portal') ||
-      location.pathname === '/self-service' ||
-      location.pathname.startsWith('/services-catalogue');
-    if (!isPortalRoute) {
-      return <Navigate to="/portal" replace />;
-    }
+    return <Navigate to="/portal" replace />;
   }
 
   // Admin Configuration guard: Only Administrator and System Manager
@@ -234,30 +228,28 @@ export const AppLayout: React.FC = () => {
                     Workspaces
                   </span>
 
-                  {user?.role !== 'End User' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        navigate('/dashboard');
-                      }}
-                      className={`flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-colors cursor-pointer text-left ${
-                        !location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin')
-                          ? 'bg-[#FFF9F5] text-[#C96F55] font-bold border border-[#ebdcd3]'
-                          : 'text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
-                        <span>Agent Console</span>
-                      </div>
-                      {!location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin') && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
-                          Current
-                        </span>
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate('/dashboard');
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl font-semibold transition-colors cursor-pointer text-left ${
+                      !location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin')
+                        ? 'bg-[#FFF9F5] text-[#C96F55] font-bold border border-[#ebdcd3]'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <LayoutDashboard className="w-4 h-4 text-slate-500 shrink-0" />
+                      <span>Agent Console</span>
+                    </div>
+                    {!location.pathname.startsWith('/portal') && !location.pathname.startsWith('/admin') && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF9F5] text-[#C96F55] border border-[#f7c9bc]">
+                        Current
+                      </span>
+                    )}
+                  </button>
 
                   <button
                     type="button"
@@ -313,19 +305,17 @@ export const AppLayout: React.FC = () => {
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
                     Account Actions
                   </span>
-                  {user?.role !== 'End User' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        navigate('/my-work');
-                      }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
-                    >
-                      <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
-                      <span>My Work &amp; Tasks</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate('/my-work');
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span>My Work &amp; Tasks</span>
+                  </button>
                   {/* Welcome Splash Screen */}
                   <button
                     type="button"
