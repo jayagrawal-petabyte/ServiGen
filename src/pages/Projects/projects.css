@@ -1,6 +1,3 @@
-/* Projects page – peach / navy theme. Everything is scoped under .projects-page
-   so it does not leak into other teams' pages. */
-
 .projects-page {
   --pj-bg: #FFF9F5;
   --pj-surface: #ffffff;
@@ -57,8 +54,6 @@
   color: var(--pj-muted);
   font-weight: 400;
 }
-
-/* ---------- left panel ---------- */
 
 .pj-side {
   width: 250px;
@@ -240,8 +235,6 @@
   background: #a9472f;
 }
 
-/* ---------- header ---------- */
-
 .pj-main {
   flex: 1;
   height: 100%;
@@ -370,8 +363,6 @@
   border-top: 1px solid var(--pj-line);
   margin: 4px 0;
 }
-
-/* ---------- project cards ---------- */
 
 .pj-list {
   display: flex;
@@ -580,8 +571,6 @@
   box-shadow: 0 2px 8px rgba(28, 37, 65, 0.08);
 }
 
-/* ---------- board ---------- */
-
 .pj-board {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -640,8 +629,6 @@
   font-size: 12px;
   margin: 16px 0;
 }
-
-/* ---------- task calendar ---------- */
 
 .pj-cal {
   background: var(--pj-surface);
@@ -746,8 +733,6 @@
   background: var(--pj-low);
 }
 
-/* ---------- gantt ---------- */
-
 .pj-gantt {
   background: var(--pj-surface);
   border-radius: 8px;
@@ -843,8 +828,6 @@
   padding: 0 8px;
 }
 
-/* ---------- task tables ---------- */
-
 .pj-table {
   background: var(--pj-surface);
   border-radius: 8px;
@@ -894,8 +877,6 @@
   color: var(--pj-low);
   font-weight: 600;
 }
-
-/* ---------- modals ---------- */
 
 .pj-overlay {
   position: fixed;
@@ -1151,8 +1132,6 @@
   background: #fde8e8;
 }
 
-/* ---------- backend states ---------- */
-
 .pj-state {
   justify-self: start;
   font-size: 10px;
@@ -1217,8 +1196,6 @@
   background: var(--pj-accent-dark);
 }
 
-/* ---------- responsive ---------- */
-
 @media (max-width: 1100px) {
   .pj-card {
     grid-template-columns: 1fr 1fr;
@@ -1268,11 +1245,6 @@
   }
 }
 
-/* ==========================================================================
-   Kanban Drag-and-Drop, Budget Tracker, & Interactive Gantt Extensions
-   ========================================================================== */
-
-/* Drag and Drop */
 .pj-board-card[draggable="true"] {
   cursor: grab;
   user-select: none;
@@ -1296,7 +1268,6 @@
   transition: background 0.15s ease;
 }
 
-/* While dragging, prevent children from capturing drag events to avoid flicker */
 .pj-board.is-dragging .pj-board-card * {
   pointer-events: none;
 }
@@ -1331,7 +1302,6 @@
   font-weight: 700;
 }
 
-/* Progress Bar & Budget Hours Tracker Banner */
 .pj-tracker-banner {
   background: #ffffff;
   border: 1px solid #ebdcd3;
@@ -1405,7 +1375,6 @@
   transition: width 0.3s ease;
 }
 
-/* Interactive Gantt Timeline with Subtasks */
 .pj-gantt-expand-btn {
   background: transparent;
   border: none;
@@ -1457,7 +1426,6 @@
   background: #ef4444;
 }
 
-/* Assignee Select and Log Hours */
 .pj-select {
   border: 1px solid #d1d5db;
   border-radius: 6px;
