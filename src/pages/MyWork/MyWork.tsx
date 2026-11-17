@@ -126,7 +126,6 @@ export default function MyWork() {
     setIsFetchingTickets(true);
     try {
       const live = await myWorkService.getAllTickets();
-      // An empty queue is a valid answer; show it rather than stale rows.
       setServerTickets(Array.isArray(live) ? live : []);
       setLoadError(null);
     } catch (err) {
@@ -146,7 +145,6 @@ export default function MyWork() {
     return Array.from(map.values());
   }, [serverTickets]);
 
-  // Available options for contextual filters
   const availableAgents = useMemo(() => {
     const set = new Set<string>();
     allTickets.forEach((t) => {
@@ -171,7 +169,6 @@ export default function MyWork() {
     return Array.from(set).sort();
   }, [allTickets]);
 
-  // Counts for each view in the primary navigation
   const viewCounts = useMemo(() => {
     const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
     const myList = allTickets.filter((t) => {
@@ -195,7 +192,6 @@ export default function MyWork() {
     };
   }, [allTickets, user]);
 
-  // Base tickets matching the active view (to compute accurate status counts)
   const baseViewTickets = useMemo(() => {
     const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
     return allTickets.filter((t) => {
@@ -207,7 +203,6 @@ export default function MyWork() {
     });
   }, [allTickets, activeView, user]);
 
-  // Counts for shifted status filter
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {
       All: baseViewTickets.length,
@@ -256,7 +251,6 @@ export default function MyWork() {
     const currentUserName = (user?.fullName || "Adam Admin").toLowerCase();
 
     return allTickets.filter((ticket) => {
-      // 1. View-level filtering
       if (activeView === "My List") {
         const agentName = (ticket.assignedAgent || "").toLowerCase();
         const isMyTicket = ticket.id.startsWith("MYW-") || agentName.includes(currentUserName) || agentName.includes("adam");
@@ -275,7 +269,6 @@ export default function MyWork() {
         }
       }
 
-      // 2. Status filter
       if (statusFilter !== "All") {
         const stLower = (ticket.status || "").toLowerCase();
         if (statusFilter === "Resolved") {
@@ -285,12 +278,10 @@ export default function MyWork() {
         }
       }
 
-      // 3. Priority filter
       if (priorityFilter !== "All" && ticket.priority !== priorityFilter) {
         return false;
       }
 
-      // 4. Search query
       if (searchText.length > 0) {
         const matchesSearch =
           ticket.id.toLowerCase().includes(searchText) ||
@@ -363,7 +354,6 @@ export default function MyWork() {
     setNewNote("");
     setShowAddTimeLog(false);
 
-    // Persist to backend and update timeRecord
     const updatedTicket = await myWorkService.logTime(selectedTicket.id, minutes);
     if (updatedTicket) {
       setSelectedTicket((curr) => curr ? { ...curr, timeRecord: updatedTicket.timeRecord } : null);
@@ -382,7 +372,6 @@ export default function MyWork() {
     }
   };
 
-  // Handle tab/status deep linking (e.g. /my-work?tab=Active or /my-work?view=All%20Tickets)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam) {
@@ -396,7 +385,6 @@ export default function MyWork() {
     }
   }, [searchParams]);
 
-  // Handle direct ticket deep-linking (e.g. /my-work?id=MYW-101)
   useEffect(() => {
     const targetId = searchParams.get('id') || searchParams.get('ticketId');
     if (!targetId) return;
@@ -434,7 +422,6 @@ export default function MyWork() {
 
     return (
       <div className="flex-1 w-full min-h-full flex flex-col bg-slate-50">
-        {/* Top Navbar */}
         <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span className="hover:text-gray-800 cursor-pointer" onClick={handleBackToWork}>Service Desk</span>
@@ -674,7 +661,6 @@ export default function MyWork() {
   return (
     <div className="flex-1 w-full min-h-full flex flex-col bg-slate-50">
       <InlineErrorBanner message={loadError} onRetry={loadTickets} />
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -689,15 +675,12 @@ export default function MyWork() {
         />
       </header>
 
-      {/* ── Two-Column Layout (Sidebar + Main Content) ── */}
       <div className="flex flex-1 min-h-0 w-full">
-        {/* Left Sidebar Panel */}
         <aside
           className={`transition-all duration-200 shrink-0 flex flex-col py-5 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] my-3 ml-3 overflow-hidden ${
             isSidebarCollapsed ? "w-16 px-2" : "w-[260px] px-3.5"
           }`}
         >
-          {/* Sidebar Header with Collapse Toggle */}
           <div
             className={
               "flex items-center mb-3.5 pb-2.5 border-b border-slate-100 " +
@@ -720,7 +703,6 @@ export default function MyWork() {
             </button>
           </div>
 
-          {/* Sidebar Record Search */}
           {!isSidebarCollapsed && (
             <div className="mb-3 px-0.5">
               <SearchInput
@@ -733,9 +715,7 @@ export default function MyWork() {
             </div>
           )}
 
-          {/* Sidebar Body with Views & Shifted Filters */}
           <div className="flex-1 overflow-y-auto pr-0.5 space-y-3">
-            {/* Primary Views Navigation */}
             <nav className="flex flex-col gap-1" aria-label="Views">
               {VIEW_OPTIONS.map((item) => {
                 const isActive = activeView === item.label;
@@ -791,7 +771,6 @@ export default function MyWork() {
               <>
                 <hr className="border-slate-100 my-2" />
 
-                {/* Shifted Status Filter Section */}
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">
                     Status
@@ -828,7 +807,6 @@ export default function MyWork() {
                   </div>
                 </div>
 
-                {/* Shifted Priority Filter Section */}
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
                     Priority
@@ -847,7 +825,6 @@ export default function MyWork() {
                   </select>
                 </div>
 
-                {/* Contextual Sub-Filters */}
                 {activeView === "Tickets by Agents" && availableAgents.length > 0 && (
                   <div>
                     <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mt-2.5 mb-1.5">
@@ -902,7 +879,6 @@ export default function MyWork() {
                   </div>
                 )}
 
-                {/* Reset All Filters Button */}
                 {(statusFilter !== "All" || priorityFilter !== "All" || agentFilter !== "All" || teamFilter !== "All" || typeFilter !== "All" || query.trim() !== "") && (
                   <button
                     type="button"
@@ -925,7 +901,6 @@ export default function MyWork() {
           </div>
         </aside>
 
-        {/* Main Content Area */}
         <main className="flex-1 min-w-0 px-6 py-6 overflow-y-auto">
           <div className="mx-auto max-w-6xl">
             <header className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -944,7 +919,6 @@ export default function MyWork() {
               </div>
             </header>
 
-            {/* Shifted bar at top to sidebar — main area table begins directly */}
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead className="bg-slate-50">

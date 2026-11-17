@@ -103,7 +103,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   const resolvedDefaultView = initialView || (isServiceRoute ? 'services' : 'all');
   const resolvedDefaultViewId = resolvedDefaultView === 'services' ? 'service-cis' : 'all-cis';
 
-  // Direct backend state
   const [items, setItems] = useState<ConfigurationItem[]>(initialItems || []);
   const [groupedItems, setGroupedItems] = useState<GroupedConfigurationItems | null>(null);
   const [viewGrouping, setViewGrouping] = useState<'all' | 'grouped' | 'topology' | 'services'>(resolvedDefaultView);
@@ -115,20 +114,16 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sidebar navigation state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedViewId, setSelectedViewId] = useState<string>(resolvedDefaultViewId);
 
-  // Topology Tree state
   const [selectedTopologyCiId, setSelectedTopologyCiId] = useState<string>('');
   const [topologyGraph, setTopologyGraph] = useState<CiTopologyGraph | null>(null);
   const [isLoadingTopology, setIsLoadingTopology] = useState<boolean>(false);
 
-  // Modals
   const [selectedCiForModal, setSelectedCiForModal] = useState<ConfigurationItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Fetch real data from backend API
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -160,7 +155,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     }
   }, [initialItems, loadData]);
 
-  // Deep-link handling: automatically open CI modal when ?ci= or ?id= is present in URL
   useEffect(() => {
     const ciParam = searchParams.get('ci') || searchParams.get('id');
     if (!ciParam) return;
@@ -197,7 +191,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     }
   };
 
-  // Topology Tree Root CI resolution
   const selectedTopologyRootCi = useMemo(() => {
     if (selectedTopologyCiId) {
       const found = items.find((c) => c.id === selectedTopologyCiId || c.tag === selectedTopologyCiId);
@@ -227,7 +220,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     }
   }, [viewGrouping, selectedTopologyRootCi, loadTopology]);
 
-  // Type Counts for dynamic filter badges
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {
       ALL: items.length,
@@ -246,7 +238,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     return counts;
   }, [items]);
 
-  // Status counts (from All Statuses filter)
   const statusActiveCount = useMemo(() => items.filter((ci) => ci.status === 'Active').length, [items]);
   const statusMaintenanceCount = useMemo(
     () => items.filter((ci) => ci.status === 'Maintenance').length,
@@ -257,7 +248,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     [items]
   );
 
-  // Lifecycle counts (from All Lifecycle filter)
   const lifecycleDeployedCount = useMemo(
     () => items.filter((ci) => ci.lifecycleState === 'Deployed' || (!ci.lifecycleState && ci.status === 'Active')).length,
     [items]
@@ -279,7 +269,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     [items]
   );
 
-  // Warranty counts (from All Warranties filter)
   const warrantyActiveCount = useMemo(() => {
     return items.filter((ci) => {
       const w = getWarrantyTag(ci.warrantyExpiry || ci.specifications?.warrantyExpiry);
@@ -299,7 +288,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     }).length;
   }, [items]);
 
-  // Sidebar navigation structure
   const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
     () => [
       {
@@ -634,7 +622,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     return 'Configuration Management Database';
   }, [selectedViewId, rawSidebarGroups]);
 
-  // Live filter query matching
   const filteredCis = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return items.filter((ci) => {
@@ -670,7 +657,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
     });
   }, [items, searchQuery, selectedType, selectedStatus, selectedLifecycle, selectedWarranty]);
 
-  // CI Registration handler (calls real backend POST)
   const handleRegisterCi = async (newCi: ConfigurationItem) => {
     try {
       const res = await createConfigurationItem(newCi);
@@ -761,7 +747,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             />
           </div>
 
-          {/* Quick Specifications */}
           <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-b border-slate-100 mb-3 bg-slate-50/60 rounded-xl px-3 mt-2">
             <div>
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
@@ -793,7 +778,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           </div>
         </div>
 
-        {/* Card Footer: Warranty & Owner */}
         <div className="flex flex-wrap items-start justify-between gap-2 pt-1 text-xs">
           <div className="flex min-w-0 items-start gap-1.5 text-slate-500">
             <User className="w-3.5 h-3.5 text-slate-400" />
@@ -818,7 +802,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
 
   return (
     <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <button
@@ -834,9 +817,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
         <GlobalNavbarActions />
       </header>
 
-      {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
       <div className="flex flex-1 h-full min-h-0 w-full min-w-0 flex-row items-stretch overflow-hidden pt-3 px-3 sm:px-[18px] pb-4 sm:pb-6 gap-3 sm:gap-4">
-        {/* Left Module Sidebar */}
         <ModuleSidebar
           title="CMDB Repository"
           icon={<Database className="w-3.5 h-3.5" />}
@@ -864,9 +845,7 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
           }
         />
 
-        {/* Right Main Panel */}
         <main className="flex-1 flex flex-col min-w-0 w-full min-h-0 h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
-          {/* Main Top Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -910,7 +889,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
             )}
           </div>
 
-          {/* Main Content Area */}
           <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-5">
             {error && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs mb-4">
@@ -919,7 +897,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               </div>
             )}
 
-            {/* VIEW 0: Service CIs & SLA View */}
             {viewGrouping === 'services' ? (
               <ServiceCisView
                 searchFilter={searchQuery}
@@ -927,7 +904,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
               />
             ) : viewGrouping === 'topology' ? (
               <div className="space-y-4">
-                {/* Top Root CI Selector bar */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     <span className="font-bold text-slate-600 shrink-0">
@@ -1017,7 +993,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 </button>
               </div>
             ) : viewGrouping === 'grouped' && groupedItems ? (
-              /* VIEW 2: Category Grouped View */
               <div className="space-y-8">
                 {Object.entries(groupedItems).map(([type, list]) => {
                   const matchedCategoryItems = list.filter((ci) =>
@@ -1044,7 +1019,6 @@ export const CmdbPage: React.FC<CmdbPageProps> = ({
                 })}
               </div>
             ) : (
-              /* VIEW 3: Flat Grid View */
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-5">
                 {filteredCis.map(renderCiCard)}
               </div>

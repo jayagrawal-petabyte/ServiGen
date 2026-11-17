@@ -1,6 +1,3 @@
-/* ================================
-   TEAM INCIDENTS PAGE
-================================ */
 
 .team-incidents-page {
   width: 100%;
@@ -10,9 +7,6 @@
   color: #1f2937;
 }
 
-/* ================================
-   PAGE HEADER
-================================ */
 
 .team-incidents-header {
   display: flex;
@@ -34,9 +28,6 @@
   color: #6b7280;
 }
 
-/* ================================
-   FILTERS
-================================ */
 
 .team-incident-filters {
   display: flex;
@@ -66,9 +57,6 @@
   border-color: #C96F55;
 }
 
-/* ================================
-   TABLE CONTAINER
-================================ */
 
 .incident-table-container {
   width: 100%;
@@ -78,9 +66,6 @@
   background: #ffffff;
 }
 
-/* ================================
-   TOOLBAR
-================================ */
 
 .incident-table-toolbar {
   display: flex;
@@ -105,9 +90,6 @@
   color: #111827;
 }
 
-/* ================================
-   BLUE + NEW BUTTON
-================================ */
 
 .new-incident-button {
   height: 36px;
@@ -130,9 +112,6 @@
   background: #1e40af;
 }
 
-/* ================================
-   CREATE INCIDENT MODAL
-================================ */
 
 .new-incident-overlay {
   position: fixed;
@@ -146,9 +125,6 @@
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* ================================
-   MODAL BOX
-================================ */
 
 .new-incident-modal {
   width: 450px;
@@ -163,9 +139,6 @@
   overflow: hidden;
 }
 
-/* ================================
-   MODAL HEADER
-================================ */
 
 .new-incident-modal-header {
   display: flex;
@@ -207,9 +180,6 @@
   color: #111827;
 }
 
-/* ================================
-   MODAL BODY
-================================ */
 
 .new-incident-modal-body {
   display: flex;
@@ -252,9 +222,6 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-/* ================================
-   CREATE ERROR
-================================ */
 
 .create-error {
   margin: 8px 0 0;
@@ -263,9 +230,6 @@
   color: #dc2626;
 }
 
-/* ================================
-   MODAL ACTIONS
-================================ */
 
 .new-incident-modal-actions {
   display: flex;
@@ -312,9 +276,6 @@
   background: #C96F55;
 }
 
-/* ================================
-   TABLE
-================================ */
 
 .incident-table {
   width: 100%;
@@ -365,9 +326,6 @@
   cursor: pointer;
 }
 
-/* ================================
-   VIEWING INDICATOR
-================================ */
 
 .viewing-indicator {
   color: #C96F55;
@@ -412,9 +370,6 @@
   background-color: #f0f7ff !important;
 }
 
-/* ================================
-   SLA INDICATOR
-================================ */
 
 .sla-indicator {
   display: inline-block;
@@ -436,9 +391,6 @@
   color: #dc2626;
 }
 
-/* ================================
-   PRIORITY
-================================ */
 
 .priority-indicator {
   display: inline-flex;
@@ -474,9 +426,6 @@
   background: #16a34a;
 }
 
-/* ================================
-   STATUS
-================================ */
 
 .status {
   display: inline-flex;
@@ -507,9 +456,6 @@
   color: #b45309;
 }
 
-/* ================================
-   INCIDENT DETAILS
-================================ */
 
 .incident-details-panel {
   margin-top: 20px;
@@ -564,9 +510,6 @@
   color: #374151;
 }
 
-/* ================================
-   EMPTY STATE
-================================ */
 
 .empty-state {
   padding: 40px !important;
@@ -576,9 +519,6 @@
   color: #6b7280 !important;
 }
 
-/* ================================
-   BULK ACTIONS BAR
-================================ */
 
 .tickets-bulk-actions-bar {
   display: flex;
@@ -675,9 +615,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ================================
-   RESPONSIVE
-================================ */
 
 @media (max-width: 900px) {
   .team-table-toolbar-row {
@@ -706,9 +643,6 @@
   }
 }
 
-/* ================================
-   IMAGE 4: 1st Line Support > Demo User Layout
-================================ */
 
 .team-shell {
   display: flex;
@@ -720,7 +654,6 @@
   font-family: inherit;
 }
 
-/* Top Nav */
 .team-top-navbar {
   height: 54px;
   background: #ffffff;
@@ -862,7 +795,6 @@
   border-radius: 50%;
 }
 
-/* Two-column Body Layout */
 .team-body-row {
   display: flex !important;
   flex-direction: row !important;
@@ -876,7 +808,6 @@
   width: 100%;
 }
 
-/* Left Sidebar */
 .team-sidebar-panel {
   width: 250px;
   min-width: 250px;
@@ -1051,7 +982,6 @@
   color: #C96F55;
 }
 
-/* Sidebar Collapsed State */
 .team-sidebar-panel.collapsed {
   width: 48px;
   min-width: 48px;
@@ -1096,7 +1026,6 @@
   color: #0f172a;
 }
 
-/* Table More Options Menu */
 .team-table-options-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -1317,7 +1246,6 @@
   background: #8b5cf6;
 }
 
-/* Right Main Area & Table */
 .team-main-content {
   flex: 1;
   min-width: 0;
@@ -1443,7 +1371,6 @@
   color: #eab308;
 }
 
-/* ── Team Get Started Guide Modal ── */
 .team-get-started-modal {
   width: 580px;
   max-width: calc(100% - 32px);
@@ -1586,9 +1513,6 @@
   border-top: 1px solid #e2e8f0;
 }
 
-/* ========================================================
-   SCREENSHOT MATCH STYLING (media_1792174973996_3f67820f)
-======================================================== */
 
 .priority-dot {
   width: 6px !important;
@@ -1701,7 +1625,6 @@
 }
 
 
-/* ── Modal Backdrop & Animation Fix for Get Started and New Incident ── */
 .new-incident-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1735,9 +1658,6 @@
   }
 }
 
-/* ================================
-   RESPONSIVE MOBILE STYLES (< 768px)
-================================ */
 @media (max-width: 768px) {
   .team-shell {
     width: 100% !important;

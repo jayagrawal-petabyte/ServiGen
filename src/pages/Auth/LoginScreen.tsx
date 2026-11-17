@@ -54,7 +54,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   return (
     <div className="figma-login-page">
-      {/* Central Organic Shape SVG matching Figma screenshot */}
       <svg
         className="figma-svg-bg"
         viewBox="0 0 1000 700"
@@ -67,7 +66,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         />
       </svg>
 
-      {/* Decorative Dots & Shapes matching Figma screenshot with ambient floating animations */}
       <div className="figma-decor-layer">
         <div className="decor-dot-1" />
         <div className="decor-dot-2" />
@@ -79,9 +77,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="decor-dot-8" />
       </div>
 
-      {/* Login Card Area */}
       <div className="figma-login-wrapper">
-        {/* BrainMint Official Brand Logo Header */}
         <div className="figma-brand-header">
           <img
             src={brainmintLogo}
@@ -96,7 +92,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           {errorMessage && <div className="figma-error-msg">{errorMessage}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* User Name */}
             <div className="figma-field">
               <label className="figma-field-label" htmlFor="username">
                 User Name
@@ -114,7 +109,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               />
             </div>
 
-            {/* Password with Visibility Toggle */}
             <div className="figma-field">
               <label className="figma-field-label" htmlFor="password">
                 Password
@@ -175,7 +169,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </div>
             </div>
 
-            {/* Login Button with Spinner and Micro-interactions */}
             <div className="figma-btn-row">
               <button
                 type="submit"
@@ -189,7 +182,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           </form>
         </div>
 
-        {/* Forget Password Link */}
         <div className="figma-forget-row">
           <a
             className="figma-forget-text"

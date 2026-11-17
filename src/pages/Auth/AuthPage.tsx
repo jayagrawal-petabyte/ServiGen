@@ -12,7 +12,7 @@ export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login, isAuthenticated, loading: authLoading, user } = useAuth();
-  
+
   const defaultRoute = user?.role === 'End User' ? '/portal' : '/dashboard';
   const rawRedirect = searchParams.get('redirect') || searchParams.get('from') || defaultRoute;
   const redirectTarget = !rawRedirect || rawRedirect === '/auth' || rawRedirect === '/login' || rawRedirect.startsWith('/auth')
@@ -29,22 +29,18 @@ export const AuthPage: React.FC = () => {
     }
   }, [user]);
 
-  // If already authenticated and not verifying, redirect directly to intended page
-  // (unless user is currently performing login or viewing the splash screen)
   useEffect(() => {
     if (isAuthenticated && !authLoading && !isLoggingInRef.current && currentTab !== 'splash') {
       navigate(redirectTarget, { replace: true });
     }
   }, [isAuthenticated, authLoading, currentTab, navigate, redirectTarget]);
 
-  // Forgot Password modal state
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
   const [resetIdentifier, setResetIdentifier] = useState<string>('');
   const [resetSubmitted, setResetSubmitted] = useState<boolean>(false);
   const [resetLoading, setResetLoading] = useState<boolean>(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
-  // Login error state for returning from failed splash attempt
   const [loginError, setLoginError] = useState<string | null>(null);
   const authPromiseRef = useRef<Promise<boolean> | null>(null);
 
@@ -53,9 +49,8 @@ export const AuthPage: React.FC = () => {
     const cleanUser = credentials.username?.trim() || 'admin001';
     setLoggedInUser(cleanUser);
     setLoginError(null);
-    setCurrentTab('splash'); // Instantly switch to Splash Screen on click!
+    setCurrentTab('splash');
 
-    // Concurrently authenticate and pre-warm data in background while splash plays
     authPromiseRef.current = (async () => {
       try {
         const success = await login(credentials);
@@ -106,7 +101,6 @@ export const AuthPage: React.FC = () => {
       await api.post('/api/auth/forgot-password', { email: resetIdentifier.trim() });
       setResetSubmitted(true);
     } catch {
-      // Backend returns generic 200 to prevent user enumeration; show success regardless
       setResetSubmitted(true);
     } finally {
       setResetLoading(false);
@@ -138,7 +132,6 @@ export const AuthPage: React.FC = () => {
       )}
       {currentTab === 'users' && <OrganisationUsersScreen />}
 
-      {/* Forgot Password Modal */}
       {showForgotPassword && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn"

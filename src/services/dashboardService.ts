@@ -1,8 +1,3 @@
-/**
- * Dashboard API Service
- * Connects frontend dashboard components to live /api/dashboard endpoints
- * with fallback resilience for offline / mock testing.
- */
 
 import { api, logServiceError } from './apiClient';
 import {
@@ -78,9 +73,6 @@ export interface BackendTicketItem {
 }
 
 export const dashboardService = {
-  /**
-   * Fetch aggregated live KPIs
-   */
   async getKpis(): Promise<DashboardKpis> {
     try {
       const res = await api.get('/api/dashboard/kpis');
@@ -95,9 +87,6 @@ export const dashboardService = {
     }
   },
 
-  /**
-   * Mood value translation between frontend display labels and backend model enums
-   */
   moodToBackend(mood: string): string {
     const map: Record<string, string> = {
       'Great': 'Great',
@@ -126,9 +115,6 @@ export const dashboardService = {
     return map[mood] || mood;
   },
 
-  /**
-   * Fetch agent mood check-in
-   */
   async getMood(): Promise<string | null> {
     try {
       const res = await api.get('/api/dashboard/mood');
@@ -141,14 +127,10 @@ export const dashboardService = {
       }
     } catch (error) {
       logServiceError('dashboard.getMood', error);
-      // Fallback
     }
     return null;
   },
 
-  /**
-   * Submit agent mood check-in
-   */
   async submitMood(mood: string): Promise<boolean> {
     try {
       const backendMood = dashboardService.moodToBackend(mood);
@@ -160,9 +142,6 @@ export const dashboardService = {
     }
   },
 
-  /**
-   * Fetch incidents grouped by team
-   */
   async getIncidentsByTeam(): Promise<TeamIncident[]> {
     try {
       const res = await api.get('/api/dashboard/incidents-by-team');
@@ -179,9 +158,6 @@ export const dashboardService = {
     return MOCK_TEAM_INCIDENTS.map((t) => ({ label: t.team, value: t.openIncidents }));
   },
 
-  /**
-   * Fetch incidents grouped by category
-   */
   async getIncidentsByCategory(): Promise<CategoryItem[]> {
     try {
       const res = await api.get('/api/dashboard/incidents-by-category');
@@ -203,9 +179,6 @@ export const dashboardService = {
     }));
   },
 
-  /**
-   * Fetch new triage tickets for the dashboard panel
-   */
   async getNewTickets(): Promise<DashboardTicket[]> {
     try {
       const res = await api.get('/api/dashboard/new-tickets', { params: { limit: 30 } });
@@ -234,7 +207,6 @@ export const dashboardService = {
         });
       }
 
-      // Try /api/incidents/new as fallback
       const incRes: any = await api.get('/api/incidents/new', { params: { limit: 10 } });
       const incItems = Array.isArray(incRes?.data?.items) ? incRes.data.items : Array.isArray(incRes?.items) ? incRes.items : [];
       if (incItems.length > 0) {
@@ -269,9 +241,6 @@ export const dashboardService = {
     }));
   },
 
-  /**
-   * Fetch agent personalized summary metrics
-   */
   async getSummary(): Promise<DashboardSummary | null> {
     try {
       const res = await api.get('/api/dashboard/summary');

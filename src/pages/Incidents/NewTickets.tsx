@@ -123,7 +123,6 @@ const NewTickets = React.memo(function NewTickets({
     activePage * pageSize
   );
 
-  // Remove selections for tickets no longer present in API data.
   useEffect(() => {
     const currentIds = new Set(tickets.map((ticket) => ticket.id));
 
@@ -132,7 +131,6 @@ const NewTickets = React.memo(function NewTickets({
     );
   }, [tickets]);
 
-  // Reset pagination if the API returns fewer tickets.
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
@@ -172,8 +170,6 @@ const NewTickets = React.memo(function NewTickets({
     setSelectedTicket(ticket);
   };
 
-  // The backend update endpoint has not been confirmed.
-  // Do not display local-only edits as successfully saved.
   const handleModalUpdateTicket = (_updated: FullTicket) => {
     window.alert(
       "Ticket updates are not connected to the backend yet. No changes have been saved."

@@ -1,8 +1,3 @@
-/**
- * Global Ticket Event Bus
- * Provides instant synchronization across modals, queue tables, and dashboards
- * without requiring full page reloads.
- */
 
 export interface TicketUpdatePayload {
   id: string;

@@ -51,9 +51,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
       title="No-Code Custom Report & Query Builder"
       description="Build custom ad-hoc cross-cutting reports across ITIL modules without writing SQL."
     >
-      {/* Form */}
       <form onSubmit={handleRun} className="p-6 space-y-5 text-xs text-slate-700">
-            {/* Report Title */}
             <div>
               <label className="block text-slate-700 font-bold mb-1">Report Name *</label>
               <input
@@ -66,9 +64,7 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               />
             </div>
 
-            {/* Grid of 2 Selectors */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Entity */}
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Target Entity / Dataset</label>
                 <select
@@ -84,7 +80,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 </select>
               </div>
 
-              {/* Aggregation Metric */}
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Aggregation Metric</label>
                 <select
@@ -99,7 +94,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 </select>
               </div>
 
-              {/* Group By Field */}
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Group By Dimension</label>
                 <select
@@ -115,7 +109,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
                 </select>
               </div>
 
-              {/* Time Range */}
               <div>
                 <label className="block text-slate-700 font-bold mb-1">Date Range Window</label>
                 <select
@@ -132,7 +125,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               </div>
             </div>
 
-            {/* Visualization Mode */}
             <div>
               <label className="block text-slate-700 font-bold mb-1.5">Chart Visualization Mode</label>
               <div className="grid grid-cols-3 gap-3">
@@ -158,7 +150,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               </div>
             </div>
 
-            {/* Query Summary Callout */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-2.5">
               <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div className="text-[11px] text-slate-600 leading-snug">
@@ -171,7 +162,6 @@ export const QueryBuilderModal: React.FC<QueryBuilderModalProps> = ({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <button
                 type="button"

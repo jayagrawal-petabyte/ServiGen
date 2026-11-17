@@ -10,20 +10,12 @@ interface GetStartedGuideProps {
   title: string;
   subtitle?: string;
   steps: GuideStep[];
-  /** Label for the primary action, e.g. "Create First Request →". */
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   onClose: () => void;
 }
 
-/**
- * Shared onboarding guide dialog.
- *
- * Major Incidents had a real guide; other workspaces wired their "Get started"
- * button to a toast that vanished after 2.5s and explained nothing. This is the
- * Major Incidents dialog with its copy lifted out, so every workspace can show
- * the same thing with its own steps.
- */
+
 export const GetStartedGuide: React.FC<GetStartedGuideProps> = ({
   title,
   subtitle,

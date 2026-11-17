@@ -66,7 +66,6 @@ export default function ApprovalCard({
   return (
     <div className={`approval-card status-${approval.status}`}>
       <div className="approval-card-main-row">
-        {/* Left: Avatar */}
         <div className="approval-card-avatar-wrapper">
           {approval.authorType === 'ai' ? (
             <div
@@ -89,9 +88,7 @@ export default function ApprovalCard({
           )}
         </div>
 
-        {/* Right: Content Column */}
         <div className="approval-card-content-column">
-          {/* Line 1: Author, On Behalf Of, Category, and Timestamp */}
           <div className="approval-card-author-row">
             <div className="approval-card-author-left">
               <button
@@ -130,7 +127,6 @@ export default function ApprovalCard({
             </div>
           </div>
 
-          {/* Line 2: Ticket Number & Title */}
           <div className="approval-card-title-row">
             <button
               type="button"
@@ -149,14 +145,12 @@ export default function ApprovalCard({
             </span>
           </div>
 
-          {/* Line 3: Description if present */}
           {approval.description && approval.description.trim().length > 0 && (
             <p className="approval-card-body">
               {approval.description}
             </p>
           )}
 
-          {/* Line 4: Clean Metadata Strip for Ticket Details */}
           {approval.ticketDetails && (
             <div className="mt-3.5 bg-[#FFF9F5]/80 border border-[#ebdcd3] rounded-xl p-3.5">
               <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#ebdcd3]/70">
@@ -215,7 +209,6 @@ export default function ApprovalCard({
         </div>
       </div>
 
-      {/* Footer: Standardized Action Controls */}
       {isPending ? (
         <div className="approval-card-footer">
           <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 font-medium">
@@ -253,7 +246,6 @@ export default function ApprovalCard({
             </Button>
           </div>
 
-          {/* Mandatory Rejection Reason Dialog */}
           <ModalShell
             isOpen={isRejectDialogOpen}
             onClose={() => setIsRejectDialogOpen(false)}

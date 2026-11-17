@@ -55,26 +55,21 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Metrics state
   const [kpis, setKpis] = useState<DashboardKpis | null>(null);
   const [kpisError, setKpisError] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number | null>(null);
   const [myAssignmentsCount, setMyAssignmentsCount] = useState<number | null>(null);
 
-  // Lists state
   const [recentTickets, setRecentTickets] = useState<RecentTicketRow[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [ticketStatusMap, setTicketStatusMap] = useState<{open:number;inProgress:number;onHold:number;resolved:number}>({open:0,inProgress:0,onHold:0,resolved:0});
 
-  // Mood state
   const [selectedMood, setSelectedMood] = useState<string>('Great');
 
-  // Presence status state
   const [presence, setPresence] = useState<'available' | 'away' | 'busy'>(() => {
     try {
       const saved = localStorage.getItem('servigen_agent_presence');
@@ -104,11 +99,9 @@ export default function Dashboard() {
     } catch {}
   };
 
-  // Search filter
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  // Ticket creation modal
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [newSummary, setNewSummary] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -117,7 +110,6 @@ export default function Dashboard() {
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
   const [ticketSuccessNotice, setTicketSuccessNotice] = useState<string | null>(null);
 
-  // Load live data
   useEffect(() => {
     let mounted = true;
 
@@ -165,7 +157,6 @@ export default function Dashboard() {
             : [];
         const allTicketData = rawTicketList.length > 0 ? rawTicketList : MOCK_TICKETS;
 
-        // Compute status breakdown from ALL fetched tickets for donut chart
         const sMap = { open: 0, inProgress: 0, onHold: 0, resolved: 0 };
         allTicketData.forEach((t: any) => {
           const s = (t.status || 'Open').toLowerCase();
@@ -268,7 +259,6 @@ export default function Dashboard() {
     try {
       await dashboardService.submitMood(mood);
     } catch {
-      // Local optimistic update stays active
     }
   };
 
@@ -315,11 +305,7 @@ export default function Dashboard() {
     }, 1500);
   };
 
-  // Status breakdown numbers
   const statusCounts = useMemo(() => {
-    // Prefer kpis (Prisma counts, no org filter) for open/resolved totals
-    // Prefer ticketStatusMap (computed from fetched tickets) for per-status breakdown
-    // Fall back to summary if available
     const hasTicketData = ticketStatusMap.open > 0 || ticketStatusMap.inProgress > 0 || ticketStatusMap.onHold > 0 || ticketStatusMap.resolved > 0;
     const open = kpis?.openIncidents != null
       ? kpis.openIncidents
@@ -333,11 +319,10 @@ export default function Dashboard() {
     return { open, inProgress, onHold, resolved, total };
   }, [summary, kpis, ticketStatusMap]);
 
-  // Donut chart calculations
   const donutGeometry = useMemo(() => {
     const r = 50;
     const circumference = 2 * Math.PI * r;
-    const total = statusCounts.total || 1; // avoid divide-by-zero; segments will all be 0 when no data
+    const total = statusCounts.total || 1;
 
     const openLen = (statusCounts.open / total) * circumference;
     const inProgressLen = (statusCounts.inProgress / total) * circumference;
@@ -354,7 +339,6 @@ export default function Dashboard() {
     };
   }, [statusCounts]);
 
-  // Display user info
   const fullName = user?.fullName || '';
   const firstName = user?.firstName || fullName.split(' ')[0] || 'Demo';
   const roleName = user?.role || 'IT Manager';
@@ -365,7 +349,6 @@ export default function Dashboard() {
     .slice(0, 2)
     .toUpperCase() || 'DU';
 
-  // Filtered recent tickets by search
   const filteredRecentTickets = useMemo(() => {
     if (!deferredSearchQuery.trim()) return recentTickets;
     const q = deferredSearchQuery.toLowerCase();
@@ -378,7 +361,6 @@ export default function Dashboard() {
     );
   }, [recentTickets, deferredSearchQuery]);
 
-  // Record-specific deep-linking handlers
   const handleRecentTicketClick = (ticket: RecentTicketRow) => {
     const type = (ticket.type || '').toLowerCase();
     if (
@@ -414,7 +396,6 @@ export default function Dashboard() {
 
   return (
     <div className="w-full min-h-screen bg-[#FFF9F5] text-gray-800 pb-16 font-sans">
-      {/* ─── TOP NAVBAR ─── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -424,9 +405,7 @@ export default function Dashboard() {
         <GlobalNavbarActions />
       </header>
 
-      {/* ─── MAIN CONTENT ─── */}
       <main className="max-w-[1400px] mx-auto px-8 pt-6 flex flex-col gap-6">
-        {/* 1. GREETING & PROFILE BANNER */}
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">
             {getGreeting()}, {firstName}
@@ -462,7 +441,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 2. MOOD CHECK-IN */}
         <section className="bg-white border border-[#EFEAE4] rounded-xl px-6 py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div>
             <h3 className="text-sm font-bold text-gray-900">How are you today?</h3>
@@ -470,7 +448,6 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Great */}
             <button
               type="button"
               onClick={() => handleMoodSelect('Great')}
@@ -484,7 +461,6 @@ export default function Dashboard() {
               <span>Great</span>
             </button>
 
-            {/* Good */}
             <button
               type="button"
               onClick={() => handleMoodSelect('Good')}
@@ -498,7 +474,6 @@ export default function Dashboard() {
               <span>Good</span>
             </button>
 
-            {/* Okay */}
             <button
               type="button"
               onClick={() => handleMoodSelect('Okay')}
@@ -512,7 +487,6 @@ export default function Dashboard() {
               <span>Okay</span>
             </button>
 
-            {/* Not Good */}
             <button
               type="button"
               onClick={() => handleMoodSelect('Not Good')}
@@ -526,7 +500,6 @@ export default function Dashboard() {
               <span>Not Good</span>
             </button>
 
-            {/* Stressed */}
             <button
               type="button"
               onClick={() => handleMoodSelect('Stressed')}
@@ -542,7 +515,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 3. 4 KPI STAT TILES */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             layout="horizontal"
@@ -603,17 +575,13 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* 4. MIDDLE ROW: TICKETS BY STATUS + RECENT TICKETS */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Left: Tickets by Status */}
           <div className="bg-white border border-[#EFEAE4] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
             <h3 className="text-sm font-bold text-gray-900 mb-2">Tickets by Status</h3>
 
             <div className="flex items-center justify-around py-3">
-              {/* Donut Chart */}
               <div className="relative w-36 h-36 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                  {/* Background Track */}
                   <circle
                     cx="60"
                     cy="60"
@@ -622,7 +590,6 @@ export default function Dashboard() {
                     stroke="#F3F4F6"
                     strokeWidth="14"
                   />
-                  {/* Segment 1: Open (Emerald / Green) */}
                   <circle
                     cx="60"
                     cy="60"
@@ -633,7 +600,6 @@ export default function Dashboard() {
                     strokeDasharray={`${donutGeometry.openLen} ${donutGeometry.circumference}`}
                     strokeDashoffset="0"
                   />
-                  {/* Segment 2: In Progress (Sky / Blue) */}
                   <circle
                     cx="60"
                     cy="60"
@@ -644,7 +610,6 @@ export default function Dashboard() {
                     strokeDasharray={`${donutGeometry.inProgressLen} ${donutGeometry.circumference}`}
                     strokeDashoffset={-donutGeometry.openLen}
                   />
-                  {/* Segment 3: On Hold (Amber / Yellow) */}
                   <circle
                     cx="60"
                     cy="60"
@@ -655,7 +620,6 @@ export default function Dashboard() {
                     strokeDasharray={`${donutGeometry.onHoldLen} ${donutGeometry.circumference}`}
                     strokeDashoffset={-(donutGeometry.openLen + donutGeometry.inProgressLen)}
                   />
-                  {/* Segment 4: Resolved (Coral / Terracotta) */}
                   <circle
                     cx="60"
                     cy="60"
@@ -668,14 +632,12 @@ export default function Dashboard() {
                   />
                 </svg>
 
-                {/* Donut Center Label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-xl font-bold text-gray-900 leading-none">{statusCounts.total}</span>
                   <span className="text-[10px] text-gray-400 font-medium mt-0.5">total</span>
                 </div>
               </div>
 
-              {/* Legend List */}
               <div className="flex flex-col gap-2.5 min-w-[140px]">
                 <div
                   className="flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
@@ -728,7 +690,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right: Recent Tickets */}
           <div className="bg-white border border-[#EFEAE4] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-x-auto">
             <h3 className="text-sm font-bold text-gray-900 mb-3">Recent Tickets</h3>
 
@@ -809,9 +770,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 5. BOTTOM ROW: UPCOMING APPROVALS + MY TASKS */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Left: Upcoming Approvals */}
           <div className="bg-white border border-[#EFEAE4] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-x-auto">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-gray-900">Upcoming Approvals</h3>
@@ -871,7 +830,6 @@ export default function Dashboard() {
             </table>
           </div>
 
-          {/* Right: My Tasks */}
           <div className="bg-white border border-[#EFEAE4] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-x-auto">
             <h3 className="text-sm font-bold text-gray-900 mb-3">My Tasks</h3>
 
@@ -936,7 +894,6 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* ─── NEW TICKET MODAL ─── */}
       {isNewTicketOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"

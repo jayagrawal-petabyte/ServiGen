@@ -33,7 +33,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState<boolean>(false);
 
-  // Sync organisation filter from URL search params (e.g. ?organisation=Acme%20Corp)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const orgParam = params.get('organisation');
@@ -42,7 +41,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     }
   }, [location.search]);
 
-  // Fetch users from live backend on mount or when organization filter changes
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -64,7 +62,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
     };
   }, [selectedOrganisation]);
 
-  // New User Form State
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -74,19 +71,16 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
   const [newRegion, setNewRegion] = useState<'APAC' | 'EMEA' | 'Americas'>('APAC');
   const [newRole, setNewRole] = useState<User['role']>('Support Agent');
 
-  // Extract unique sites for filter dropdown
   const sites = useMemo(() => {
     const set = new Set(userList.map((u) => u.defaultSite));
     return Array.from(set);
   }, [userList]);
 
-  // Extract unique organisations for filter dropdown
   const organisations = useMemo(() => {
     const set = new Set(userList.map((u) => u.defaultOrganisation));
     return Array.from(set);
   }, [userList]);
 
-  // Filter users based on search and selected options
   const filteredUsers = useMemo(() => {
     return userList.filter((user) => {
       const q = searchQuery.toLowerCase().trim();
@@ -164,7 +158,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5]">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -175,7 +168,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
       </header>
 
       <div className="org-users-page flex-1">
-        {/* Header Section */}
         <div className="org-users-header-row">
           <div className="org-users-title-col">
             <h1>Contacts &amp; Users Directory</h1>
@@ -185,7 +177,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
           </div>
 
           <div className="org-users-header-right">
-            {/* Sub actions */}
             <div className="org-users-actions-row">
               <RefreshButton
                 onClick={handleRefresh}
@@ -207,7 +198,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
           </div>
         </div>
 
-      {/* Region Tabs */}
       <div className="org-region-tabs-row">
         {['ALL', 'APAC', 'EMEA', 'Americas'].map((reg) => (
           <button
@@ -221,7 +211,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         ))}
       </div>
 
-      {/* Search & Filter Bar */}
       <div className="org-filters-bar">
         <div className="org-search-box">
           <input
@@ -284,7 +273,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </select>
       </div>
 
-      {/* Users Table matching image columns */}
       <div className="org-table-wrapper">
         <table className="org-users-table">
           <thead>
@@ -355,7 +343,6 @@ export const OrganisationUsersScreen: React.FC<OrganisationUsersScreenProps> = (
         </table>
       </div>
 
-      {/* Add User Modal */}
       {isAddUserModalOpen && (
         <div className="org-modal-backdrop" onClick={() => setIsAddUserModalOpen(false)}>
           <div className="org-modal-card" onClick={(e) => e.stopPropagation()}>

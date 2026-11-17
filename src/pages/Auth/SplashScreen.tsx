@@ -54,7 +54,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           transition: { duration: 0.7, ease: [0.85, 0, 0.15, 1] },
         }}
       >
-        {/* Center Content Area - Clean Logo Only */}
         <div className="splash-content-wrapper">
           <motion.div
             className="splash-logo-container neon-glow-logo"
@@ -81,7 +80,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           </motion.div>
         </div>
 
-        {/* Elegant Bottom Loading Progress Bar in Brand Palette */}
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: '100%' }}

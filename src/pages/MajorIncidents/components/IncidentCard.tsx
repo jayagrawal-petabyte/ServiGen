@@ -53,7 +53,6 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
         isSelected ? 'border-cyan-500 ring-2 ring-cyan-100' : 'border-gray-200'
       }`}
     >
-      {/* Top Header Line */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className="shrink-0 text-xs font-bold font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 rounded px-2 py-0.5">
@@ -76,7 +75,6 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
         </div>
       </div>
 
-      {/* Target Subtitle Line */}
       <div className="flex items-center justify-between text-xs text-gray-500 mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap">
           <span>
@@ -103,7 +101,6 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
         )}
       </div>
 
-      {/* Lifecycle Pipeline Chevrons */}
       <div className="w-full overflow-x-auto">
         <LifecyclePipeline stages={incident.lifecycleStages} />
       </div>

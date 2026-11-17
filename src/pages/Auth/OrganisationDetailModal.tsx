@@ -41,7 +41,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
   const [activeTab, setActiveTab] = useState<'tickets' | 'contacts' | 'overview'>(initialTab);
   const [ticketFilter, setTicketFilter] = useState<string>('ALL');
 
-  // Reset active tab whenever the modal opens or organisation changes
   React.useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
@@ -49,10 +48,8 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
     }
   }, [isOpen, initialTab, organisation?.id]);
 
-  // Resolve contacts for this organisation
   const orgContacts = useMemo(() => {
     if (!organisation) return [];
-    // 1. Check matching mock users
     const matched = MOCK_USERS.filter(
       (u) =>
         u.defaultOrganisation?.toLowerCase() === organisation.name.toLowerCase() ||
@@ -61,7 +58,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
 
     if (matched.length > 0) return matched;
 
-    // 2. Generate contextual contacts based on organisation details
     const domain = organisation.domain || 'org.com';
     const mockList = [
       {
@@ -119,10 +115,8 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
     return mockList.slice(0, Math.max(organisation.contactCount, 2));
   }, [organisation]);
 
-  // Resolve tickets for this organisation
   const orgTickets = useMemo(() => {
     if (!organisation) return [];
-    // Check if tickets match by organisation name
     const matched = MOCK_TICKETS.filter(
       (t) =>
         t.organisation?.toLowerCase() === organisation.name.toLowerCase() ||
@@ -131,7 +125,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
 
     if (matched.length > 0) return matched;
 
-    // Contextual fallback tickets for organisation
     const baseTickets = [
       {
         id: `INC-${organisation.id.replace('ORG-', '2024-')}`,
@@ -195,7 +188,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
         <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in" />
         <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-5 md:p-6 overflow-y-auto pointer-events-none">
           <Dialog.Content className="w-full max-w-4xl max-h-[calc(100vh-48px)] my-2 sm:my-4 overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col pointer-events-auto animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
           <div className="bg-slate-50/80 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-11 h-11 rounded-xl bg-[#13273e] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm border border-slate-700/20">
@@ -256,7 +248,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
             </button>
           </div>
 
-          {/* Quick Metrics Bar */}
           <div className="grid grid-cols-4 border-b border-slate-100 bg-white px-6 py-3 shrink-0">
             <div className="border-r border-slate-100 pr-4">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Open Tickets</span>
@@ -288,7 +279,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
             </div>
           </div>
 
-          {/* Navigation Tabs */}
           <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-200 bg-slate-50/50 shrink-0">
             <button
               type="button"
@@ -340,9 +330,7 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
             </button>
           </div>
 
-          {/* Modal Tab Body */}
           <div className="flex-1 overflow-y-auto p-6 bg-white min-h-[320px]">
-            {/* TAB 1: TICKETS */}
             {activeTab === 'tickets' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -475,7 +463,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
               </div>
             )}
 
-            {/* TAB 2: CONTACTS */}
             {activeTab === 'contacts' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -559,7 +546,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
               </div>
             )}
 
-            {/* TAB 3: OVERVIEW */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -641,7 +627,6 @@ export const OrganisationDetailModal: React.FC<OrganisationDetailModalProps> = (
             )}
           </div>
 
-          {/* Modal Footer */}
           <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
             <span className="text-xs text-slate-400">
               Showing directory details for <strong className="text-slate-700">{organisation.name}</strong>

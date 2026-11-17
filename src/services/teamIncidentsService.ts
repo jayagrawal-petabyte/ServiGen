@@ -130,7 +130,7 @@ export async function fetchSupportIncidents(
     : '/api/incidents/support/first-line';
 
   const queryParams: Record<string, string | number> = {
-    limit: 100, // retrieve full queue for responsive client-side filtering
+    limit: 100,
   };
   if (params?.page) queryParams.page = params.page;
   if (params?.limit) queryParams.limit = params.limit;
@@ -219,7 +219,7 @@ let cachedTeamIncidents: {
 
 let inFlightTeamIncidentsPromise: Promise<AllTeamIncidentsResult> | null = null;
 
-const CACHE_TTL_MS = 15000; // 15-second client cache
+const CACHE_TTL_MS = 15000;
 
 export function invalidateTeamIncidentsCache(): void {
   cachedTeamIncidents = null;

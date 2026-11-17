@@ -783,7 +783,6 @@
   text-decoration: underline;
 }
 
-/* Bulk Actions Bar */
 .tickets-bulk-actions-bar {
   display: flex;
   align-items: center;
@@ -1552,7 +1551,6 @@
   font-weight: 700;
 }
 
-/* ── My New Tickets Visual Polish & Summary Hover Popover (Image 5) ── */
 .incident-row.row-hovered {
   background: #eef5fb !important;
 }
@@ -1574,7 +1572,6 @@
   color: #0369a1;
 }
 
-/* Table Avatar with Bubble Q and Green Dot */
 .ticket-agent-cell {
   display: inline-flex;
   align-items: center;
@@ -1613,7 +1610,6 @@
   border: 1.2px solid #ffffff;
 }
 
-/* Floating summary preview popover (Image 5) */
 .ticket-hover-popover {
   position: absolute;
   top: 100%;

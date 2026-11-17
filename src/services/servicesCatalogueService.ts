@@ -1,13 +1,3 @@
-/**
- * Servigen Services Catalogue Service Layer
- * Corresponds to Servigen API Specification Section (Services Catalogue Module)
- *
- * Backend Routes (Mounted at /api/services):
- * - GET /api/services                       : List and search/filter services
- * - GET /api/services/categories            : List available service categories
- * - GET /api/services/:serviceId            : Get single service details
- * - POST /api/services/:serviceId/requests  : Submit a service request
- */
 
 import { api, type ApiResponse } from './apiClient';
 import { MOCK_SERVICES } from './fallback/mockData';
@@ -45,7 +35,6 @@ export interface SubmittedServiceRequest {
   urgency?: string;
 }
 
-// Icon mapper for catalog items based on name or category
 export function getServiceIcon(name: string, category: string): string {
   const n = (name || '').toLowerCase();
   const c = (category || '').toLowerCase();
@@ -65,9 +54,6 @@ export function getServiceIcon(name: string, category: string): string {
   return '📦';
 }
 
-/**
- * Fetch list of services from live backend API (GET /api/services)
- */
 export async function fetchServices(category?: string, search?: string): Promise<ServiceItem[]> {
   try {
     const params: Record<string, string> = {};
@@ -103,9 +89,6 @@ export async function fetchServices(category?: string, search?: string): Promise
   }));
 }
 
-/**
- * Fetch available service categories from live backend (GET /api/services/categories)
- */
 export async function fetchServiceCategories(): Promise<string[]> {
   try {
     const res = await api.get('/api/services/categories');
@@ -121,9 +104,6 @@ export async function fetchServiceCategories(): Promise<string[]> {
   return ['All Services', 'Business Applications', 'End-User Catalogue', 'Services', 'Access'];
 }
 
-/**
- * Fetch single service detail by ID (GET /api/services/:serviceId)
- */
 export async function fetchServiceById(serviceId: string): Promise<ServiceItem | null> {
   try {
     const res = await api.get(`/api/services/${encodeURIComponent(serviceId)}`);
@@ -146,9 +126,6 @@ export async function fetchServiceById(serviceId: string): Promise<ServiceItem |
   return null;
 }
 
-/**
- * Submit a service request to backend (POST /api/services/:serviceId/requests)
- */
 export async function submitServiceRequest(
   serviceId: string,
   submission: ServiceRequestSubmission
@@ -178,7 +155,6 @@ export async function submitServiceRequest(
     console.warn('[servicesCatalogueService] Backend POST /requests failed, recording locally:', err);
   }
 
-  // Graceful fallback response
   return {
     id: `req_${Date.now()}`,
     serviceId,

@@ -53,8 +53,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
       }
     }).catch(() => {});
 
-    // Product / CI options. The old <datalist id="cmdb-products-list"> was
-    // declared but left empty, so the field never suggested anything.
+
     api.get('/api/cmdb/configuration-items').then((res: any) => {
       if (!active) return;
       const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
@@ -70,7 +69,6 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
     };
   }, []);
 
-  // close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
@@ -121,9 +119,7 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
       icon={<span className="w-3 h-3 bg-red-500 rounded-sm" />}
       title="New Major Incident"
     >
-      {/* Form */}
       <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
-          {/* Title */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
               Title <span className="text-red-500">*</span>
@@ -146,7 +142,6 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
             )}
           </div>
 
-          {/* Priority */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
             <div className="flex gap-2 flex-wrap">
@@ -167,7 +162,6 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
             </div>
           </div>
 
-          {/* Product */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
               Product / CI Service
@@ -180,7 +174,6 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
             />
           </div>
 
-          {/* Assignee */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Assignee</label>
             <Combobox
@@ -194,7 +187,6 @@ const NewIncidentModal: React.FC<NewIncidentModalProps> = ({ onClose, onSubmit, 
             />
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-end gap-2 pt-1">
             <button
               type="button"

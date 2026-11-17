@@ -211,7 +211,6 @@ function normalizeStatus(
     "in progress": "In Progress",
   };
 
-  // The UI status type has no Unknown option, so keep the fallback explicit.
   return statusMap[rawStatus.trim().toLowerCase()] ?? "Open";
 }
 
@@ -228,8 +227,6 @@ function normalizePriorityValue(
 
   const normalized = rawPriority.trim().toLowerCase();
 
-  // The backend also permits P1/P2. Normalize those without inventing
-  // a medium priority when the server sends an unfamiliar value.
   if (normalized === "p1") return "Critical";
   if (normalized === "p2") return "High";
 
@@ -402,8 +399,6 @@ export default function IncidentsDashboard() {
       setApiError(null);
 
       try {
-        // Fetch each section independently. One unavailable endpoint should
-        // not hide data successfully returned by the other endpoints.
         const endpoints = await Promise.all([
           api.get("/api/incidents/analytics/priority").then(
             (response) => ({ response, error: null as string | null }),

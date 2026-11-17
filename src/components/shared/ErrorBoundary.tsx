@@ -2,7 +2,6 @@ import React from 'react';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
-  /** Remount the subtree when this value changes (e.g. the route path). */
   resetKey?: string;
 }
 
@@ -10,12 +9,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Catches render-time exceptions so one bad component cannot blank the app.
- *
- * Without this, a mapper meeting an unexpected response shape took the whole
- * page to a white screen with nothing in the UI to explain it.
- */
+
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { error: null };
 

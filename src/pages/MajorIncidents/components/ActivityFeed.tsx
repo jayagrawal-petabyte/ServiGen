@@ -84,7 +84,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
 
-  // Keep target incident in sync when defaultIncidentId or incident list updates
   useEffect(() => {
     if (defaultIncidentId && validIncidents.some((i) => i.id === defaultIncidentId)) {
       setTargetIncidentId(defaultIncidentId);
@@ -93,7 +92,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     }
   }, [defaultIncidentId, validIncidents]);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
@@ -150,7 +148,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <aside className="w-[340px] lg:w-[360px] shrink-0 rounded-xl border border-gray-200 bg-white flex flex-col shadow-2xs overflow-hidden h-full">
-      {/* Feed Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-200 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold text-gray-900">Activity Feed</h2>
@@ -168,7 +165,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </div>
       </div>
 
-      {/* Quick Post Broadcast / War-Room Update Composer */}
       {onPostUpdate && (
         <div className="p-3 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center justify-between mb-1.5">
@@ -217,7 +213,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </div>
       )}
 
-      {/* Filter Row */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0 relative">
         <div className="flex items-center gap-1.5">
           <span className="text-[12px] font-semibold text-gray-700">
@@ -260,7 +255,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             </svg>
           </button>
 
-          {/* Interactive Filter Menu Popover */}
           {showFilterDropdown && (
             <div className="absolute right-0 top-8 z-30 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1.5 text-xs">
               <div className="px-3 py-1.5 border-b border-gray-100 flex items-center justify-between">
@@ -322,7 +316,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </div>
       </div>
 
-      {/* Feed List */}
       <div className="flex-1 overflow-y-auto px-4">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-gray-400 text-center px-4">

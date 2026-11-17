@@ -113,7 +113,6 @@ export interface CiSpecification {
   model?: string;
   rackLocation?: string;
   warrantyExpiry?: string;
-  // Type-specific dynamic attributes
   version?: string;
   runtime?: string;
   port?: string;

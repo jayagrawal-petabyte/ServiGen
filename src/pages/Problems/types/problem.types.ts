@@ -24,27 +24,27 @@ export interface ProblemLogEntry {
 }
 
 export interface ProblemItem {
-  id: string; // e.g. "0002149"
-  prefixId: string; // e.g. "PR-0002149"
+  id: string;
+  prefixId: string;
   summary: string;
   description: string;
-  team: string; // e.g. "Infrastructure"
-  agent: string; // e.g. "Ken Yang"
-  agentInitials: string; // e.g. "KY"
+  team: string;
+  agent: string;
+  agentInitials: string;
   priority: ProblemPriority;
   status: ProblemStatus;
-  category: string; // e.g. "Business Applications"
-  type: string; // "Problem"
-  workflow: string; // "Problem Management Workflow"
-  dateReported: string; // e.g. "17/05/2026 4:06 AM"
-  timeRecorded: string; // "00:00"
-  impact: string; // "High"
+  category: string;
+  type: string;
+  workflow: string;
+  dateReported: string;
+  timeRecorded: string;
+  impact: string;
   currentStage: ProblemStage;
   causeStatus?: 'Identified' | 'Unknown' | 'Under Investigation';
   rootCauseDescription?: string;
   workaroundDescription?: string;
   pirData?: PirData;
-  monitoredServices: string[]; // e.g. ["Microsoft Teams"]
+  monitoredServices: string[];
   childCis: Array<{
     id: string;
     name: string;

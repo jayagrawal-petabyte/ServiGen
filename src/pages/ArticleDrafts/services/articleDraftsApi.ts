@@ -1,16 +1,3 @@
-/**
- * Article Drafts API Service
- * 
- * Integrates directly with the ServiGen Backend Knowledge Articles endpoints:
- * - GET    /api/articles
- * - GET    /api/articles/:id
- * - POST   /api/articles
- * - PATCH  /api/articles/:id
- * 
- * Provides typed DTOs and seamless fallback to persistent isolated storage
- * when operating in offline/demo environments, with complete lifecycle
- * status synchronization into My Approvals.
- */
 
 import {
   type ArticleDraft,
@@ -28,9 +15,6 @@ export type { CreateArticleDraftDto, UpdateArticleDraftDto, BackendKnowledgeArti
 const STORAGE_KEY = 'servigen_article_drafts_v3';
 const SIMULATED_LATENCY_MS = 100;
 
-/**
- * Check if custom or default backend articles endpoint is available
- */
 function getArticlesBackendEndpoint(): string {
   const custom =
     typeof import.meta !== 'undefined' && import.meta.env
@@ -42,14 +26,10 @@ function getArticlesBackendEndpoint(): string {
   return '/api/articles';
 }
 
-/**
- * Helper to adapt a Backend Knowledge Article to the UI ArticleDraft model
- */
 export function adaptBackendArticle(item: BackendKnowledgeArticle | any): ArticleDraft {
   const rawId = item.id !== undefined && item.id !== null ? String(item.id) : '';
   const idStr = /^\d+$/.test(rawId) ? rawId.padStart(7, '0') : rawId || `ART-${Date.now().toString().slice(-4)}`;
 
-  // Calculate relative SLA status if slaDueAt exists
   let slaTimeLeft = '3d 6h left';
   let slaStatus: ArticleDraftSlaStatus = 'safe';
   if (item.slaDueAt) {
@@ -105,9 +85,6 @@ export function adaptBackendArticle(item: BackendKnowledgeArticle | any): Articl
   };
 }
 
-/**
- * Helper to get drafts from isolated development storage or initial seed
- */
 function getStoredDrafts(): ArticleDraft[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -121,9 +98,6 @@ function getStoredDrafts(): ArticleDraft[] {
   return [];
 }
 
-/**
- * Helper to persist drafts to isolated development storage
- */
 function setStoredDrafts(data: ArticleDraft[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -133,9 +107,6 @@ function setStoredDrafts(data: ArticleDraft[]): void {
 }
 
 export const articleDraftsApi = {
-  /**
-   * Fetch all article drafts from backend /api/articles with fallback and local override preservation
-   */
   async getDrafts(): Promise<ArticleDraft[]> {
     const endpoint = getArticlesBackendEndpoint();
     const stored = getStoredDrafts();
@@ -151,7 +122,6 @@ export const articleDraftsApi = {
       if (rawList !== null) {
         const backendDrafts = rawList.map(adaptBackendArticle);
 
-        // Merge: keep locally created or modified drafts that may not yet be in backend
         const mergedMap = new Map<string, ArticleDraft>();
         backendDrafts.forEach((d: ArticleDraft) => mergedMap.set(d.id, d));
         stored.forEach((localDraft) => {
@@ -175,7 +145,6 @@ export const articleDraftsApi = {
         return finalDrafts;
       }
     } catch {
-      // Backend offline or route unpopulated, fall through to local storage
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -187,9 +156,6 @@ export const articleDraftsApi = {
     return stored;
   },
 
-  /**
-   * Fetch single article draft by ID
-   */
   async getDraftById(id: string): Promise<ArticleDraft> {
     if (!id) {
       throw new Error('Validation Error: Article ID is required.');
@@ -203,7 +169,6 @@ export const articleDraftsApi = {
         return adaptBackendArticle(item);
       }
     } catch {
-      // Fallback
     }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -215,9 +180,6 @@ export const articleDraftsApi = {
     return found;
   },
 
-  /**
-   * Create a new article draft with validation
-   */
   async createArticleDraft(newDraft: CreateArticleDraftDto): Promise<ArticleDraft> {
     if (!newDraft.summaryTitle || newDraft.summaryTitle.trim().length < 3) {
       throw new Error('Validation Error: Article title must be at least 3 characters.');
@@ -251,7 +213,6 @@ export const articleDraftsApi = {
         return created;
       }
     } catch {
-      // Fallback to local store
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -272,9 +233,6 @@ export const articleDraftsApi = {
     return created;
   },
 
-  /**
-   * Update article draft content and metadata with validation
-   */
   async updateDraftContent(
     id: string,
     updates: UpdateArticleDraftDto
@@ -309,7 +267,6 @@ export const articleDraftsApi = {
         priority: updates.priority,
       });
     } catch {
-      // Fallback
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -336,9 +293,6 @@ export const articleDraftsApi = {
     return updated;
   },
 
-  /**
-   * Transition article draft lifecycle status with workflow validation
-   */
   async updateDraftStatus(
     id: string,
     newStatus: ArticleDraftStatus,
@@ -355,7 +309,6 @@ export const articleDraftsApi = {
         approvalStatus: newStatus === 'Awaiting Approval' ? 'Pending' : newStatus === 'Published' ? 'Approved' : 'Rejected',
       });
     } catch {
-      // Fallback
     }
 
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
@@ -394,9 +347,6 @@ export const articleDraftsApi = {
     return updated;
   },
 
-  /**
-   * Batch update status
-   */
   async batchUpdateStatus(ids: string[], newStatus: ArticleDraftStatus): Promise<ArticleDraft[]> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new Error('Validation Error: At least one ID must be provided.');
@@ -408,9 +358,6 @@ export const articleDraftsApi = {
     return results;
   },
 
-  /**
-   * Batch delete drafts
-   */
   async batchDelete(ids: string[]): Promise<void> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new Error('Validation Error: At least one ID must be provided for deletion.');
@@ -423,9 +370,6 @@ export const articleDraftsApi = {
     setStoredDrafts(nextList);
   },
 
-  /**
-   * Reset data to default seed
-   */
   async resetData(): Promise<ArticleDraft[]> {
     await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
     const seeded = MOCK_ARTICLES.map(adaptBackendArticle);

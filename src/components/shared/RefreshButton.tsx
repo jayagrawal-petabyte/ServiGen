@@ -42,7 +42,6 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
     );
   }
 
-  // Pill with icon + label for Page Headers
   const pillPaddingClass =
     size === 'sm'
       ? 'px-3 py-1.5 text-xs'

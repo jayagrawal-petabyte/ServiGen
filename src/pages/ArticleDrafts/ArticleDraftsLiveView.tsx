@@ -40,7 +40,6 @@ export default function ArticleDraftsLiveView({
 
   return (
     <div className="w-full">
-      {/* Category filters */}
       <div className="flex items-center gap-2 flex-wrap mb-5">
         {categories.map((category) => {
           const isActive = categoryFilter === category;
@@ -61,7 +60,6 @@ export default function ArticleDraftsLiveView({
         })}
       </div>
 
-      {/* Article cards grid */}
       <div className="live-cards-grid">
         {visibleDrafts.map((draft) => {
           const formattedId = draft.id.startsWith('#') ? draft.id : `#${draft.id}`;
@@ -79,7 +77,6 @@ export default function ArticleDraftsLiveView({
                 }
               }}
             >
-              {/* Top Section */}
               <div>
                 <div className="live-card-top">
                   <span className="live-card-id">{formattedId}</span>
@@ -97,7 +94,6 @@ export default function ArticleDraftsLiveView({
                 )}
               </div>
 
-              {/* Bottom Section */}
               <div>
                 <div className="live-card-meta">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -163,7 +159,6 @@ export default function ArticleDraftsLiveView({
         })}
       </div>
 
-      {/* Empty State */}
       {visibleDrafts.length === 0 && (
         <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center my-4">
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-xl mb-3">

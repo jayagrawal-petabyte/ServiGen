@@ -163,7 +163,6 @@ export default function ProjectsPage() {
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Global safety listener to ensure draggingId and dragOverCol never get stuck under any condition
   useEffect(() => {
     const handleGlobalDragEnd = () => {
       setDraggingId(null);
@@ -174,7 +173,6 @@ export default function ProjectsPage() {
     };
 
     const handlePointerMove = (e: MouseEvent) => {
-      // If mouse is moving without any button pressed, we are definitely NOT dragging
       if (e.buttons === 0) {
         setDraggingId(null);
         setDragOverCol(null);
@@ -210,7 +208,6 @@ export default function ProjectsPage() {
     }, 4000);
   }, []);
 
-  // Fetch real user list for assignee dropdowns
   useEffect(() => {
     api
       .get("/api/users")
@@ -326,14 +323,12 @@ export default function ProjectsPage() {
     setTogglingTaskId(task.id);
     const nextDone = !task.done;
     const nextStatus = nextDone ? "COMPLETED" : "PENDING";
-    // Optimistic UI update
     replaceTaskInProject(projectId, task.id, { ...task, done: nextDone, status: nextStatus } as any);
     try {
       const updated = await updateSubtask(projectId, task.id, { done: nextDone, status: nextStatus });
       replaceTaskInProject(projectId, task.id, updated);
       showToast(`Task #${task.id} marked as ${nextDone ? "Done" : "Open"}`);
     } catch {
-      // Rollback
       replaceTaskInProject(projectId, task.id, task);
       showToast("Failed to save task status to database.");
     } finally {
@@ -468,7 +463,6 @@ export default function ProjectsPage() {
   const rangeStart = listed.length === 0 ? 0 : page * PAGE_SIZE + 1;
   const rangeEnd = Math.min(listed.length, (page + 1) * PAGE_SIZE);
 
-  // Executive Tracker Metrics
   const trackerStats = useMemo(() => {
     const totalProjects = projects.length;
     const totalBudget = projects.reduce((acc, p) => acc + (p.hoursBudget || 0), 0);
@@ -545,7 +539,6 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Progress Bar & Budget Burn Bar */}
         <div className="pj-tracker-bar-wrap">
           <div className="pj-tracker-bar-header">
             <span>Portfolio Task Completion</span>
@@ -615,11 +608,9 @@ export default function ProjectsPage() {
     );
   }
 
-  // Kanban Board with Drag and Drop supporting both Projects and Tasks
   function renderBoard() {
     return (
       <div>
-        {/* Toggle between Projects Board and Tasks Board */}
         <div className="pj-board-toggle">
           <button
             type="button"
@@ -671,7 +662,6 @@ export default function ProjectsPage() {
                     const targetProject = projects.find((p) => p.id === projId);
                     if (!targetProject || targetProject.status === status) return;
 
-                    // Optimistic update
                     const prevStatus = targetProject.status;
                     replaceProject(projId, { ...targetProject, status, statusLabel: status });
                     showToast(`Project #${projId} moved to ${status}`);
@@ -767,7 +757,6 @@ export default function ProjectsPage() {
                       const prevDone = task.done;
                       const prevStatus = (task as any).status;
 
-                      // Optimistically update
                       replaceTaskInProject(projectId, taskId, {
                         ...task,
                         done: isDone,
@@ -775,14 +764,12 @@ export default function ProjectsPage() {
                       } as any);
                       showToast(`Task #${taskId} moved to ${col.label} (saved to DB)`);
 
-                      // Persist to backend database!
                       try {
                         await updateSubtask(projectId, taskId, {
                           done: isDone,
                           status: col.dbStatus,
                         });
                       } catch {
-                        // Rollback on failure
                         replaceTaskInProject(projectId, taskId, {
                           ...task,
                           done: prevDone,
@@ -948,9 +935,7 @@ export default function ProjectsPage() {
     );
   }
 
-  // Interactive Gantt Timeline with expandable subtasks
   function renderGantt() {
-    // Provide safe fallback dates so all projects are rendered on the Gantt timeline
     const todayKey = toDateKey(new Date());
     const items = searched.map((p) => {
       const startDate = p.startDate || toDateKey(new Date(Date.now() - 14 * 86400000));
@@ -979,7 +964,6 @@ export default function ProjectsPage() {
 
     return (
       <div className="pj-gantt">
-        {/* Gantt Legend */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: "1px solid #e2e8f0", fontSize: 11 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontWeight: 700, color: "#475569" }}>Timeline Scale:</span>
@@ -999,7 +983,6 @@ export default function ProjectsPage() {
           <span style={{ color: "#64748b" }}>Click project or subtask row to open details</span>
         </div>
 
-        {/* Timeline Header Row */}
         <div className="pj-gantt-row pj-gantt-scale">
           <div className="pj-gantt-name">Project / Subtasks</div>
           <div className="pj-gantt-track">
@@ -1011,7 +994,6 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Project and Subtask Timeline Rows */}
         {items.map((p) => {
           const left = pos(parseDate(p.startDate).getTime());
           const width = Math.max(pos(parseDate(p.targetDate).getTime()) - left, 2.5);
@@ -1019,7 +1001,6 @@ export default function ProjectsPage() {
 
           return (
             <div key={p.id}>
-              {/* Project Main Row */}
               <div className="pj-gantt-row">
                 <div className="pj-gantt-name" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 6 }}>
                   {p.tasks.length > 0 ? (
@@ -1062,7 +1043,6 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              {/* Expanded Subtask Rows */}
               {isExpanded &&
                 p.tasks.map((t) => {
                   const taskDate = t.dueDate ? parseDate(t.dueDate).getTime() : parseDate(p.startDate).getTime();
@@ -1330,13 +1310,11 @@ export default function ProjectsPage() {
             </div>
           </header>
 
-          {/* Progress Bar & Budget Hours Tracker KPI Banner */}
           {!loading && !error && renderTrackerBanner()}
 
           {renderContent()}
         </main>
 
-        {/* Project Detail Modal */}
         {detail && (
           <div className="pj-overlay" onClick={() => setDetailId(null)}>
             <div className="pj-modal wide" onClick={(e) => e.stopPropagation()}>
@@ -1394,7 +1372,6 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              {/* Hours Budget Field */}
               <div style={{ margin: "10px 0", display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Hours Budget:</span>
                 <input
@@ -1436,7 +1413,6 @@ export default function ProjectsPage() {
                 </div>
               )}
 
-              {/* Hours Spent & Log Hours Section */}
               <div className="pj-detail-hours">
                 <div className="pj-detail-hours-top">
                   <span>
@@ -1455,7 +1431,6 @@ export default function ProjectsPage() {
                   <div style={{ width: `${timePercent(detail)}%` }} />
                 </div>
 
-                {/* Inline Log Hours Box */}
                 {showLogHours && (
                   <div className="pj-log-hours-box">
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#C96F55" }}>Log Working Hours</span>
@@ -1482,7 +1457,6 @@ export default function ProjectsPage() {
                 )}
               </div>
 
-              {/* Subtasks Section with Assignee Dropdown */}
               <h3 className="pj-section-title">
                 Subtasks <span className="pj-muted">{progress(detail)}% complete</span>
                 <button
@@ -1554,7 +1528,6 @@ export default function ProjectsPage() {
                       <strong>#{t.id}</strong> {t.title}
                     </span>
 
-                    {/* Inline Task Assignee Dropdown */}
                     <select
                       value={t.assignee || ""}
                       onChange={async (e) => {
@@ -1605,7 +1578,6 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* Create Project Modal */}
         {showNewModal && (
           <div className="pj-overlay" onClick={() => setShowNewModal(false)}>
             <div className="pj-modal wide" onClick={(e) => e.stopPropagation()}>
@@ -1708,7 +1680,6 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* Global Toast Notification */}
         {toast && (
           <div className="approvals-toast info">
             <span>{toast}</span>

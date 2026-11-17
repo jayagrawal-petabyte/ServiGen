@@ -73,9 +73,7 @@ export const ServiceCisView: React.FC<ServiceCisViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* ── KPI Metric Cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Metric 1: Operational Status */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -91,7 +89,6 @@ export const ServiceCisView: React.FC<ServiceCisViewProps> = ({
           </div>
         </div>
 
-        {/* Metric 2: Average Uptime SLA */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -107,7 +104,6 @@ export const ServiceCisView: React.FC<ServiceCisViewProps> = ({
           </div>
         </div>
 
-        {/* Metric 3: Supporting CIs Mapped */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -131,7 +127,6 @@ export const ServiceCisView: React.FC<ServiceCisViewProps> = ({
         </div>
       )}
 
-      {/* ── Registered Business Services Table/Card List ── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2.5">

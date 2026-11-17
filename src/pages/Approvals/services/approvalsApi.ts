@@ -17,9 +17,6 @@ export interface BackendApproval {
 
 const STORAGE_KEY = 'servigen_approvals_cache_v3';
 
-/**
- * Helper to compute friendly relative time string from ISO date string
- */
 function formatTimeAgo(dateString?: string): string {
   if (!dateString) return 'recently';
   try {
@@ -46,10 +43,6 @@ function formatTimeAgo(dateString?: string): string {
   }
 }
 
-/**
- * Adapter: Convert Backend Approval response schema to the UI Approval model.
- * Preserves all UI design elements, ticket details, and metadata.
- */
 export function adaptBackendApproval(
   backendItem: BackendApproval | Approval | Record<string, unknown>,
   overrideRejectReason?: string
@@ -73,7 +66,6 @@ export function adaptBackendApproval(
     };
   }
 
-  // If wrapped in an API envelope: { success: true, data: { ... } }
   const raw: any = (backendItem as any).data || backendItem;
 
   if ('ticketNumber' in raw && 'authorName' in raw) {
@@ -131,10 +123,6 @@ export function adaptBackendApproval(
   };
 }
 
-/**
- * Adapter: Convert an Article Draft awaiting approval into an Approval record.
- * Bridges Article Drafts submissions into the My Approvals queue.
- */
 export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
   const initials = draft.author
     ? draft.author
@@ -180,9 +168,6 @@ export function adaptArticleDraftToApproval(draft: ArticleDraft): Approval {
   };
 }
 
-/**
- * Cache helper for live API state (to keep approved/rejected status across tab switching)
- */
 function getCachedApprovals(): Record<string, Approval> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -198,32 +183,15 @@ function cacheApproval(approval: Approval): void {
     cache[approval.id] = approval;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
   } catch {
-    // ignore
   }
 }
 
-/**
- * Approvals API Service
- * Integrates directly with documented ServiGen backend endpoints:
- * - GET   /api/approvals/pending
- * - GET   /api/approvals/:approvalId
- * - PATCH /api/approvals/:approvalId/approve
- * - PATCH /api/approvals/:approvalId/reject
- * 
- * Also bridges submitted Article Drafts awaiting review into the approval queue.
- */
 export const approvalsApi = {
-  /**
-   * Return any cached processed (approved / rejected) approvals from current session
-   */
   getCachedHistory(): Approval[] {
     const cache = getCachedApprovals();
     return Object.values(cache);
   },
 
-  /**
-   * Fetch pending approvals from GET /api/approvals/pending merged with awaiting article drafts.
-   */
   async getPendingApprovals(): Promise<Approval[]> {
     let baseApprovals: Approval[] = [];
 
@@ -244,7 +212,6 @@ export const approvalsApi = {
       baseApprovals = MOCK_APPROVALS.map((item: any) => adaptBackendApproval(item));
     }
 
-    // Always fetch pending article drafts currently awaiting approval
     let draftApprovals: Approval[] = [];
     try {
       const allDrafts = await articleDraftsApi.getDrafts();
@@ -260,7 +227,6 @@ export const approvalsApi = {
       draftApprovals = [];
     }
 
-    // Filter out items already actioned in this session
     const cache = getCachedApprovals();
     const finalPending = [...draftApprovals, ...baseApprovals].filter((item) => {
       const cached = cache[item.id];
@@ -270,9 +236,6 @@ export const approvalsApi = {
     return finalPending;
   },
 
-  /**
-   * Fetch all approvals (pending + historical approved and rejected)
-   */
   async getAllApprovals(): Promise<Approval[]> {
     const pending = await this.getPendingApprovals();
     const history = this.getCachedHistory();
@@ -284,15 +247,11 @@ export const approvalsApi = {
     return Array.from(mergedMap.values());
   },
 
-  /**
-   * Fetch approval details by ID from GET /api/approvals/:approvalId
-   */
   async getApprovalById(approvalId: string): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
     }
 
-    // Check if this approval references an article draft
     if (approvalId.startsWith('draft-')) {
       const draftId = approvalId.replace('draft-', '');
       const draft = await articleDraftsApi.getDraftById(draftId);
@@ -326,16 +285,11 @@ export const approvalsApi = {
     }
   },
 
-  /**
-   * Approve a pending request via PATCH /api/approvals/:approvalId/approve
-   * If approving an article draft, updates the draft status to 'Published'.
-   */
   async approveRequest(approvalId: string): Promise<Approval> {
     if (!approvalId) {
       throw new Error('Validation Error: approvalId is required');
     }
 
-    // Handle Article Draft approval
     if (approvalId.startsWith('draft-')) {
       const draftId = approvalId.replace('draft-', '');
       const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Published');
@@ -361,7 +315,6 @@ export const approvalsApi = {
       }
       return adapted;
     } catch {
-      // Mock / offline fallback
       const mock = MOCK_APPROVALS.find((m) => m.id === approvalId);
       const adapted = mock
         ? adaptBackendApproval(mock)
@@ -390,10 +343,6 @@ export const approvalsApi = {
     }
   },
 
-  /**
-   * Reject a pending request via PATCH /api/approvals/:approvalId/reject
-   * If rejecting an article draft, returns it to 'Rejected' with rejection reason recorded.
-   */
   async rejectRequest(
     approvalId: string,
     reason: string
@@ -407,7 +356,6 @@ export const approvalsApi = {
       throw new Error('Validation Error: Rejection reason must be at least 5 characters long.');
     }
 
-    // Handle Article Draft rejection
     if (approvalId.startsWith('draft-')) {
       const draftId = approvalId.replace('draft-', '');
       const updatedDraft = await articleDraftsApi.updateDraftStatus(draftId, 'Rejected', trimmedReason);
@@ -436,7 +384,6 @@ export const approvalsApi = {
       }
       return adapted;
     } catch {
-      // Mock / offline fallback
       const mock = MOCK_APPROVALS.find((m) => m.id === approvalId);
       const rejected = mock
         ? adaptBackendApproval(mock, trimmedReason)
@@ -467,9 +414,6 @@ export const approvalsApi = {
     }
   },
 
-  /**
-   * Batch approve pending requests
-   */
   async batchApprove(approvalIds: string[]): Promise<string[]> {
     if (!Array.isArray(approvalIds) || approvalIds.length === 0) {
       throw new Error('Validation Error: At least one approval ID must be provided.');
@@ -502,9 +446,6 @@ export const approvalsApi = {
     return succeeded;
   },
 
-  /**
-   * Batch reject pending requests
-   */
   async batchReject(
     approvalIds: string[],
     reason: string
@@ -540,9 +481,6 @@ export const approvalsApi = {
     return succeeded;
   },
 
-  /**
-   * Reset local approvals cache
-   */
   resetCache(): void {
     try {
       localStorage.removeItem(STORAGE_KEY);

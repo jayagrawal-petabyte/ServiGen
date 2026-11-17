@@ -54,7 +54,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
         </div>
       ) : (
         <>
-          {/* Top Search Bar */}
           <div className="p-3 pb-2 shrink-0">
             <SearchInput
               size="sm"
@@ -65,7 +64,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
             />
           </div>
 
-          {/* Heading Row: Title & Collapse Button */}
           <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
             <div className="min-w-0">
               <div
@@ -80,7 +78,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
               </div>
             </div>
 
-            {/* Collapse Arrow Button */}
             {onToggleCollapse && (
               <button
                 type="button"
@@ -94,7 +91,6 @@ export const ProblemsSidebar: React.FC<ProblemsSidebarProps> = ({
             )}
           </div>
 
-          {/* Navigation Items */}
           <nav className="flex-1 overflow-y-auto px-2 mt-2 pb-6 flex flex-col gap-1">
             {navItems.map((item) => {
               const isActive = selectedListId === item.id;

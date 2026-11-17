@@ -28,7 +28,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   onClose,
   onCreate,
 }) => {
-  // General CI Details
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [type, setType] = useState<CiType>('Server');
@@ -40,7 +39,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   const [criticality, setCriticality] = useState<'Tier 1 - Mission Critical' | 'Tier 2 - Business Operational' | 'Tier 3 - Supporting'>('Tier 2 - Business Operational');
   const [warrantyExpiry, setWarrantyExpiry] = useState<string>('2028-12-31');
 
-  // Server Specific Fields
   const [serverOs, setServerOs] = useState('Ubuntu Linux 22.04 LTS');
   const [serverCpu, setServerCpu] = useState('16 vCPU');
   const [serverRam, setServerRam] = useState('64 GB ECC');
@@ -50,7 +48,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   const [serverMac, setServerMac] = useState('00:1A:2B:3C:4D:5E');
   const [serverRack, setServerRack] = useState('Rack B-14, U18-U20');
 
-  // Application / Software Specific Fields
   const [appVersion, setAppVersion] = useState('v2.4.1');
   const [appRuntime, setAppRuntime] = useState('Node.js 20 LTS');
   const [appPort, setAppPort] = useState('443 / HTTPS');
@@ -59,7 +56,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   const [appLicenseKey, setAppLicenseKey] = useState('LIC-ENT-2026-X94B');
   const [appLicenseExpiry, setAppLicenseExpiry] = useState('2027-12-31');
 
-  // Network Specific Fields
   const [netCategory, setNetCategory] = useState('Core Router');
   const [netFirmware, setNetFirmware] = useState('Cisco IOS XR 7.5.2');
   const [netPorts, setNetPorts] = useState('48x 10GbE SFP+ + 4x 100GbE');
@@ -69,21 +65,18 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
   const [netVlan, setNetVlan] = useState('VLAN 100 (Core Infrastructure)');
   const [netRack, setNetRack] = useState('Rack A-01, U40-U42');
 
-  // Database Specific Fields
   const [dbEngine, setDbEngine] = useState('PostgreSQL');
   const [dbVersion, setDbVersion] = useState('16.2');
   const [dbPort, setDbPort] = useState('5432');
   const [dbRole, setDbRole] = useState('Primary High-Availability Cluster');
   const [dbStorage, setDbStorage] = useState('1.5 TB NVMe');
 
-  // Cloud Service Specific Fields
   const [cloudProvider, setCloudProvider] = useState('AWS');
   const [cloudRegion, setCloudRegion] = useState('eu-west-1 (Ireland)');
   const [cloudServiceOffering, setCloudServiceOffering] = useState('Kubernetes EKS Cluster');
   const [cloudPool, setCloudPool] = useState('m6i.4xlarge (4 instances)');
   const [cloudCidr, setCloudCidr] = useState('52.214.0.0/16');
 
-  // Security Specific Fields
   const [secCategory, setSecCategory] = useState('Web Application Firewall (WAF)');
   const [secVendor, setSecVendor] = useState('Cloudflare Enterprise / F5');
   const [secIp, setSecIp] = useState('198.51.100.4');
@@ -113,7 +106,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
     const generatedTag =
       tag.trim() || `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
 
-    // Build type-specific specifications dictionary
     let specifications: Record<string, any> = {};
     let resolvedIp: string | undefined = undefined;
 
@@ -262,7 +254,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs text-slate-700">
-          {/* 1. CI Type Selection Pills */}
           <div>
             <label className="block text-slate-700 font-bold mb-1.5 uppercase text-[11px] tracking-wider">
               1. Select CI Category (Controls Dynamic Fields) <span className="text-rose-500">*</span>
@@ -291,7 +282,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
             </div>
           </div>
 
-          {/* 2. Common Identification Fields */}
           <div className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200/80 space-y-3.5">
             <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
               2. Core Identification & Ownership
@@ -408,7 +398,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             </div>
 
-            {/* Universal Warranty Expiry Date */}
             <div>
               <label className="block text-slate-700 font-bold mb-1 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -423,7 +412,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
             </div>
           </div>
 
-          {/* 3. DYNAMIC TYPE-SPECIFIC SPECIFICATIONS */}
           <div className="p-4 bg-orange-50/40 rounded-2xl border border-orange-200/60 space-y-3.5">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-[#C96F55]" />
@@ -432,7 +420,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </span>
             </div>
 
-            {/* A. SERVER FIELDS */}
             {type === 'Server' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -526,7 +513,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             )}
 
-            {/* B. APPLICATION (SOFTWARE) FIELDS */}
             {type === 'Application' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -609,7 +595,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             )}
 
-            {/* C. NETWORK FIELDS */}
             {type === 'Network' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -684,7 +669,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             )}
 
-            {/* D. DATABASE FIELDS */}
             {type === 'Database' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -750,7 +734,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             )}
 
-            {/* E. CLOUD SERVICE FIELDS */}
             {type === 'Cloud Service' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -813,7 +796,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
               </div>
             )}
 
-            {/* F. SECURITY FIELDS */}
             {type === 'Security' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -852,7 +834,6 @@ export const CreateCiModal: React.FC<CreateCiModalProps> = ({
             )}
           </div>
 
-          {/* Form Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"

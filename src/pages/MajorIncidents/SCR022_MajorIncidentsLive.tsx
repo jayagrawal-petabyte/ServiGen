@@ -26,14 +26,8 @@ import { TimesheetPopover } from '../../components/shared/TimesheetPopover';
 import { AgentKpiDrawer } from '../../components/shared/AgentKpiDrawer';
 import { GlobalNavbarActions } from '../../components/shared/GlobalNavbarActions';
 
-/**
- * Records whose IDs start with this prefix are legacy fixtures from the
- * pre-integration mock data and are never shown. Kept as a named constant
- * so the filter is greppable instead of a bare magic string.
- */
 const LEGACY_FIXTURE_ID_PREFIX = '000267';
 
-// Single source of truth, shared with the API client and the backend.
 const STAGE_ORDER = STAGE_LABELS;
 
 const filterByList = (incidents: MajorIncident[], listId: string): MajorIncident[] => {
@@ -64,7 +58,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'dashboard':       '🌐 Major Incident Dashboard',
 };
 
-/* ─── panel registry ─── */
 type PanelType = 'notifications' | 'tasks' | 'performance' | 'status' | 'history' | 'help' | 'profile' | null;
 
 interface PanelDef { title: string; body: string }
@@ -136,7 +129,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   const [isTimesheetOpen, setIsTimesheetOpen] = useState<boolean>(false);
   const [isKpiDrawerOpen, setIsKpiDrawerOpen] = useState<boolean>(false);
 
-  // Clear any legacy mock localStorage data on mount
   useEffect(() => {
     try {
       localStorage.removeItem('servigen_major_incidents_live_v1');
@@ -145,7 +137,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       localStorage.removeItem('servigen_major_incidents_notifs_v2');
       localStorage.removeItem('servigen_major_incidents_tasks_v2');
     } catch {
-      // ignore
     }
   }, []);
 
@@ -154,7 +145,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       setIsFetchingLive(true);
       const live = await majorIncidentsService.getMajorIncidents();
       if (Array.isArray(live) && live.length > 0) {
-        // Strip out any legacy mock incidents
         const cleanLive = live.filter((inc) => !inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX));
         setServerIncidents(cleanLive.length > 0 ? cleanLive : FALLBACK_MAJOR_INCIDENTS);
         setLocalIncidents([]);
@@ -177,7 +167,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     loadLiveIncidents();
   }, [loadLiveIncidents]);
 
-  // Dynamically derive permissions from the authenticated user's role
   const role: UserRole = useMemo(() => {
     if (!user) return 'Admin';
     const r = (user.role || '').toLowerCase();
@@ -289,7 +278,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     allIncidents.forEach((inc) => {
       if (inc.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) return;
 
-      // 1. Explicit updates & broadcasts posted to this incident
       (inc.updates || []).forEach((u) => {
         entries.push({
           id: `feed-${inc.id}-${u.id}`,
@@ -304,7 +292,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         });
       });
 
-      // 2. Auto-generate milestone audit entries from lifecycle stages (Started, Escalated, Diagnosed, Mitigated, Resolved, Closed)
       const stages = inc.lifecycleStages || [];
       if (stages[0]?.isActive || stages[0]?.isCompleted) {
         entries.push({
@@ -439,7 +426,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
 
   useEffect(() => {
     if (!selectedIncidentId) return;
-    // Skip locally-created optimistic IDs (format: MI-{timestamp}-{n}) — they don't exist on backend yet
     if (/^MI-\d+-\d+$/.test(selectedIncidentId)) return;
     majorIncidentsService.getMajorIncidentById(selectedIncidentId).then((fresh) => {
       if (fresh) {
@@ -448,7 +434,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
     }).catch(() => {});
   }, [selectedIncidentId]);
 
-  // Real-time live update stream for active incident via Server-Sent Events (SSE)
   useEffect(() => {
     const activeId = selectedIncidentId || allIncidents[0]?.id;
     if (!activeId) return;
@@ -809,20 +794,17 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
       .catch(() => {});
   };
 
-  /* Search icon → focus the sub-bar search input */
   const handleSearchFocus = useCallback(() => {
     const el = document.getElementById('header-search-input') as HTMLInputElement | null;
     el?.focus();
     el?.select();
   }, []);
 
-  /* Toggle a named info panel; clicking same icon again closes it */
   const handlePanel = useCallback((panel: NonNullable<PanelType>) => {
     setOpenPanel((prev) => (prev === panel ? null : panel));
     setIsFeedOpen(false);
   }, []);
 
-  /* Close any open panel on Escape */
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenPanel(null); };
     window.addEventListener('keydown', h);
@@ -832,7 +814,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
   return (
     <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans">
       <InlineErrorBanner message={loadError} onRetry={loadLiveIncidents} />
-      {/* Full-width top navbar */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -847,7 +828,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         />
       </header>
 
-      {/* Two-Column Body below top navbar */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
         <MajorIncidentsSidebar
           onSelectList={setSelectedListId}
@@ -915,7 +895,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           breadcrumb={BREADCRUMB_LABELS[selectedListId] ?? selectedListId}
             />
 
-            {/* Main content area */}
             <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
             {selectedListId === 'board' ? (
               <div className="flex h-full gap-4 overflow-x-auto pb-4">
@@ -1008,7 +987,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
               </div>
             ) : selectedListId === 'dashboard' ? (
               <div className="flex flex-col gap-5 h-full overflow-y-auto">
-                {/* 1. Metric KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Major Incidents</span>
@@ -1040,7 +1018,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Lifecycle Pipeline Distribution */}
                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-xs">
                   <h3 className="text-sm font-bold text-gray-900 mb-3">Major Incident Lifecycle Breakdown</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1056,7 +1033,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 3. Ongoing Major Incidents Summary Table */}
                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-xs flex-1">
                   <h3 className="text-sm font-bold text-gray-900 mb-3">Live Active War Rooms &amp; Alerts</h3>
                   <div className="divide-y divide-gray-100">
@@ -1103,7 +1079,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             )}
           </div>
 
-          {/* ── Icon-button info panels ── */}
           {openPanel && (
             <div className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col shadow-lg overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -1321,7 +1296,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
           )}
           </div>
 
-          {/* ── Incident Detail Side Bar Menu (Primary) ── */}
           {selectedIncident && (
             <IncidentDetailPanel
               incident={selectedIncident}
@@ -1344,7 +1318,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
             />
           )}
 
-          {/* ── Activity Feed (··· button only) ── */}
           {!selectedIncident && !openPanel && isFeedOpen && (
             <ActivityFeed
               entries={liveFeedEntries}
@@ -1372,7 +1345,6 @@ const SCR022_MajorIncidentsLive: React.FC = () => {
         />
       )}
 
-      {/* Floating Popovers */}
       {isFeedPopoverOpen && (
         <FeedPopover
           onClose={() => setIsFeedPopoverOpen(false)}

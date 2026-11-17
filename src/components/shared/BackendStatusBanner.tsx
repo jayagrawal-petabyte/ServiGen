@@ -5,10 +5,7 @@ import {
   type BackendDbStatus,
 } from '../../services/backendStatusService';
 
-/**
- * Shows a dismissible banner when the API cannot serve real data, so an empty
- * or stale screen is never mistaken for "there is nothing to show".
- */
+
 export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60000 }) => {
   const [status, setStatus] = useState<BackendDbStatus | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -39,8 +36,7 @@ export const BackendStatusBanner: React.FC<{ pollMs?: number }> = ({ pollMs = 60
     };
   }, [pollMs]);
 
-  // Any request that came back as demo data flags it straight away, so the
-  // badge does not wait for the next health poll.
+
   useEffect(() => {
     const onDemoData = (event: Event) => {
       const detail = (event as CustomEvent<{ endpoint?: string; reason?: string }>).detail;

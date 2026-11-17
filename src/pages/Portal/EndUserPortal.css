@@ -1,15 +1,3 @@
-/* ──────────────────────────────────────────────────────────────────────────
-   ServiGen End-User Self-Service Portal Styling
-   Official Brand Palette:
-   --bg-canvas: #FFF9F5
-   --primary-peach: #F4A58A
-   --secondary-coral: #F7C4B3
-   --accent-terracotta: #C96F55
-   --text-main: #332B28
-   --navy-contrast: #263B5E
-   --navy-contrast-text: #202530
-   --bg-card: #FFFFFF
-   ────────────────────────────────────────────────────────────────────────── */
 
 .portal-canvas {
   min-height: 100vh;
@@ -20,7 +8,6 @@
   flex-direction: column;
 }
 
-/* ── Toast Notification Banner ── */
 .portal-toast-banner {
   position: fixed;
   top: 18px;
@@ -48,7 +35,6 @@
   }
 }
 
-/* ── Portal Secondary Navigation Sub-bar ── */
 .portal-subnav-bar {
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
@@ -125,7 +111,6 @@
   color: #ffffff;
 }
 
-/* ── Support Introduction (Light Integrated Header) ── */
 .portal-intro-section {
   width: 100%;
   max-width: 1240px;
@@ -156,7 +141,6 @@
   font-weight: 400;
 }
 
-/* ── Capsule Knowledge Search Field ── */
 .portal-search-wrapper {
   position: relative;
   width: 100%;
@@ -230,7 +214,6 @@
   color: #0f172a;
 }
 
-/* ── Common Topic Tags ── */
 .portal-quick-tags {
   display: flex;
   flex-wrap: wrap;
@@ -278,7 +261,6 @@
   transform: translateY(-1px);
 }
 
-/* ── Main Content Container (Max-Width 1240px, Centered) ── */
 .portal-main-container {
   max-width: 1240px;
   margin: 0 auto;
@@ -293,7 +275,6 @@
   gap: 28px;
 }
 
-/* ── Quick Action Cards (3-Column Balanced Grid) ── */
 .portal-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -381,7 +362,6 @@
   transition: gap 0.15s ease;
 }
 
-/* ── Section Containers ── */
 .portal-section-box {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
@@ -434,7 +414,6 @@
   text-decoration: underline;
 }
 
-/* ── FAQ & Knowledge Grid ── */
 .portal-faq-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -533,7 +512,6 @@
   opacity: 0.9;
 }
 
-/* ── Activity & Tickets Table ── */
 .portal-table-container {
   overflow-x: auto;
   border-radius: 12px;
@@ -644,7 +622,6 @@
   border-color: #e2e8f0;
 }
 
-/* ── Modals & Dialogs ── */
 .portal-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -748,7 +725,6 @@
   border: 1px solid #e2e8f0;
 }
 
-/* ── Deflection Feedback Box ── */
 .portal-feedback-box {
   padding: 16px 20px;
   background-color: #FFF9F5;
@@ -807,7 +783,6 @@
   color: #0f172a;
 }
 
-/* ── Ticket Detail Grid ── */
 .portal-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -835,7 +810,6 @@
   font-size: 12.5px;
 }
 
-/* ── Ticket Timeline ── */
 .portal-timeline-section {
   padding-top: 8px;
 }
@@ -894,7 +868,6 @@
   margin-top: 1px;
 }
 
-/* ── Modal Form Inputs ── */
 .portal-form-label {
   display: block;
   font-size: 12px;
@@ -939,7 +912,6 @@
   box-shadow: 0 0 0 3px rgba(201, 111, 85, 0.15);
 }
 
-/* ── Responsive Adaptations ── */
 @media (max-width: 1024px) {
   .portal-actions-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

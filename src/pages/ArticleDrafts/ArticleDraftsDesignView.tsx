@@ -41,7 +41,6 @@ export default function ArticleDraftsDesignView({
 
   return (
     <div className="article-drafts-table-container">
-      {/* Main Table */}
       <div className="drafts-table-wrapper">
         <table className="drafts-table">
           <thead>
@@ -152,7 +151,6 @@ export default function ArticleDraftsDesignView({
                       />
                     </td>
 
-                    {/* ID Cell */}
                     <td
                       className="id-cell"
                       onClick={() => onOpenArticle(draft)}
@@ -161,12 +159,10 @@ export default function ArticleDraftsDesignView({
                       {draft.id}
                     </td>
 
-                    {/* SLA TIME LEFT Cell */}
                     <td className="sla-cell">
                       <SlaBadge slaTimeLeft={draft.slaTimeLeft} />
                     </td>
 
-                    {/* SUMMARY Cell */}
                     <td className="summary-cell">
                       <div
                         className="summary-title"
@@ -182,10 +178,8 @@ export default function ArticleDraftsDesignView({
                       )}
                     </td>
 
-                    {/* CATEGORY Cell */}
                     <td className="category-cell">{draft.category}</td>
 
-                    {/* PRIORITY Cell */}
                     <td>
                       <div className="priority-cell">
                         <span
@@ -204,15 +198,12 @@ export default function ArticleDraftsDesignView({
                       </div>
                     </td>
 
-                    {/* STATUS Cell */}
                     <td>
                       <StatusBadge status={draft.status} />
                     </td>
 
-                    {/* TYPE Cell */}
                     <td className="type-cell">{draft.type}</td>
 
-                    {/* DATE Cell */}
                     <td className="date-cell">{draft.date}</td>
                   </tr>
                 );

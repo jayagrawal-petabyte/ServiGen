@@ -44,13 +44,9 @@ const getIcon = (iconKey?: string) => {
     case 'red-square':
       return (
         <svg className="w-4 h-4 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-          {/* Arrowhead at top left */}
           <path d="M3 4v5h5" />
-          {/* Top arc sweeping across top and right */}
           <path d="M4.9 9A9 9 0 0 1 20.4 12" />
-          {/* Bottom arc sweeping from lower left around bottom to right */}
           <path d="M3.5 16.5A9 9 0 0 0 11.5 21a9 9 0 0 0 6.5-2.8" />
-          {/* Slashed circle badge at bottom right */}
           <circle cx="15.5" cy="15.5" r="3.8" strokeWidth={1.5} />
           <line x1="12.8" y1="12.8" x2="18.2" y2="18.2" strokeWidth={1.5} />
         </svg>
@@ -59,7 +55,6 @@ const getIcon = (iconKey?: string) => {
     case 'clipboard':
       return (
         <svg className="w-4 h-4 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-          {/* Two persons outline */}
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -70,7 +65,6 @@ const getIcon = (iconKey?: string) => {
     case 'alert':
       return (
         <svg className="w-4 h-4 shrink-0 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-          {/* Standalone clean exclamation point */}
           <line x1="12" y1="5" x2="12" y2="13" />
           <circle cx="12" cy="18" r="1.1" fill="currentColor" stroke="none" />
         </svg>
@@ -206,10 +200,8 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
         isCollapsed ? 'w-[44px] min-w-[44px]' : 'w-[250px] min-w-[250px]'
       } shrink-0 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out`}
     >
-      {/* ── Collapsed (Minimized) Mode ── */}
       {isCollapsed ? (
         <div className="flex flex-col h-full items-center py-3">
-          {/* Expand Toggle Button */}
           <button
             type="button"
             onClick={toggleCollapse}
@@ -221,9 +213,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
           </button>
         </div>
       ) : (
-        /* ── Expanded Normal Mode ── */
         <>
-          {/* 1. Top Search Bar */}
           <div className="p-3 pb-2 shrink-0">
             <SearchInput
               size="sm"
@@ -234,9 +224,7 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
             />
           </div>
 
-          {/* 2. Header Row: Title & Collapse Arrow */}
           <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
-            {/* Title with click to reset */}
             <div
               className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#C96F55] cursor-pointer transition-colors select-none"
               onClick={handleResetToDefault}
@@ -248,7 +236,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
               <span className="truncate">Major Incidents</span>
             </div>
 
-            {/* Collapse / Reduce Button */}
             <button
               type="button"
               onClick={toggleCollapse}
@@ -260,7 +247,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
             </button>
           </div>
 
-          {/* 3. Navigation Tree with Collapsible Sections */}
           <nav className="flex-1 overflow-y-auto px-2 mt-2 pb-6 flex flex-col gap-2">
             {filteredGroups.length === 0 ? (
               <p className="px-3 py-4 text-xs text-slate-400 text-center">No results for "{currentSearch}"</p>
@@ -274,7 +260,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
 
                 return (
                   <div key={group.groupLabel} className="flex flex-col">
-                    {/* Collapsible Group Header Button */}
                     <button
                       type="button"
                       onClick={() => handleToggleSection(group.groupLabel)}
@@ -296,7 +281,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
                       )}
                     </button>
 
-                    {/* Group Items */}
                     {isGroupExpanded && (
                       <div className="flex flex-col gap-0.5 pl-1.5">
                         {group.items.map((item) => {
@@ -337,7 +321,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
               })
             )}
 
-            {/* Custom Lists Section */}
             {customLists.length > 0 && (
               <div className="flex flex-col">
                 <button
@@ -390,7 +373,6 @@ export const MajorIncidentsSidebar: React.FC<MajorIncidentsSidebarProps> = ({
               </div>
             )}
 
-            {/* Inline Create Form & 'Create a new List' Button */}
             <div className="pt-2 px-1 shrink-0">
               <AnimatePresence>
                 {isCreating && (

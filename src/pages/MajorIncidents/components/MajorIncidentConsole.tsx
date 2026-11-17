@@ -43,7 +43,6 @@ const DEFAULT_TECHNICAL_TASKS: WorkTask[] = [];
 
 const DEFAULT_BUSINESS_TASKS: WorkTask[] = [];
 
-// KB articles loaded from /api/kb/articles at runtime
 const ALL_KB_ARTICLES: KnowledgeArticle[] = [];
 
 export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
@@ -59,7 +58,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
   onOpenNewTicket,
 }) => {
   const navigate = useNavigate();
-  // Local editable incident properties for instant UI response
   const [currentPriority, setCurrentPriority] = useState<Priority>(initialIncident.priority);
   const [currentAssignee, setCurrentAssignee] = useState<string>(initialIncident.assignee);
   const [currentLocation, setCurrentLocation] = useState<string>('Site 2');
@@ -70,7 +68,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     `Users cannot access ${initialIncident.product || 'MyFinance'}, preventing financial data entry and reporting activities. The issue is partially affecting business operations.`
   );
 
-  // Chevron lifecycle pipeline local state (so clicking any stage immediately activates it!)
   const [currentStages, setCurrentStages] = useState<LifecycleStage[]>(
     initialIncident.lifecycleStages && initialIncident.lifecycleStages.length > 0
       ? initialIncident.lifecycleStages
@@ -84,7 +81,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         ]
   );
 
-  // Sync when incident changes
   useEffect(() => {
     setCurrentPriority(initialIncident.priority);
     setCurrentAssignee(initialIncident.assignee);
@@ -95,7 +91,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     }
   }, [initialIncident]);
 
-  // Navigation between incidents
   const currentIndex = allIncidents.findIndex((i) => i.id === initialIncident.id);
   const handlePrev = () => {
     if (currentIndex > 0 && onSelectIncident) {
@@ -110,19 +105,16 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     }
   };
 
-  // State
   const [activeTab, setActiveTab] = useState<string>('Major Incident Console');
   const [workActivityTab, setWorkActivityTab] = useState<'technical' | 'business'>('technical');
   const [technicalTasks, setTechnicalTasks] = useState<WorkTask[]>(DEFAULT_TECHNICAL_TASKS);
   const [businessTasks, setBusinessTasks] = useState<WorkTask[]>(DEFAULT_BUSINESS_TASKS);
 
-  // Dropdowns & Toolbar states
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState<boolean>(false);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState<boolean>(false);
   const [isWatching, setIsWatching] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // AI & Knowledge Base States
   const [isAiArticlesOpen, setIsAiArticlesOpen] = useState<boolean>(true);
   const [aiFilterCategory, setAiFilterCategory] = useState<'all' | 'kb' | 'urgent' | 'tickets' | 'approved' | 'restricted'>('all');
   const [isKbModalOpen, setIsKbModalOpen] = useState<boolean>(false);
@@ -131,7 +123,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
   const [isKbCategoryDropdownOpen, setIsKbCategoryDropdownOpen] = useState<boolean>(false);
   const [kbSearchQuery, setKbSearchQuery] = useState<string>(`id=${initialIncident.id.replace(/^0+/, '')}`);
 
-  // Note Modal state
   const [isNoteModalOpen, setIsNoteModalOpen] = useState<boolean>(false);
   const [isNoteFullscreen, setIsNoteFullscreen] = useState<boolean>(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false);
@@ -140,17 +131,14 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
   const [hoursTaken, setHoursTaken] = useState<string>('00');
   const [minutesTaken, setMinutesTaken] = useState<string>('01');
 
-  // Inline Editing States
   const [isEditingPriority, setIsEditingPriority] = useState<boolean>(false);
   const [isEditingAssignee, setIsEditingAssignee] = useState<boolean>(false);
   const [isEditingLocation, setIsEditingLocation] = useState<boolean>(false);
   const [isEditingImpactStatement, setIsEditingImpactStatement] = useState<boolean>(false);
   const [activeTaskStatusDropdown, setActiveTaskStatusDropdown] = useState<string | null>(null);
 
-  // Task Details Modal
   const [editingTask, setEditingTask] = useState<WorkTask | null>(null);
 
-  // Multi-modal modal manager
   type ModalType =
     | 'comms'
     | 'customers'
@@ -172,12 +160,10 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
 
   const [activeActionModal, setActiveActionModal] = useState<ModalType>(null);
 
-  // New task form state
   const [newTaskSummary, setNewTaskSummary] = useState('');
   const [newTaskTeam, setNewTaskTeam] = useState('Infrastructure');
   const [newTaskActivity, setNewTaskActivity] = useState('Diagnosis');
 
-  // Timesheet timer state
   const [timerRunning, setTimerRunning] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(60);
 
@@ -189,7 +175,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     return () => clearInterval(interval);
   }, [timerRunning]);
 
-  // Local activity feed
   const [activities, setActivities] = useState([
     {
       id: 'act-1',
@@ -203,7 +188,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     },
   ]);
 
-  // Toast Helper
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -211,10 +195,8 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     }, 2800);
   };
 
-  // Clean incident short id for display (e.g. 2673)
   const shortId = initialIncident.id.replace(/^0+/, '') || initialIncident.id;
 
-  // Chevron stage click handler: activates whichever stage user clicks!
   const handleChevronClick = (targetIndex: number) => {
     const now = new Date().toLocaleString('en-GB', {
       hour12: true,
@@ -263,13 +245,11 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     showToast(`Stage updated to ${targetLabel}`);
   };
 
-  // Filtered AI articles
   const filteredArticles = useMemo(() => {
     if (aiFilterCategory === 'all') return ALL_KB_ARTICLES;
     return ALL_KB_ARTICLES.filter((a) => a.category === aiFilterCategory || a.category === 'all');
   }, [aiFilterCategory]);
 
-  // Filtered KB Modal articles
   const displayedKbArticles = useMemo(() => {
     let list = ALL_KB_ARTICLES;
     if (kbCategory !== 'All') {
@@ -296,7 +276,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     return list;
   }, [kbCategory, kbSearchQuery]);
 
-  // Save Note handler
   const handleSaveNote = () => {
     if (!noteContent.trim()) return;
     const now = new Date().toLocaleString('en-GB', {
@@ -336,7 +315,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     showToast('Incident update saved and broadcasted');
   };
 
-  // Add task handler
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskSummary.trim()) return;
@@ -361,7 +339,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     showToast(`Task ${newTask.id} created`);
   };
 
-  // Task selection & bulk action support
   const currentTaskList = workActivityTab === 'technical' ? technicalTasks : businessTasks;
   const selectedTaskCount = currentTaskList.filter((t) => t.checked).length;
 
@@ -421,14 +398,12 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
     showToast(`Task ${taskId} status changed to ${newStatus}`);
   };
 
-  // WYSIWYG Editor Insert Helpers
   const insertTextAtCursor = (prefix: string, suffix: string = '') => {
     setNoteContent((prev) => `${prev}\n${prefix}${suffix}`);
   };
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-screen bg-[#f8fafc] overflow-y-auto mi-console-scroll font-sans text-gray-800 relative">
-      {/* ── Toast Notification ── */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
@@ -436,9 +411,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ── Top Header Bar (Breadcrumb + Actions) ── */}
       <header className="shrink-0 bg-white border-b border-gray-200 px-6 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
-        {/* Left: Breadcrumbs */}
         <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
           <button
             onClick={() => {
@@ -464,7 +437,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </span>
         </div>
 
-        {/* Right: Header Buttons & Global Icons */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveActionModal('get_started')}
@@ -483,7 +455,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>New Ticket</span>
           </button>
 
-          {/* Icon buttons with interactive modals */}
           <div className="flex items-center gap-1.5 ml-1 text-[#4a2820]">
             <button
               onClick={() => setIsKbModalOpen(true)}
@@ -564,7 +535,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
               </svg>
             </button>
 
-            {/* Profile Avatar */}
             <div
               onClick={() => setActiveActionModal('profile')}
               title="Your Account & Profile"
@@ -576,11 +546,8 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       </header>
 
-      {/* ── Sub-Bar Action Pills (Image 1 Toolbar) ── */}
       <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between sticky top-[53px] z-20 shadow-2xs">
-        {/* Left Action Buttons */}
         <div className="flex items-center gap-2 overflow-x-auto">
-          {/* Back Circular Button */}
           <button
             onClick={onBack}
             title="Back to Dashboard"
@@ -591,7 +558,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             </svg>
           </button>
 
-          {/* Update Incidents */}
           <button
             onClick={() => {
               setNoteType('update');
@@ -603,7 +569,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>Update Incidents</span>
           </button>
 
-          {/* Communications */}
           <button
             onClick={() => setActiveActionModal('comms')}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
@@ -612,7 +577,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>Communications</span>
           </button>
 
-          {/* Impacted Customers */}
           <button
             onClick={() => setActiveActionModal('customers')}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
@@ -621,7 +585,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>Impacted Custome...</span>
           </button>
 
-          {/* Raise Problem */}
           <button
             onClick={() => setActiveActionModal('problem')}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
@@ -630,7 +593,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             <span>Raise Problem</span>
           </button>
 
-          {/* Contributors */}
           <button
             onClick={() => setActiveActionModal('contributors')}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
@@ -640,7 +602,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </button>
         </div>
 
-        {/* Right Tools (< > ↗ >> 👁 share ···) */}
         <div className="flex items-center gap-1.5 text-gray-400 shrink-0 relative">
           <button
             onClick={handlePrev}
@@ -659,7 +620,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             &gt;
           </button>
 
-          {/* ↗ Pop out */}
           <button
             onClick={() => window.open(`/major-incidents/live?incident=${initialIncident.id}`, '_blank')}
             title="Pop out in new tab"
@@ -668,7 +628,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             ↗
           </button>
 
-          {/* >> Fast forward stage */}
           <button
             title="Advance Incident Stage"
             onClick={() => {
@@ -684,7 +643,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             &gt;&gt;
           </button>
 
-          {/* 👁 Watch/Subscribe */}
           <button
             title={isWatching ? 'Unwatch Incident' : 'Watch Incident'}
             onClick={() => {
@@ -698,7 +656,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             👁
           </button>
 
-          {/* Share Button & Dropdown */}
           <div className="relative">
             <button
               onClick={() => {
@@ -761,7 +718,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
             )}
           </div>
 
-          {/* ── ··· MORE OPTIONS DROPDOWN MENU ── */}
           <div className="relative">
             <button
               onClick={() => {
@@ -954,9 +910,8 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       </div>
 
-      {/* ── Main Content Container ── */}
       <div className="px-6 py-4 space-y-4 max-w-[1700px] w-full mx-auto">
-        {/* Incident Title Header */}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs shrink-0">
@@ -980,7 +935,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </button>
         </div>
 
-        {/* ── Chevron Lifecycle Process Pipeline (Image 1 & 2) ── */}
         <div className="mi-chevron-container py-1">
           {currentStages.map((stage, idx) => {
             const isFirst = idx === 0;
@@ -1021,7 +975,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           })}
         </div>
 
-        {/* ── Tabs Bar (Interactive Tab Options) ── */}
         <div className="border-b border-gray-200 flex items-center gap-6 text-xs font-semibold text-gray-600 overflow-x-auto">
           {[
             'Major Incident Console',
@@ -1059,16 +1012,10 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           })}
         </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 1: MAJOR INCIDENT CONSOLE & WORK ACTIVITY (Primary View)
-        ═══════════════════════════════════════════════════════════════════ */}
         {(activeTab === 'Major Incident Console' || activeTab.startsWith('Technical') || activeTab.startsWith('Business')) && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 relative items-start">
-            {/* ═══════ LEFT COLUMN (8 cols): Metrics, Impact Statement, Work Activity ═══════ */}
             <div className="lg:col-span-8 space-y-4">
-              {/* Metric Cards Row (4 cards with interactive edit options) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                {/* 1. Priority */}
                 <div
                   onClick={() => setIsEditingPriority(true)}
                   className="bg-white border border-gray-200/80 hover:border-cyan-400 rounded-xl p-3.5 shadow-2xs flex items-center gap-3 cursor-pointer transition-all relative group active:scale-98"
@@ -1112,7 +1059,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 </div>
 
-                {/* 2. Impacted Locations */}
                 <div
                   onClick={() => setIsEditingLocation(true)}
                   className="bg-white border border-gray-200/80 hover:border-cyan-400 rounded-xl p-3.5 shadow-2xs flex items-center gap-3 cursor-pointer transition-all relative group active:scale-98"
@@ -1152,7 +1098,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 </div>
 
-                {/* 3. Impacted Customers */}
                 <div
                   onClick={() => {
                     const next = currentCustomerCount >= 5 ? 1 : currentCustomerCount + 1;
@@ -1175,7 +1120,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 </div>
 
-                {/* 4. MI Manager */}
                 <div
                   onClick={() => setIsEditingAssignee(true)}
                   className="bg-white border border-gray-200/80 hover:border-cyan-400 rounded-xl p-3.5 shadow-2xs flex items-center gap-3 cursor-pointer transition-all relative group active:scale-98"
@@ -1219,7 +1163,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 </div>
               </div>
 
-              {/* Impact Statement Box (Editable) */}
               <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-2xs space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-wide">
@@ -1246,7 +1189,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 )}
               </div>
 
-                            {/* Live Service Health Visibility (Halo Parity) */}
               <ServiceHealthCard
                 product={editProduct}
                 priority={currentPriority}
@@ -1254,9 +1196,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 onNavigateCmdb={() => navigate('/cmdb/services')}
               />
 
-              {/* Work Activity Section */}
               <div className="bg-white border border-gray-200/80 rounded-xl p-5 shadow-2xs space-y-4 relative">
-                {/* Header with Title + Action Buttons */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-gray-900">Work Activity</h3>
                   <div className="flex items-center gap-2">
@@ -1281,7 +1221,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 </div>
 
-                {/* Subtabs: Technical (4) & Business (4) */}
                 <div className="flex items-center gap-1 border-b border-gray-100 pb-1">
                   <button
                     onClick={() => {
@@ -1315,7 +1254,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </button>
                 </div>
 
-                {/* Bulk Actions Floating Bar (appears when rows are checked!) */}
                 {selectedTaskCount > 0 && (
                   <div className="bg-cyan-900 text-white px-4 py-2 rounded-xl flex items-center justify-between shadow-lg text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                     <span className="font-semibold">{selectedTaskCount} tasks selected</span>
@@ -1348,7 +1286,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 )}
 
-                {/* Work Activity Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
@@ -1456,7 +1393,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                               {task.status} ▾
                             </button>
 
-                            {/* Status options dropdown */}
                             {activeTaskStatusDropdown === task.id && (
                               <div className="absolute left-1/2 -translate-x-1/2 top-8 w-32 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 text-left text-[11px] font-medium text-gray-700">
                                 {(['New', 'In Progress', 'Recovery', 'Diagnosis', 'Completed', 'Blocked'] as WorkTask['status'][]).map(
@@ -1485,9 +1421,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
               </div>
             </div>
 
-            {/* ═══════ RIGHT COLUMN (4 cols): SLA, Impacted CIs, Latest Activity, AI Floating ═══════ */}
             <div className="lg:col-span-4 space-y-4">
-              {/* 1. Major Incident SLA Breach Widget */}
               <div
                 onClick={() => setActiveActionModal('sla_breakdown')}
                 className="bg-[#ea2e2e] text-white rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer hover:opacity-95 transition-all group"
@@ -1520,7 +1454,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 </div>
               </div>
 
-              {/* 2. Impacted CIs Card */}
               <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
@@ -1591,7 +1524,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 </div>
               </div>
 
-              {/* 3. Latest Activity Card */}
               <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
@@ -1619,7 +1551,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   </div>
                 </div>
 
-                {/* Activity List */}
                 <div className="space-y-3 pt-1">
                   {activities.map((act) => (
                     <div key={act.id} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0 space-y-1.5">
@@ -1651,7 +1582,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 </div>
               </div>
 
-              {/* 4. AI Suggested Articles Dark Widget */}
               {isAiArticlesOpen ? (
                 <div className="bg-[#24282d] text-white rounded-xl p-3.5 shadow-2xl border border-gray-700/60 space-y-3">
                   <div className="flex items-center justify-between">
@@ -1667,7 +1597,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                     </button>
                   </div>
 
-                  {/* Filter Icon Pill Buttons Row (Interactive Filter Options) */}
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => {
@@ -1731,7 +1660,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                     </button>
                   </div>
 
-                  {/* Articles List */}
                   <div className="space-y-1.5 pt-1">
                     {filteredArticles.slice(0, 4).map((art) => (
                       <div
@@ -1764,9 +1692,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 2: DETAILS VIEW
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Details' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -1840,9 +1765,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 3: PROGRESS TIMELINE
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Progress' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -1885,9 +1807,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 4: IMPACT ASSESSMENT
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Impact' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-6">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-4">
@@ -1913,9 +1832,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 5: CONTRIBUTORS VIEW
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Contributors' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
@@ -1962,9 +1878,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 6: VIEW LOG / AUDIT TRAIL
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'View Log' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
@@ -1985,9 +1898,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 7: RELATED CIS (CMDB)
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Related CIs' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
@@ -2029,9 +1939,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            TAB 8: NOTIFICATION LOG
-        ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === 'Notification Log' && (
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
@@ -2057,15 +1964,11 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         )}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 1: Update Progress Note Modal (Image 3)
-      ═══════════════════════════════════════════════════════════════════ */}
       {isNoteModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className={`bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transition-all animate-in fade-in zoom-in-95 duration-150 ${
             isNoteFullscreen ? 'w-[95vw] h-[92vh] flex flex-col' : 'w-full max-w-xl'
           }`}>
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-cyan-400 text-white font-bold text-xs flex items-center justify-center">
@@ -2093,12 +1996,11 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
               </button>
             </div>
 
-            {/* Modal Body: Rich WYSIWYG Editor Toolbar + Textarea */}
             <div className={`p-6 space-y-4 ${isNoteFullscreen ? 'flex-1 flex flex-col' : ''}`}>
               <div className={`border border-gray-200 rounded-xl overflow-hidden focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-100 transition-all ${
                 isNoteFullscreen ? 'flex-1 flex flex-col' : ''
               }`}>
-                {/* Formatting Toolbar (Active Formatting Options) */}
+
                 <div className="bg-gray-50 border-b border-gray-200 p-2 space-y-1.5 select-none relative">
                   <div className="flex items-center gap-2 text-gray-600 text-xs">
                     <button
@@ -2226,7 +2128,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                     </button>
                   </div>
 
-                  {/* Emoji Quick Picker */}
                   {isEmojiPickerOpen && (
                     <div className="absolute left-2 top-16 bg-white border border-gray-200 rounded-lg shadow-xl p-2 z-50 flex gap-2 text-base">
                       {['⚠️', '✅', '❌', '🚀', '⏱️', '🔥', '💡', '👍', '🔍', '🔒'].map((emoji) => (
@@ -2246,7 +2147,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                   )}
                 </div>
 
-                {/* Textarea */}
                 <textarea
                   rows={isNoteFullscreen ? 16 : 5}
                   value={noteContent}
@@ -2257,7 +2157,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 />
               </div>
 
-              {/* Time Taken Row */}
               <div className="flex items-center gap-3 text-xs">
                 <span className="font-semibold text-gray-700">Time Taken</span>
                 <div className="flex items-center gap-1.5">
@@ -2280,7 +2179,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
                 </div>
               </div>
 
-              {/* Buttons: Save & Discard */}
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
@@ -2302,13 +2200,9 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 2: Knowledge Base / AI Articles Popover (Image 4)
-      ═══════════════════════════════════════════════════════════════════ */}
       {isKbModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
-            {/* Search Header with Dropdown Options */}
             <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/70">
               <div className="flex items-center flex-1 max-w-md border border-cyan-400 rounded-md overflow-visible bg-white shadow-2xs relative">
                 <button
@@ -2369,7 +2263,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
               </button>
             </div>
 
-            {/* Articles List or Selected Article Reader View */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4 mi-console-scroll">
               {selectedKbArticle ? (
                 <div className="space-y-4">
@@ -2477,9 +2370,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 3: Add Task Modal (+ Technical / Business Task)
-      ═══════════════════════════════════════════════════════════════════ */}
       {activeActionModal === 'add_task' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2558,9 +2448,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 4: Task Edit Details Modal
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {editingTask && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2648,9 +2536,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 5: Edit Incident Details Modal
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'edit_details' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2757,9 +2643,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 6: Get Started / Interactive Playbook Modal
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'get_started' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2804,9 +2688,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 7: Notifications Dropdown / Modal
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'notifications' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2863,9 +2745,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 8: Tasks Modal (Top header 📋 icon)
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'tasks' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2915,9 +2795,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 9: SLA Breakdown Modal
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'sla_breakdown' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -2982,9 +2860,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 10: Performance / Health / Timesheet / Help / Profile Modals
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'performance' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -3131,9 +3007,7 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 11: CI Details Popup
-      ═══════════════════════════════════════════════════════════════════ */}
+
       {activeActionModal === 'ci_details' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -3193,9 +3067,6 @@ export const MajorIncidentConsole: React.FC<MajorIncidentConsoleProps> = ({
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MODAL 12: Action Modals (Comms, Customers, Problem, Contributors)
-      ═══════════════════════════════════════════════════════════════════ */}
       {activeActionModal === 'comms' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">

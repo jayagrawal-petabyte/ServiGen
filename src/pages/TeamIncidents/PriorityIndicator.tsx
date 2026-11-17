@@ -9,7 +9,7 @@ const PriorityIndicator: React.FC<PriorityIndicatorProps> = React.memo(({
 }) => {
   const pLower = (priority || '').toLowerCase();
 
-  let dotColor = '#16a34a'; // low
+  let dotColor = '#16a34a';
   let textColor = '#166534';
   if (pLower === 'critical') {
     dotColor = '#dc2626';

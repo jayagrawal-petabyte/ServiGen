@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface ComboboxOption {
   value: string;
-  /** Secondary line, e.g. a role or category path. */
   hint?: string;
 }
 
@@ -11,22 +10,13 @@ interface ComboboxProps {
   onChange: (value: string) => void;
   options: ComboboxOption[];
   placeholder?: string;
-  /** Allow values that are not in the list. */
   allowCustom?: boolean;
   id?: string;
   disabled?: boolean;
   className?: string;
 }
 
-/**
- * Styled combobox.
- *
- * Replaces `<input list=…>` + `<datalist>`. A native datalist is rendered and
- * positioned entirely by the browser: no CSS reaches it, so it arrives in the
- * OS's own styling (dark on Windows), and when there is no room below the field
- * the browser flips it upward over the form. This renders its own menu instead,
- * anchored under the input, in the app's visual language.
- */
+
 export const Combobox: React.FC<ComboboxProps> = ({
   value,
   onChange,

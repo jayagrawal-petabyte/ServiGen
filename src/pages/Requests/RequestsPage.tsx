@@ -304,7 +304,6 @@ export const RequestsPage: React.FC = () => {
   const { user } = useAuth();
   const currentUserName = user?.fullName || 'Adam Admin';
 
-  // Navigation & Hierarchy State - default to 'All Agents' so tickets are immediately visible
   const [selectedTeam, setSelectedTeam] = useState<string>('1st Line Support');
   const [selectedAgent, setSelectedAgent] = useState<string>('All Agents');
   const [is1stLineExpanded, setIs1stLineExpanded] = useState<boolean>(true);
@@ -314,7 +313,6 @@ export const RequestsPage: React.FC = () => {
   const [searchTree, setSearchTree] = useState<string>('');
   const deferredSearchTree = useDeferredValue(searchTree);
 
-  // Table Data State with guaranteed offline fallback
   const [requestsList, setRequestsList] = useState<RequestItem[]>(DEFAULT_REQUESTS);
   const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<RequestItem | null>(null);
@@ -322,7 +320,6 @@ export const RequestsPage: React.FC = () => {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
-  // Custom Saved Views (Halo AI Style)
   const [customViews, setCustomViews] = useState<CustomView[]>(() => {
     try {
       const saved = localStorage.getItem('sg_custom_views');
@@ -341,13 +338,11 @@ export const RequestsPage: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
   const [activeCrCount, setActiveCrCount] = useState<number | null>(1);
 
-  // Dropdown reference for click-outside
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -404,7 +399,6 @@ export const RequestsPage: React.FC = () => {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Fetch live active change requests count
       try {
         const crRes = await fetchActiveChangeRequests();
         const crList = Array.isArray(crRes?.data) ? crRes.data : [];
@@ -414,7 +408,6 @@ export const RequestsPage: React.FC = () => {
         setActiveCrCount(1);
       }
 
-      // 2. Fetch live requests
       const res: any = await api.get('/api/tickets', { params: { ticketType: 'Service Request' } });
       let items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
       if (items.length === 0) {
@@ -458,12 +451,10 @@ export const RequestsPage: React.FC = () => {
         });
         setRequestsList(mapped);
       } else {
-        // Keep default requests if backend returned 0 items
         setRequestsList((prev) => (prev.length > 0 ? prev : DEFAULT_REQUESTS));
       }
     } catch (err) {
       console.warn('[RequestsPage] Live service requests fetch error, fallback active:', err);
-      // On network failure or offline backend, ensure default requests are populated
       setRequestsList((prev) => (prev.length > 0 ? prev : DEFAULT_REQUESTS));
     }
   }, []);
@@ -472,7 +463,6 @@ export const RequestsPage: React.FC = () => {
     void loadData();
   }, [loadData]);
 
-  // Auto-open modal if ?id= query param is specified
   useEffect(() => {
     const targetId = searchParams.get('id');
     if (targetId) {
@@ -489,7 +479,6 @@ export const RequestsPage: React.FC = () => {
     }
   }, [searchParams, requestsList]);
 
-  // New Ticket Modal State
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
   const [newSummary, setNewSummary] = useState('');
   const [newCategory, setNewCategory] = useState('Hardware>Laptop');
@@ -498,10 +487,8 @@ export const RequestsPage: React.FC = () => {
   const [newTeam, setNewTeam] = useState('1st Line Support');
   const [newAgent, setNewAgent] = useState('Adam Admin');
 
-  // Filter requests based on selected agent, team, and filter mode
   const filteredRequests = useMemo(() => {
     return requestsList.filter((req) => {
-      // If a custom view is active, evaluate its specific criteria
       if (activeCustomView) {
         if (activeCustomView.status === 'Open Requests' && req.status === 'Resolved') return false;
         if (activeCustomView.status === 'In Progress' && req.status !== 'In Progress') return false;
@@ -515,7 +502,6 @@ export const RequestsPage: React.FC = () => {
           if (req.priority !== activeCustomView.priority) return false;
         }
       } else {
-        // Standard Agent & Team filter
         if (selectedAgent && selectedAgent !== 'All Agents') {
           if (req.agent.toLowerCase() !== selectedAgent.toLowerCase()) return false;
           if (selectedTeam && selectedTeam !== 'All Teams' && req.team.toLowerCase() !== selectedTeam.toLowerCase()) {
@@ -525,7 +511,6 @@ export const RequestsPage: React.FC = () => {
           if (req.team.toLowerCase() !== selectedTeam.toLowerCase()) return false;
         }
 
-        // Standard Status filter
         if (statusFilter === 'Open Requests') {
           if (req.status === 'Resolved') return false;
         } else if (statusFilter === 'In Progress') {
@@ -535,7 +520,6 @@ export const RequestsPage: React.FC = () => {
         }
       }
 
-      // Search filter
       if (deferredSearchTree.trim()) {
         const query = deferredSearchTree.toLowerCase();
         return (
@@ -551,19 +535,16 @@ export const RequestsPage: React.FC = () => {
     });
   }, [requestsList, selectedAgent, selectedTeam, statusFilter, activeCustomView, deferredSearchTree]);
 
-  // Reset page to 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedTeam, selectedAgent, statusFilter, deferredSearchTree]);
 
-  // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
   const paginatedRequests = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredRequests.slice(start, start + pageSize);
   }, [filteredRequests, currentPage, pageSize]);
 
-  // Dynamic tree counts & agents
   const firstLineAgents = useMemo(() => {
     return [...new Set(
       requestsList
@@ -628,7 +609,6 @@ export const RequestsPage: React.FC = () => {
     };
   }, [requestsList, currentUserName]);
 
-  // Checkbox handling
   const allSelected = useMemo(() => {
     return paginatedRequests.length > 0 && paginatedRequests.every((r) => selectedRequestIds.includes(r.id));
   }, [paginatedRequests, selectedRequestIds]);
@@ -729,14 +709,12 @@ export const RequestsPage: React.FC = () => {
 
   return (
     <div className="requests-page-layout">
-      {/* Toast notification banner */}
       {statusMessage && (
         <div className="requests-toast-banner" role="status" aria-live="polite">
           <span>{statusMessage}</span>
         </div>
       )}
 
-      {/* ── Global Header Bar ── */}
       <header className="requests-top-header">
         <div className="requests-breadcrumb-group">
           <button
@@ -774,11 +752,8 @@ export const RequestsPage: React.FC = () => {
         </div>
       </header>
 
-      {/* ── Two Column Viewport: Team Tree + Main Requests Table ── */}
       <div className="requests-body-container">
-        {/* Left Team Tree Sidebar */}
         <aside className={`requests-tree-sidebar ${isTreeCollapsed ? 'collapsed' : ''}`}>
-          {/* Tree Search Box */}
           {!isTreeCollapsed && (
             <div className="requests-tree-search-wrapper">
               <input
@@ -794,7 +769,6 @@ export const RequestsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Section Header (Halo AI Style) */}
           <div className="requests-tree-header">
             {!isTreeCollapsed && (
               <div className="tree-header-left">
@@ -821,10 +795,8 @@ export const RequestsPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Tree Hierarchical List */}
           {!isTreeCollapsed && (
             <div className="requests-tree-nodes">
-              {/* Group 0: All Requests */}
               <div className="tree-node-group mb-1">
                 <div
                   className={`tree-group-title-row ${selectedTeam === 'All Teams' ? 'active-group' : ''}`}
@@ -841,7 +813,6 @@ export const RequestsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Group 1: 1st Line Support */}
               <div className="tree-node-group">
                 <div
                   className={`tree-group-title-row ${selectedTeam === '1st Line Support' && (!selectedAgent || selectedAgent === 'All Agents') ? 'active-group' : ''}`}
@@ -859,7 +830,6 @@ export const RequestsPage: React.FC = () => {
 
                 {is1stLineExpanded && (
                   <div className="tree-sub-items">
-                    {/* Unassigned */}
                     <div
                       className={`tree-agent-row ${selectedTeam === '1st Line Support' && selectedAgent === 'Unassigned' ? 'active-agent' : ''}`}
                       onClick={() => {
@@ -872,7 +842,6 @@ export const RequestsPage: React.FC = () => {
                       <span className="agent-count-badge">{counts.unassigned}</span>
                     </div>
 
-                    {/* Current User (You) */}
                     <div
                       className={`tree-agent-row highlight-demo-user ${selectedTeam === '1st Line Support' && selectedAgent.toLowerCase() === currentUserName.toLowerCase() ? 'active-agent-pill' : ''}`}
                       onClick={() => {
@@ -888,7 +857,6 @@ export const RequestsPage: React.FC = () => {
                       <span className="agent-count-badge cyan-count">{counts.demoUser}</span>
                     </div>
 
-                    {/* Dynamic other 1st Line agents */}
                     {firstLineAgents.map((agentName) => {
                       const initials = agentName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
                       return (
@@ -912,7 +880,6 @@ export const RequestsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Group 2: 2nd Line Support */}
               <div className="tree-node-group">
                 <div
                   className={`tree-group-title-row ${selectedTeam === '2nd Line Support' && (!selectedAgent || selectedAgent === 'All Agents') ? 'active-group' : ''}`}
@@ -967,7 +934,6 @@ export const RequestsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Group 3: Infrastructure */}
               <div className="tree-node-group">
                 <div
                   className={`tree-group-title-row ${selectedTeam === 'Infrastructure' && (!selectedAgent || selectedAgent === 'All Agents') ? 'active-group' : ''}`}
@@ -1022,7 +988,6 @@ export const RequestsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Group 4: Change Requests link */}
               <div className="tree-node-group mt-3 pt-2.5 border-t border-[#d4887b]">
                 <div
                   className="tree-group-title-row cursor-pointer hover:bg-black/5 transition-colors rounded-lg py-1 px-2 flex items-center justify-between"
@@ -1042,9 +1007,7 @@ export const RequestsPage: React.FC = () => {
           )}
         </aside>
 
-        {/* Main Requests Content */}
         <main className="requests-main-viewport">
-          {/* Main Table Toolbar */}
           <div className="requests-table-toolbar">
             <div className="toolbar-left-view-selector relative flex items-center gap-1.5" ref={filterDropdownRef}>
               <button
@@ -1239,7 +1202,6 @@ export const RequestsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Table Container */}
           <div className="requests-table-card">
             <table className="requests-data-table">
               <thead>
@@ -1298,7 +1260,6 @@ export const RequestsPage: React.FC = () => {
         </main>
       </div>
 
-      {/* ── Ticket Detail Modal ── */}
       {selectedTicketForModal && (
         <TicketDetailModal
           ticket={{
@@ -1343,7 +1304,6 @@ export const RequestsPage: React.FC = () => {
         />
       )}
 
-      {/* ── New Request Modal ── */}
       {isNewRequestModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg overflow-hidden animate-scaleUp">
@@ -1479,7 +1439,6 @@ export const RequestsPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Create Custom View Modal (Halo AI Style) ── */}
       {isCreateViewModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-scaleUp">
@@ -1582,7 +1541,6 @@ export const RequestsPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Getting Started Guide Modal ── */}
       {isGuideOpen && (
         <GetStartedGuide
           title="Getting Started with Service Requests"

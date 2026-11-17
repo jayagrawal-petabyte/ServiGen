@@ -59,9 +59,6 @@ export interface CreateCustomListPayload {
 
 const STORAGE_KEY = 'servigen_custom_lists_cache';
 
-/**
- * Retrieve cached custom lists for resilient offline fallback
- */
 function getCachedLists(): BackendCustomList[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -70,19 +67,14 @@ function getCachedLists(): BackendCustomList[] {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {
-    // ignore
   }
   return [];
 }
 
-/**
- * Update local cache
- */
 function setCachedLists(lists: BackendCustomList[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
   } catch {
-    // ignore
   }
 }
 
@@ -125,9 +117,6 @@ export const DEFAULT_CUSTOM_LISTS: BackendCustomList[] = [
   },
 ];
 
-/**
- * Fetch all custom lists from backend /api/list-builder/lists
- */
 export async function fetchCustomLists(): Promise<BackendCustomList[]> {
   try {
     const response = await apiClient.get<any>('/api/list-builder/lists');
@@ -150,9 +139,6 @@ export async function fetchCustomLists(): Promise<BackendCustomList[]> {
   }
 }
 
-/**
- * Fetch a single custom list by ID from /api/list-builder/lists/:id
- */
 export async function fetchCustomListById(id: string): Promise<BackendCustomList | null> {
   try {
     const response = await apiClient.get<any>(`/api/list-builder/lists/${encodeURIComponent(id)}`);
@@ -165,14 +151,10 @@ export async function fetchCustomListById(id: string): Promise<BackendCustomList
   }
 }
 
-/**
- * Create a new custom list via POST /api/list-builder/lists
- */
 export async function saveCustomList(
   formData: CustomListFormData,
   filterConditions: FilterCondition[] = []
 ): Promise<BackendCustomList> {
-  // Determine relevant display columns based on target entity/scope
   const defaultFields =
     formData.use === 'Users'
       ? ['id', 'username', 'email', 'role', 'availability', 'organisation']
@@ -216,7 +198,6 @@ export async function saveCustomList(
       throw err;
     }
 
-    // Fallback: If network or backend connection is temporarily unavailable in dev
     console.warn('[CustomListsApi] Network unavailable, saving to local state fallback:', err);
     const fallbackList: BackendCustomList = {
       id: `LIST-${Date.now()}`,

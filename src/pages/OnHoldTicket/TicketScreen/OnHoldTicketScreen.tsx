@@ -140,14 +140,12 @@ const OnHoldTicketScreen: React.FC = () => {
   const [showFeedPopover, setShowFeedPopover] = useState<boolean>(false);
   const [showTimesheetPopover, setShowTimesheetPopover] = useState<boolean>(false);
 
-  // Authenticated user state
   const { user } = useAuth();
   const currentUserName = user?.fullName || "Support Agent";
   const defaultOrg = user
     ? `consultancy/${user.region || 'EMEA'}/${user.fullName || 'Support Agent'}`
     : 'consultancy/EMEA/Support Agent';
 
-  // Flyouts & Modals State
   const [activeFlyout, setActiveFlyout] = useState<
     "search" | "notifications" | "menu" | "history" | "settings" | "profile" | "more" | null
   >(null);
@@ -167,7 +165,6 @@ const OnHoldTicketScreen: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [activeFlyout]);
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
 
@@ -209,7 +206,6 @@ const OnHoldTicketScreen: React.FC = () => {
     await fetchData();
   };
 
-  // New Ticket Modal State
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [newType, setNewType] = useState<"Incident" | "Service Request">("Incident");
   const [newSummary, setNewSummary] = useState<string>("");
@@ -274,7 +270,6 @@ const OnHoldTicketScreen: React.FC = () => {
     setNewDescription("");
   };
 
-  // 1. Filter Tickets
   const filteredTickets = useMemo(() => {
     return tickets.filter(t => 
       t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -283,7 +278,6 @@ const OnHoldTicketScreen: React.FC = () => {
     );
   }, [searchQuery, tickets]);
 
-  // 2. Pagination
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
   const paginatedTickets = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -302,7 +296,6 @@ const OnHoldTicketScreen: React.FC = () => {
   const countStart = filteredTickets.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const countEnd = Math.min(currentPage * pageSize, filteredTickets.length);
 
-  // 3. Group Tickets
   const groupedTickets = useMemo(() => {
     const groups: Record<string, Ticket[]> = {};
     paginatedTickets.forEach(ticket => {
@@ -440,7 +433,6 @@ const OnHoldTicketScreen: React.FC = () => {
     <div className="app-shell">
       <div className="main-area">
 
-        {/* Top Nav */}
         <header className="top-navbar">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Service Desk</span>
@@ -459,7 +451,6 @@ const OnHoldTicketScreen: React.FC = () => {
         </header>
 
 
-        {/* Content */}
         <div className="content-row">
           <MyList 
             searchQuery={searchQuery} 
@@ -495,7 +486,6 @@ const OnHoldTicketScreen: React.FC = () => {
                 New
               </button>
 
-              {/* Toolbar More Menu */}
               <div className="onhold-flyout-wrap" ref={activeFlyout === "more" ? flyoutRef : undefined}>
                 <button
                   type="button"

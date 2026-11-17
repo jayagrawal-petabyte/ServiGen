@@ -7,7 +7,7 @@ export interface ProjectTask {
   id: string;
   title: string;
   assignee: string;
-  dueDate: string; // YYYY-MM-DD, or "" when the backend sends none
+  dueDate: string;
   done: boolean;
 }
 
@@ -16,16 +16,16 @@ export interface Project {
   name: string;
   description: string;
   owner: string;
-  status: ProjectStatus; // normalised, used for grouping
-  statusLabel: string; // exactly what the backend sent, used for display
+  status: ProjectStatus;
+  statusLabel: string;
   priority: ProjectPriority;
-  startDate: string; // YYYY-MM-DD or ""
-  targetDate: string; // YYYY-MM-DD or ""
+  startDate: string;
+  targetDate: string;
   hoursSpent: number;
-  hoursBudget: number; // 0 when unknown
-  completionPercent?: number; // only when the backend sends it
+  hoursBudget: number;
+  completionPercent?: number;
   tasks: ProjectTask[];
-  tasksError?: string; // set when GET /projects/:id/subtasks failed
+  tasksError?: string;
 }
 
 function pad(n: number) {

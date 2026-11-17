@@ -93,7 +93,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div className="shrink-0 bg-white border-b border-gray-200 relative select-none">
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 min-w-0">
-        {/* Left: Record count + Pagination */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-gray-500 whitespace-nowrap">
             {totalCount === 0
@@ -121,7 +120,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Refresh + New + Feed */}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 min-w-0">
           <RefreshButton
             size="sm"

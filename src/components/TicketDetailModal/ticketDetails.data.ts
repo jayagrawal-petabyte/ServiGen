@@ -87,9 +87,6 @@ export const AVAILABLE_PRIORITIES: TicketPriority[] = [
   "Unassigned",
 ];
 
-/**
- * Enriches any ticket (from storage or mock) with full detailed fields.
- */
 export function enrichTicketDetails(rawTicket: {
   id: string;
   type?: string;

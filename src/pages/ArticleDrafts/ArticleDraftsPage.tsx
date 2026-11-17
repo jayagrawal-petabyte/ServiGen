@@ -42,7 +42,6 @@ export default function ArticleDraftsPage() {
     }, 4000);
   };
 
-  // Load drafts from API
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -60,7 +59,6 @@ export default function ArticleDraftsPage() {
     loadData();
   }, [loadData]);
 
-  // Handle URL query parameter deep linking (view, search, page, create)
   useEffect(() => {
     const viewParam = searchParams.get('view') as ArticleDraftView | null;
     if (viewParam && ['all', 'my-lists', 'by-agent', 'by-team', 'by-status'].includes(viewParam)) {
@@ -82,7 +80,6 @@ export default function ArticleDraftsPage() {
     }
   }, [searchParams]);
 
-  // Handle direct article draft deep linking (e.g. ?id=DRAFT-001 or ?id=uuid)
   useEffect(() => {
     const targetId = searchParams.get('id');
     if (!targetId || drafts.length === 0) return;
@@ -97,7 +94,6 @@ export default function ArticleDraftsPage() {
     }
   }, [searchParams, drafts, selectedArticle]);
 
-  // Filter drafts based on the selected sidebar view and search
   const filteredDrafts = useMemo(() => {
     let result = [...drafts];
 
@@ -113,7 +109,6 @@ export default function ArticleDraftsPage() {
     } else if (activeSubnavView === 'by-team') {
       result = result.filter((draft) => draft.team.trim().length > 0);
     } else if (activeSubnavView === 'by-status') {
-      // Filter open/pending statuses
       result = result.filter((draft) => draft.status === 'Draft' || draft.status === 'Awaiting Approval');
     }
 
@@ -140,7 +135,6 @@ export default function ArticleDraftsPage() {
     return result;
   }, [drafts, activeSubnavView, searchQuery]);
 
-  // Sort drafts
   const sortedDrafts = useMemo(() => {
     return [...filteredDrafts].sort((a, b) => {
       const first = a.id.localeCompare(b.id);
@@ -148,7 +142,6 @@ export default function ArticleDraftsPage() {
     });
   }, [filteredDrafts, sortDirection]);
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(sortedDrafts.length / perPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedDrafts = useMemo(() => {
@@ -156,7 +149,6 @@ export default function ArticleDraftsPage() {
     return sortedDrafts.slice(startIndex, startIndex + perPage);
   }, [sortedDrafts, safeCurrentPage, perPage]);
 
-  // Selection
   const handleToggleSelect = (id: string) => {
     setSelectedIds((previousIds) =>
       previousIds.includes(id)
@@ -182,7 +174,6 @@ export default function ArticleDraftsPage() {
     }
   };
 
-  // Create article draft
   const handleCreateDraft = async (draftData: Omit<ArticleDraft, 'id'>) => {
     setIsActionLoading(true);
     try {
@@ -197,7 +188,6 @@ export default function ArticleDraftsPage() {
     }
   };
 
-  // Article status update
   const handleUpdateStatus = async (id: string, newStatus: ArticleDraftStatus) => {
     setIsActionLoading(true);
     try {
@@ -216,7 +206,6 @@ export default function ArticleDraftsPage() {
     }
   };
 
-  // Save content
   const handleSaveContent = async (id: string, updates: Partial<ArticleDraft>) => {
     setIsActionLoading(true);
     try {
@@ -249,7 +238,6 @@ export default function ArticleDraftsPage() {
     setSearchParams(next, { replace: true });
   };
 
-  // Delete article draft with React modal confirmation (replaces native browser confirmation dialog)
   const handleDeleteDraft = (id: string) => {
     setDraftToDelete(id);
   };
@@ -276,7 +264,6 @@ export default function ArticleDraftsPage() {
 
   return (
     <div className="article-drafts-page-wrapper">
-      {/* Top Application Navbar with Unified Global Actions */}
       <header className="article-drafts-top-navbar">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -286,9 +273,7 @@ export default function ArticleDraftsPage() {
         <GlobalNavbarActions onNewTicket={() => setIsCreateModalOpen(true)} />
       </header>
 
-      {/* Main Page Layout Container */}
       <div className="article-drafts-main-layout">
-        {/* Left Peach Sidebar */}
         <ArticleDraftSidebar
           activeView={activeSubnavView}
           onSelectView={(v) => {
@@ -318,11 +303,8 @@ export default function ArticleDraftsPage() {
           }}
         />
 
-        {/* Right Content Area */}
         <main className="article-drafts-main flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
-          {/* Approved Shared Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
-            {/* Left: View title + context */}
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-sm font-bold text-slate-800 tracking-tight" style={{ margin: 0 }}>
                 Open Article Drafts
@@ -332,9 +314,7 @@ export default function ArticleDraftsPage() {
               </span>
             </div>
 
-            {/* Right: Controls in exact required order */}
             <div className="flex items-center gap-3 flex-wrap">
-              {/* 1. Table/Card view toggle */}
               <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
                 <button
                   type="button"
@@ -360,14 +340,12 @@ export default function ArticleDraftsPage() {
                 </button>
               </div>
 
-              {/* 2. Record count */}
               <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
                 {filteredDrafts.length > 0
                   ? `${(safeCurrentPage - 1) * perPage + 1}–${Math.min(safeCurrentPage * perPage, filteredDrafts.length)} of ${filteredDrafts.length}`
                   : '0 of 0'}
               </span>
 
-              {/* 3. Rows-per-page selector */}
               <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 <span className="text-[11px] font-medium text-slate-500">Rows:</span>
                 <select
@@ -385,7 +363,6 @@ export default function ArticleDraftsPage() {
                 </select>
               </div>
 
-              {/* 4. Previous / Next pagination */}
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -407,7 +384,6 @@ export default function ArticleDraftsPage() {
                 </button>
               </div>
 
-              {/* 5. Refresh */}
               <RefreshButton
                 size="sm"
                 onClick={loadData}
@@ -415,7 +391,6 @@ export default function ArticleDraftsPage() {
                 title="Refresh article drafts"
               />
 
-              {/* 6. Primary Creation Action */}
               <Button
                 variant="primary"
                 size="sm"
@@ -427,9 +402,7 @@ export default function ArticleDraftsPage() {
             </div>
           </div>
 
-          {/* Scrollable Content Container */}
           <div className="flex-1 overflow-y-auto p-5">
-            {/* Error alert */}
             {error && (
               <div
                 style={{
@@ -447,7 +420,6 @@ export default function ArticleDraftsPage() {
               </div>
             )}
 
-            {/* Table or Card View */}
             {viewMode === 'table' ? (
               <ArticleDraftsDesignView
                 drafts={paginatedDrafts}
@@ -481,7 +453,6 @@ export default function ArticleDraftsPage() {
         </main>
       </div>
 
-      {/* Article Detail Modal */}
       {selectedArticle && (
         <ArticleDraftDetailModal
           article={selectedArticle}
@@ -492,7 +463,6 @@ export default function ArticleDraftsPage() {
         />
       )}
 
-      {/* Delete Confirmation React Modal */}
       {draftToDelete && (
         <div
           role="dialog"
@@ -531,7 +501,6 @@ export default function ArticleDraftsPage() {
         </div>
       )}
 
-      {/* Create Article Draft Modal */}
       {isCreateModalOpen && (
         <CreateArticleDraftModal
           isOpen={isCreateModalOpen}
@@ -540,7 +509,6 @@ export default function ArticleDraftsPage() {
         />
       )}
 
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="approvals-toast info">
           <span>{toastMessage}</span>

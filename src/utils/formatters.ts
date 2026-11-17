@@ -1,6 +1,3 @@
-/**
- * Human-written helper utilities for formatting data across Halo AI.
- */
 
 export const formatHours = (hours: number): string => {
   if (hours >= 1000) {

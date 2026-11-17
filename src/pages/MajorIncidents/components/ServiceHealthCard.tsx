@@ -16,9 +16,7 @@ interface DependentCi {
   latency?: string;
 }
 
-/**
- * Returns dynamic dependent CIs and topology based on the product/CI name
- */
+
 function getDependentTopology(productName: string, isHealthy: boolean): DependentCi[] {
   const p = (productName || '').toLowerCase();
 
@@ -74,7 +72,6 @@ function getDependentTopology(productName: string, isHealthy: boolean): Dependen
     ];
   }
 
-  // Default topology for MyFinance PROD or generic services
   return [
     {
       tag: 'CI-APP-SRV',
@@ -108,7 +105,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
 }) => {
   const [showTopology, setShowTopology] = useState(false);
 
-  // Derive health status and impact percentage
   let healthLabel = 'Operational';
   let badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
   let dotColor = 'bg-emerald-500';
@@ -152,7 +148,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-2xs space-y-3">
-      {/* Header Row: CI name & Live Halo-style Status Badge */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
@@ -166,7 +161,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
           </h4>
         </div>
 
-        {/* Live Status Badge: e.g. "Payment Gateway: Major Outage (99.1% affected)" */}
         <div
           className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold ${badgeColor} shadow-2xs`}
         >
@@ -182,7 +176,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
         </div>
       </div>
 
-      {/* Metrics Row: Blast Radius + SLA Target */}
       <div className="grid grid-cols-2 gap-2 p-2 bg-gray-50/90 rounded-lg border border-gray-100 text-[11px]">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Blast Radius</span>
@@ -194,7 +187,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
         </div>
       </div>
 
-      {/* Dependent Infrastructure Accordion Toggle */}
       <div className="pt-1 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <button
@@ -215,7 +207,6 @@ export const ServiceHealthCard: React.FC<ServiceHealthCardProps> = ({
           )}
         </div>
 
-        {/* Dependent Topology List */}
         {showTopology && (
           <div className="mt-2.5 space-y-1.5">
             {topology.map((ci) => {

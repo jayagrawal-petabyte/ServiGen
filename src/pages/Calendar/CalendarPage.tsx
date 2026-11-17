@@ -27,7 +27,6 @@ const VIEWS: { id: View; label: string }[] = [
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const HOUR_HEIGHT = 48;
 
-/* ---------- date helpers ---------- */
 
 function addDays(d: Date, n: number) {
   const r = new Date(d);
@@ -95,7 +94,6 @@ function rangeLabel(days: Date[]) {
   return `${short(first)} - ${short(last)}`;
 }
 
-/* Lays out overlapping events side by side within a single day column. */
 function layoutDay(events: CalendarEvent[]) {
   const sorted = [...events].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   const laneEnds: number[] = [];
@@ -208,7 +206,6 @@ export default function CalendarPage() {
   const [showChangeOverlay, setShowChangeOverlay] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Fetch calendar events on mount
   useEffect(() => {
     let active = true;
     async function fetchCalendarEvents() {
@@ -251,7 +248,6 @@ export default function CalendarPage() {
           });
           setEvents(mapped);
         } else {
-          // If database is unseeded, use default mock calendar events so page is not empty
           setEvents(generateDefaultCalendarEvents(anchor));
         }
       } catch (err: any) {
@@ -320,7 +316,6 @@ export default function CalendarPage() {
     }
   }, []);
 
-  // Fetch change requests and map them to calendar events for overlay
   useEffect(() => {
     let active = true;
     async function loadChangeRequests() {
@@ -334,7 +329,7 @@ export default function CalendarPage() {
             const startDt = new Date(cr.scheduledStart);
             const endDt = cr.scheduledEnd && cr.scheduledEnd !== "Pending Schedule"
               ? new Date(cr.scheduledEnd)
-              : new Date(startDt.getTime() + 2 * 60 * 60 * 1000); // default 2h
+              : new Date(startDt.getTime() + 2 * 60 * 60 * 1000);
             const pad = (n: number) => String(n).padStart(2, "0");
             const isAllDay =
               startDt.getHours() === 0 && startDt.getMinutes() === 0 &&
@@ -361,13 +356,11 @@ export default function CalendarPage() {
     return () => { active = false; };
   }, []);
 
-  // Merge calendar events + change request overlay events
   const allEvents = useMemo(() => {
     if (!showChangeOverlay) return events;
     return [...events, ...changeEvents];
   }, [events, changeEvents, showChangeOverlay]);
 
-  // Load agent list from API
   useEffect(() => {
     async function loadAgents() {
       try {
@@ -392,14 +385,12 @@ export default function CalendarPage() {
     void loadAgents();
   }, []);
 
-  // Fallback: derive from loaded events
   useEffect(() => {
     if (agentList.length === 0 && allEvents.length > 0) {
       setAgentList([...new Set(allEvents.map((e) => e.agent).filter(Boolean))]);
     }
   }, [allEvents, agentList.length]);
 
-  // Keep the red "now" line moving.
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(id);
@@ -435,7 +426,6 @@ export default function CalendarPage() {
       .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   }
 
-  /* ---------- navigation ---------- */
 
   function goTo(date: Date) {
     setAnchor(date);
@@ -455,7 +445,6 @@ export default function CalendarPage() {
       ? anchor.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
       : rangeLabel(weekDays);
 
-  /* ---------- sidebar toggles ---------- */
 
   function toggleType(id: EventType) {
     setHiddenTypes((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -465,7 +454,6 @@ export default function CalendarPage() {
     setHiddenAgents((prev) => (prev.includes(name) ? prev.filter((a) => a !== name) : [...prev, name]));
   }
 
-  /* ---------- create / delete ---------- */
 
   function openDraft(date: Date, hour?: number) {
     setDraftError("");
@@ -478,7 +466,6 @@ export default function CalendarPage() {
     if (toMinutes(draft.end) <= toMinutes(draft.start)) return setDraftError("End time must be after start time.");
     const newEvent: CalendarEvent = { ...draft, title: draft.title.trim(), id: String(Date.now()) };
     setEvents((prev) => [...prev, newEvent]);
-    // Ensure the created event's type is visible
     setHiddenTypes((prev) => prev.filter((t) => t !== draft.type));
     setDraft(null);
 
@@ -504,7 +491,6 @@ export default function CalendarPage() {
     setSelected(null);
   }
 
-  /* ---------- views ---------- */
 
   function renderTimeGrid(days: Date[]) {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -754,14 +740,12 @@ export default function CalendarPage() {
     );
   }
 
-  /* ---------- render ---------- */
 
   const miniDays = monthGrid(miniMonth);
   const anchorWeek = startOfWeek(anchor);
 
   return (
     <div className="flex-1 w-full h-full flex flex-col bg-[#FFF9F5] overflow-hidden">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>

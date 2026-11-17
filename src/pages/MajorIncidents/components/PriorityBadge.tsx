@@ -1,5 +1,3 @@
-// PriorityBadge — coloured text label for Critical / High / Medium / Low
-
 import React from 'react';
 import type { Priority } from '../types/majorIncident.types';
 
@@ -8,7 +6,6 @@ interface PriorityBadgeProps {
   className?: string;
 }
 
-// One Tailwind class per priority level — Record ensures all 4 are covered
 const PRIORITY_STYLES: Record<Priority, string> = {
   Critical: 'text-red-600 font-semibold',
   High: 'text-orange-500 font-semibold',

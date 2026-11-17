@@ -40,7 +40,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
   const effectiveUserName = userName || user?.fullName || '';
   const effectiveDate = userDate || new Date().toLocaleDateString('en-GB');
 
-  // Load persistent state or fall back to defaults
   const [startTime, setStartTime] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('servigen_timesheet_data');
@@ -86,7 +85,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
   const startMenuRef = useRef<HTMLDivElement>(null);
   const finishMenuRef = useRef<HTMLDivElement>(null);
 
-  // Persist state to localStorage on changes
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -101,7 +99,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
     } catch {}
   }, [startTime, finishTime, loggedMinutes, breakMinutes]);
 
-  // Handle outside click for menus
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (startMenuRef.current && !startMenuRef.current.contains(e.target as Node)) {
@@ -115,7 +112,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  // Timer loop
   useEffect(() => {
     let interval: any = null;
     if (timerActive) {
@@ -137,10 +133,8 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
     return `${String(mins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
   };
 
-  // Target hours: 8 hours = 480 minutes
   const TARGET_MINUTES = 480;
 
-  // Calculate Hours Worked = (Finish Time - Start Time) - Break Time
   const hoursWorkedStr = useMemo(() => {
     const startMins = parseTimeToMinutes(startTime);
     const finishMins = parseTimeToMinutes(finishTime);
@@ -148,13 +142,12 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
     if (startMins === null || finishMins === null) return '-';
 
     let diff = finishMins - startMins;
-    if (diff < 0) diff += 24 * 60; // Crosses midnight
+    if (diff < 0) diff += 24 * 60;
 
     const workedMins = Math.max(0, diff - breakMinutes);
     return formatMinutesToHours(workedMins);
   }, [startTime, finishTime, breakMinutes]);
 
-  // Calculate Unlogged Time = Target Hours - Logged Hours
   const unloggedMinutes = Math.max(0, TARGET_MINUTES - loggedMinutes);
   const unloggedStr = formatMinutesToHours(unloggedMinutes);
   const loggedStr = formatMinutesToHours(loggedMinutes);
@@ -162,7 +155,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
   const START_SUGGESTIONS = ['08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM'];
   const FINISH_SUGGESTIONS = ['04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM'];
 
-  // Time grid slots
   const timeSlots = [
     '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
     '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
@@ -171,7 +163,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
 
   return (
     <div className="timesheet-floating-popover">
-      {/* Header */}
       <div className="timesheet-popover-header">
         <h3 className="timesheet-popover-title">Timesheet</h3>
         <button
@@ -184,9 +175,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
         </button>
       </div>
 
-      {/* Main Info Card */}
       <div className="timesheet-info-card">
-        {/* User Header */}
         <div className="timesheet-user-row">
           <div className="timesheet-icon-circle">
             <svg
@@ -207,9 +196,7 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           </span>
         </div>
 
-        {/* Inputs & Stats Grid */}
         <div className="timesheet-metrics-grid">
-          {/* Start Time */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Start Time:</span>
             <div className="timesheet-input-box" ref={startMenuRef}>
@@ -252,7 +239,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </div>
           </div>
 
-          {/* Finish Time */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Finish Time:</span>
             <div className="timesheet-input-box" ref={finishMenuRef}>
@@ -295,13 +281,11 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </div>
           </div>
 
-          {/* Target Hours */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Target Hours:</span>
             <span className="timesheet-metric-val font-semibold">08:00</span>
           </div>
 
-          {/* Hours Worked (Dynamically Computed) */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Hours Worked:</span>
             <span className="timesheet-metric-val font-semibold text-gray-800">
@@ -309,7 +293,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </span>
           </div>
 
-          {/* Hours Logged */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Hours Logged:</span>
             <div className="flex items-center gap-2">
@@ -333,7 +316,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </div>
           </div>
 
-          {/* Break Time */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Break Time:</span>
             <div className="flex items-center gap-2">
@@ -357,7 +339,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
             </div>
           </div>
 
-          {/* Unlogged Time (Dynamically Computed) */}
           <div className="timesheet-metric-row">
             <span className="timesheet-metric-label">Unlogged Time:</span>
             <div className="flex items-center gap-2">
@@ -384,7 +365,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           </div>
         </div>
 
-        {/* Live Ticking Timer Card */}
         {timerActive && (
           <div className="mt-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-900">
             <div className="flex items-center gap-2">
@@ -408,14 +388,12 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
           </div>
         )}
 
-        {/* Status Toast Banner */}
         {statusNotice && (
           <div className="mt-3 p-2 bg-cyan-50 border border-cyan-200 rounded-lg text-xs text-cyan-800 text-center font-semibold">
             {statusNotice}
           </div>
         )}
 
-        {/* Action Links */}
         <div className="timesheet-links-row mt-3">
           <button
             type="button"
@@ -442,7 +420,6 @@ export const TimesheetPopover: React.FC<TimesheetPopoverProps> = ({
         </div>
       </div>
 
-      {/* Timeline Schedule Grid */}
       <div className="timesheet-timeline-grid-wrap">
         <div className="timesheet-timeline-grid">
           {timeSlots.map((slot) => (

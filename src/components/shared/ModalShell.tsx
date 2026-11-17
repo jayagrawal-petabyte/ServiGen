@@ -80,7 +80,6 @@ export const ModalShell: React.FC<ModalShellProps> = ({
           aria-describedby={ariaDescribedBy}
           className={`fixed inset-0 m-auto bg-white rounded-3xl shadow-2xl border border-slate-200 w-[95vw] ${SIZE_CLASSES[size]} h-fit max-h-[92vh] z-50 flex flex-col overflow-hidden outline-none ${className}`}
         >
-          {/* Header */}
           {!hideHeader ? (
             <div
               className={`p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0 ${headerClassName}`}
@@ -150,12 +149,10 @@ export const ModalShell: React.FC<ModalShellProps> = ({
             </>
           )}
 
-          {/* Body Content */}
           <div className={`overflow-y-auto flex-1 ${bodyClassName}`}>
             {children}
           </div>
 
-          {/* Optional Footer */}
           {footer && (
             <div
               className={`p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 shrink-0 ${footerClassName}`}

@@ -63,7 +63,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'specs' | 'relationships' | 'impact' | 'licenses'>('specs');
   const [currentCi, setCurrentCi] = useState<ConfigurationItem | null>(ci);
 
-  // Specifications editing state
   const [isEditingSpecs, setIsEditingSpecs] = useState(false);
   const [specForm, setSpecForm] = useState({
     os: '',
@@ -118,7 +117,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
     };
   };
 
-  // Relationships & Topology state
   const [showAddRel, setShowAddRel] = useState(false);
   const [relTargetId, setRelTargetId] = useState('');
   const [relType, setRelType] = useState<'depends_on' | 'runs_on' | 'backed_up_by' | 'connected_to'>('depends_on');
@@ -128,7 +126,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
   const [topologyGraph, setTopologyGraph] = useState<CiTopologyGraph | null>(null);
   const [isLoadingTopology, setIsLoadingTopology] = useState(false);
 
-  // Status & Lifecycle update loading
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
@@ -361,7 +358,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
       }
     >
       <div>
-        {/* Feedback message banner */}
         {actionMessage && (
           <div
             className={`mx-6 mt-3 p-2.5 rounded-xl text-xs flex items-center gap-2 ${
@@ -379,7 +375,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           </div>
         )}
 
-        {/* Overview attributes card */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 mx-6 mt-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
           <div>
             <span className="text-slate-400 font-bold block mb-0.5 uppercase text-[10px]">Site Location</span>
@@ -407,7 +402,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex items-center gap-2 px-6 pt-4 border-b border-slate-200 text-xs font-bold">
           <button
             type="button"
@@ -459,9 +453,7 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Contents */}
         <div className="p-6 space-y-5 text-xs text-slate-700 flex-1">
-          {/* TAB 1: Specifications & Lifecycle */}
           {activeTab === 'specs' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -653,7 +645,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Interactive Lifecycle Stage Transition */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -687,7 +678,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: Dependencies & Topology */}
           {activeTab === 'relationships' && (
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
@@ -722,7 +712,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   </div>
                 </div>
 
-                {/* Add Relationship Form */}
                 {showAddRel && (
                   <form
                     onSubmit={handleAddRelationship}
@@ -802,7 +791,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   </form>
                 )}
 
-                {/* Interactive Visual Topology Tree */}
                 {showTopology && (
                   <div className="mb-4">
                     <CiVisualTopologyTree
@@ -843,7 +831,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
                   </div>
                 )}
 
-                {/* Direct Dependencies List */}
                 {currentCi.relationships && currentCi.relationships.length > 0 ? (
                   <div className="space-y-3">
                     {currentCi.relationships.map((rel: CiRelationship, idx: number) => (
@@ -889,7 +876,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Impact & Tickets */}
           {activeTab === 'impact' && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -967,7 +953,6 @@ export const CiDetailModal: React.FC<CiDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: Software Licenses */}
           {activeTab === 'licenses' && (
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">

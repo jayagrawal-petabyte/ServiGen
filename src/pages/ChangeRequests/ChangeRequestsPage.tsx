@@ -84,7 +84,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
   const items = externalRequests || internalRequests;
 
-  // Compute live view counts for the sidebar
   const counts = useMemo(() => {
     const all = items.length;
     const active = items.filter(
@@ -115,7 +114,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     };
   }, [items]);
 
-  // Sidebar navigation structure inspired by reference design with brand soft-peach styling
   const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
     () => [
       {
@@ -204,7 +202,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
     [counts]
   );
 
-  // Filter change requests based on selected sidebar view & sidebar record search
   const filteredRequests = useMemo(() => {
     return items.filter((cr: ChangeRequest) => {
       const q = searchQuery.toLowerCase().trim();
@@ -283,7 +280,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
 
   return (
     <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -293,7 +289,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
         <GlobalNavbarActions />
       </header>
 
-      {/* CI Filter Active Notification */}
       {(ciId || ciName) && (
         <div className="mx-[18px] mt-3 px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center justify-between text-xs font-semibold shadow-2xs shrink-0">
           <div className="flex items-center gap-2">
@@ -317,9 +312,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
         </div>
       )}
 
-      {/* ── Two-Column Layout (Sidebar + Main Panel) ── */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
-        {/* Left Module Sidebar */}
         <ModuleSidebar
           title="Change Requests"
           icon={<GitPullRequest className="w-3.5 h-3.5" />}
@@ -350,9 +343,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
           }
         />
 
-        {/* Right Main Table/Grid Panel */}
         <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
-          {/* Main Top Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
@@ -361,7 +352,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
-              {/* View Switcher: Grid / Table */}
               <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
                 <button
                   type="button"
@@ -389,12 +379,10 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                 </button>
               </div>
 
-              {/* Top Toolbar Pagination Count */}
               <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
                 {pageStart}-{pageEnd} of {filteredRequests.length}
               </span>
 
-              {/* Top Toolbar Page Navigation Buttons */}
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -416,7 +404,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                 </button>
               </div>
 
-              {/* Standardized Context Refresh Button */}
               <RefreshButton
                 size="sm"
                 onClick={() => loadData()}
@@ -424,7 +411,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
                 title="Refresh Change Requests"
               />
 
-              {/* Primary Action Button */}
               <Button
                 variant="primary"
                 size="sm"
@@ -437,9 +423,7 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
             </div>
           </div>
 
-          {/* Scrollable Content Container */}
           <div className="flex-1 overflow-y-auto p-5">
-            {/* Error banner */}
             {error && (
               <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-rose-700 text-xs">
                 <div className="flex items-center gap-2.5">
@@ -455,7 +439,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               </div>
             )}
 
-            {/* Grid View */}
             {viewMode === 'grid' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {paginatedRequests.map((cr: ChangeRequest) => {
@@ -557,7 +540,6 @@ export const ChangeRequestsPage: React.FC<ChangeRequestsPageProps> = ({
               </div>
             )}
 
-            {/* Table View */}
             {viewMode === 'table' && (
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
                 <div className="overflow-x-auto">

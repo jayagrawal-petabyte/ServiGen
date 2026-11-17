@@ -58,7 +58,6 @@ export default function ArticleDraftDetailModal({
   const [statusValidationError, setStatusValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Lock body scroll and listen for Escape key
   React.useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -76,7 +75,6 @@ export default function ArticleDraftDetailModal({
     };
   }, [onClose]);
 
-  // Reset internal editing and validation state whenever the inspected article changes (prevents stale data)
   React.useEffect(() => {
     if (!article) return;
     setIsEditing(false);
@@ -267,7 +265,6 @@ export default function ArticleDraftDetailModal({
             padding: '24px',
           }}
         >
-          {/* Status Validation Error Banner (Replaces native browser alert) */}
           {statusValidationError && (
             <div
               style={{
@@ -309,7 +306,6 @@ export default function ArticleDraftDetailModal({
             </div>
           )}
 
-          {/* Rejection Alert if rejected */}
           {(article.status === 'Rejected' || article.rejectReason) && (
             <div
               style={{
@@ -343,7 +339,6 @@ export default function ArticleDraftDetailModal({
             </div>
           )}
 
-          {/* Metadata Grid */}
           <div
             style={{
               display: 'grid',
@@ -500,7 +495,6 @@ export default function ArticleDraftDetailModal({
             </div>
           </div>
 
-          {/* Title & Subtitle Edit or View */}
           {isEditing ? (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ marginBottom: '12px' }}>
@@ -612,7 +606,6 @@ export default function ArticleDraftDetailModal({
             </div>
           )}
 
-          {/* Body Content */}
           <div>
             <div
               style={{

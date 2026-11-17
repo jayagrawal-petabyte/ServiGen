@@ -53,7 +53,6 @@ export function SegmentedTabs<T extends string = string>({
       return 'bg-white text-slate-900 shadow-2xs font-bold';
     }
 
-    // Default 'pill'
     if (theme === 'terracotta') {
       return 'bg-[#C96F55] text-white shadow-xs font-bold';
     }

@@ -93,7 +93,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
       }
     >
       <div>
-        {/* Search & Category Filter Bar */}
         <div className="px-6 py-3 border-b border-[#ebdcd3] bg-white">
           <FilterToolbar
             search={searchQuery}
@@ -106,7 +105,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
           />
         </div>
 
-        {/* Category Pills Bar */}
         <div className="px-6 py-2.5 bg-slate-100/70 border-b border-[#ebdcd3]">
           <SegmentedTabs
             tabs={[
@@ -126,7 +124,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
           />
         </div>
 
-        {/* Report Cards Grid */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredReports.length === 0 ? (
               <div className="col-span-full py-16 text-center text-slate-400">
@@ -149,7 +146,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                     }`}
                   >
                     <div>
-                      {/* Top Badges */}
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                           {getCategoryIcon(report.category)}
@@ -167,7 +163,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Title & Description */}
                       <h3 className="font-bold text-sm text-slate-900 group-hover:text-[#C96F55] transition-colors">
                         {report.title}
                       </h3>
@@ -176,7 +171,6 @@ export const ReportCatalogModal: React.FC<ReportCatalogModalProps> = ({
                       </p>
                     </div>
 
-                    {/* Bottom Metadata & Launch Action */}
                     <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">

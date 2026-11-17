@@ -1,19 +1,6 @@
 import type { MajorIncident } from '../../pages/MajorIncidents/types/majorIncident.types';
 import { STAGE_LABELS } from '../majorIncidents.lifecycle';
 
-/**
- * Offline demo data for Major Incidents.
- *
- * Two different outages need covering, and only one of them the API can handle:
- *
- *   1. API up, database unreachable  -> the backend serves its own fixtures and
- *      tags them `meta.source: "mock"`. Nothing here is used.
- *   2. API unreachable (Render asleep, cold start, network) -> nothing comes
- *      back at all, so the screen would be blank. These fixtures fill it.
- *
- * Anything rendered from here must be labelled as demo data in the UI — the
- * point is to avoid an empty screen, not to pass fixtures off as live records.
- */
 
 function stages(activeLabel: string): MajorIncident['lifecycleStages'] {
   const activeIndex = Math.max(0, STAGE_LABELS.indexOf(activeLabel as never));

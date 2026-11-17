@@ -8,23 +8,12 @@ export interface StatusBadgeProps {
   className?: string;
 }
 
-/**
- * Returns class and inline style for a given status based on theme tokens:
- * - Open → primary/info color (sky/blue token)
- * - In Progress → a distinct accent (blue or indigo token)
- * - On Hold → warning/amber token
- * - Resolved / Closed → success/green token
- * - Awaiting Approval → a high-contrast dark token (navy or dark surface)
- * - Rejected → danger/error token
- * - Draft → a soft/muted token
- */
 export function getStatusStyle(statusValue: string): {
   classes: string;
   style?: React.CSSProperties;
 } {
   const norm = (statusValue || '').trim().toLowerCase();
 
-  // Resolved / Closed / Published / Completed → success/green token
   if (
     norm.includes('resolve') ||
     norm.includes('closed') ||
@@ -40,7 +29,6 @@ export function getStatusStyle(statusValue: string): {
     };
   }
 
-  // Awaiting Approval → high-contrast dark token (navy / dark surface)
   if (norm.includes('await') || norm.includes('approval')) {
     return {
       classes: 'bg-slate-900 text-white border-slate-900',
@@ -51,7 +39,6 @@ export function getStatusStyle(statusValue: string): {
     };
   }
 
-  // Rejected → danger/error token
   if (norm.includes('reject')) {
     return {
       classes: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -62,21 +49,18 @@ export function getStatusStyle(statusValue: string): {
     };
   }
 
-  // On Hold / Pending → warning/amber token
   if (norm.includes('hold') || norm.includes('pend')) {
     return {
       classes: 'bg-amber-50 text-amber-700 border-amber-200',
     };
   }
 
-  // In Progress / Actioned → distinct accent (indigo/blue token)
   if (norm.includes('progress') || norm.includes('action')) {
     return {
       classes: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     };
   }
 
-  // Draft → soft/muted token
   if (norm.includes('draft')) {
     return {
       classes: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -87,14 +71,12 @@ export function getStatusStyle(statusValue: string): {
     };
   }
 
-  // Open / New / Active → primary/info color
   if (norm.includes('open') || norm.includes('new') || norm.includes('active')) {
     return {
       classes: 'bg-sky-50 text-sky-700 border-sky-200',
     };
   }
 
-  // Default fallback (muted)
   return {
     classes: 'bg-slate-100 text-slate-700 border-slate-200',
   };

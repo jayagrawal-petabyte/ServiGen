@@ -1,8 +1,3 @@
-/**
- * My Work API Service
- * Connects frontend My Work personal queue and ticket management screens
- * to live /api/my-work backend endpoints with offline fallback resilience.
- */
 
 import { api, logServiceError } from './apiClient';
 import { MOCK_MY_WORK_TICKETS, MOCK_TICKETS } from './fallback/mockData';
@@ -54,9 +49,6 @@ export interface TimeLog {
   note: string;
 }
 
-/**
- * Format minutes into readable "Xh Ym" string
- */
 export function formatMinutes(minutes: number | string | undefined | null): string {
   if (minutes == null) return '0m';
   if (typeof minutes === 'string') {
@@ -69,7 +61,6 @@ export function formatMinutes(minutes: number | string | undefined | null): stri
     ) {
       return '0m';
     }
-    // Clean string format like "2h 30m", "2h", "45m", "01:30"
     if (
       /^\d+\s*h(\s*\d+\s*m)?$/i.test(trimmed) ||
       /^\d+\s*m$/i.test(trimmed) ||
@@ -90,9 +81,6 @@ export function formatMinutes(minutes: number | string | undefined | null): stri
   return `${remaining}m`;
 }
 
-/**
- * Parse human duration (e.g. "1h 30m", "45m", "2h", "15") into minutes
- */
 export function parseDurationToMinutes(durationStr: string): number {
   if (!durationStr || !durationStr.trim()) return 0;
   const str = durationStr.trim().toLowerCase();
@@ -108,7 +96,6 @@ export function parseDurationToMinutes(durationStr: string): number {
     minutes += parseInt(minMatch[1], 10);
   }
 
-  // If simple numeric string without units
   if (!hourMatch && !minMatch && /^\d+$/.test(str)) {
     minutes = parseInt(str, 10);
   }
@@ -116,9 +103,6 @@ export function parseDurationToMinutes(durationStr: string): number {
   return minutes || 15;
 }
 
-/**
- * Map backend priority to frontend "P1 - Critical" label
- */
 export function formatPriority(priority: string): string {
   switch (priority?.toLowerCase()) {
     case 'critical':
@@ -139,19 +123,14 @@ export function formatPriority(priority: string): string {
 }
 
 export const myWorkService = {
-  /**
-   * Fetch personal tickets for current acting agent
-   */
   async getMyWorkTickets(filters?: {
     status?: string;
     priority?: string;
     agentId?: string;
   }): Promise<MyWorkTicket[]> {
     try {
-      // Do not send agentId — backend resolves it from the JWT token
       const params: Record<string, string | undefined> = {};
       if (filters?.agentId) {
-        // Only admins pass an explicit agentId to inspect another agent's queue
         params.agentId = filters.agentId;
       }
       if (filters?.status && filters.status !== 'All') {
@@ -185,9 +164,6 @@ export const myWorkService = {
     return MOCK_MY_WORK_TICKETS;
   },
 
-  /**
-   * Fetch all tickets across organization (combining /api/tickets and /api/my-work)
-   */
   async getAllTickets(): Promise<MyWorkTicket[]> {
     try {
       const res = await api.get('/api/tickets');
@@ -240,7 +216,6 @@ export const myWorkService = {
       logServiceError('myWork.getAllTickets', error);
     }
 
-    // Fallback: merge MOCK_TICKETS with MOCK_MY_WORK_TICKETS
     const fallbackOrg: MyWorkTicket[] = (MOCK_TICKETS || []).map((t: any) => ({
       id: t.id,
       priority: formatPriority(t.priority),
@@ -273,9 +248,6 @@ export const myWorkService = {
     return Array.from(map.values());
   },
 
-  /**
-   * Update ticket status and optional hold reason
-   */
   async updateTicketStatus(
     ticketId: string,
     status: TicketStatus,
@@ -305,15 +277,11 @@ export const myWorkService = {
       }
     } catch (error) {
       logServiceError('myWork.updateTicketStatus', error);
-      // Fallback
     }
 
     return null;
   },
 
-  /**
-   * Log spent time in minutes against a ticket
-   */
   async logTime(
     ticketId: string,
     minutesSpent: number
@@ -340,7 +308,6 @@ export const myWorkService = {
       }
     } catch (error) {
       logServiceError('myWork.logTime', error);
-      // Fallback
     }
 
     return null;

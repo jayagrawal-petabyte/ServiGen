@@ -11,7 +11,6 @@ export interface PreBuiltReportItem {
 }
 
 export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
-  // ── 1. Incidents & Requests ──
   {
     id: 'REP-INC-01',
     title: 'Incidents by Category & Impact',
@@ -55,7 +54,6 @@ export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
     sampleMetric: '12 Triage Tickets',
   },
 
-  // ── 2. SLA & OLA Compliance ──
   {
     id: 'REP-SLA-01',
     title: 'SLA Compliance & Resolution Breach Analysis',
@@ -98,7 +96,6 @@ export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
     sampleMetric: '4 Hotspot Queues',
   },
 
-  // ── 3. Agent & Team Workload ──
   {
     id: 'REP-AGT-01',
     title: 'Agent Performance & Resolution Velocity',
@@ -141,7 +138,6 @@ export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
     sampleMetric: '4.8 / 5.0 CSAT',
   },
 
-  // ── 4. Change Management & CAB ──
   {
     id: 'REP-CHG-01',
     title: 'Change Request Success & Rollback Rate',
@@ -184,7 +180,6 @@ export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
     sampleMetric: '14 Critical Changes',
   },
 
-  // ── 5. CMDB & IT Asset Lifecycle ──
   {
     id: 'REP-AST-01',
     title: 'Assets with Expiring Warranty in <60 Days',
@@ -227,7 +222,6 @@ export const PRE_BUILT_REPORTS: PreBuiltReportItem[] = [
     sampleMetric: '3 Fragile CIs',
   },
 
-  // ── 6. Service Requests & Catalog ──
   {
     id: 'REP-REQ-01',
     title: 'Top Requested Service Catalog Offerings',

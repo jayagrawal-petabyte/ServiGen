@@ -43,7 +43,6 @@ export default function CreateArticleDraftModal({
   const [slaDays, setSlaDays] = useState('3');
   const [submitAsAwaiting, setSubmitAsAwaiting] = useState(false);
 
-  // Validation errors
   const [errors, setErrors] = useState<{
     title?: string;
     subtitle?: string;
@@ -115,14 +114,12 @@ export default function CreateArticleDraftModal({
         body: body.trim(),
       });
 
-      // Reset and close
       setTitle('');
       setSubtitle('');
       setBody('');
       setErrors({});
       onClose();
     } catch {
-      // Error handled by parent toast
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +164,6 @@ export default function CreateArticleDraftModal({
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', backgroundColor: '#ffffff' }}>
-            {/* Title */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
@@ -202,7 +198,6 @@ export default function CreateArticleDraftModal({
               )}
             </div>
 
-            {/* Subtitle / Short Summary */}
             <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                 Summary / Subtitle <span style={{ color: '#dc2626' }}>*</span>
@@ -232,7 +227,6 @@ export default function CreateArticleDraftModal({
               )}
             </div>
 
-            {/* Category & Priority Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
@@ -285,7 +279,6 @@ export default function CreateArticleDraftModal({
               </div>
             </div>
 
-            {/* Author, Team & SLA */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 0.8fr', gap: '12px', marginBottom: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
@@ -352,7 +345,6 @@ export default function CreateArticleDraftModal({
               </div>
             </div>
 
-            {/* Content Body */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
@@ -391,7 +383,6 @@ export default function CreateArticleDraftModal({
               )}
             </div>
 
-            {/* Checkbox: Submit directly for approval */}
             <div
               style={{
                 display: 'flex',

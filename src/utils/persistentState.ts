@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Reads a value from localStorage with fallback to defaultValue
- */
 export function getPersistentData<T>(key: string, defaultValue: T): T {
   try {
     const item = localStorage.getItem(key);
@@ -15,9 +12,6 @@ export function getPersistentData<T>(key: string, defaultValue: T): T {
   return defaultValue;
 }
 
-/**
- * Saves a value to localStorage
- */
 export function setPersistentData<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -26,10 +20,6 @@ export function setPersistentData<T>(key: string, value: T): void {
   }
 }
 
-/**
- * React hook that behaves like useState, but persists automatically to localStorage.
- * Survives route switches and page reloads.
- */
 export function usePersistentState<T>(
   key: string,
   initialValue: T

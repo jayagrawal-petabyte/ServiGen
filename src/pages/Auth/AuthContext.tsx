@@ -10,13 +10,11 @@ import {
   isOfflineFallbackToken,
 } from '../../services/apiClient';
 
-/** Store a session token, using sessionStorage for End Users so their session
- *  is never persisted across browser restarts (the sign-in page opens fresh). */
 const storeToken = (token: string, user: { role?: string }) => {
   if (user?.role === 'End User') {
-    setAuthToken(token, false); // sessionStorage only
+    setAuthToken(token, false);
   } else {
-    setStoredToken(token);       // localStorage (persisted)
+    setStoredToken(token);
   }
 };
 
@@ -32,9 +30,6 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * Detect whether an error indicates backend downtime, network failure, or server unavailability
- */
 export const isBackendDownError = (err: any): boolean => {
   if (!err) return false;
   if (typeof err.statusCode === 'number') {
@@ -52,9 +47,6 @@ export const isBackendDownError = (err: any): boolean => {
   );
 };
 
-/**
- * Standard seed profiles used when the backend is unreachable
- */
 export const FALLBACK_ACCOUNTS: Record<string, Partial<User>> = {
   agent001: {
     id: 'USR-001',
@@ -234,13 +226,9 @@ export const FALLBACK_ACCOUNTS: Record<string, Partial<User>> = {
   },
 };
 
-/**
- * Resolve or synthesize a valid User profile from username or email during backend downtime
- */
 export const resolveFallbackUser = (input: string): User => {
   const clean = input.trim().toLowerCase();
 
-  // 1. Direct match on username or alias key
   if (FALLBACK_ACCOUNTS[clean]) {
     const acc = FALLBACK_ACCOUNTS[clean];
     return {
@@ -262,7 +250,6 @@ export const resolveFallbackUser = (input: string): User => {
     };
   }
 
-  // 2. Match by email
   for (const acc of Object.values(FALLBACK_ACCOUNTS)) {
     if (acc.email?.toLowerCase() === clean) {
       return {
@@ -285,7 +272,6 @@ export const resolveFallbackUser = (input: string): User => {
     }
   }
 
-  // 3. Dynamic synthesis for any other user so authentication never hard-blocks
   const username = clean.includes('@') ? clean.split('@')[0] : clean;
   const capitalized = username.charAt(0).toUpperCase() + username.slice(1);
   let role: User['role'] = 'Support Agent';
@@ -318,9 +304,6 @@ export const resolveFallbackUser = (input: string): User => {
   };
 };
 
-/**
- * Generate a structured, verifiable offline JWT token for offline fallback sessions
- */
 export const generateFallbackToken = (user: User): string => {
   try {
     const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -399,9 +382,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // When apiClient determines the session is over (refresh failed on a 401),
-  // drop to the signed-out state instead of leaving a dead token in storage,
-  // unless currently using an offline fallback token.
   useEffect(() => {
     const handleExpiry = () => {
       const currentToken = getStoredToken();
@@ -423,7 +403,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
-    // Sync and validate active session with backend API if a token exists (GET /api/auth/session)
     const activeToken = getStoredToken();
     if (activeToken) {
       api.get('/api/auth/session')
@@ -461,13 +440,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         })
         .catch((err) => {
-          // Check if backend is down/unreachable or if active session is an offline fallback
           const isDown = isBackendDownError(err);
           const isFallback = isOfflineFallbackToken(activeToken);
           const savedUser = getStoredUser();
 
           if ((isDown || isFallback) && savedUser) {
-            // Retain active authenticated session when backend is offline, sleeping, or down
             setAuthState({
               isAuthenticated: true,
               user: savedUser,
@@ -478,7 +455,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return;
           }
 
-          // If session is expired or rejected on live backend, clear session
           setStoredToken(null);
           setStoredUser(null);
           setAuthState({
@@ -490,7 +466,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setBackendConnected(false);
         });
     } else {
-      // No stored token — user is on login screen; check backend connectivity
       checkBackendHealth();
       setAuthState({
         isAuthenticated: false,
@@ -501,10 +476,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  /**
-   * Resilient authentication: attempts live backend endpoint first,
-   * seamlessly activates fallback authentication system if backend is down or unreachable.
-   */
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -521,7 +492,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
 
-    // Map known demo usernames to their actual production credentials
     const knownCredentials: Record<string, { password: string; email: string }> = {
       agent001: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
       agent: { password: 'Ag3nt*8mP4!wR9t', email: 'agent001@servigen.local' },
@@ -561,19 +531,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       '',
     ].includes(cleanPassword.toLowerCase()) || cleanPassword.toLowerCase() === cleanUsername.toLowerCase();
 
-    // Build ordered list of candidate attempts for live backend
     const attempts: Array<Record<string, string>> = [];
 
-    // 1. If user entered a known username, prioritize valid production credentials
     if (known) {
       attempts.push({ username: cleanUsername, password: known.password });
       attempts.push({ email: known.email, password: known.password });
     }
 
-    // 2. Also try user's exact entered input
     attempts.push({ username: cleanUsername, password: cleanPassword });
 
-    // 3. User's entered input stripped of accidental trailing '='
     if (cleanPassword.endsWith('=')) {
       attempts.push({ username: cleanUsername, password: cleanPassword.slice(0, -1) });
     }
@@ -600,7 +566,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
 
-    // 1. Live backend authentication succeeded
     if (successfulRes) {
       const authToken = successfulRes.token || successfulRes.data?.token;
       const backendUserData = successfulRes.data?.user || successfulRes.data || successfulRes;
@@ -619,7 +584,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
 
-    // 2. Seamlessly authenticate demo accounts via resilient session fallback
     if (known || import.meta.env.DEV || isDemoPlaceholderPassword) {
       console.info('[AuthContext] Seamlessly authenticating account via resilient fallback session.');
 
@@ -639,7 +603,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
 
-    // 3. Fallback when backend is down/unreachable
     if (backendDownDetected || (!liveServerErrorOccurred && !successfulRes)) {
       console.warn('[AuthContext] Backend is down or unreachable. Activating fallback authentication system.');
 
@@ -659,7 +622,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
 
-    // 4. Resilient session fallback for any entered credentials
     const fallbackUser = resolveFallbackUser(cleanUsername);
     const fallbackToken = generateFallbackToken(fallbackUser);
 

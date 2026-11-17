@@ -39,7 +39,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
@@ -66,7 +65,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
 
       const items: FeedItem[] = [];
 
-      // 1. Live Major Incident Updates
       if (miRes.status === 'fulfilled' && Array.isArray(miRes.value?.data)) {
         miRes.value.data.forEach((mi: any) => {
           (mi.updates || []).forEach((u: any, idx: number) => {
@@ -86,7 +84,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
             });
           });
 
-          // Incident declared event
           const commander = mi.commander || 'Admin';
           const cmdInitials = commander.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'IA';
           items.push({
@@ -103,7 +100,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
         });
       }
 
-      // 2. Live Tickets Logged
       if (tickRes.status === 'fulfilled' && Array.isArray(tickRes.value?.data)) {
         tickRes.value.data.slice(0, 6).forEach((t: any) => {
           const author = t.assignee || t.agent || 'Support Lead';
@@ -155,7 +151,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
 
   return (
     <div className="feed-floating-popover">
-      {/* Header */}
       <div className="feed-popover-header">
         <h3 className="feed-popover-title">Feed</h3>
         <button
@@ -168,9 +163,7 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
         </button>
       </div>
 
-      {/* Subheader Filter & Popout */}
       <div className="feed-subheader-row">
-        {/* Interactive Filter Dropdown */}
         <div className="feed-filter-dropdown-container" ref={filterDropdownRef}>
           <button
             type="button"
@@ -218,7 +211,6 @@ export const FeedPopover: React.FC<FeedPopoverProps> = ({ onClose, onOpenTicket 
         </button>
       </div>
 
-      {/* Feed Cards Stack (Live Backend Stream) */}
       <div className="feed-cards-stack">
         {isLoading ? (
           <div className="p-8 flex flex-col items-center justify-center text-gray-400">

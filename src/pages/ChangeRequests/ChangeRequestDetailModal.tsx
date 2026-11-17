@@ -44,7 +44,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
   const [voteChoice, setVoteChoice] = useState<'Approved' | 'Rejected'>('Approved');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  // 1. Interactive 4-Question Risk Assessment State
   const [riskAnswers, setRiskAnswers] = useState<RiskQuestionnaire>(() => {
     return changeRequest?.cabReview?.riskQuestionnaire || {
       causesDowntime: changeRequest?.risk === 'Critical' || changeRequest?.risk === 'High',
@@ -70,7 +69,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
     return 'Low';
   }, [calculatedRiskScore]);
 
-  // 2. CAB Voting Audit Trail State
   const [votes, setVotes] = useState<CabVote[]>(() => {
     if (changeRequest?.cabReview?.votes && changeRequest.cabReview.votes.length > 0) {
       return changeRequest.cabReview.votes;
@@ -218,7 +216,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
           </div>
         )}
 
-        {/* Prominent Change Freeze Window Alert Banner */}
         {changeRequest.freezeWindowConflict && (
           <div className="mx-6 mt-4 p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-900 flex items-start gap-3 shadow-2xs">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -522,7 +519,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
           {activeTab === 'risk' && (
             <div className="space-y-4">
-              {/* Dynamic Score Header Card */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -559,9 +555,7 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 </div>
               </div>
 
-              {/* 4 Questions Checklist Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Q1: User Downtime */}
                 <div className={`p-4 rounded-2xl border transition-all ${
                   riskAnswers.causesDowntime ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-200'
                 }`}>
@@ -598,7 +592,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   </div>
                 </div>
 
-                {/* Q2: Staging Testing */}
                 <div className={`p-4 rounded-2xl border transition-all ${
                   !riskAnswers.testedInStaging ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-200'
                 }`}>
@@ -635,7 +628,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   </div>
                 </div>
 
-                {/* Q3: Automated Rollback */}
                 <div className={`p-4 rounded-2xl border transition-all ${
                   !riskAnswers.hasRollbackScript ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-slate-200'
                 }`}>
@@ -672,7 +664,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   </div>
                 </div>
 
-                {/* Q4: Maintenance Window */}
                 <div className={`p-4 rounded-2xl border transition-all ${
                   !riskAnswers.inMaintenanceWindow ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-slate-200'
                 }`}>
@@ -710,7 +701,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 </div>
               </div>
 
-              {/* Dynamic Risk Guidance Policy */}
               <div className={`p-4 rounded-2xl border flex items-center justify-between text-xs ${
                 calculatedRiskLevel === 'Critical'
                   ? 'bg-rose-50 border-rose-300 text-rose-900'
@@ -741,7 +731,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
           {activeTab === 'cab' && (
             <div className="space-y-4">
-              {/* Board Review Summary Header */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
@@ -771,7 +760,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                   </div>
                 </div>
 
-                {/* Quorum Metric Row */}
                 <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
                   <div className="flex items-center gap-3">
                     <span className="font-semibold">Quorum Votes:</span>
@@ -786,7 +774,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 </div>
               </div>
 
-              {/* Authorizer Voting Action Box */}
               <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
                 <h4 className="font-bold text-xs text-slate-800 uppercase mb-2 flex items-center justify-between">
                   <span>Cast Your CAB Vote</span>
@@ -795,7 +782,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
 
                 {isApproverOrAdmin ? (
                   <div className="space-y-3">
-                    {/* Vote Selector Buttons */}
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -824,7 +810,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                       </button>
                     </div>
 
-                    {/* Review Note Input */}
                     <div>
                       <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
                         Vote Rationale & Conditions:
@@ -838,7 +823,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                       />
                     </div>
 
-                    {/* Submit Button */}
                     <button
                       type="button"
                       onClick={handleSubmitVote}
@@ -860,7 +844,6 @@ export const ChangeRequestDetailModal: React.FC<ChangeRequestDetailModalProps> =
                 )}
               </div>
 
-              {/* CAB Voting Record (Audit Trail Stream) */}
               <div className="p-4 bg-white border border-slate-200 rounded-2xl">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wide">

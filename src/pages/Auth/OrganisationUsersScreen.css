@@ -1,6 +1,3 @@
-/* Organisations - Users List
-   Light Theme Styling matching the rest of the application
-*/
 
 .org-users-page {
   min-height: 100vh;
@@ -13,7 +10,6 @@
   overflow-y: auto;
 }
 
-/* Header */
 .org-users-header-row {
   display: flex;
   align-items: flex-start;
@@ -37,7 +33,6 @@
   margin: 0;
 }
 
-/* Header Top Right Badges & Action Buttons */
 .org-users-header-right {
   display: flex;
   flex-direction: column;
@@ -140,7 +135,6 @@
   box-shadow: 0 2px 6px rgba(235, 106, 71, 0.35);
 }
 
-/* Region Filter Tabs */
 .org-region-tabs-row {
   display: flex;
   align-items: center;
@@ -174,7 +168,6 @@
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
 }
 
-/* Search and Filters Bar */
 .org-filters-bar {
   display: flex;
   align-items: center;
@@ -235,7 +228,6 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-/* Table Container & Table */
 .org-table-wrapper {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -275,7 +267,6 @@
   background: var(--bg-canvas);
 }
 
-/* User cell (Avatar + Name + Handle) */
 .org-user-identity {
   display: flex;
   align-items: center;
@@ -322,7 +313,6 @@
   border: 1px solid #e2e8f0;
 }
 
-/* Status pills */
 .org-status-pill {
   display: inline-block;
   padding: 3px 10px;
@@ -369,7 +359,6 @@
   border: 1px solid #fde68a;
 }
 
-/* Add User Modal */
 .org-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -474,9 +463,6 @@
   background: var(--bg-canvas);
 }
 
-/* ========================================================
-   Organisations Directory - Sidebar & Main Layout
-   ======================================================== */
 
 @media (max-width: 900px) {
   .org-page-layout {
@@ -508,7 +494,6 @@
   color: #0f172a;
 }
 
-/* Left Sidebar */
 .org-side {
   width: 250px;
   height: calc(100vh - 86px);
@@ -715,7 +700,6 @@
   background: #b55d44;
 }
 
-/* Right Main Area */
 .org-main {
   flex: 1;
   height: calc(100vh - 86px);

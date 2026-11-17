@@ -1,14 +1,3 @@
-/**
- * ServiGen Centralized API Client
- * Standardized HTTP communication layer adhering to ServiGen API Specification (V1.0)
- * 
- * Features:
- * - Base URL configuration via import.meta.env.VITE_API_BASE_URL
- * - Automatic JWT Bearer token attachment
- * - Standardized error formatting (400, 401, 403, 404, 429, 500)
- * - Safe response envelope unwrapping ({ success: true, data: T })
- * - Full backward compatibility for both `apiClient` and `api` interfaces
- */
 
 import { handleOfflineRequest } from './fallback/mockApiHandler';
 
@@ -43,12 +32,6 @@ export class ApiError extends Error {
 const USER_KEY = 'servigen_auth_user';
 const TOKEN_KEY = 'servigen_auth_token';
 
-/**
- * Legacy token keys. The app previously wrote the same JWT under four names
- * across both localStorage and sessionStorage; any one of them going stale
- * produced auth behaviour that was very hard to trace. One key is canonical
- * now, and these are read once then cleared.
- */
 const LEGACY_TOKEN_KEYS = ['token', 'jwt_token', 'access_token'] as const;
 
 function readStore(store: Storage, key: string): string | null {
@@ -59,9 +42,6 @@ function readStore(store: Storage, key: string): string | null {
   }
 }
 
-/**
- * Retrieve the active JWT, migrating any legacy key to the canonical one.
- */
 export function getAuthToken(): string | null {
   const current = readStore(localStorage, TOKEN_KEY) || readStore(sessionStorage, TOKEN_KEY);
   if (current) return current;
@@ -78,9 +58,6 @@ export function getAuthToken(): string | null {
 
 export const getStoredToken = getAuthToken;
 
-/**
- * Store a JWT token for authenticated requests
- */
 export function setAuthToken(token: string | null, persist = true): void {
   if (!token) {
     clearAuthToken();
@@ -89,46 +66,35 @@ export function setAuthToken(token: string | null, persist = true): void {
   try {
     (persist ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
   } catch {
-    // Quota exceeded or restricted environment
   }
-  // A new token supersedes anything left under the legacy names.
   for (const key of LEGACY_TOKEN_KEYS) {
     try {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     } catch {
-      // ignore
     }
   }
 }
 
 export const setStoredToken = (token: string | null) => setAuthToken(token, true);
 
-/**
- * Check if the active JWT is a resilient offline fallback token
- */
 export function isOfflineFallbackToken(token: string | null): boolean {
   if (!token) return false;
   return token.includes('offline_fallback') || token.includes('isOfflineFallback');
 }
 
-/**
- * Clear stored authentication tokens
- */
 export function clearAuthToken(): void {
   for (const key of [TOKEN_KEY, ...LEGACY_TOKEN_KEYS]) {
     try {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     } catch {
-      // ignore
     }
   }
 }
 
 export const getStoredUser = (): any | null => {
   try {
-    // End User sessions are stored in sessionStorage only (tab-scoped, not persisted across restarts)
     const session = sessionStorage.getItem(USER_KEY);
     if (session) {
       const parsed = JSON.parse(session);
@@ -145,10 +111,8 @@ export const setStoredUser = (user: any | null): void => {
   try {
     if (user) {
       if (user.role === 'End User') {
-        // End User sessions are tab-scoped only — never persist to localStorage
-        // so the sign-in page always opens fresh on the next visit.
         sessionStorage.setItem(USER_KEY, JSON.stringify(user));
-        localStorage.removeItem(USER_KEY); // clear any stale End User entry
+        localStorage.removeItem(USER_KEY);
       } else {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         sessionStorage.removeItem(USER_KEY);
@@ -162,10 +126,6 @@ export const setStoredUser = (user: any | null): void => {
   }
 };
 
-/**
- * Resolve the backend base URL.
- * Defaults to empty string (same host / Vite proxy) or VITE_API_BASE_URL.
- */
 export function getApiBaseUrl(): string {
   const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
   const envUrl = env?.VITE_API_BASE_URL;
@@ -176,17 +136,12 @@ export function getApiBaseUrl(): string {
     }
     return clean;
   }
-  // In production builds (e.g. Vercel), default to the live Render backend
   if (env?.PROD) {
     return 'https://servigen-backend.onrender.com';
   }
-  // In local development, empty string leverages Vite's dev proxy to Render
   return '';
 }
 
-/**
- * Format status-specific error messages per ServiGen API specification.
- */
 function resolveErrorMessage(status: number, backendMessage?: string): string {
   if (backendMessage && typeof backendMessage === 'string' && backendMessage.trim()) {
     return backendMessage;
@@ -222,21 +177,6 @@ export interface RequestOptions extends RequestInit {
 
 let refreshPromise: Promise<string | null> | null = null;
 
-/**
- * Attempt to renew the current session.
- *
- * This used to log in with hardcoded demo credentials
- * (agent001@servigen.local, falling back to admin@servigen.local) whenever no
- * token was present or a request returned 401. Three consequences:
- *   - the login screen was decorative: the client authenticated regardless of
- *     who, if anyone, had signed in;
- *   - a token expiry silently replaced the signed-in user with agent001, or
- *     escalated them to admin;
- *   - both passwords shipped in the public production bundle.
- *
- * It now only renews an existing session. With no valid token the request
- * fails with 401 and the app routes to the login screen, which is correct.
- */
 export async function refreshSession(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
 
@@ -277,20 +217,13 @@ export async function refreshSession(): Promise<string | null> {
   return refreshPromise;
 }
 
-/**
- * Notify the app that the session is over so it can route to /auth.
- */
 function announceSessionExpiry(): void {
   try {
     window.dispatchEvent(new CustomEvent('servigen-session-expired'));
   } catch {
-    // Non-browser environment
   }
 }
 
-/**
- * Checks if an endpoint is public (accessible without Bearer token)
- */
 export function isPublicEndpoint(endpoint: string): boolean {
   const clean = endpoint.toLowerCase();
   return (
@@ -303,10 +236,9 @@ export function isPublicEndpoint(endpoint: string): boolean {
 }
 
 export const refreshAuthToken = refreshSession;
-/** @deprecated Retained for callers of the old name; no longer logs in with demo credentials. */
 export const obtainDevAuthToken = refreshSession;
 
-const GET_CACHE_TTL_MS = 3000; // 3 seconds for rapid navigation and duplicate mounts
+const GET_CACHE_TTL_MS = 3000;
 interface CacheRecord {
   data: any;
   timestamp: number;
@@ -314,18 +246,10 @@ interface CacheRecord {
 const apiGetCache = new Map<string, CacheRecord>();
 const apiInFlightGetRequests = new Map<string, Promise<any>>();
 
-/**
- * Clear cached GET responses. Called automatically on any mutation (POST/PUT/PATCH/DELETE)
- * or manually when fresh data is required.
- */
 export function clearApiCache(): void {
   apiGetCache.clear();
 }
 
-/**
- * Core HTTP fetch wrapper with authorization header, request payload handling,
- * standard error parsing, and transparent JWT auto-acquisition.
- */
 async function executeRequest<T = any>(
   endpoint: string,
   options: RequestOptions & { _isRetry?: boolean } = {}
@@ -351,17 +275,12 @@ async function executeRequest<T = any>(
 
   const headers = new Headers(customHeaders || {});
 
-  // Attach Content-Type for mutations if not already set
   if (fetchOptions.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  // Attach the signed-in user's JWT. Never acquire a session on their behalf.
   const token = getAuthToken();
 
-  // Early guard: If endpoint requires authentication and no token is present,
-  // do not dispatch the HTTP request. This prevents 401 storms and protects against
-  // tripping the backend rate limiter (429 Too Many Requests).
   if (!token && !isPublicEndpoint(normalizedEndpoint)) {
     throw new ApiError('Authentication required. Missing Bearer token.', 401);
   }
@@ -377,7 +296,6 @@ async function executeRequest<T = any>(
       headers,
     });
   } catch (err: unknown) {
-    // If backend is unreachable (Render asleep or network down), seamlessly fall back
     const mockRes = handleOfflineRequest(
       normalizedEndpoint,
       fetchOptions.method || 'GET',
@@ -405,8 +323,6 @@ async function executeRequest<T = any>(
     throw new ApiError(errorMsg, 0);
   }
 
-  // If backend returned a 5xx server error (e.g. database unreachable), unmounted route (404),
-  // origin constraint rejection (403), or rejected a mock session token (401), fall back to mock demo fixtures
   const isMockToken = Boolean(token?.startsWith('mock_')) || isOfflineFallbackToken(token);
   const isAuthFailureWithMock = (response.status === 401 || response.status === 403) && isMockToken;
   const isServerError = response.status >= 500;
@@ -437,7 +353,6 @@ async function executeRequest<T = any>(
     }
   }
 
-  // If rate limited by backend, immediately throw rate limit error without retrying
   if (response.status === 429) {
     throw new ApiError(
       'Rate Limit Exceeded (429): Maximum 100 requests per 15 minutes reached. Please wait.',
@@ -445,7 +360,6 @@ async function executeRequest<T = any>(
     );
   }
 
-  // If unauthorized and haven't retried yet, transparently refresh token and retry
   if (response.status === 401 && !_isRetry && !isPublicEndpoint(normalizedEndpoint) && !endpoint.includes('/auth/refresh')) {
     const freshToken = await refreshSession();
     if (freshToken) {
@@ -460,7 +374,6 @@ async function executeRequest<T = any>(
         headers: retryHeaders,
       });
     }
-    // Refresh failed: only expire the entire app session if the auth verification endpoint itself rejected the token
     if (normalizedEndpoint.includes('/auth/session') && !isOfflineFallbackToken(token)) {
       clearAuthToken();
       announceSessionExpiry();
@@ -483,8 +396,6 @@ async function executeRequest<T = any>(
     }
   }
 
-  // The API tags any payload it had to build from demo fixtures. Surface it so
-  // the UI can label the data instead of presenting fixtures as live records.
   const dataSource =
     response.headers.get('X-Data-Source') ||
     (responseData && typeof responseData === 'object' ? (responseData as any)?.meta?.source : null);
@@ -499,7 +410,6 @@ async function executeRequest<T = any>(
         })
       );
     } catch {
-      // Non-browser environment
     }
   }
 
@@ -515,9 +425,6 @@ async function executeRequest<T = any>(
   return responseData as T;
 }
 
-/**
- * Public apiRequest entrypoint with transparent in-flight deduplication and short TTL cache.
- */
 export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestOptions & { _isRetry?: boolean } = {}
@@ -547,13 +454,11 @@ export async function apiRequest<T = any>(
   const token = getAuthToken();
   const cacheKey = `${token || 'anon'}::${fullUrl}`;
 
-  // Check short TTL cache
   const cached = apiGetCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < GET_CACHE_TTL_MS) {
     return cached.data as T;
   }
 
-  // Check in-flight request to deduplicate
   const inFlight = apiInFlightGetRequests.get(cacheKey);
   if (inFlight) {
     return inFlight as Promise<T>;
@@ -574,13 +479,7 @@ export async function apiRequest<T = any>(
   return promise;
 }
 
-/**
- * Report a swallowed service-layer failure.
- *
- * Service methods intentionally degrade to empty results so a single broken
- * endpoint cannot blank the whole app, but the cause must still be visible:
- * silent catches are what made "backend integrated, no data" undiagnosable.
- */
+
 export function logServiceError(context: string, error: unknown): void {
   const detail =
     error instanceof ApiError
@@ -594,7 +493,6 @@ export function logServiceError(context: string, error: unknown): void {
       new CustomEvent('servigen-api-error', { detail: { context, message: detail } })
     );
   } catch {
-    // Non-browser environment
   }
 }
 

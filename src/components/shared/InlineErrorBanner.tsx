@@ -6,12 +6,7 @@ interface InlineErrorBannerProps {
   className?: string;
 }
 
-/**
- * Inline failure notice for a screen whose data could not be loaded.
- *
- * Screens used to swallow fetch errors and keep their previous rows, which made
- * "the request failed" indistinguishable from "there is nothing here".
- */
+
 export const InlineErrorBanner: React.FC<InlineErrorBannerProps> = ({
   message,
   onRetry,

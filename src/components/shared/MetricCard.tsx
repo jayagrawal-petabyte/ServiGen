@@ -91,7 +91,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     );
   }
 
-  // Default: Vertical Layout
   return (
     <div
       role={isClickable ? 'button' : undefined}

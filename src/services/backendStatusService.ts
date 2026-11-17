@@ -1,12 +1,3 @@
-/**
- * Backend status / diagnostics.
- *
- * The API used to answer every request with hardcoded mock data whenever its
- * database call failed, so "deployed and working" and "database unreachable"
- * looked identical in the UI. GET /api/health/db now reports the truth; this
- * service exposes it to the app so the state is visible instead of guessed.
- */
-
 import { getApiBaseUrl } from './apiClient';
 
 export interface BackendDatasource {
@@ -20,7 +11,6 @@ export interface BackendDatasource {
 }
 
 export interface BackendDbStatus {
-  /** The diagnostics endpoint is not deployed on this backend. */
   unsupported?: boolean;
   reachable: boolean;
   connected: boolean;
@@ -36,15 +26,9 @@ export interface BackendDbStatus {
   checkedAt: string;
 }
 
-/**
- * Human-readable explanation of why screens are empty or stale.
- */
 export function describeBackendProblem(status: BackendDbStatus | null): string | null {
   if (!status) return null;
 
-  // GET /api/health/db is optional. When the deployed backend does not expose
-  // it, say nothing rather than reporting a database problem we cannot see —
-  // the demo-data badge still appears via the `servigen-demo-data` event.
   if (status.unsupported) return null;
 
   if (!status.reachable) {
@@ -78,9 +62,6 @@ export function describeBackendProblem(status: BackendDbStatus | null): string |
   return null;
 }
 
-/**
- * Fetches live database status. Never throws.
- */
 export async function fetchBackendDbStatus(): Promise<BackendDbStatus> {
   const checkedAt = new Date().toISOString();
   try {
@@ -89,7 +70,6 @@ export async function fetchBackendDbStatus(): Promise<BackendDbStatus> {
       headers: { Accept: 'application/json' },
     });
 
-    // 404/405 => this backend has no diagnostics endpoint. Not a fault.
     if (res.status === 404 || res.status === 405) {
       return { unsupported: true, reachable: true, connected: true, checkedAt };
     }
@@ -99,7 +79,6 @@ export async function fetchBackendDbStatus(): Promise<BackendDbStatus> {
       return { reachable: res.ok, connected: false, checkedAt };
     }
 
-    // Some error envelopes have no diagnostics fields at all.
     if (!('connected' in body)) {
       return { unsupported: true, reachable: true, connected: true, checkedAt };
     }

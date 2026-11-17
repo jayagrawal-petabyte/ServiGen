@@ -60,11 +60,9 @@ export const ContractsPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  // Sidebar navigation state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedViewId, setSelectedViewId] = useState<string>('all-contracts');
 
-  // New Contract Form State
   const [newTitle, setNewTitle] = useState('');
   const [newVendorName, setNewVendorName] = useState('');
   const [newVendorEmail, setNewVendorEmail] = useState('');
@@ -90,7 +88,6 @@ export const ContractsPage: React.FC = () => {
       const data = await contractsService.getContracts();
       setContracts(data);
     } catch {
-      // offline / mock fallback handles it
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +125,6 @@ export const ContractsPage: React.FC = () => {
           (c.daysUntilExpiry !== null && c.daysUntilExpiry !== undefined && c.daysUntilExpiry <= 0)
       ).length,
       draft: contracts.filter((c) => c.status === 'Draft').length,
-      // Types
       license: contracts.filter((c) => c.contractType === 'License').length,
       sla: contracts.filter((c) => c.contractType === 'SLA').length,
       maintenance: contracts.filter((c) => c.contractType === 'Maintenance').length,
@@ -139,7 +135,6 @@ export const ContractsPage: React.FC = () => {
     };
   }, [contracts]);
 
-  // Sidebar navigation structure
   const rawSidebarGroups: ModuleSidebarGroup[] = useMemo(
     () => [
       {
@@ -350,7 +345,6 @@ export const ContractsPage: React.FC = () => {
       setContracts((prev) => [created, ...prev]);
       setIsCreateModalOpen(false);
       showToast(`Contract ${created.id} created successfully!`);
-      // Reset form
       setNewTitle('');
       setNewVendorName('');
       setNewVendorEmail('');
@@ -462,7 +456,6 @@ export const ContractsPage: React.FC = () => {
 
   return (
     <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-[#FFF9F5] overflow-hidden font-sans select-none">
-      {/* Toast */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
           <span>✓</span>
@@ -470,7 +463,6 @@ export const ContractsPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -480,9 +472,7 @@ export const ContractsPage: React.FC = () => {
         <GlobalNavbarActions />
       </header>
 
-      {/* ── Two-Column Layout (ModuleSidebar + Main Panel) ── */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
-        {/* Left Module Sidebar */}
         <ModuleSidebar
           title="Contracts & SLAs"
           icon={<FileText className="w-3.5 h-3.5" />}
@@ -509,9 +499,7 @@ export const ContractsPage: React.FC = () => {
           }
         />
 
-        {/* Right Main Table/Grid Panel */}
         <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
-          {/* Main Top Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -523,7 +511,6 @@ export const ContractsPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
-              {/* View Switcher: Grid / Table */}
               <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200">
                 <button
                   type="button"
@@ -561,9 +548,7 @@ export const ContractsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            {/* Expiry Warning Banner (if any expiring in <=60 days) */}
             {expiringSoonContracts.length > 0 && selectedViewId !== 'status-expiring-soon' && (
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 flex items-start gap-3 shadow-2xs">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -624,7 +609,6 @@ export const ContractsPage: React.FC = () => {
                 </button>
               </div>
             ) : viewMode === 'table' ? (
-              /* Enterprise High-Density Table View */
               <div className="overflow-x-auto rounded-xl border border-slate-200">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -724,7 +708,6 @@ export const ContractsPage: React.FC = () => {
                 </table>
               </div>
             ) : (
-              /* Grid View Cards */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredContracts.map((c) => {
                   const isExpired =
@@ -782,7 +765,6 @@ export const ContractsPage: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Footer Stats */}
                       <div className="pt-3 border-t border-slate-100 space-y-2 text-[11px]">
                         <div className="flex items-center justify-between text-slate-600">
                           <span className="text-slate-400">Annual Value:</span>
@@ -829,7 +811,6 @@ export const ContractsPage: React.FC = () => {
         </main>
       </div>
 
-      {/* Contract Detail Modal */}
       {selectedContract && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div
@@ -941,7 +922,6 @@ export const ContractsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Linked Configuration Items Section */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <span className="text-slate-400 text-[10px] uppercase font-bold block">
                   Linked Configuration Items ({contractLinkedCis.length})
@@ -1020,7 +1000,6 @@ export const ContractsPage: React.FC = () => {
         </div>
       )}
 
-      {/* New Contract Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div

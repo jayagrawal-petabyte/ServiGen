@@ -22,7 +22,6 @@ export default function ArticleDraftSidebar({
 }: ArticleDraftSidebarProps) {
   return (
     <aside className="article-drafts-subnav">
-      {/* Search Input Box */}
       <div className="subnav-search-box">
         <input
           type="text"
@@ -46,7 +45,6 @@ export default function ArticleDraftSidebar({
         </svg>
       </div>
 
-      {/* All Article Drafts */}
       <button
         type="button"
         className={`subnav-all-drafts-btn ${activeView === 'all' ? 'active' : ''}`}
@@ -70,11 +68,9 @@ export default function ArticleDraftSidebar({
         <span>All Article Drafts</span>
       </button>
 
-      {/* Select a View */}
       <div className="subnav-section-title">Select a View</div>
 
       <div className="subnav-menu-list">
-        {/* 1. My Lists */}
         <button
           type="button"
           className={`subnav-menu-item ${activeView === 'my-lists' ? 'active' : ''}`}
@@ -100,7 +96,6 @@ export default function ArticleDraftSidebar({
           <span>My Lists</span>
         </button>
 
-        {/* 2. Article Drafts by Agent */}
         <button
           type="button"
           className={`subnav-menu-item ${activeView === 'by-agent' ? 'active' : ''}`}
@@ -122,7 +117,6 @@ export default function ArticleDraftSidebar({
           <span>Article Drafts by Agent</span>
         </button>
 
-        {/* 3. Article Drafts by Team */}
         <button
           type="button"
           className={`subnav-menu-item ${activeView === 'by-team' ? 'active' : ''}`}
@@ -146,7 +140,6 @@ export default function ArticleDraftSidebar({
           <span>Article Drafts by Team</span>
         </button>
 
-        {/* 4. Article Drafts by Status */}
         <button
           type="button"
           className={`subnav-menu-item ${activeView === 'by-status' ? 'active' : ''}`}

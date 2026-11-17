@@ -1,8 +1,4 @@
-/* ==========================================================================
-   Article Drafts Module Styling - UI/UX Exact Replication
-   ========================================================================== */
 
-/* Overall Page Layout Wrapper */
 .article-drafts-page-wrapper {
   display: flex;
   flex-direction: column;
@@ -13,7 +9,6 @@
   background-color: #faf8f5;
 }
 
-/* --- Top Application Navbar --- */
 .article-drafts-top-navbar {
   height: 52px;
   background-color: #ffffff;
@@ -34,7 +29,6 @@
   gap: 12px;
 }
 
-/* Main Layout Container (Sidebar + Content) */
 .article-drafts-main-layout {
   flex: 1;
   min-height: 0;
@@ -47,7 +41,6 @@
   box-sizing: border-box;
 }
 
-/* --- Sub-Navigation Panel (Brand Theme Standard) --- */
 .article-drafts-subnav {
   width: 250px;
   height: calc(100vh - 90px);
@@ -180,7 +173,6 @@
   flex-shrink: 0;
 }
 
-/* --- Main Content Area --- */
 .article-drafts-main {
   flex: 1;
   height: 100%;
@@ -192,7 +184,6 @@
   box-sizing: border-box;
 }
 
-/* Page Title */
 .drafts-title {
   font-size: 18px;
   font-weight: 700;
@@ -201,7 +192,6 @@
   margin: 0 0 16px 0;
 }
 
-/* Table Toolbar / Sub-bar */
 .drafts-table-toolbar {
   display: flex;
   align-items: center;
@@ -290,7 +280,6 @@
   font-size: 12px;
 }
 
-/* --- Table Wrapper & Table --- */
 .article-drafts-table-container {
   width: 100%;
 }
@@ -365,7 +354,6 @@
   accent-color: #e07a5f;
 }
 
-/* ID Cell */
 .id-cell {
   font-weight: 600;
   color: #0070f3;
@@ -378,7 +366,6 @@
   color: #0051b3;
 }
 
-/* SLA Pill Badges */
 .sla-cell {
   white-space: nowrap;
 }
@@ -428,7 +415,6 @@
   background-color: #e11d48;
 }
 
-/* Summary Cell */
 .summary-cell {
   max-width: 320px;
 }
@@ -456,14 +442,12 @@
   text-overflow: ellipsis;
 }
 
-/* Category Cell */
 .category-cell {
   color: #4b5563;
   font-size: 13px;
   white-space: nowrap;
 }
 
-/* Priority Cell */
 .priority-cell {
   display: inline-flex;
   align-items: center;
@@ -480,7 +464,6 @@
   display: inline-block;
 }
 
-/* Status Pills */
 .status-pill {
   display: inline-block;
   padding: 3px 12px;
@@ -511,7 +494,6 @@
   color: #16a34a;
 }
 
-/* Type & Date */
 .type-cell {
   color: #64748b;
   font-size: 12px;
@@ -524,9 +506,6 @@
   white-space: nowrap;
 }
 
-/* ==========================================================================
-   Modal Overlay & Content Dialog Styling
-   ========================================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -630,7 +609,6 @@
 }
 
 
-/* Skeletons */
 .draft-skeleton {
   background: linear-gradient(90deg, #f3ede6 25%, #e9e1d8 50%, #f3ede6 75%);
   background-size: 200% 100%;
@@ -647,9 +625,6 @@
   }
 }
 
-/* ==========================================================================
-   Article Drafts Cards (Live View) Styling
-   ========================================================================== */
 .live-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

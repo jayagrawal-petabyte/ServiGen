@@ -45,9 +45,6 @@ export interface CustomListSummary {
   scope?: string;
 }
 
-/**
- * Adapter: Convert Backend Ticket representation to UI Ticket representation
- */
 export function adaptBackendTicket(b: BackendOnHoldTicket): Ticket {
   const priorityColorMap: Record<string, 'red' | 'orange' | 'yellow' | 'green'> = {
     Critical: 'red',
@@ -102,9 +99,6 @@ export function adaptBackendTicket(b: BackendOnHoldTicket): Ticket {
   };
 }
 
-/**
- * Cache helpers for local resilience
- */
 function getCachedList(key: string): Ticket[] | null {
   try {
     const raw = localStorage.getItem(key);
@@ -113,7 +107,6 @@ function getCachedList(key: string): Ticket[] | null {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {
-    // ignore
   }
   return null;
 }
@@ -122,7 +115,6 @@ function setCachedList(key: string, tickets: Ticket[]): void {
   try {
     localStorage.setItem(key, JSON.stringify(tickets));
   } catch {
-    // ignore
   }
 }
 
@@ -134,9 +126,6 @@ export function setCachedOnHoldTickets(tickets: Ticket[]): void {
   setCachedList(STORAGE_KEY_ONHOLD, tickets);
 }
 
-/**
- * Fetch all On-Hold tickets from backend GET /api/my-work/on-hold
- */
 function extractCount(res: any): number {
   if (!res) return 0;
   if (typeof res.pagination?.total === 'number') return res.pagination.total;
@@ -148,9 +137,6 @@ function extractCount(res: any): number {
   return 0;
 }
 
-/**
- * Fetch all On-Hold tickets from backend GET /api/my-work/on-hold
- */
 export async function fetchOnHoldTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/on-hold');
@@ -176,9 +162,6 @@ export async function fetchOnHoldTickets(fallbackTickets: Ticket[] = []): Promis
   }
 }
 
-/**
- * Fetch all Active tickets from backend GET /api/my-work/active
- */
 export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/active');
@@ -204,9 +187,6 @@ export async function fetchActiveTickets(fallbackTickets: Ticket[] = []): Promis
   }
 }
 
-/**
- * Fetch all Closed/Actioned tickets from backend GET /api/my-work/actioned
- */
 export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promise<Ticket[]> {
   try {
     const response = await apiClient.get<any>('/api/my-work/actioned');
@@ -232,9 +212,6 @@ export async function fetchClosedTickets(fallbackTickets: Ticket[] = []): Promis
   }
 }
 
-/**
- * Fetch queue counts from backend GET /api/dashboard/summary and /api/my-work queues
- */
 export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
   try {
     const [summaryRes, activeRes, onHoldRes, actionedRes] = await Promise.all([
@@ -253,7 +230,6 @@ export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
     const summaryOnHold = typeof summaryCounts?.onHold === 'number' ? summaryCounts.onHold : (summaryCounts?.pending ?? 0);
     const summaryActioned = typeof summaryCounts?.actioned === 'number' ? summaryCounts.actioned : 0;
 
-    // Use the max of dashboard summary and direct endpoint count to prevent 0 counts when tickets exist
     const finalActive = Math.max(activeCount, summaryActive);
     const finalOnHold = Math.max(onHoldCount, summaryOnHold);
     const finalActioned = Math.max(actionedCount, summaryActioned);
@@ -277,9 +253,6 @@ export async function fetchTicketQueueCounts(): Promise<QueueCounts> {
   }
 }
 
-/**
- * Fetch saved custom lists from backend GET /api/list-builder/lists
- */
 export async function fetchCustomListsSummary(): Promise<CustomListSummary[]> {
   try {
     const response = await apiClient.get<any>('/api/list-builder/lists');
@@ -301,9 +274,6 @@ export async function fetchCustomListsSummary(): Promise<CustomListSummary[]> {
   }
 }
 
-/**
- * Update ticket status via PATCH /api/my-work/:ticketId/status
- */
 export async function updateOnHoldTicketStatus(
   ticketId: string,
   status: 'On Hold' | 'Active' | 'Pending' | 'Actioned',
@@ -321,9 +291,6 @@ export async function updateOnHoldTicketStatus(
   }
 }
 
-/**
- * Bulk update ticket status
- */
 export async function bulkUpdateTicketStatus(
   ticketIds: string[],
   status: 'On Hold' | 'Active' | 'Pending'
@@ -334,9 +301,6 @@ export async function bulkUpdateTicketStatus(
   await Promise.all(promises);
 }
 
-/**
- * Create a new ticket in the backend POST /api/my-work
- */
 export async function createNewTicket(ticket: Partial<Ticket> & { summary: string }): Promise<Ticket> {
   let createdTicket: Ticket;
   try {
@@ -373,7 +337,6 @@ export async function createNewTicket(ticket: Partial<Ticket> & { summary: strin
     };
   }
 
-  // Update local cache so switching views or reloading retains the new ticket immediately
   const targetKey = createdTicket.status === 'On H' ? STORAGE_KEY_ONHOLD : STORAGE_KEY_ACTIVE;
   const existingCache = getCachedList(targetKey) || [];
   setCachedList(targetKey, [createdTicket, ...existingCache.filter((t) => t.id !== createdTicket.id)]);
@@ -381,9 +344,6 @@ export async function createNewTicket(ticket: Partial<Ticket> & { summary: strin
   return createdTicket;
 }
 
-/**
- * Bulk update ticket priority on server
- */
 export async function bulkUpdateTicketPriority(ticketIds: string[], priority: string): Promise<void> {
   const promises = ticketIds.map((id) =>
     apiClient.patch(`/api/my-work/${encodeURIComponent(id)}`, { priority }).catch(() => false)
@@ -391,9 +351,6 @@ export async function bulkUpdateTicketPriority(ticketIds: string[], priority: st
   await Promise.all(promises);
 }
 
-/**
- * Bulk assign tickets to an agent on server
- */
 export async function bulkAssignTickets(ticketIds: string[], assignedAgentId: string): Promise<void> {
   const promises = ticketIds.map((id) =>
     apiClient.patch(`/api/my-work/${encodeURIComponent(id)}`, { assignedAgentId }).catch(() => false)
@@ -401,9 +358,6 @@ export async function bulkAssignTickets(ticketIds: string[], assignedAgentId: st
   await Promise.all(promises);
 }
 
-/**
- * Bulk delete tickets on server
- */
 export async function bulkDeleteTickets(ticketIds: string[]): Promise<void> {
   const promises = ticketIds.map((id) =>
     apiClient.delete(`/api/my-work/${encodeURIComponent(id)}`).catch(() => false)

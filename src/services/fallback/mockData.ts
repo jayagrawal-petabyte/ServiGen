@@ -1,9 +1,3 @@
-/**
- * ServiGen Comprehensive Offline Mock Data
- * Provides complete, realistic datasets for running the frontend in self-sufficient
- * demo mode without depending on the Render backend.
- */
-
 import { STAGE_LABELS, StageLabel } from '../majorIncidents.lifecycle';
 import type { MajorIncident } from '../../pages/MajorIncidents/types/majorIncident.types';
 

@@ -151,7 +151,6 @@ export const OrganisationsScreen: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
-  // New Organisation Form
   const [newOrgName, setNewOrgName] = useState('');
   const [newOrgDomain, setNewOrgDomain] = useState('');
   const [newOrgTier, setNewOrgTier] = useState<'Enterprise' | 'Standard' | 'Premium'>('Enterprise');
@@ -183,7 +182,6 @@ export const OrganisationsScreen: React.FC = () => {
     selectedSite !== 'ALL' ||
     selectedStatus !== 'ALL';
 
-  // Organisation Detail & Ticket Modal State
   const [selectedOrgForModal, setSelectedOrgForModal] = useState<OrganisationItem | null>(null);
   const [orgModalInitialTab, setOrgModalInitialTab] = useState<'tickets' | 'contacts' | 'overview'>('tickets');
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<any | null>(null);
@@ -263,7 +261,6 @@ export const OrganisationsScreen: React.FC = () => {
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-[#FFF9F5] overflow-hidden">
-      {/* ── Top Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-40 min-h-[50px] sticky top-0 overflow-visible">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -273,11 +270,8 @@ export const OrganisationsScreen: React.FC = () => {
         <GlobalNavbarActions />
       </header>
 
-      {/* ── Two-Column Layout with Left Sidebar & Right Content ── */}
       <div className="org-page-layout">
-        {/* Left Sidebar */}
         <aside className="org-side">
-          {/* Search box */}
           <div className="org-side-search">
             <input
               type="text"
@@ -301,7 +295,6 @@ export const OrganisationsScreen: React.FC = () => {
             )}
           </div>
 
-          {/* Regions Nav */}
           <div className="org-side-section">
             <h3 className="org-side-heading">Regions</h3>
             <div className="org-side-nav-group">
@@ -330,7 +323,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Tiers Nav */}
           <div className="org-side-section">
             <h3 className="org-side-heading">Service Tiers</h3>
             <div className="org-side-nav-group">
@@ -359,7 +351,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Status Nav */}
           <div className="org-side-section">
             <h3 className="org-side-heading">Status</h3>
             <div className="org-side-nav-group">
@@ -388,7 +379,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Default Sites Dropdown */}
           <div className="org-side-section" ref={siteDropdownRef}>
             <h3 className="org-side-heading">Default Site</h3>
             <div className="relative w-full">
@@ -411,7 +401,6 @@ export const OrganisationsScreen: React.FC = () => {
                 />
               </button>
 
-              {/* Dropdown Menu */}
               {isSiteDropdownOpen && (
                 <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-slate-200 bg-white p-1 shadow-lg ring-1 ring-black/5">
                   <button
@@ -456,7 +445,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Reset Filters Button */}
           {hasActiveFilters && (
             <button
               type="button"
@@ -468,7 +456,6 @@ export const OrganisationsScreen: React.FC = () => {
             </button>
           )}
 
-          {/* Add Organisation Sidebar Button */}
           {isAdmin && (
             <button
               type="button"
@@ -482,9 +469,7 @@ export const OrganisationsScreen: React.FC = () => {
           )}
         </aside>
 
-        {/* Right Main Content */}
         <main className="org-main">
-          {/* Header Section */}
           <div className="org-main-header">
             <div>
               <h1 className="org-main-title">Organisations Directory</h1>
@@ -530,7 +515,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Organisations Table */}
           <div className="org-table-wrapper">
             <table className="org-users-table">
               <thead>
@@ -659,7 +643,6 @@ export const OrganisationsScreen: React.FC = () => {
           </div>
         </main>
 
-        {/* Add Organisation Modal */}
         {isAddOrgModalOpen && (
           <div className="org-modal-backdrop" onClick={() => setIsAddOrgModalOpen(false)}>
             <div className="org-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -741,7 +724,6 @@ export const OrganisationsScreen: React.FC = () => {
             </div>
           </div>
         )}
-        {/* Organisation Detail Modal */}
         {selectedOrgForModal && (
           <OrganisationDetailModal
             isOpen={Boolean(selectedOrgForModal)}
@@ -754,7 +736,6 @@ export const OrganisationsScreen: React.FC = () => {
           />
         )}
 
-        {/* Full Ticket Detail Modal */}
         {selectedTicketForModal && (
           <TicketDetailModal
             ticket={{

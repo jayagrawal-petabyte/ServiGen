@@ -1,7 +1,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-/* --- Shell --- */
 .app-shell {
   display: flex;
   height: 100%;
@@ -12,7 +11,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 
 
-/* --- Main Area --- */
 .main-area {
   flex: 1;
   display: flex;
@@ -21,7 +19,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   min-width: 0;
 }
 
-/* --- Top Navbar --- */
 .top-navbar {
   height: 52px;
   background: #ffffff;
@@ -172,7 +169,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   flex-shrink: 0;
 }
 
-/* --- Content Row --- */
 .content-row {
   flex: 1;
   display: flex;
@@ -182,7 +178,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 
 
-/* --- Right Panel --- */
 .right-panel {
   flex: 1;
   display: flex;
@@ -196,7 +191,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   border: 1px solid #f1f5f9;
 }
 
-/* Table Toolbar */
 .table-toolbar {
   display: flex;
   align-items: center;
@@ -259,7 +253,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 .btn-new-green:hover { background: #b55f46; }
 
-/* --- Table --- */
 .table-scroll-wrap {
   flex: 1;
   overflow: auto;
@@ -307,7 +300,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .ticket-row:hover td { background: #f8fafc; }
 .ticket-row.selected td { background: #f0f9ff; }
 
-/* Group Header */
 .group-header-row td {
   background: #e0f7fe;
   padding: 6px 10px;
@@ -328,7 +320,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   font-weight: 600;
 }
 
-/* Columns */
 .col-type { width: 40px; text-align: center; }
 .col-check { width: 32px; text-align: center; }
 .col-viewing { width: 8%; }
@@ -339,7 +330,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .col-summary { width: auto; min-width: 180px; }
 .col-status { width: 110px; }
 
-/* Cells */
 .badge-onhold {
   display: inline-block;
   padding: 2px 7px;
@@ -424,7 +414,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   border: 1px solid #99f6e4;
 }
 
-/* Input checkboxes */
 input[type="checkbox"] {
   width: 13px;
   height: 13px;
@@ -432,7 +421,6 @@ input[type="checkbox"] {
   accent-color: #00b0f0;
 }
 
-/* --- UI States (Empty/Error) --- */
 .empty-state, .error-state {
   display: flex;
   flex-direction: column;
@@ -465,7 +453,6 @@ input[type="checkbox"] {
   max-width: 400px;
 }
 
-/* --- Skeleton Loader --- */
 .skeleton-container {
   width: 100%;
 }
@@ -547,7 +534,6 @@ input[type="checkbox"] {
   border-color: #C96F55;
 }
 
-/* --- New Ticket Modal --- */
 .onhold-modal-overlay {
   position: fixed;
   inset: 0;
@@ -706,7 +692,6 @@ input[type="checkbox"] {
   background: #0090cc;
 }
 
-/* --- Bulk Actions Bar --- */
 .onhold-bulk-bar {
   display: flex;
   align-items: center;
@@ -786,7 +771,6 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
-/* --- Popovers & Flyouts --- */
 .onhold-flyout-wrap {
   position: relative;
   display: inline-flex;
@@ -904,7 +888,6 @@ input[type="checkbox"] {
 
 
 
-/* ── My New Tickets (Image 3 Match) ── */
 .sla-bar-red {
   background: #ea3829;
   color: #ffffff;

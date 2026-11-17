@@ -111,7 +111,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
 
   return (
     <aside className="w-full max-w-[460px] sm:w-[420px] md:w-[460px] shrink-0 rounded-xl border border-gray-200 bg-white flex flex-col shadow-xl overflow-hidden font-sans z-10 animate-in slide-in-from-right duration-200 h-full">
-      {/* ── Panel Header ── */}
       <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 bg-[#fbfcfd]">
         <div className="flex-1 min-w-0 pr-3">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -119,7 +118,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
               #{incident.id}
             </span>
 
-            {/* Editable Priority for Admin */}
             {role === 'Admin' && onUpdatePriority ? (
               <select
                 value={incident.priority}
@@ -162,7 +160,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
         </button>
       </div>
 
-      {/* ── Tabbed Navigation (Clean De-congested UX) ── */}
       <div className="flex items-center border-b border-gray-200 bg-gray-50/90 px-3 text-xs font-semibold shrink-0 gap-1 select-none">
         <button
           type="button"
@@ -209,13 +206,10 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
         </button>
       </div>
 
-      {/* ── Panel Body ── */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         {activeTab === 'overview' && (
           <div className="space-y-4 animate-in fade-in duration-150">
-        {/* Key Info Cards */}
         <div className="grid grid-cols-2 gap-2.5 p-3 bg-gray-50/80 rounded-xl border border-gray-100 text-xs">
-          {/* Commander / Assignee */}
           <div>
             <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5 flex items-center justify-between">
               Commander
@@ -280,7 +274,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             )}
           </div>
 
-          {/* Current State / Quick Stage Selector */}
           <div>
             <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5 flex items-center justify-between">
               State
@@ -306,7 +299,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             )}
           </div>
 
-          {/* Product / CI */}
           <div>
             <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5 flex items-center justify-between">
               Product / CI
@@ -348,7 +340,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             )}
           </div>
 
-          {/* Resolution SLA */}
           <div>
             <span className="text-gray-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">Resolution SLA</span>
             <span className={`font-semibold block truncate mt-0.5 ${incident.resolutionTarget.startsWith('-') ? 'text-rose-600 font-bold' : 'text-gray-800'}`}>
@@ -357,7 +348,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           </div>
         </div>
 
-                {/* ── Live Service Health Visibility (Halo Parity) ── */}
         <ServiceHealthCard
           product={incident.product}
           priority={incident.priority}
@@ -369,7 +359,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
 
         {activeTab === 'lifecycle' && (
           <div className="space-y-4 animate-in fade-in duration-150">
-            {/* ── Lifecycle Stage Progression & Controls ── */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
@@ -380,7 +369,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             </span>
           </div>
 
-          {/* Interactive Stage Pipeline / Chevron Steps */}
           <div className="space-y-1.5 bg-gray-50/90 p-2.5 rounded-xl border border-gray-100">
             {incident.lifecycleStages.map((stage, idx) => {
               const isPast = stage.isCompleted;
@@ -429,11 +417,9 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             })}
           </div>
 
-          {/* Stage Action Buttons: Advance, Step Back, Reopen */}
           {isPrivileged ? (
             <div className="space-y-2 pt-1">
               <div className="grid grid-cols-2 gap-2">
-                {/* Step Back button */}
                 <button
                   type="button"
                   disabled={!canStepBack}
@@ -444,7 +430,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
                   <span>← Step Back</span>
                 </button>
 
-                {/* Advance Stage button */}
                 <button
                   type="button"
                   disabled={!canAdvance}
@@ -456,7 +441,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
                 </button>
               </div>
 
-              {/* Reopen button when closed */}
               {isClosed && onReopen && (
                 <button
                   type="button"
@@ -481,7 +465,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
 
         {activeTab === 'timeline' && (
           <div className="space-y-4 animate-in fade-in duration-150">
-            {/* ── Timeline Updates Feed ── */}
         <div className="space-y-2 pt-2 border-t border-gray-100">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
@@ -524,7 +507,6 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           </div>
         </div>
 
-        {/* ── Post New Update Form ── */}
         <form onSubmit={handlePostUpdate} className="space-y-2 pt-2 border-t border-gray-100">
           <label className="text-xs font-semibold text-gray-700 block">
             Post Real-Time Update

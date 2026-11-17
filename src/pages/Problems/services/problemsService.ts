@@ -260,16 +260,10 @@ export function mapBackendProblem(raw: any): ProblemItem {
 }
 
 export const problemsService = {
-  /**
-   * Synchronous cached problems getter for initial states and search
-   */
   getStoredProblems(): ProblemItem[] {
     return getStoredLocal();
   },
 
-  /**
-   * Fetch all problems from backend /api/problems with offline fallback
-   */
   async getProblems(filters?: Record<string, string>): Promise<ProblemItem[]> {
     try {
       const res = await api.get('/api/problems', { params: filters });
@@ -281,14 +275,10 @@ export const problemsService = {
         return mapped;
       }
     } catch {
-      // offline or backend error fallback
     }
     return getStoredLocal();
   },
 
-  /**
-   * Fetch single problem by ID
-   */
   async getProblemById(id: string): Promise<ProblemItem | undefined> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -296,16 +286,12 @@ export const problemsService = {
       const raw = res?.data || res;
       if (raw) return mapBackendProblem(raw);
     } catch {
-      // offline fallback
     }
     const local = getStoredLocal();
     const cleanId = id.replace(/^PR-/, '');
     return local.find((p) => p.id === cleanId || p.prefixId === id || p.id === id);
   },
 
-  /**
-   * Create a new problem record
-   */
   async createProblem(data: Partial<ProblemItem>): Promise<ProblemItem> {
     const payload = {
       summary: data.summary || 'Untitled Problem Investigation',
@@ -330,7 +316,6 @@ export const problemsService = {
         return mapped;
       }
     } catch {
-      // offline fallback
     }
 
     const current = getStoredLocal();
@@ -385,9 +370,6 @@ export const problemsService = {
     return fallbackProblem;
   },
 
-  /**
-   * Update problem record
-   */
   async updateProblem(id: string, updates: Partial<ProblemItem>): Promise<ProblemItem | undefined> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -400,7 +382,6 @@ export const problemsService = {
         return mapped;
       }
     } catch {
-      // offline fallback
     }
 
     const current = getStoredLocal();
@@ -417,9 +398,6 @@ export const problemsService = {
     return updatedItem;
   },
 
-  /**
-   * Delete or archive problem
-   */
   async deleteProblem(id: string): Promise<boolean> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -430,9 +408,6 @@ export const problemsService = {
     return true;
   },
 
-  /**
-   * Change lifecycle stage
-   */
   async updateStage(id: string, stage: ProblemStage): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -442,9 +417,6 @@ export const problemsService = {
     return { success: true, stage };
   },
 
-  /**
-   * Reassign problem team and agent
-   */
   async reassignProblem(id: string, team: string, assignedAgentId?: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -454,9 +426,6 @@ export const problemsService = {
     return { success: true, team, assignedAgentId };
   },
 
-  /**
-   * Save temporary workaround
-   */
   async saveWorkaround(id: string, workaround: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -466,9 +435,6 @@ export const problemsService = {
     return { success: true, workaround };
   },
 
-  /**
-   * Record root cause analysis
-   */
   async saveRootCause(id: string, rootCause: string, causeStatus: string = 'Identified'): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -478,9 +444,6 @@ export const problemsService = {
     return { success: true, rootCause, causeStatus };
   },
 
-  /**
-   * Link an incident to a problem
-   */
   async linkIncident(id: string, incidentId: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -490,9 +453,6 @@ export const problemsService = {
     return { success: true, incidentId };
   },
 
-  /**
-   * Unlink an incident from a problem
-   */
   async unlinkIncident(id: string, incidentId: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -502,9 +462,6 @@ export const problemsService = {
     return { success: true };
   },
 
-  /**
-   * Bulk resolve all child incidents linked to this problem
-   */
   async bulkResolveChildIncidents(id: string, resolutionNote?: string, author?: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -517,9 +474,6 @@ export const problemsService = {
     return { success: true };
   },
 
-  /**
-   * Get configuration items linked to problem
-   */
   async getLinkedCis(id: string): Promise<any[]> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -530,9 +484,6 @@ export const problemsService = {
     return [];
   },
 
-  /**
-   * Link a configuration item to problem
-   */
   async linkCi(id: string, ciId: string, relationType: string = 'impacted_by'): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -542,9 +493,6 @@ export const problemsService = {
     return { success: true, ciId };
   },
 
-  /**
-   * Unlink a configuration item from problem
-   */
   async unlinkCi(id: string, ciId: string): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');
@@ -554,9 +502,6 @@ export const problemsService = {
     return { success: true };
   },
 
-  /**
-   * Post a work note / activity log
-   */
   async addLogEntry(
     id: string,
     author: string,
@@ -594,9 +539,6 @@ export const problemsService = {
     return updatedItem;
   },
 
-  /**
-   * Send email notification to user or stakeholders
-   */
   async sendEmail(id: string, payload: { to: string; subject: string; body: string }): Promise<any> {
     try {
       const cleanId = id.replace(/^PR-/, '');

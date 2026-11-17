@@ -64,7 +64,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
   const [isSubmittingLink, setIsSubmittingLink] = useState<boolean>(false);
   const [linkError, setLinkError] = useState<string | null>(null);
 
-  // Fullscreen management: handles native browser fullscreen API with CSS viewport fallback
   const toggleFullscreen = async () => {
     try {
       if (!isFullscreen) {
@@ -104,7 +103,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  // Compute Warranty Status badge in clean theme colors
   const getWarrantyInfo = (dateStr?: string) => {
     if (!dateStr) return null;
     const expiry = new Date(dateStr);
@@ -150,12 +148,10 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
     }
   };
 
-  // Group nodes into topological tiers: Upstream -> Root CI -> Downstream
   const { upstreamNodes, downstreamNodes, allNodes, filteredEdges } = useMemo(() => {
     const rawNodes = topologyGraph?.nodes || [];
     const rawEdges = topologyGraph?.edges || [];
 
-    // Map of nodes indexed by both id and tag (lowercase for case-insensitive lookup)
     const nodeMap = new Map<string, CiTopologyNode>();
     rawNodes.forEach((n) => {
       if (n.id) nodeMap.set(n.id.toLowerCase(), n);
@@ -184,10 +180,8 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
     const rootLowerId = (rootCi.id || '').toLowerCase();
     const rootLowerTag = (rootCi.tag || '').toLowerCase();
 
-    // From edges or direct relationships
     const edgesList: CiTopologyEdge[] = [...rawEdges];
     if (edgesList.length === 0) {
-      // 1. Outgoing direct dependencies from rootCi
       if (Array.isArray(rootCi.relationships)) {
         rootCi.relationships.forEach((r) => {
           edgesList.push({
@@ -198,7 +192,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           });
         });
       }
-      // 2. Inbound links from other CIs in allCis pointing to rootCi
       if (Array.isArray(allCis)) {
         allCis.forEach((other) => {
           if (
@@ -307,14 +300,12 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
     };
   }, [topologyGraph, rootCi, allCis, selectedDirectionFilter]);
 
-  // Available options for linking new dependency (deduplicated against root CI)
   const availableCisToLink = useMemo(() => {
     const list: Array<{ id: string; tag: string; name: string; type: string }> = [];
     const seen = new Set<string>();
     const rootLowerId = (rootCi.id || '').toLowerCase();
     const rootLowerTag = (rootCi.tag || '').toLowerCase();
 
-    // 1. From allCis
     allCis.forEach((c) => {
       const idLower = (c.id || '').toLowerCase();
       const tagLower = (c.tag || '').toLowerCase();
@@ -326,7 +317,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
       }
     });
 
-    // 2. Fallback catalog items if allCis is small
     const defaults = [
       { id: 'CI-1001', tag: 'DB-001', name: 'Primary PostgreSQL Database Cluster', type: 'Database' },
       { id: 'CI-1002', tag: 'PAY-001', name: 'Payment Gateway Application Server', type: 'Server' },
@@ -387,7 +377,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           : 'w-full bg-[#FFF9F5] text-slate-800 rounded-3xl border border-[#EADBCE] overflow-hidden shadow-sm flex flex-col transition-all'
       }
     >
-      {/* Top Controls Toolbar — Brand Styled */}
       <div className="px-5 py-3.5 bg-white/95 backdrop-blur-sm border-b border-[#EADBCE] flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#C96F55]/15 border border-[#C96F55]/30 flex items-center justify-center text-[#C96F55]">
@@ -408,9 +397,7 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           </div>
         </div>
 
-        {/* View & Filter Controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Direction Filter Tabs */}
           <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200 text-xs">
             <button
               onClick={() => setSelectedDirectionFilter('all')}
@@ -444,7 +431,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
             </button>
           </div>
 
-          {/* Zoom Buttons */}
           <div className="flex items-center bg-white rounded-xl p-0.5 border border-[#EADBCE] shadow-2xs">
             <button
               onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.1))}
@@ -469,7 +455,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
             </button>
           </div>
 
-          {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
             className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
@@ -492,7 +477,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
             )}
           </button>
 
-          {/* Refresh Button */}
           {onRefresh && (
             <button
               onClick={onRefresh}
@@ -504,7 +488,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
             </button>
           )}
 
-          {/* Link Dependency Button */}
           {onLinkRelationship && (
             <button
               onClick={() => setShowAddLinkModal(true)}
@@ -517,7 +500,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
         </div>
       </div>
 
-      {/* Main Canvas Area — Soft Warm Cream with Subtle Dot Grid */}
       <div
         className="relative w-full p-6 sm:p-10 overflow-x-auto min-h-[480px] flex-1 flex flex-col items-center justify-center bg-[#FFF9F5] bg-[radial-gradient(#E2D4C9_1.2px,transparent_1.2px)] [background-size:24px_24px]"
         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center top' }}
@@ -531,7 +513,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center w-full max-w-4xl space-y-8 my-auto">
-            {/* 1. UPSTREAM TIER (Consumers, Applications, Calling Gateways) */}
             {selectedDirectionFilter !== 'downstream' && (
               <div className="w-full flex flex-col items-center">
                 <div className="flex items-center gap-2 mb-3">
@@ -600,7 +581,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                             </div>
                           </div>
 
-                          {/* Directed Call Indicator Pin */}
                           <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center">
                             <span className="text-[9px] font-mono font-bold text-[#263B5E] uppercase tracking-wider px-1.5 py-0.2 rounded bg-white border border-[#263B5E]/25 shadow-2xs">
                               calls
@@ -615,7 +595,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               </div>
             )}
 
-            {/* SVG Connecting Flow Lines (Upstream to Root) */}
             {upstreamNodes.length > 0 && selectedDirectionFilter !== 'downstream' && (
               <div className="w-full flex justify-center -my-3 relative z-0">
                 <svg className="w-64 h-10 stroke-[#263B5E]/40" fill="none">
@@ -626,7 +605,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               </div>
             )}
 
-            {/* 2. ROOT CI NODE (Centerpiece) */}
             <div className="relative z-10 w-full max-w-lg">
               <div className="p-1 rounded-3xl bg-gradient-to-r from-[#C96F55] via-amber-500 to-[#C96F55] shadow-xl shadow-[#C96F55]/15">
                 <div className="bg-white rounded-[22px] p-5 border border-[#F0E4DC]">
@@ -679,7 +657,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
                     </div>
                   </div>
 
-                  {/* Warranty Expiry Indicator */}
                   {rootCi.warrantyExpiry && (
                     <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#FFF9F5] border border-[#EADBCE] text-xs">
                       <span className="text-slate-500 font-mono text-[11px] flex items-center gap-1.5">
@@ -704,7 +681,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               </div>
             </div>
 
-            {/* SVG Connecting Flow Lines (Root to Downstream) */}
             {downstreamNodes.length > 0 && selectedDirectionFilter !== 'upstream' && (
               <div className="w-full flex justify-center -my-3 relative z-0">
                 <svg className="w-64 h-10 stroke-emerald-600/50" fill="none">
@@ -715,7 +691,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
               </div>
             )}
 
-            {/* 3. DOWNSTREAM TIER (Databases, Storage, Backbone Networks, Caches) */}
             {selectedDirectionFilter !== 'upstream' && (
               <div className="w-full flex flex-col items-center">
                 <div className="flex items-center gap-2 mb-3">
@@ -794,7 +769,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
         )}
       </div>
 
-      {/* Dependency Links Ledger Footer — Brand Styled with Clear Unlink Buttons */}
       {filteredEdges.length > 0 && (
         <div className="px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-[#EADBCE] flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
@@ -845,7 +819,6 @@ export const CiVisualTopologyTree: React.FC<CiVisualTopologyTreeProps> = ({
         </div>
       )}
 
-      {/* Add Dependency Modal — Clean Brand Styled */}
       {showAddLinkModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-[#EADBCE] rounded-3xl p-6 w-full max-w-md shadow-2xl text-slate-900 space-y-4 animate-in fade-in zoom-in-95 duration-150">

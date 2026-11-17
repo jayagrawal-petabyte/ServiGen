@@ -4,11 +4,7 @@ import { majorIncidentsService } from '../../services/majorIncidentsService';
 import { useAuth } from '../../pages/Auth/AuthContext';
 import './AgentKpiDrawer.css';
 
-/**
- * Records whose IDs start with this prefix are legacy fixtures from the
- * pre-integration mock data and are never shown. Kept as a named constant
- * so the filter is greppable instead of a bare magic string.
- */
+
 const LEGACY_FIXTURE_ID_PREFIX = '000267';
 
 interface AgentKpiDrawerProps {
@@ -55,7 +51,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
 
   const agentDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (agentDropdownRef.current && !agentDropdownRef.current.contains(e.target as Node)) {
@@ -86,7 +81,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         setKpis(kpiRes.value.data as LiveKpiData);
       }
 
-      // Populate full agent list from live backend users
       if (userRes.status === 'fulfilled' && Array.isArray(userRes.value?.data)) {
         const fullNames = new Set<string>();
         fullNames.add('All Agents');
@@ -127,7 +121,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         combined = [...mis, ...combined];
       }
 
-      // Filter unassigned tickets
       const unassigned = combined.filter(
         (t) =>
           !t.assignee ||
@@ -137,7 +130,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
       );
       setUnassignedTickets(unassigned);
 
-      // Filter breaching or critical tickets
       const breaching = combined.filter(
         (t) =>
           t.priority?.toLowerCase() === 'critical' ||
@@ -155,16 +147,13 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
     };
   }, []);
 
-  // Handle claiming ticket inline without redirecting
   const handleClaimTicket = async (e: React.MouseEvent, ticket: LiveTicketItem) => {
     e.stopPropagation();
 
-    // Mark locally as claimed immediately
     setClaimedIds((prev) => ({ ...prev, [ticket.id]: true }));
     setActionNotice(`Claimed #${ticket.id} and assigned to ${currentUserName}`);
     setTimeout(() => setActionNotice(null), 3500);
 
-    // Call backend API based on ticket type
     try {
       if (ticket.isMajor || ticket.id.startsWith('MI-') || ticket.id.startsWith(LEGACY_FIXTURE_ID_PREFIX)) {
         await majorIncidentsService.updateMajorIncident(ticket.id, {
@@ -176,7 +165,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         }).catch(() => {});
       }
 
-      // Update state in lists
       setUnassignedTickets((prev) =>
         prev.map((t) => (t.id === ticket.id ? { ...t, assignee: currentUserName, status: 'In Progress' } : t))
       );
@@ -187,7 +175,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         setInspectedTicket((prev) => (prev ? { ...prev, assignee: currentUserName, status: 'In Progress' } : null));
       }
     } catch {
-      // Keep optimistic UI
     }
   };
 
@@ -202,7 +189,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
 
   return (
     <aside className="agent-kpi-drawer-floating" aria-label="Agent KPI Dashboard">
-      {/* Header */}
       <div className="agent-kpi-header">
         <div className="agent-kpi-header-left">
           <span className="agent-kpi-live-dot" />
@@ -219,16 +205,13 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Global Action Banner */}
       {actionNotice && (
         <div className="agent-kpi-action-banner">
           <span>✓ {actionNotice}</span>
         </div>
       )}
 
-      {/* Content Scroll Container */}
       <div className="agent-kpi-content-scroll">
-        {/* If user is inspecting a specific ticket inline */}
         {inspectedTicket ? (
           <div className="agent-kpi-inspect-view">
             <div className="agent-kpi-inspect-header">
@@ -288,7 +271,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
           </div>
         ) : (
           <>
-            {/* Agent Selector Dropdown (Exact Match to Figma Design) */}
             <div className="agent-kpi-agent-section" ref={agentDropdownRef}>
               <label className="agent-kpi-label">Agent</label>
               <div
@@ -330,7 +312,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
                 </button>
               </div>
 
-              {/* Floating Full Agents Dropdown Menu */}
               {isAgentMenuOpen && (
                 <div className="agent-kpi-agent-dropdown animate-in fade-in duration-100">
                   <input
@@ -363,7 +344,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
               )}
             </div>
 
-            {/* Compact 4-Metric Grid */}
             <div className="agent-kpi-metrics-grid">
               <div className="agent-kpi-metric-tile">
                 <div className="metric-tile-header">
@@ -400,7 +380,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
               </div>
             </div>
 
-            {/* Subtle Compact AI Forecast Row */}
             <div className="agent-kpi-forecast-strip">
               <div className="agent-kpi-forecast-text">
                 <span className="font-bold text-gray-800">AI Load Peak:</span> 02:00 PM – 04:30 PM (95% expected)
@@ -414,7 +393,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
               </div>
             </div>
 
-            {/* Actionable Queue Tabs */}
             <div className="agent-kpi-tabs-row">
               <button
                 type="button"
@@ -432,7 +410,6 @@ export const AgentKpiDrawer: React.FC<AgentKpiDrawerProps> = ({ onClose }) => {
               </button>
             </div>
 
-            {/* Queue List with Clean Compact Items */}
             <div className="agent-kpi-queue-list">
               {isLoading ? (
                 <div className="agent-kpi-loading-box">

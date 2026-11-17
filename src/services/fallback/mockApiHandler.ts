@@ -500,7 +500,7 @@ export function handleOfflineRequest(
   if (path === '/api/major-incidents') {
     if (upperMethod === 'POST') {
       const newId = `MI-${1000 + mutableMajorIncidents.length + 1}`;
-      const activeIdx = 0; // Starts at 'Started'
+      const activeIdx = 0;
       const newMI: MajorIncident = {
         id: newId,
         title: parsedBody?.title || 'New Major Incident',

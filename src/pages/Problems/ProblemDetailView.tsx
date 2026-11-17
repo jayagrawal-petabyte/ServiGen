@@ -43,7 +43,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  // Post-Incident Review (PIR) Form Modal State
   const [showPirModal, setShowPirModal] = useState(false);
   const [pirCategory, setPirCategory] = useState(problem.pirData?.rootCauseCategory || 'Software Defect / Application Bug');
   const [pirSummary, setPirSummary] = useState(problem.pirData?.executiveSummary || problem.rootCauseDescription || '');
@@ -52,13 +51,11 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
   const [pirTargetDate, setPirTargetDate] = useState(problem.pirData?.targetDate || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
   const [pirInvestigator, setPirInvestigator] = useState(problem.pirData?.leadInvestigator || problem.agent || 'Ken Yang');
 
-  // Publish Workaround to Knowledge Base State
   const [showKbModal, setShowKbModal] = useState(false);
   const [kbTitle, setKbTitle] = useState(`Workaround: ${problem.summary}`);
   const [kbContent, setKbContent] = useState(problem.workaroundDescription || '');
   const [isPublishingKb, setIsPublishingKb] = useState(false);
 
-  // Link Incident Modal state
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [incidentSearch, setIncidentSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<'All' | 'Critical' | 'High' | 'Medium' | 'Low'>('All');
@@ -100,7 +97,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     try {
       await api.post(`/api/problems/${problem.id}/incidents`, { incidentId: inc.id });
     } catch {
-      // offline fallback
     }
     const updated = {
       ...problem,
@@ -116,7 +112,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
     try {
       await api.delete(`/api/problems/${problem.id}/incidents/${incId}`);
     } catch {
-      // offline fallback
     }
     const updated = {
       ...problem,
@@ -341,7 +336,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
 
   return (
     <div className="flex-1 w-full h-full flex flex-col bg-slate-50 overflow-y-auto font-sans select-text">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
           <span>✓</span>
@@ -349,7 +343,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       )}
 
-      {/* ── Top Bar: Breadcrumb & Quick Actions ── */}
       <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-2xs">
         <div className="flex items-center gap-3">
           <button
@@ -373,7 +366,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           </div>
         </div>
 
-        {/* Action Button Pills */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -456,7 +448,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             <span>Add Note</span>
           </button>
 
-          {/* Re-Assign Dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -493,9 +484,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       </div>
 
-      {/* ── Main Detail Console ── */}
       <div className="p-6 space-y-5 flex-1 max-w-[1600px] w-full mx-auto">
-        {/* Ticket Header & Title */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs space-y-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 font-bold shrink-0 mt-0.5">
@@ -509,7 +498,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             </div>
           </div>
 
-          {/* ITIL Lifecycle Chevron Pipeline */}
           <div className="flex items-center overflow-x-auto gap-1 py-1">
             {STAGES.map((stg, idx) => {
               const currentIdx = STAGES.indexOf(problem.currentStage);
@@ -542,11 +530,8 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
           </div>
         </div>
 
-        {/* ── 3-Column Ticket Information Grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Column 1: Tabs & Activity / Notes Console (6 Cols) */}
           <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col">
-            {/* Console Tab Bar */}
             <div className="flex items-center justify-between border-b border-slate-200 px-5 pt-3 bg-slate-50/50">
               <div className="flex items-center gap-6 text-xs font-bold overflow-x-auto">
                 {[
@@ -573,11 +558,9 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               </div>
             </div>
 
-            {/* Tab Body */}
             <div className="p-5 space-y-4">
               {activeTab === 'progress' && (
                 <>
-                  {/* PIR Status Card (if documented) */}
                   {problem.pirData && (
                     <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200 text-xs space-y-2">
                       <div className="flex items-center justify-between">
@@ -598,7 +581,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     </div>
                   )}
 
-                  {/* Active Workaround Card (if documented) */}
                   {problem.workaroundDescription && (
                     <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
                       <div className="flex items-center justify-between">
@@ -618,7 +600,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     </div>
                   )}
 
-                  {/* Activity Feed Items */}
                   <div className="space-y-3">
                     {problem.logs.map((log) => (
                       <div key={log.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
@@ -641,7 +622,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                     ))}
                   </div>
 
-                  {/* Add Note / Workaround Composer */}
                   <form onSubmit={handleAddNoteSubmit} className="pt-3 border-t border-slate-100 space-y-2">
                     <label className="block text-xs font-bold text-slate-700">Add Problem Note / Workaround Update</label>
                     <textarea
@@ -954,7 +934,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             </div>
           </div>
 
-          {/* Column 2: Ticket Information (3 Cols) */}
           <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100">
               Ticket Information
@@ -1028,9 +1007,7 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
             </div>
           </div>
 
-          {/* Column 3: End-User & AI Insights (3 Cols) */}
           <div className="lg:col-span-3 space-y-4">
-            {/* End-User Details */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3 text-xs">
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100">
                 End-User Details
@@ -1077,7 +1054,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               </div>
             </div>
 
-            {/* AI Suggested Articles Panel */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3 text-xs">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -1116,7 +1092,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       </div>
 
-      {/* Email User Modal */}
       {showEmailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden p-6 space-y-4 text-xs">
@@ -1180,11 +1155,9 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       )}
 
-      {/* ── Link Incident Search Modal (ITSM-2) ── */}
       {showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-orange-100 text-[#C96F55] flex items-center justify-center font-bold text-sm">
@@ -1206,7 +1179,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               </button>
             </div>
 
-            {/* Search and Filters Bar */}
             <div className="p-4 border-b border-slate-100 bg-white space-y-3">
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
@@ -1229,7 +1201,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
                 )}
               </div>
 
-              {/* Priority Badges Filter */}
               <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
                 <span className="text-[11px] font-semibold text-slate-400 mr-1">Priority:</span>
                 {(['All', 'Critical', 'High', 'Medium', 'Low'] as const).map((p) => (
@@ -1252,7 +1223,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               </div>
             </div>
 
-            {/* Incident List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 divide-y divide-slate-100">
               {filteredAvailableIncidents.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 text-xs">
@@ -1317,7 +1287,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
               <span>{filteredAvailableIncidents.length} incidents found</span>
               <button
@@ -1332,7 +1301,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       )}
 
-      {/* ── Post-Incident Review (PIR) Modal ── */}
       {showPirModal && (
         <div
           className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
@@ -1452,7 +1420,6 @@ export const ProblemDetailView: React.FC<ProblemDetailViewProps> = ({
         </div>
       )}
 
-      {/* ── Publish Workaround to Knowledge Base Modal ── */}
       {showKbModal && (
         <div
           className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"

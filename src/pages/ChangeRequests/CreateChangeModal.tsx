@@ -40,7 +40,6 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // 4-Question Interactive Risk Questionnaire State
   const [causesDowntime, setCausesDowntime] = useState(false);
   const [testedInStaging, setTestedInStaging] = useState(true);
   const [hasRollbackScript, setHasRollbackScript] = useState(true);
@@ -195,7 +194,6 @@ export const CreateChangeModal: React.FC<CreateChangeModalProps> = ({
             </div>
           </div>
 
-          {/* 4-Question Risk Questionnaire */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
             <span className="text-slate-700 font-bold text-xs uppercase tracking-wider block">
               Risk Assessment Questionnaire:

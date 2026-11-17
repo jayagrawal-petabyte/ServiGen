@@ -42,7 +42,6 @@ export default function ApprovalsPage() {
     []
   );
 
-  // Load pending approvals from API (GET /api/approvals/pending) and merge with history
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -52,7 +51,6 @@ export default function ApprovalsPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load approvals from server.';
       setErrorMessage(msg);
-      // Fallback to cached items
       const cached = approvalsApi.getCachedHistory();
       if (cached.length > 0) {
         setApprovals(cached);
@@ -78,12 +76,10 @@ export default function ApprovalsPage() {
   const filteredApprovals = useMemo(() => {
     let result = approvals;
 
-    // Filter by tab
     if (currentTab !== 'all') {
       result = result.filter((a) => a.status === currentTab);
     }
 
-    // Filter by search query
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       result = result.filter((a) => {
@@ -105,11 +101,8 @@ export default function ApprovalsPage() {
 
   const pendingApprovalsCount = counts.pending;
 
-  /**
-   * Approve a single approval request via PATCH /api/approvals/:approvalId/approve
-   */
   const handleApprove = async (id: string) => {
-    if (actionLoadingId) return; // Prevent duplicate submission
+    if (actionLoadingId) return;
     const item = approvals.find((a) => a.id === id);
 
     setActionLoadingId(id);
@@ -128,12 +121,8 @@ export default function ApprovalsPage() {
     }
   };
 
-  /**
-   * Reject a single approval request via PATCH /api/approvals/:approvalId/reject
-   * Requires mandatory justification/reason of at least 5 non-whitespace characters.
-   */
   const handleReject = async (id: string, reason?: string) => {
-    if (actionLoadingId) return; // Prevent duplicate submission
+    if (actionLoadingId) return;
     const trimmed = reason ? reason.trim() : '';
     if (!trimmed || trimmed.length < 5) {
       showToast('Validation Error: A mandatory rejection reason (min 5 characters) is required.', 'error');
@@ -157,9 +146,6 @@ export default function ApprovalsPage() {
     }
   };
 
-  /**
-   * Batch approve pending requests (React modal confirmation replaces direct execution)
-   */
   const handleOpenBatchAccept = () => {
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
@@ -196,9 +182,6 @@ export default function ApprovalsPage() {
     }
   };
 
-  /**
-   * Batch reject pending requests (React modal dialog replaces window.prompt)
-   */
   const handleOpenBatchReject = () => {
     const pendingItems = approvals.filter((a) => a.status === 'pending');
     if (pendingItems.length === 0) {
@@ -254,10 +237,6 @@ export default function ApprovalsPage() {
     }
   };
 
-  /**
-   * Open Approval Details Modal with URL query parameter synchronization
-   * Loads specific approval details from GET /api/approvals/:approvalId
-   */
   const handleOpenDetails = async (approval: Approval, defaultRejectMode = false) => {
     setSelectedApproval(approval);
     setModalRejectMode(defaultRejectMode);
@@ -273,11 +252,9 @@ export default function ApprovalsPage() {
       const fresh = await approvalsApi.getApprovalById(approval.id);
       setSelectedApproval(fresh);
     } catch {
-      // Retain existing card details if individual fetch fails
     }
   };
 
-  // Handle tab deep linking (e.g. /approvals?tab=pending)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ['pending', 'approved', 'rejected', 'all'].includes(tabParam.toLowerCase())) {
@@ -285,7 +262,6 @@ export default function ApprovalsPage() {
     }
   }, [searchParams]);
 
-  // Handle direct approval deep linking (e.g. /approvals?id=APP-201 or /approvals?id=1)
   useEffect(() => {
     const targetId =
       searchParams.get('id') ||
@@ -325,7 +301,6 @@ export default function ApprovalsPage() {
 
   return (
     <div className="approvals-page-wrapper">
-      {/* Top Application Navbar matching UI/UX design */}
       <header className="approvals-top-navbar">
         <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0">
           <span>Service Desk</span>
@@ -335,9 +310,7 @@ export default function ApprovalsPage() {
         <GlobalNavbarActions />
       </header>
 
-      {/* Main Page Content */}
       <main className="approvals-main-content">
-        {/* Page Header */}
         <div className="approvals-header">
           <div className="approvals-title-group">
             <h1>My Approvals</h1>
@@ -378,7 +351,6 @@ export default function ApprovalsPage() {
           </div>
         </div>
 
-        {/* Error Banner if any */}
         {errorMessage && (
           <div className="approvals-error-banner" role="alert">
             <div className="approvals-error-banner-content">
@@ -395,7 +367,6 @@ export default function ApprovalsPage() {
           </div>
         )}
 
-        {/* Filter Subbar (Tabs & Search) */}
         <div className="approvals-subbar">
           <SegmentedTabs<TabType>
             variant="boxed"
@@ -443,7 +414,6 @@ export default function ApprovalsPage() {
           />
         </div>
 
-        {/* Loading Skeletons */}
         {isLoading ? (
           <div className="approvals-list">
             {[1, 2, 3].map((i) => (
@@ -476,7 +446,6 @@ export default function ApprovalsPage() {
             ))}
           </div>
         ) : filteredApprovals.length === 0 ? (
-          /* Empty State */
           <div className="approvals-empty">
             <div className="approvals-empty-icon">
               <svg
@@ -521,7 +490,6 @@ export default function ApprovalsPage() {
             )}
           </div>
         ) : (
-          /* Approval Cards List */
           <div className="approvals-list">
             {filteredApprovals.map((approval) => (
               <ApprovalCard
@@ -560,7 +528,6 @@ export default function ApprovalsPage() {
           />
         )}
 
-        {/* React Confirmation Modal for Batch Accept (Replaces native browser behavior) */}
         {isBatchAcceptModalOpen && (
           <div
             className="modal-overlay"
@@ -634,7 +601,6 @@ export default function ApprovalsPage() {
           </div>
         )}
 
-        {/* React Modal for Batch Reject (Replaces window.prompt with validated React modal) */}
         {isBatchRejectModalOpen && (
           <div
             className="modal-overlay"

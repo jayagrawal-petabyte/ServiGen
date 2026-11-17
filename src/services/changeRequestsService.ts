@@ -1,14 +1,3 @@
-/**
- * Servigen Change Requests Service Layer
- * Corresponds to Servigen API Specification Section 5.15 (Change Requests Module)
- *
- * Backend Routes (Mounted at /api/change-requests):
- * - GET /api/change-requests        : List all change requests
- * - GET /api/change-requests/active : List active change requests
- * - GET /api/change-requests/:id    : Get change request details
- * - POST /api/change-requests       : Create change request
- * - PATCH /api/change-requests/:id  : Update change request status
- */
 
 import type { ChangeRequest, ChangeStatus, ChangeType, RiskLevel, Subtask } from '../types/cmdb';
 import { api } from './apiClient';
@@ -19,13 +8,9 @@ export interface ChangeRequestsApiResponse<T> {
   message?: string;
 }
 
-/**
- * Normalize raw backend record into standard ChangeRequest interface
- */
 export function normalizeChangeRequest(cr: any): ChangeRequest {
   if (!cr) return cr;
 
-  // Map backend status ('Active', 'Completed', 'Pending') to frontend ChangeStatus
   let mappedStatus: ChangeStatus = 'In Progress';
   if (cr.status === 'Active') {
     mappedStatus = 'In Progress';
@@ -39,13 +24,11 @@ export function normalizeChangeRequest(cr: any): ChangeRequest {
     mappedStatus = 'Scheduled';
   }
 
-  // Map backend changeType ('Normal', 'Emergency', 'Standard')
   const validTypes: ChangeType[] = ['Normal', 'Emergency', 'Standard'];
   const mappedType: ChangeType = validTypes.includes(cr.changeType || cr.type)
     ? (cr.changeType || cr.type)
     : 'Normal';
 
-  // Format dates
   const startDateStr = cr.startDate || cr.scheduledStart;
   const endDateStr = cr.endDate || cr.scheduledEnd;
   const formattedStart = startDateStr
@@ -87,10 +70,6 @@ export function normalizeChangeRequest(cr: any): ChangeRequest {
   };
 }
 
-/**
- * Fetch all change requests from live backend
- * Endpoint: GET /api/change-requests
- */
 import { MOCK_CHANGE_REQUESTS } from './fallback/mockData';
 
 export const fetchChangeRequests = async (): Promise<ChangeRequestsApiResponse<ChangeRequest[]>> => {
@@ -115,10 +94,6 @@ export const fetchChangeRequests = async (): Promise<ChangeRequestsApiResponse<C
   };
 };
 
-/**
- * Fetch active change requests from live backend
- * Endpoint: GET /api/change-requests/active
- */
 export const fetchActiveChangeRequests = async (): Promise<ChangeRequestsApiResponse<ChangeRequest[]>> => {
   try {
     const res = await api.get('/api/change-requests/active');
@@ -144,10 +119,6 @@ export const fetchActiveChangeRequests = async (): Promise<ChangeRequestsApiResp
   };
 };
 
-/**
- * Get detailed change request by ID from live backend
- * Endpoint: GET /api/change-requests/:id
- */
 export const fetchChangeRequestById = async (
   id: string
 ): Promise<ChangeRequestsApiResponse<ChangeRequest>> => {
@@ -168,20 +139,12 @@ export const fetchChangeRequestById = async (
   };
 };
 
-/**
- * Map frontend ChangeStatus to backend VALID_STATUSES
- * Backend accepts: ['Draft', 'Pending Approval', 'Approved', 'Active', 'Scheduled', 'On Hold', 'Completed', 'Rejected']
- */
 export function toBackendChangeStatus(status: ChangeStatus | string): string {
   if (status === 'In Progress') return 'Active';
   if (status === 'Pending') return 'Pending Approval';
   return status;
 }
 
-/**
- * Submit a new change request to the backend
- * Sends POST /api/change-requests
- */
 export const createChangeRequest = async (
   payload: Partial<ChangeRequest> & { title: string }
 ): Promise<ChangeRequestsApiResponse<ChangeRequest>> => {
@@ -233,10 +196,6 @@ export const createChangeRequest = async (
   };
 };
 
-/**
- * Update the status of an existing change request on backend
- * Sends PATCH /api/change-requests/:id
- */
 export const updateChangeRequestStatus = async (
   id: string,
   status: ChangeStatus
@@ -258,10 +217,6 @@ export const updateChangeRequestStatus = async (
   };
 };
 
-/**
- * Toggle completion of a subtask within a change request
- * Sends PATCH /api/change-requests/:id
- */
 export const toggleSubtaskCompletion = async (
   changeRequestId: string,
   subtaskId: string
@@ -277,7 +232,6 @@ export const toggleSubtaskCompletion = async (
   const totalCount = updatedSubtasks.length;
   const completionPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  // Include valid status in payload so backend schema validation succeeds
   try {
     await api.patch(`/api/change-requests/${encodeURIComponent(changeRequestId)}`, {
       status: toBackendChangeStatus(currentCR.status),

@@ -31,7 +31,6 @@ export const ProblemsPage: React.FC = () => {
     };
   }, []);
 
-  // Filter problems based on sidebar selection and search query
   const filteredProblems = useMemo(() => {
     let list = [...problems];
 
@@ -144,7 +143,6 @@ export const ProblemsPage: React.FC = () => {
     setIsMoreMenuOpen(false);
   };
 
-  // If viewing a single problem's full detail console
   if (selectedProblem) {
     return (
       <div className="flex-1 w-full h-full flex flex-col bg-slate-50 overflow-hidden font-sans">
@@ -180,7 +178,6 @@ export const ProblemsPage: React.FC = () => {
 
   return (
     <div className="flex-1 w-full h-full min-h-0 flex flex-col bg-gray-50 overflow-hidden font-sans">
-      {/* ── Top Header Navbar ── */}
       <header className="w-full bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between shrink-0 z-30 min-h-[50px] sticky top-0">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -195,9 +192,7 @@ export const ProblemsPage: React.FC = () => {
         />
       </header>
 
-      {/* ── Two-Column Body ── */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden pt-3 px-[18px] pb-6 gap-4">
-        {/* Left Sidebar */}
         <ProblemsSidebar
           selectedListId={selectedListId}
           onSelectList={(id) => {
@@ -214,9 +209,7 @@ export const ProblemsPage: React.FC = () => {
           }}
         />
 
-        {/* Right Main Table Panel */}
         <main className="flex-1 flex flex-col min-w-[340px] h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xs">
-          {/* Main Toolbar */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 shrink-0 bg-white">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
@@ -226,7 +219,6 @@ export const ProblemsPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Pagination controls */}
               <span className="text-xs font-medium text-slate-500">
                 {pageStart}-{pageEnd} of {totalCount}
               </span>
@@ -250,7 +242,6 @@ export const ProblemsPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Refresh Button */}
               <RefreshButton
                 size="sm"
                 onClick={async () => {
@@ -260,7 +251,6 @@ export const ProblemsPage: React.FC = () => {
                 title="Refresh list"
               />
 
-              {/* + New Button */}
               <Button
                 variant="primary"
                 size="sm"
@@ -270,7 +260,6 @@ export const ProblemsPage: React.FC = () => {
                 New
               </Button>
 
-              {/* More Actions Menu Button (···) */}
               <div className="relative">
                 <button
                   type="button"
@@ -331,7 +320,6 @@ export const ProblemsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Table View Content ── */}
           <div className="flex-1 overflow-auto">
             {viewMode === 'tile' ? (
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

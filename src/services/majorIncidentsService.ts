@@ -1,8 +1,3 @@
-/**
- * Major Incidents API Service
- * Centralized service connecting frontend Major Incidents screens
- * with live /api/major-incidents backend endpoints.
- */
 
 import { api, ApiError, logServiceError, getApiBaseUrl } from './apiClient';
 import {
@@ -47,9 +42,6 @@ export interface CreateMajorIncidentPayload {
   assignee?: string;
 }
 
-// The six-stage lifecycle vocabulary lives in its own dependency-free module
-// so the offline fixtures can import it without forming a cycle with this file.
-// Re-exported here because existing call sites import it from this service.
 export {
   STAGE_LABELS,
   RESOLVED_STAGES,
@@ -74,10 +66,6 @@ function formatStageTime(value?: string | null): string {
   });
 }
 
-/**
- * Expand a backend status into the pipeline's stage array.
- * Inverse of mapStageToBackendStatus.
- */
 function buildLifecycleStages(
   backendStatus: string,
   startedAt?: string,
@@ -103,9 +91,6 @@ function buildLifecycleStages(
 }
 
 
-/**
- * Converts a backend major incident object to the frontend MajorIncident shape.
- */
 export function mapBackendToFrontendIncident(backend: BackendMajorIncident): MajorIncident {
   const priority: Priority = (backend.priority as string) === 'P1' || (backend.priority as string) === 'Critical' ? 'Critical' : 'High';
   const product = Array.isArray(backend.affectedServices) && backend.affectedServices.length > 0
@@ -149,10 +134,6 @@ export function mapBackendToFrontendIncident(backend: BackendMajorIncident): Maj
   };
 }
 
-/**
- * Tell the app this screen is rendering local fixtures because the API could
- * not be reached, so it can show the demo-data badge.
- */
 function announceOfflineFallback(endpoint: string): void {
   try {
     window.dispatchEvent(
@@ -161,21 +142,11 @@ function announceOfflineFallback(endpoint: string): void {
       })
     );
   } catch {
-    // Non-browser environment
   }
 }
 
 export const majorIncidentsService = {
-  /**
-   * Fetch all major incidents from backend with fallback
-   */
   async getMajorIncidents(filters?: { status?: string; priority?: string }): Promise<MajorIncident[]> {
-    // Three distinct outcomes, kept distinct:
-    //   - live rows (possibly an empty list, which is a valid answer)
-    //   - API reachable but degraded: it returns its own fixtures tagged
-    //     meta.source="mock"; apiClient raises `servigen-demo-data` for the badge
-    //   - API unreachable: fall back to local fixtures so the screen is not
-    //     blank, and announce it so the UI labels the data as demo
     try {
       const res = await api.get('/api/major-incidents', { params: filters });
       const listData = res?.data ?? res;
@@ -193,10 +164,6 @@ export const majorIncidentsService = {
     }
   },
 
-  /**
-   * Fetch a single major incident by ID
-   * GET /api/major-incidents/:id (per spec)
-   */
   async getMajorIncidentById(id: string): Promise<MajorIncident | null> {
     try {
       const res = await api.get(`/api/major-incidents/${id}`);
@@ -206,16 +173,11 @@ export const majorIncidentsService = {
       }
     } catch (error) {
       logServiceError('majorIncidents.getMajorIncidentById', error);
-      // Fallback
     }
 
     return null;
   },
 
-  /**
-   * Declare and create a new major incident
-   * POST /api/major-incidents (per spec)
-   */
   async createMajorIncident(payload: CreateMajorIncidentPayload): Promise<MajorIncident | null> {
     try {
       const backendPriority: 'P1' | 'P2' = payload.priority === 'Critical' ? 'P1' : 'P2';
@@ -245,10 +207,6 @@ export const majorIncidentsService = {
     return null;
   },
 
-  /**
-   * Update major incident fields (status, commander, priority, affectedServices, title, description, impact)
-   * PATCH /api/major-incidents/:id (per spec)
-   */
   async updateMajorIncident(
     id: string,
     changes: Partial<{
@@ -287,10 +245,6 @@ export const majorIncidentsService = {
     return null;
   },
 
-  /**
-   * Add a timeline update / comment to a major incident
-   * POST /api/major-incidents/:id/updates (per spec)
-   */
   async addMajorIncidentUpdate(
     incidentId: string,
     payload: { message: string; author?: string }
@@ -302,7 +256,6 @@ export const majorIncidentsService = {
         if (updateRes.id === incidentId) {
           return mapBackendToFrontendIncident(updateRes as BackendMajorIncident);
         }
-        // If API returned update object (id is MI-xxx-U...), do not corrupt incident ID:
         const fresh = await this.getMajorIncidentById(incidentId);
         if (fresh) return fresh;
       }
@@ -313,9 +266,6 @@ export const majorIncidentsService = {
     return null;
   },
 
-  /**
-   * Alias for addMajorIncidentUpdate to support appendIncidentUpdate naming
-   */
   async appendIncidentUpdate(
     incidentId: string,
     payload: { message: string; author?: string }
@@ -323,10 +273,6 @@ export const majorIncidentsService = {
     return this.addMajorIncidentUpdate(incidentId, payload);
   },
 
-  /**
-   * Subscribe to live Server-Sent Events (SSE) updates for a specific major incident
-   * Endpoint: GET /api/major-incidents/:id/stream
-   */
   subscribeToIncidentStream(
     incidentId: string,
     onUpdate: (update: IncidentUpdate) => void,

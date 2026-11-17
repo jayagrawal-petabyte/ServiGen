@@ -23,7 +23,6 @@ export default function ApprovalDetailsModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState(initialRejectMode);
 
-  // Prevent background page scrolling while modal is open and handle Escape key
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -41,7 +40,6 @@ export default function ApprovalDetailsModal({
     };
   }, [onClose]);
 
-  // Reset form and validation state whenever the inspected approval changes (prevents stale data)
   useEffect(() => {
     setRejectReason('');
     setShowRejectInput(initialRejectMode);
@@ -72,7 +70,6 @@ export default function ApprovalDetailsModal({
       await onReject(approval.id, trimmedReason);
       onClose();
     } catch {
-      // Error handled by parent toast
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +81,6 @@ export default function ApprovalDetailsModal({
       await onApprove(approval.id);
       onClose();
     } catch {
-      // Error handled by parent toast
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +181,6 @@ export default function ApprovalDetailsModal({
         </div>
       }
     >
-          {/* Status Badge Row */}
           <div
             style={{
               padding: '10px 14px',
@@ -253,7 +248,6 @@ export default function ApprovalDetailsModal({
             </span>
           </div>
 
-          {/* Saved Rejection Reason Banner (Bug 1 Requirement 9) */}
           {(approval.rejectReason || approval.status === 'rejected') && (
             <div
               className="approval-saved-rejection-banner"
@@ -298,7 +292,6 @@ export default function ApprovalDetailsModal({
             </div>
           )}
 
-          {/* Request Information Card */}
           <div className="approval-ticket-details">
             <div className="approval-details-header">
               Approval Request Information
@@ -340,7 +333,6 @@ export default function ApprovalDetailsModal({
             </div>
           </div>
 
-          {/* Associated Ticket Metadata Card */}
           {approval.ticketDetails && (
             <div className="approval-ticket-details">
               <div className="approval-details-header">
@@ -408,7 +400,6 @@ export default function ApprovalDetailsModal({
             </div>
           </div>
 
-          {/* Mandatory Rejection Reason Input Section (Bug 1 Requirements 1, 2, 3, 4, 5) */}
           {showRejectInput && approval.status === 'pending' && (
             <div
               className="approval-reject-box"
@@ -487,7 +478,6 @@ export default function ApprovalDetailsModal({
                 }}
               />
 
-              {/* Validation Feedback (Bug 1 Requirements 4 & 5) */}
               {(validationError || (touched && !isReasonValid)) && (
                 <div
                   className="rejection-validation-error"

@@ -1,18 +1,3 @@
-/**
- * Servigen CMDB Service Layer
- * Corresponds to Servigen API Specification Section 5.13 (CMDB Module)
- *
- * Backend Routes (Mounted at /api/cmdb):
- * - GET    /api/cmdb/configuration-items                       : List all configuration items
- * - POST   /api/cmdb/configuration-items                       : Create new configuration item
- * - GET    /api/cmdb/configuration-items/grouped-by-type       : List configuration items grouped by type
- * - GET    /api/cmdb/configuration-items/:id                   : Get single CI details
- * - PATCH  /api/cmdb/configuration-items/:id                   : Update CI details, specs & lifecycle
- * - POST   /api/cmdb/configuration-items/:id/relationships     : Link two CIs together
- * - DELETE /api/cmdb/configuration-items/:id/relationships/:targetId : Remove dependency link
- * - GET    /api/cmdb/configuration-items/:id/topology          : Recursive dependency tree
- * - GET    /api/cmdb/service-cis                               : Live Service CIs health & SLA status
- */
 
 import type {
   ConfigurationItem,
@@ -57,9 +42,6 @@ export interface CiTopologyGraph {
   edges: CiTopologyEdge[];
 }
 
-/**
- * Map raw backend configuration item to frontend ConfigurationItem model
- */
 export function normalizeConfigurationItem(item: any): ConfigurationItem {
   if (!item) return item;
 
@@ -120,9 +102,6 @@ export function normalizeConfigurationItem(item: any): ConfigurationItem {
   };
 }
 
-/**
- * Group a list of Configuration Items by their type category
- */
 export function groupCisByType(items: ConfigurationItem[]): GroupedConfigurationItems {
   const grouped: GroupedConfigurationItems = {
     'Cloud Service': [],
@@ -144,10 +123,6 @@ export function groupCisByType(items: ConfigurationItem[]): GroupedConfiguration
   return grouped;
 }
 
-/**
- * Fetch all configuration items from live backend
- * Endpoint: GET /api/cmdb/configuration-items
- */
 export const fetchConfigurationItems = async (): Promise<CmdbApiResponse<ConfigurationItem[]>> => {
   try {
     const res = await api.get('/api/cmdb/configuration-items');
@@ -171,10 +146,6 @@ export const fetchConfigurationItems = async (): Promise<CmdbApiResponse<Configu
   };
 };
 
-/**
- * Fetch configuration items grouped by type from live backend
- * Endpoint: GET /api/cmdb/configuration-items/grouped-by-type
- */
 export const fetchConfigurationItemsGroupedByType = async (): Promise<
   CmdbApiResponse<GroupedConfigurationItems>
 > => {
@@ -216,10 +187,6 @@ export const fetchConfigurationItemsGroupedByType = async (): Promise<
   };
 };
 
-/**
- * Fetch single configuration item by ID from live backend
- * Endpoint: GET /api/cmdb/configuration-items/:id
- */
 export const fetchConfigurationItemById = async (
   id: string
 ): Promise<CmdbApiResponse<ConfigurationItem>> => {
@@ -235,10 +202,6 @@ export const fetchConfigurationItemById = async (
   };
 };
 
-/**
- * Create a new configuration item
- * Endpoint: POST /api/cmdb/configuration-items
- */
 export const createConfigurationItem = async (
   payload: Partial<ConfigurationItem>
 ): Promise<CmdbApiResponse<ConfigurationItem>> => {
@@ -251,10 +214,6 @@ export const createConfigurationItem = async (
   };
 };
 
-/**
- * Update CI details, specifications, and lifecycle status
- * Endpoint: PATCH /api/cmdb/configuration-items/:id
- */
 export const updateConfigurationItem = async (
   id: string,
   patch: Partial<ConfigurationItem>
@@ -268,10 +227,6 @@ export const updateConfigurationItem = async (
   };
 };
 
-/**
- * Link two CIs together (e.g. connect DB-001 to PAY-001 with direction upstream/downstream)
- * Endpoint: POST /api/cmdb/configuration-items/:id/relationships
- */
 export const addCiRelationship = async (
   id: string,
   relationship: {
@@ -292,10 +247,6 @@ export const addCiRelationship = async (
   };
 };
 
-/**
- * Remove a dependency link
- * Endpoint: DELETE /api/cmdb/configuration-items/:id/relationships/:targetId
- */
 export const deleteCiRelationship = async (
   id: string,
   targetId: string
@@ -311,10 +262,6 @@ export const deleteCiRelationship = async (
   };
 };
 
-/**
- * Return recursive dependency tree (nodes & edges)
- * Endpoint: GET /api/cmdb/configuration-items/:id/topology
- */
 export const fetchCiTopology = async (
   id: string
 ): Promise<CmdbApiResponse<CiTopologyGraph>> => {
@@ -332,10 +279,6 @@ export const fetchCiTopology = async (
   };
 };
 
-/**
- * Fetch all live Service CIs from live backend
- * Endpoint: GET /api/cmdb/service-cis
- */
 export const fetchServiceCis = async (): Promise<CmdbApiResponse<ServiceCI[]>> => {
   try {
     const res = await api.get('/api/cmdb/service-cis');
@@ -361,7 +304,6 @@ export const fetchServiceCis = async (): Promise<CmdbApiResponse<ServiceCI[]>> =
       };
     }
   } catch (_err) {
-    // Endpoint unavailable
   }
 
   return {

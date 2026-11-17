@@ -42,7 +42,6 @@ export const AdminSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('sla');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // 1. SLA Policy Configuration State
   const [slaRules, setSlaRules] = useState<SlaRule[]>([
     { priority: 'Critical', responseTargetMinutes: 15, resolutionTargetHours: 2, businessHoursOnly: false, escalateAtPercent: 75 },
     { priority: 'High', responseTargetMinutes: 30, resolutionTargetHours: 4, businessHoursOnly: false, escalateAtPercent: 80 },
@@ -50,7 +49,6 @@ export const AdminSettingsPage: React.FC = () => {
     { priority: 'Low', responseTargetMinutes: 120, resolutionTargetHours: 48, businessHoursOnly: true, escalateAtPercent: 90 },
   ]);
 
-  // 2. Category Taxonomy State
   const [categories, setCategories] = useState<TicketCategoryItem[]>([
     { id: 'CAT-01', name: 'Network & Global VPN Access', department: 'Infrastructure', assignedTeam: '1st Line Support', slaTier: 'Expedited', active: true },
     { id: 'CAT-02', name: 'Hardware & Laptop Provisioning', department: 'End User Computing', assignedTeam: '2nd Line Specialists', slaTier: 'Standard', active: true },
@@ -61,15 +59,12 @@ export const AdminSettingsPage: React.FC = () => {
   const [newCatName, setNewCatName] = useState('');
   const [newCatTeam, setNewCatTeam] = useState('1st Line Support');
 
-  // 3. Priority Matrix Configuration State: [Impact][Urgency]
-  // 0: High, 1: Medium, 2: Low
   const [priorityMatrix, setPriorityMatrix] = useState<string[][]>([
-    ['Critical', 'High', 'Medium'],   // High Impact
-    ['High', 'Medium', 'Low'],        // Medium Impact
-    ['Medium', 'Low', 'Low'],         // Low Impact
+    ['Critical', 'High', 'Medium'],
+    ['High', 'Medium', 'Low'],
+    ['Medium', 'Low', 'Low'],
   ]);
 
-  // 4. Workflow Rules State
   const [workflowGuards, setWorkflowGuards] = useState({
     requireRootCauseOnResolve: true,
     requireCabApprovalForProdChanges: true,
@@ -78,7 +73,6 @@ export const AdminSettingsPage: React.FC = () => {
     autoNotifyRequesterOnStatusChange: true,
   });
 
-  // 5. Custom Form Fields
   const [customFields, setCustomFields] = useState([
     { id: 'fld-1', label: 'Impacted Site / Data Center', type: 'Dropdown', required: true, module: 'Incidents' },
     { id: 'fld-2', label: 'Vendor Ticket External Reference', type: 'Text', required: false, module: 'Incidents' },
@@ -134,14 +128,12 @@ export const AdminSettingsPage: React.FC = () => {
 
   return (
     <div className="admin-settings-canvas">
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="admin-toast-banner">
           ✓ {toastMessage}
         </div>
       )}
 
-      {/* Top Application Navbar matching UI/UX design */}
       <header className="admin-header">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -151,7 +143,6 @@ export const AdminSettingsPage: React.FC = () => {
         <GlobalNavbarActions />
       </header>
 
-      {/* Page Title & Subtitle */}
       <div className="admin-title-area">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-[#C96F55]/10 text-[#C96F55] rounded-xl">
@@ -166,7 +157,6 @@ export const AdminSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
       <div className="admin-nav-tabs">
         <button
           type="button"
@@ -218,9 +208,7 @@ export const AdminSettingsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Main Settings Panel */}
       <main className="admin-main-panel">
-        {/* TAB 1: SLA Policies */}
         {activeTab === 'sla' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -291,7 +279,6 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 2: Categories */}
         {activeTab === 'categories' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -301,7 +288,6 @@ export const AdminSettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Add Category Form */}
             <form onSubmit={handleAddCategory} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-3 items-end">
               <div className="flex-1 min-w-[240px]">
                 <label className="block text-xs font-bold text-slate-700 mb-1">New Category Title</label>
@@ -333,7 +319,6 @@ export const AdminSettingsPage: React.FC = () => {
               </button>
             </form>
 
-            {/* Category Table */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10.5px]">
@@ -377,7 +362,6 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: Priority Calculation Matrix */}
         {activeTab === 'matrix' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -431,7 +415,6 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 4: Workflow Transitions & Guards */}
         {activeTab === 'workflows' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -474,7 +457,6 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 5: Dynamic Custom Fields */}
         {activeTab === 'fields' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -529,7 +511,6 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 6: Role Permissions (RBAC) */}
         {activeTab === 'roles' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">

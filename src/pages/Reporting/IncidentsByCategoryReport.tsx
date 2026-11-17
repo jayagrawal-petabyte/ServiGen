@@ -288,7 +288,6 @@ export default function IncidentsByCategoryReport() {
   const [selectedTicket, setSelectedTicket] = useState<ReportTicketRow | null>(null);
   const [tickets, setTickets] = useState<ReportTicketRow[]>(DEFAULT_REPORT_TICKETS);
 
-  // Catalog and No-Code Query Builder states
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isQueryBuilderOpen, setIsQueryBuilderOpen] = useState(false);
   const [customQueryConfig, setCustomQueryConfig] = useState<CustomQueryConfig | null>(() => {
@@ -351,7 +350,6 @@ export default function IncidentsByCategoryReport() {
     setActiveCatalogReport(report);
     handleSelectReport(report.targetView, false);
 
-    // Apply specific contextual filters according to template definition
     if (report.id === 'REP-INC-03') {
       setActiveCategoryTag(null);
     } else if (report.id === 'REP-INC-04') {
@@ -391,7 +389,6 @@ export default function IncidentsByCategoryReport() {
     setTimeout(() => setStatusMessage(null), 2500);
   };
 
-  // Scheduled export state
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleFreq, setScheduleFreq] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
   const [scheduleFormat, setScheduleFormat] = useState<'CSV' | 'PDF'>('CSV');
@@ -404,7 +401,6 @@ export default function IncidentsByCategoryReport() {
     return null;
   });
 
-  // Custom column visibility builder
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('servigen_reporting_visible_columns');
@@ -474,7 +470,6 @@ export default function IncidentsByCategoryReport() {
     };
   }, [activeCategoryTag, refreshKey]);
 
-  // Clean default filter conditions
   const [filters, setFilters] = useState<FilterRow[]>([]);
 
   const handleCloseTab = () => {
@@ -543,12 +538,10 @@ export default function IncidentsByCategoryReport() {
     setTimeout(() => setStatusMessage(null), 2000);
   };
 
-  // Dynamically filtered tickets
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
-      // Check Period Filter
       if (period !== 'All') {
-        const ticketDateStr = t.createdAt; // e.g. "13/11/2026"
+        const ticketDateStr = t.createdAt;
         const parts = ticketDateStr.split('/');
         if (parts.length === 3) {
           const tDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
@@ -561,7 +554,6 @@ export default function IncidentsByCategoryReport() {
         }
       }
       if (activeCategoryTag && !t.category.toLowerCase().includes(activeCategoryTag.toLowerCase().split('>')[0])) {
-        // Soft match if category tag is active
         return false;
       }
       if (activeReport === 'sla') {
@@ -579,7 +571,6 @@ export default function IncidentsByCategoryReport() {
           return false;
         }
       }
-      // Check custom condition rows
       for (const f of filters) {
         let fieldVal = '';
         if (f.field === 'Category') fieldVal = t.category || '';
@@ -607,7 +598,6 @@ export default function IncidentsByCategoryReport() {
     });
   }, [tickets, activeCategoryTag, activeReport, slaFilterMode, filters, period, activeCatalogReport]);
 
-  // Sorting state for report table
   type SortField = 'category' | 'id' | 'summary' | 'createdAt' | 'site' | 'team' | 'priority' | 'agent' | 'status' | 'slaResolutionMet';
   const [sortField, setSortField] = useState<SortField>('category');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -666,7 +656,6 @@ export default function IncidentsByCategoryReport() {
     });
   }, [filteredTickets, sortField, sortOrder]);
 
-  // SLA Metrics
   const slaMetrics = useMemo(() => {
     const total = tickets.length;
     const met = tickets.filter((t) => t.slaResolutionMet === 1).length;
@@ -675,12 +664,10 @@ export default function IncidentsByCategoryReport() {
     return { total, met, breached, metPercent };
   }, [tickets]);
 
-  // Contextual filters for Assets
   const [assetSearch, setAssetSearch] = useState('');
   const [assetTypeFilter, setAssetTypeFilter] = useState('All');
   const [assetEnvFilter, setAssetEnvFilter] = useState('All');
 
-  // Contextual filters for Changes
   const [changeSearch, setChangeSearch] = useState('');
   const [changeRiskFilter, setChangeRiskFilter] = useState('All');
   const [changeTypeFilter, setChangeTypeFilter] = useState('All');
@@ -724,7 +711,6 @@ export default function IncidentsByCategoryReport() {
   }, [CHANGES_DATA, changeRiskFilter, changeTypeFilter, changeSearch]);
 
 
-  // CSV Exporter
   const handleExportCSV = () => {
     let headers: string[] = [];
     let rows: string[][] = [];
@@ -835,14 +821,12 @@ export default function IncidentsByCategoryReport() {
 
   return (
     <div className="reporting-page-container">
-      {/* Toast banner */}
       {statusMessage && (
         <div className="reporting-toast-banner">
           ✓ {statusMessage}
         </div>
       )}
 
-      {/* ── Top Navbar (matching Dashboard & Reference Image) ── */}
       <header className="reporting-top-nav-bar">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-0 shrink-0">
           <span>Service Desk</span>
@@ -850,7 +834,6 @@ export default function IncidentsByCategoryReport() {
           <span className="text-gray-900">Reporting &amp; Analytics</span>
         </div>
 
-        {/* Right utility items */}
         <div className="reporting-top-right-tools">
           <GlobalNavbarActions
             onGetStarted={() => navigate('/dashboard')}
@@ -863,9 +846,7 @@ export default function IncidentsByCategoryReport() {
         </div>
       </header>
 
-      {/* ── Two-Column Layout (ModuleSidebar + Main Workspace) ── */}
       <div className="flex flex-1 h-full min-h-0 w-full overflow-hidden p-3.5 sm:p-5 gap-3.5 sm:gap-5 box-border">
-        {/* Left Module Sidebar */}
         <ModuleSidebar
           title="Reporting & Analytics"
           icon={<BarChart3 className="w-3.5 h-3.5 text-[#C96F55]" />}
@@ -878,9 +859,7 @@ export default function IncidentsByCategoryReport() {
           resetTitleTooltip="Reset to Incidents by Category"
         />
 
-        {/* Right Main Workspace */}
         <main className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-transparent gap-5 pr-1">
-          {/* ── Level 2: Active Report Header Card & Unified Action Toolbar ── */}
           <div className="bg-white border border-[#ebdcd3] rounded-2xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -920,7 +899,6 @@ export default function IncidentsByCategoryReport() {
             </p>
           </div>
 
-          {/* Contextual Action Toolbar */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             {activeReport === 'custom' && (
               <button
@@ -1050,7 +1028,6 @@ export default function IncidentsByCategoryReport() {
           </div>
         </div>
 
-        {/* Running Catalog Template Banner */}
         {activeCatalogReport && (
           <div className="bg-gradient-to-r from-[#FFF9F5] via-white to-[#FFF9F5] border border-[#ebdcd3] rounded-2xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start sm:items-center gap-3 min-w-0">
@@ -1107,12 +1084,9 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ── Level 3: Active Report Content & Data ── */}
 
-        {/* ══════════════ VIEW 1: INCIDENTS BY CATEGORY ══════════════ */}
         {activeReport === 'category' && (
           <div className="flex flex-col gap-6">
-            {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="Total Active Incidents"
@@ -1140,7 +1114,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* Contextual Incident Filter Strip */}
             <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#ebdcd3]/60">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1184,7 +1157,6 @@ export default function IncidentsByCategoryReport() {
                 </div>
               </div>
 
-              {/* Dynamic Filter Conditions Builder */}
               {filters.length > 0 && (
                 <div className="filter-rows-container pt-2">
                   {filters.map((filter) => (
@@ -1268,7 +1240,6 @@ export default function IncidentsByCategoryReport() {
                 </div>
               )}
 
-              {/* Active Category Tag pill */}
               {activeCategoryTag && (
                 <div className="flex items-center gap-2 pt-1">
                   <span className="text-xs font-semibold text-[#332B28]/60">Active Filter:</span>
@@ -1280,7 +1251,6 @@ export default function IncidentsByCategoryReport() {
               )}
             </div>
 
-            {/* Incidents Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1389,10 +1359,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 2: SLA COMPLIANCE ══════════════ */}
         {activeReport === 'sla' && (
           <div className="flex flex-col gap-6">
-            {/* SLA KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="SLA Met Compliance"
@@ -1423,7 +1391,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* SLA Filter Slices */}
             <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-[#332B28] uppercase tracking-wider">Filter SLA Slices:</span>
@@ -1467,7 +1434,6 @@ export default function IncidentsByCategoryReport() {
               </span>
             </div>
 
-            {/* SLA Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1524,10 +1490,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 3: AGENT PERFORMANCE ══════════════ */}
         {activeReport === 'agents' && (
           <div className="flex flex-col gap-6">
-            {/* Agent KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="Active Responders"
@@ -1554,7 +1518,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* Agent Performance Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1598,10 +1561,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 4: FIRST CONTACT RESOLUTION (FCR) ══════════════ */}
         {activeReport === 'fcr' && (
           <div className="flex flex-col gap-6">
-            {/* FCR KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="First Contact Resolution"
@@ -1628,7 +1589,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* FCR Breakdown Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1661,10 +1621,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 5: CHANGE MANAGEMENT & CAB ══════════════ */}
         {activeReport === 'changes' && (
           <div className="flex flex-col gap-6">
-            {/* Changes KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="Total Production RFCs"
@@ -1692,7 +1650,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* Risk Profile Breakdown Bar */}
             <div className="bg-white p-5 rounded-2xl border border-[#ebdcd3] shadow-xs flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#332B28]">Risk Profile Breakdown &amp; CAB Governance</span>
@@ -1712,7 +1669,6 @@ export default function IncidentsByCategoryReport() {
               </div>
             </div>
 
-            {/* Contextual Changes Filter Strip */}
             <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-wrap">
                 <input
@@ -1744,7 +1700,6 @@ export default function IncidentsByCategoryReport() {
               </span>
             </div>
 
-            {/* Changes Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1792,10 +1747,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 6: CMDB ASSET LIFECYCLE ══════════════ */}
         {activeReport === 'assets' && (
           <div className="flex flex-col gap-6">
-            {/* Asset KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 label="Total CMDB Assets"
@@ -1822,7 +1775,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* Asset Lifecycle Progression Bar */}
             <div className="bg-white p-5 rounded-2xl border border-[#ebdcd3] shadow-xs flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#332B28]">CI Lifecycle Progression</span>
@@ -1844,7 +1796,6 @@ export default function IncidentsByCategoryReport() {
               </div>
             </div>
 
-            {/* Contextual Asset Filter Strip (NO INCIDENT MISMATCH!) */}
             <div className="bg-white border border-[#ebdcd3] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-wrap">
                 <input
@@ -1876,7 +1827,6 @@ export default function IncidentsByCategoryReport() {
               </span>
             </div>
 
-            {/* Assets Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -1922,10 +1872,8 @@ export default function IncidentsByCategoryReport() {
           </div>
         )}
 
-        {/* ══════════════ VIEW 7: NO-CODE CUSTOM QUERY VIEW ══════════════ */}
         {activeReport === 'custom' && customQueryConfig && (
           <div className="flex flex-col gap-6">
-            {/* Custom KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <MetricCard
                 label="Total Evaluated Records"
@@ -1946,7 +1894,6 @@ export default function IncidentsByCategoryReport() {
               />
             </div>
 
-            {/* Custom Query Header Banner */}
             <div className="p-4 bg-[#FFF9F5] border border-[#ebdcd3] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#263B5E] block">Active Custom Query</span>
@@ -1976,7 +1923,6 @@ export default function IncidentsByCategoryReport() {
               </div>
             </div>
 
-            {/* Custom Aggregation Table */}
             <div className="report-table-wrapper bg-white border border-[#ebdcd3] rounded-2xl overflow-hidden shadow-xs">
               <table className="report-data-table w-full">
                 <thead>
@@ -2019,7 +1965,6 @@ export default function IncidentsByCategoryReport() {
         </main>
       </div>
 
-      {/* ── Ticket Detail Modal Popup ── */}
       {selectedTicket && (
         <TicketDetailModal
           ticket={{
@@ -2038,7 +1983,6 @@ export default function IncidentsByCategoryReport() {
         />
       )}
 
-      {/* ── Schedule Automated Export Dialog ── */}
       <ModalShell
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
@@ -2130,7 +2074,6 @@ export default function IncidentsByCategoryReport() {
         </div>
       </ModalShell>
 
-      {/* ── Pre-Built Report Catalog Modal ── */}
       <ReportCatalogModal
         isOpen={isCatalogOpen}
         onClose={() => setIsCatalogOpen(false)}
@@ -2138,14 +2081,12 @@ export default function IncidentsByCategoryReport() {
         activeReportId={activeCatalogReport?.id}
       />
 
-      {/* ── No-Code Custom Query Builder Modal ── */}
       <QueryBuilderModal
         isOpen={isQueryBuilderOpen}
         onClose={() => setIsQueryBuilderOpen(false)}
         onExecuteQuery={handleExecuteCustomQuery}
       />
 
-      {/* Refresh Report Button & Results Count */}
     </div>
   );
 }

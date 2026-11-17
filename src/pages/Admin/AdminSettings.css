@@ -1,4 +1,3 @@
-/* ── Administrative Configuration Settings Screen (Halo Parity) ── */
 
 .admin-settings-canvas {
   min-height: 100vh;
@@ -9,7 +8,6 @@
   flex-direction: column;
 }
 
-/* Toast Banner */
 .admin-toast-banner {
   position: fixed;
   top: 14px;
@@ -31,7 +29,6 @@
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Top Navigation Bar matching UI/UX exact replication */
 .admin-header {
   height: 64px;
   background-color: #ffffff;
@@ -44,7 +41,6 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Title Area */
 .admin-title-area {
   padding: 24px 28px 12px;
   max-width: 1200px;
@@ -53,7 +49,6 @@
   margin: 0 auto;
 }
 
-/* Nav Tabs */
 .admin-nav-tabs {
   max-width: 1200px;
   width: 100%;
@@ -96,7 +91,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Main Panel */
 .admin-main-panel {
   max-width: 1200px;
   width: 100%;
@@ -106,7 +100,6 @@
   flex: 1;
 }
 
-/* Inputs & Buttons */
 .admin-input-box {
   width: 100%;
   padding: 8px 12px;

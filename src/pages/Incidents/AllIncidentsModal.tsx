@@ -156,7 +156,6 @@ export default function AllIncidentsModal({
       }
     >
       <div>
-        {/* Search & Filter Toolbar */}
         <div className="p-4 px-6 border-b border-slate-100 bg-white">
           <FilterToolbar
             search={search}

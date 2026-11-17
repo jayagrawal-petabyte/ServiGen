@@ -93,8 +93,6 @@ const CategoryChart = React.memo(function CategoryChart({
   const [hoveredSlice, setHoveredSlice] =
     useState<HoveredSlice | null>(null);
 
-  // Use backend-provided category names and counts.
-  // Do not introduce fixture or hardcoded incident counts.
   const sorted = useMemo(() => {
     const sourceItems = Array.isArray(data) ? data : [];
     const validItems = sourceItems.filter(
@@ -110,12 +108,10 @@ const CategoryChart = React.memo(function CategoryChart({
       const ai = ORDER.indexOf(a.label);
       const bi = ORDER.indexOf(b.label);
 
-      // Keep known design categories in their intended order.
       if (ai !== -1 && bi !== -1) return ai - bi;
       if (ai !== -1) return -1;
       if (bi !== -1) return 1;
 
-      // Unknown categories from the backend remain visible.
       return b.value - a.value || a.label.localeCompare(b.label);
     });
   }, [data]);

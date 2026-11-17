@@ -1,8 +1,3 @@
-/* ============================================================
-   GLOBAL NAVBAR ACTIONS COMPONENT STYLES
-   Adheres to ServiGen Global Utility Bar Design System
-   ============================================================ */
-
 .global-nav-actions-wrap {
   position: relative;
   display: flex;
@@ -10,7 +5,6 @@
   gap: 12px;
 }
 
-/* Leading Image Components: Get Started & + New Ticket */
 .global-nav-leading-actions {
   display: flex;
   align-items: center;
@@ -84,7 +78,6 @@
   border-color: #d8897c;
 }
 
-/* Red Notification Badge */
 .global-nav-badge {
   position: absolute;
   top: 3px;
@@ -114,7 +107,6 @@
   border: 1.5px solid #ffffff;
 }
 
-/* Avatar Button */
 .global-nav-avatar-btn {
   position: relative;
   width: 34px;
@@ -161,7 +153,6 @@
   background: #94a3b8;
 }
 
-/* Flyout Menus Common Styles */
 .global-flyout-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -217,7 +208,6 @@
   background: #e0f2fe;
 }
 
-/* Global Multi-Entity Search Dropdown */
 .global-search-flyout {
   width: 560px;
   max-width: calc(100vw - 32px);
@@ -313,7 +303,6 @@
   pointer-events: none;
 }
 
-/* Scope Filter Tabs */
 .global-search-scope-tabs {
   display: flex;
   align-items: center;
@@ -353,7 +342,7 @@
   border-color: #13273e;
 }
 
-/* Results List */
+
 .global-search-results-list {
   max-height: 420px;
   overflow-y: auto;
@@ -515,7 +504,6 @@
   text-align: center;
 }
 
-/* Footer Shortcuts */
 .global-search-footer {
   display: flex;
   align-items: center;
@@ -545,7 +533,6 @@
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Notifications Dropdown */
 .global-notifications-flyout {
   width: 360px;
 }
@@ -650,7 +637,6 @@
   display: block;
 }
 
-/* User Profile Dropdown */
 .global-profile-flyout {
   width: 250px;
   padding: 8px 0;
@@ -790,7 +776,6 @@
   background: #fef2f2;
 }
 
-/* Help Modal Overlay */
 .global-help-modal-overlay {
   position: fixed;
   inset: 0;
@@ -936,7 +921,6 @@
   font-weight: 600;
 }
 
-/* ─── TO-DO FLOATING POPOVER (MATCHING FIGMA SCREENSHOT) ─── */
 .global-nav-icon-btn.is-todo-active {
   background: #ffffff !important;
   color: #C96F55 !important;
@@ -1216,9 +1200,7 @@
   text-decoration: underline;
 }
 
-/* ============================================================
-   RESPONSIVE MOBILE STYLES (< 768px)
-   ============================================================ */
+
 @media (max-width: 768px) {
   .global-nav-actions-wrap {
     gap: 6px;

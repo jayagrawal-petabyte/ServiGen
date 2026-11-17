@@ -138,7 +138,6 @@ export const NewProblemModal: React.FC<NewProblemModalProps> = ({ onClose, onSub
             />
           </div>
 
-          {/* Footer Actions */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
             <button
               type="button"

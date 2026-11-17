@@ -26,24 +26,20 @@ export interface ModuleSidebarProps {
   resetTitleTooltip?: string;
   subtitle?: React.ReactNode;
 
-  // Search
   search?: React.ReactNode;
   searchValue?: string;
   onSearchChange?: (val: string) => void;
   searchPlaceholder?: string;
   searchId?: string;
 
-  // Navigation Items / Groups
   groups?: ModuleSidebarGroup[];
   items?: ModuleSidebarItem[];
   selectedId?: string;
   onSelectId?: (id: string) => void;
 
-  // Collapse
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 
-  // Custom Slots
   footer?: React.ReactNode;
   children?: React.ReactNode;
   hideZeroCountBadges?: boolean;
@@ -123,7 +119,6 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
         isCollapsed ? collapsedWidth : width
       } shrink-0 bg-white border border-gray-200 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col self-stretch overflow-hidden relative select-none box-border transition-all duration-200 ease-in-out ${className}`}
     >
-      {/* ── Collapsed Mode ── */}
       {isCollapsed ? (
         <div className="flex flex-col h-full items-center py-2.5 gap-1.5 overflow-y-auto overflow-x-hidden">
           {onToggleCollapse && (
@@ -168,9 +163,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
           })}
         </div>
       ) : (
-        /* ── Expanded Normal Mode ── */
         <>
-          {/* 1. Top Search Bar */}
           {search !== undefined ? (
             search && <div className="p-3 pb-2 shrink-0">{search}</div>
           ) : onSearchChange ? (
@@ -186,7 +179,6 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
             </div>
           ) : null}
 
-          {/* 2. Header Row: Title, Subtitle & Collapse Button */}
           {(title || onToggleCollapse) && (
             <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5 shrink-0">
               <div className="min-w-0 flex-1">
@@ -221,9 +213,7 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
             </div>
           )}
 
-          {/* 3. Navigation List / Groups */}
           <nav className="flex-1 overflow-y-auto px-2 mt-2 pb-6 flex flex-col gap-2">
-            {/* Flat items list */}
             {items && (
               <div className="flex flex-col gap-0.5">
                 {items.map((item) => {
@@ -260,7 +250,6 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
               </div>
             )}
 
-            {/* Grouped items list */}
             {groups &&
               groups.map((group) => {
                 const key = group.id || group.title || 'group';
@@ -337,7 +326,6 @@ export const ModuleSidebar: React.FC<ModuleSidebarProps> = ({
 
             {children}
 
-            {/* 4. Footer */}
             {footer && <div className="pt-2 px-1 shrink-0 mt-auto">{footer}</div>}
           </nav>
         </>

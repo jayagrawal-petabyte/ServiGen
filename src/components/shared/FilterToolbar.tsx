@@ -46,7 +46,6 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
       className={`bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 ${className}`}
     >
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 min-w-0">
-        {/* Live Search Input */}
         {showSearch && (
           <div className={`relative flex-1 max-w-full sm:max-w-xs md:max-w-sm ${searchClassName}`}>
             <Search
@@ -74,7 +73,6 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           </div>
         )}
 
-        {/* Filter slots */}
         {filters && (
           <div className="flex items-center gap-2 flex-wrap">
             {filters}
@@ -84,7 +82,6 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         {children}
       </div>
 
-      {/* Right Section: Counts & Actions */}
       <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
         {hasCounts && (
           <div className="text-xs text-slate-500 font-medium whitespace-nowrap">

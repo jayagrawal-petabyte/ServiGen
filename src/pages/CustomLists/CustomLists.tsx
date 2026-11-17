@@ -31,7 +31,6 @@ const CustomLists: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
-  // Filter states
   const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([
     { id: '1', field: 'Status', operator: 'is equal to', value: 'Open' },
     { id: '2', field: 'Priority', operator: 'is not equal to', value: 'Closed' }
@@ -75,7 +74,6 @@ const CustomLists: React.FC = () => {
     }
   };
 
-  // Handlers for Filters
   const handleAddCondition = () => {
     setFilterConditions(prev => [
       ...prev,
