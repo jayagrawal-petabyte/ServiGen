@@ -64,14 +64,6 @@ interface TeamIncidentTableProps {
   initialViewKind?: "team" | "agent" | "breaching-sla";
 }
 
-/**
- * Incident categories.
- *
- * These must match the values used elsewhere (ticket records, the category
- * chart, the dashboard breakdown). The form previously offered four invented
- * paths — "Collaboration Tools > Zoom/Teams" and friends — so anything created
- * here carried a category no filter or report recognised.
- */
 const INCIDENT_CATEGORIES = [
   'Network & Connectivity',
   'Software & Applications',
@@ -202,7 +194,7 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
             {aiRisk.level === 'High Risk' ? (
               <span
                 className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 shrink-0"
-                title="High AI Risk: Approaching SLA breach threshold"
+                title="High Risk: Approaching SLA breach threshold"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0" />
                 High Risk {aiRisk.score}%
@@ -228,7 +220,7 @@ const IncidentTableRow = React.memo(function IncidentTableRow({
                 disabled={isEscalating}
                 onClick={() => onEscalateToTier2(incident)}
                 className="px-2.5 py-0.5 rounded-full border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[11px] font-medium cursor-pointer transition-colors shadow-2xs flex items-center gap-1 shrink-0 disabled:opacity-50"
-                title="1-Click Escalate to 2nd Line Support via AI Handoff"
+                title="Escalate to 2nd Line Support"
               >
                 {isEscalating ? (
                   <span className="w-2.5 h-2.5 border border-slate-600 border-t-transparent rounded-full animate-spin" />
@@ -337,18 +329,14 @@ function TeamIncidentTable({
     });
 
     setEscalatingId(null);
-    setEscalationToast(`⚡ Ticket #${incident.id} escalated to 2nd Line Support (Tier 2 AI Handoff Created)!`);
+    setEscalationToast(`⚡ Ticket #${incident.id} escalated to 2nd Line Support (Tier 2 Handoff Created)!`);
     setTimeout(() => setEscalationToast(null), 4000);
   };
-
-  // Sync incidents and agents with live backend API
   useEffect(() => {
-    // Clear legacy localStorage cached mock data
     try {
       localStorage.removeItem("servigen_all_team_incidents_v6");
       localStorage.removeItem("servigen_all_team_incidents_v5");
     } catch {
-      // ignore
     }
 
     let mounted = true;
@@ -383,8 +371,6 @@ function TeamIncidentTable({
       mounted = false;
     };
   }, [team]);
-
-  // Global ticket event subscription for real-time queue synchronization
   useEffect(() => {
     const unsubscribe = ticketEvents.subscribe((event) => {
       if (event.type === 'TICKET_UPDATED') {
@@ -454,8 +440,6 @@ function TeamIncidentTable({
     }
   });
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
-
-  // Popover & Drawer States
   const [showKpiDrawer, setShowKpiDrawer] = useState(false);
   const [showFeedPopover, setShowFeedPopover] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
@@ -465,8 +449,6 @@ function TeamIncidentTable({
 
   const [isTableMenuOpen, setIsTableMenuOpen] = useState<boolean>(false);
   const tableMenuRef = useRef<HTMLDivElement>(null);
-
-  // Synced agent presence state
   const [agentPresence, setAgentPresence] = useState<'available' | 'away' | 'busy'>(() => {
     try {
       const saved = localStorage.getItem('servigen_agent_presence');
@@ -474,8 +456,6 @@ function TeamIncidentTable({
     } catch {}
     return 'available';
   });
-
-  // Handle status filter deep linking (e.g., /incidents?status=open or /incidents?status=resolved)
   useEffect(() => {
     const statusParam = searchParams.get('status');
     if (!statusParam) return;
@@ -494,8 +474,6 @@ function TeamIncidentTable({
       setStatusFilter('All incidents');
     }
   }, [searchParams]);
-
-  // Handle direct ticket deep-linking (e.g. /incidents?id=1024 or /incidents?ticketId=TK-1024)
   useEffect(() => {
     const targetId = searchParams.get('id') || searchParams.get('ticketId');
     if (!targetId) return;
@@ -509,8 +487,6 @@ function TeamIncidentTable({
     }
 
     const clean = targetId.toLowerCase().replace(/^#?tk-?/i, '').trim();
-
-    // 1. Try to find in loaded incidents
     const match = incidents.find(
       (inc) =>
         inc.id.toLowerCase() === targetId.toLowerCase() ||
@@ -523,8 +499,6 @@ function TeamIncidentTable({
       setSelectedIncident(match);
       return;
     }
-
-    // 2. If not found in current loaded list, fetch from API or fallback
     let mounted = true;
     api
       .get(`/api/incidents/${encodeURIComponent(clean || targetId)}`)
@@ -561,8 +535,6 @@ function TeamIncidentTable({
     window.addEventListener('servigen-presence-change', handlePresenceEvent);
     return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
   }, []);
-
-  // Click outside listener for dropdown menus
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (statusMenuRef.current && !statusMenuRef.current.contains(e.target as Node)) {
@@ -577,12 +549,8 @@ function TeamIncidentTable({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  // Team Sidebar Navigation state
   const [firstLineExpanded, setFirstLineExpanded] = useState<boolean>(!isSecondLine);
   const [secondLineExpanded, setSecondLineExpanded] = useState<boolean>(isSecondLine);
-
-  // Dynamic live agent lists
   const firstLineAgentNames = useMemo(() => {
     const fromRoster = firstLineAgents.map((a) => `${a.firstName} ${a.lastName}`.trim()).filter(Boolean);
     const fromIncidents = incidents
@@ -598,8 +566,6 @@ function TeamIncidentTable({
       .map((i) => i.agent);
     return Array.from(new Set([...fromRoster, ...fromIncidents]));
   }, [secondLineAgents, incidents]);
-
-  // Single-pass computation for all sidebar metrics & agent counts O(N)
   const {
     count1stLineTotal,
     count1stLineUnassigned,
@@ -653,14 +619,10 @@ function TeamIncidentTable({
   }, [incidents]);
 
   const deferredSearch = useDeferredValue(search);
-
-  // Reset page and selection when view, search, or status filter changes
   useEffect(() => {
     setCurrentPage(1);
     setSelectedIncidents([]);
   }, [selectedView, deferredSearch, statusFilter]);
-
-  // Get Started & New incident modals
   const [showGetStartedModal, setShowGetStartedModal] = useState<boolean>(false);
   const [showNewIncidentModal, setShowNewIncidentModal] = useState<boolean>(false);
   const [newSummary, setNewSummary] = useState("");
@@ -668,12 +630,8 @@ function TeamIncidentTable({
     isSecondLine ? "Infrastructure & Cloud" : "Network & Connectivity"
   );
   const [newPriority, setNewPriority] = useState<string>("Medium");
-
-  // Filtered incidents based on active sidebar view selection, status filter & search query
   const filteredIncidents = useMemo(() => {
     let base = incidents;
-
-    // View filter
     if (selectedView.kind === "team") {
       base = incidents.filter((i) => i.team === selectedView.team);
     } else if (selectedView.kind === "agent") {
@@ -689,8 +647,6 @@ function TeamIncidentTable({
     } else if (selectedView.kind === "breaching-sla") {
       base = incidents.filter((i) => i.sla.startsWith("-") || i.sla.toLowerCase().includes("breach"));
     }
-
-    // Status filter
     if (statusFilter === "Open incidents") {
       base = base.filter((i) => i.status !== "Resolved" && i.status !== "Closed");
     } else if (statusFilter === "In Progress") {
@@ -948,7 +904,7 @@ function TeamIncidentTable({
 
   return (
     <div className="team-shell">
-      {/* Top Navbar Header */}
+      {}
       <header className="team-top-navbar">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <span>Service Desk</span>
@@ -968,11 +924,11 @@ function TeamIncidentTable({
         </div>
       </header>
 
-      {/* Two-Column Body */}
+      {}
       <div className="team-body-row">
-        {/* Left Sidebar: Incidents by Team */}
+        {}
         <aside className={`team-sidebar-panel ${isSidebarCollapsed ? "collapsed" : ""}`}>
-          {/* Search */}
+          {}
           {!isSidebarCollapsed && (
             <div className="team-sidebar-search">
               <input
@@ -1000,7 +956,7 @@ function TeamIncidentTable({
             </div>
           )}
 
-          {/* Heading */}
+          {}
           <div className="team-sidebar-header-row">
             {!isSidebarCollapsed && (
               <div className="team-sidebar-title-wrap">
@@ -1064,10 +1020,10 @@ function TeamIncidentTable({
             </button>
           </div>
 
-          {/* Teams Navigation Tree */}
+          {}
           {!isSidebarCollapsed && (
             <div className="team-sidebar-scroll">
-            {/* 1st Line Support Group */}
+            {}
             <div className="team-sidebar-section">
               <button
                 type="button"
@@ -1100,7 +1056,7 @@ function TeamIncidentTable({
 
               {firstLineExpanded && (
                 <div className="team-subitems-tree">
-                  {/* Unassigned */}
+                  {}
                   <button
                     type="button"
                     className={`team-subitem-btn ${
@@ -1126,7 +1082,7 @@ function TeamIncidentTable({
                     <span className="team-sidebar-badge">{count1stLineUnassigned}</span>
                   </button>
 
-                  {/* Dynamic 1st Line Agents */}
+                  {}
                   {firstLineAgentNames.length > 0 && (
                     <>
                       <span className="team-section-pill-label available">Support Agents</span>
@@ -1190,7 +1146,7 @@ function TeamIncidentTable({
               )}
             </div>
 
-            {/* 2nd Line Support Group */}
+            {}
             <div className="team-sidebar-section">
               <button
                 type="button"
@@ -1223,7 +1179,7 @@ function TeamIncidentTable({
 
               {secondLineExpanded && (
                 <div className="team-subitems-tree">
-                  {/* Unassigned */}
+                  {}
                   <button
                     type="button"
                     className={`team-subitem-btn ${
@@ -1249,7 +1205,7 @@ function TeamIncidentTable({
                     <span className="team-sidebar-badge">{count2ndLineUnassigned}</span>
                   </button>
 
-                  {/* Dynamic 2nd Line Agents */}
+                  {}
                   {secondLineAgentNames.length > 0 && (
                     <>
                       <span className="team-section-pill-label available">Support Agents</span>
@@ -1313,7 +1269,7 @@ function TeamIncidentTable({
               )}
             </div>
 
-            {/* Infrastructure Group */}
+            {}
             <div className="team-sidebar-section">
               <button
                 type="button"
@@ -1335,7 +1291,7 @@ function TeamIncidentTable({
               </button>
             </div>
 
-            {/* Breaching SLA */}
+            {}
             <div className="team-sidebar-section" style={{ marginTop: 6 }}>
               <button
                 type="button"
@@ -1356,9 +1312,9 @@ function TeamIncidentTable({
           )}
         </aside>
 
-        {/* Right Main Table Content */}
+        {}
         <main className="team-main-content">
-          {/* Table Toolbar */}
+          {}
           <div className="team-table-toolbar-row">
             <div className="team-toolbar-left-group flex items-center gap-2">
               <button
@@ -1495,7 +1451,7 @@ function TeamIncidentTable({
             </div>
           </div>
 
-          {/* Bulk Action Bar when checkboxes are checked */}
+          {}
           {selectedIncidents.length > 0 && (
             <div className="tickets-bulk-actions-bar">
               <div className="bulk-selection-count">
@@ -1566,7 +1522,7 @@ function TeamIncidentTable({
             </div>
           )}
 
-          {/* AI Escalation Live Toast */}
+          {}
           {escalationToast && (
             <div className="mx-6 mb-3 p-3 bg-indigo-950 text-white text-xs font-bold rounded-xl flex items-center justify-between shadow-lg">
               <div className="flex items-center gap-2">
@@ -1583,7 +1539,7 @@ function TeamIncidentTable({
             </div>
           )}
 
-          {/* Table */}
+          {}
           <div className="incident-table-container" style={{ border: "none", borderRadius: 0 }}>
             <table className="incident-table">
               <thead>
@@ -1632,7 +1588,7 @@ function TeamIncidentTable({
                   >
                     Priority {sortColumn === 'priority' ? (sortDirection === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: 10 }}>⇅</span>}
                   </th>
-                  <th style={{ width: 195, whiteSpace: "nowrap" }}>AI Risk & Handoff</th>
+                  <th style={{ width: 195, whiteSpace: "nowrap" }}>Risk & Escalation</th>
                   <th
                     style={{ width: 105, cursor: "pointer", userSelect: "none" }}
                     onClick={() => handleSort('status')}
@@ -1696,7 +1652,7 @@ function TeamIncidentTable({
         </main>
       </div>
 
-      {/* Ticket Detail Modal */}
+      {}
       {selectedIncident && (
         <TicketDetailModal
           ticket={{
@@ -1764,7 +1720,7 @@ function TeamIncidentTable({
         />
       )}
 
-      {/* New Incident Modal */}
+      {}
       {showNewIncidentModal && (
         <div className="new-incident-modal-backdrop" onClick={() => setShowNewIncidentModal(false)}>
           <div className="new-incident-modal" onClick={(e) => e.stopPropagation()}>
@@ -1834,7 +1790,7 @@ function TeamIncidentTable({
         </div>
       )}
 
-      {/* Get Started Guide Modal */}
+      {}
       {showGetStartedModal && (
         <div className="new-incident-modal-backdrop" onClick={() => setShowGetStartedModal(false)}>
           <div className="team-get-started-modal" onClick={(e) => e.stopPropagation()}>

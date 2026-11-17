@@ -70,8 +70,6 @@ export default function ServiceCatalogue() {
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [submittedResult, setSubmittedResult] = useState<SubmittedServiceRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Dynamic custom form field specifications (SR-1)
   const [laptopModel, setLaptopModel] = useState('14" High Performance Laptop (M-Series / Intel i7)');
   const [laptopMemory, setLaptopMemory] = useState('32 GB Unified RAM');
   const [deliveryLocation, setDeliveryLocation] = useState('Corporate Office Desk Pickup - London HQ');
@@ -79,8 +77,6 @@ export default function ServiceCatalogue() {
   const [softwareJustification, setSoftwareJustification] = useState('Core workflow requirement for active sprint delivery.');
   const [accessEnv, setAccessEnv] = useState('Staging & Production Read-Only');
   const [accessRole, setAccessRole] = useState('Developer / Contributor');
-
-  // Load categories and initial services from live backend API
   useEffect(() => {
     let mounted = true;
     async function loadData() {
@@ -182,9 +178,7 @@ export default function ServiceCatalogue() {
   };
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col bg-[#FFF9F5] overflow-hidden">
-      {/* ── Top Navbar ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 z-10">
+    <div className="flex-1 w-full h-full flex flex-col bg-[#FFF9F5] overflow-hidden"><header className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           <button
             type="button"
@@ -285,10 +279,7 @@ export default function ServiceCatalogue() {
             )}
           </section>
         </div>
-      </div>
-
-      {/* Details Modal */}
-      {detailsService && (
+      </div>{detailsService && (
         <div className="modal-overlay" onClick={() => setDetailsService(null)}>
           <section
             className="service-modal"
@@ -330,10 +321,7 @@ export default function ServiceCatalogue() {
             </div>
           </section>
         </div>
-      )}
-
-      {/* Request Modal */}
-      {requestOpen && (
+      )}{requestOpen && (
         <div className="modal-overlay" onClick={closeRequest}>
           <section
             className="request-modal"
@@ -358,10 +346,7 @@ export default function ServiceCatalogue() {
 
                 <p style={{ fontSize: 13, color: "#475569", marginBottom: 16 }}>
                   Your service request for <strong>{requestService?.name}</strong> has been registered in the system.
-                </p>
-
-                {/* ── Requester Stage-by-Stage Fulfillment Stepper (SR-2) ── */}
-                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                </p><div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginBottom: 16 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", display: "block", marginBottom: 12 }}>
                     Fulfillment Lifecycle Tracking
                   </span>
@@ -432,10 +417,7 @@ export default function ServiceCatalogue() {
                         {service.name} ({service.category})
                       </option>
                     ))}
-                  </select>
-
-                  {/* ── Dynamic Custom Fields per Catalog Offering (SR-1) ── */}
-                  {requestService && (
+                  </select>{requestService && (
                     Boolean(requestService.name.toLowerCase().includes('laptop') || requestService.name.toLowerCase().includes('hardware') || requestService.name.toLowerCase().includes('desktop')) ? (
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 my-2">
                         <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wide block">Hardware Specifications</span>

@@ -5,28 +5,18 @@ import { useAuth } from '../../pages/Auth/AuthContext';
 import type { User } from '../../pages/Auth/types';
 import './Sidebar.css';
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Icon Definitions (Accurately styled to match reference screenshot)
-   - Size: 22x22
-   - Stroke / Fill: Crisp white
-   - Uniform stroke width ~2.2px for outline icons
-   ────────────────────────────────────────────────────────────────────────── */
-
-// 1. Dashboard: House with doorway cut out
 const DashboardIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
     <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
   </svg>
 );
 
-// 2. My Work: Clipboard with top clip and 3 horizontal lines
 const MyWorkIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
     <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
   </svg>
 );
 
-// 3. Incidents: Tilted price/luggage tag with loop thread at top
 const IncidentsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" className={className} aria-hidden="true">
     <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" />
@@ -34,14 +24,12 @@ const IncidentsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 4. Major Incidents: Hollow upright triangle outline
 const MajorIncidentsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M12 3.8L2.5 20.2h19L12 3.8z" />
   </svg>
 );
 
-// 5. Problems: Solid upright triangle with question mark cut out
 const ProblemsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" className={className} aria-hidden="true">
     <path
@@ -53,7 +41,6 @@ const ProblemsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 6. Requests: Shopping cart with wheels
 const RequestsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <circle cx="8" cy="20.5" r="1.5" fill="currentColor" stroke="none" />
@@ -62,7 +49,6 @@ const RequestsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 7. Change Requests: Two curved circular refresh arrows
 const ChangeRequestsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
@@ -72,7 +58,6 @@ const ChangeRequestsIcon: React.FC<{ className?: string }> = ({ className }) => 
   </svg>
 );
 
-// 8. Projects: Outline briefcase with top handle and two vertical divider stripes
 const ProjectsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <rect x="3.5" y="7" width="17" height="13.5" rx="2" />
@@ -82,14 +67,12 @@ const ProjectsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 9. Article Drafts: Bookmark ribbon outline with notch
 const ArticleDraftsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M19 21l-7-4.5L5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
   </svg>
 );
 
-// 10. Calendar: Calendar with binder rings at top
 const CalendarNavIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <rect width="18" height="17" x="3" y="4" rx="2.5" />
@@ -99,7 +82,6 @@ const CalendarNavIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 11. Organisations: Two people outline
 const OrganisationsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -109,7 +91,6 @@ const OrganisationsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 12. CMDB: 3 stacked database discs
 const CmdbIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <ellipse cx="12" cy="5.5" rx="8.5" ry="3" />
@@ -118,7 +99,6 @@ const CmdbIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 13. Contacts: ID badge / contact notebook with spiral pins at top and person inside
 const ContactsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5" />
@@ -129,7 +109,6 @@ const ContactsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 14. Contracts: Document agreement icon with folded corner and signature lines
 const ContractsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -140,7 +119,6 @@ const ContractsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 14. My Approvals: Shield outline with checkmark
 const MyApprovalsIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
@@ -148,7 +126,6 @@ const MyApprovalsIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// 15. Reporting: Analytics bar chart icon
 const ReportingNavIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     <path d="M3 3v18h18" />
@@ -157,38 +134,6 @@ const ReportingNavIcon: React.FC<{ className?: string }> = ({ className }) => (
     <path d="M8 17v-3" />
   </svg>
 );
-
-// 16. Self-Service Portal: House outline with sparkles (Halo Parity)
-const PortalNavIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   Navigation Items Configuration
-   Exact order:
-   1. Dashboard
-   2. My Work
-   3. Incidents
-   4. Major Incidents
-   5. Problems
-   6. Requests
-   7. Change Requests
-   8. Projects
-   9. Article Drafts
-   10. Calendar
-   11. Organisations
-   12. CMDB
-   13. Contracts
-   14. My Approvals
-
-   RBAC Filter:
-   - Items with roles restricted according to QA-RBAC-01
-   - End User ('user001') hides administrative menus: CMDB, Change Requests, Organisations, Article Drafts, Problems, Major Incidents, Approvals.
-   - Administrator retains full access to all 14 items.
-   ────────────────────────────────────────────────────────────────────────── */
 
 export interface NavItemConfig {
   to: string;
@@ -358,8 +303,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
   const { user } = useAuth();
   const currentRole: User['role'] = user?.role || 'Administrator';
 
-  // QA-RBAC-01: Filter sidebar items by user role.
-  // Administrators see all items. End users are restricted from CMDB, Change Requests, Organisations, Article Drafts, etc.
   const visibleNavItems = useMemo(() => {
     return NAV_ITEMS.filter((item) => {
       if (!item.roles || item.roles.length === 0) return true;
@@ -369,7 +312,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
 
   return (
     <aside className={`figma-left-sidebar select-none ${mobileOpen ? 'mobile-open' : ''}`}>
-      {/* Brand Logo */}
       <div className="sidebar-logo">
         <NavLink
           to="/dashboard"
@@ -394,7 +336,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ mobileOpen, onClose
         )}
       </div>
 
-      {/* Vertically Stacked Navigation Items */}
       <nav className="sidebar-nav">
         {visibleNavItems.map((item) => {
           const Icon = item.icon;

@@ -1,13 +1,4 @@
 
-/**
- * Data-access layer for the Incidents module.
- *
- * Uses in-memory fixtures only during Jest tests.
- * Outside the test environment, all incident data comes from Prisma.
- *
- * A database failure must propagate to the controller rather than
- * returning fake incident records.
- */
 
 const db = require('../../config/db');
 const {
@@ -143,19 +134,11 @@ const incidents = [
   },
 ];
 
-/**
- * Make a test fixture copy so tests cannot accidentally mutate
- * the original shared fixtures.
- */
 const copyFixture = (ticket) => ({
   ...ticket,
   incident: ticket.incident ? { ...ticket.incident } : null,
 });
 
-/**
- * Convert database dates to ISO strings while safely preserving
- * missing optional values.
- */
 const toIsoString = (value) => {
   if (value === null || value === undefined) {
     return null;
@@ -170,10 +153,6 @@ const toIsoString = (value) => {
   return date.toISOString();
 };
 
-/**
- * Convert a Prisma Ticket record and its related Incident into
- * the response shape expected by the Incidents service.
- */
 const mapTicketToIncident = (ticket) => {
   const mapped = {
     id: ticket.id,
@@ -224,14 +203,6 @@ const mapTicketToIncident = (ticket) => {
   };
 };
 
-/**
- * Retrieve all incident tickets.
- *
- * In tests: use the in-memory fixtures.
- * Otherwise: query the database and propagate any database errors.
- *
- * An empty database result correctly returns an empty array.
- */
 const getIncidents = async () => {
   if (process.env.NODE_ENV === 'test') {
     return incidents.map(copyFixture);
@@ -254,9 +225,6 @@ const getIncidents = async () => {
   return records.map(mapTicketToIncident);
 };
 
-/**
- * Retrieve one incident by its ticket ID.
- */
 const getIncidentById = async (id) => {
   if (typeof id !== 'string' || !id.trim()) {
     return null;

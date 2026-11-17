@@ -55,7 +55,6 @@ export const AppLayout: React.FC = () => {
     setProfileMenuOpen(false);
   }, [location.pathname]);
 
-  // If session verification is in progress, show an accessible loading spinner
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#FFF9F5]">
@@ -76,12 +75,10 @@ export const AppLayout: React.FC = () => {
     return <Navigate to={toUrl} replace />;
   }
 
-  // End Users cannot access restricted administrative/agent routes; redirect to User Console
   if (user?.role === 'End User') {
     return <Navigate to="/portal" replace />;
   }
 
-  // Admin Configuration guard: Only Administrator and System Manager
   if ((location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings')) && user?.role !== 'Administrator' && user?.role !== 'System Manager') {
     return <Navigate to="/dashboard" replace />;
   }
@@ -97,7 +94,6 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-[#FFF9F5]">
-      {/* Mobile Top Header (< 768px) with Hamburger Drawer Trigger */}
       <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-[#263B5E] text-white z-40 shrink-0 shadow-sm relative">
         <div className="flex items-center gap-3">
           <button
@@ -121,7 +117,6 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Profile Trigger & Flyout */}
         <div className="relative">
           <button
             type="button"
@@ -145,10 +140,8 @@ export const AppLayout: React.FC = () => {
             />
           </button>
 
-          {/* Mobile Profile Dropdown Flyout */}
           {profileMenuOpen && (
             <>
-              {/* Overlay to close menu when clicking outside */}
               <div
                 className="fixed inset-0 z-50 bg-black/30 backdrop-blur-xs"
                 onClick={() => setProfileMenuOpen(false)}
@@ -159,7 +152,6 @@ export const AppLayout: React.FC = () => {
                 className="absolute right-0 top-11 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 text-slate-800 p-4 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Profile Header */}
                 <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="w-10 h-10 rounded-full bg-[#1c2b3d] text-white font-bold text-sm flex items-center justify-center shrink-0">
                     {initials}
@@ -177,7 +169,6 @@ export const AppLayout: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Agent Presence Status */}
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">
                     Agent Presence
@@ -222,7 +213,6 @@ export const AppLayout: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Workspaces Section */}
                 <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
                     Workspaces
@@ -300,7 +290,6 @@ export const AppLayout: React.FC = () => {
                   )}
                 </div>
 
-                {/* Account Actions Section */}
                 <div className="flex flex-col gap-1 pt-1 border-t border-slate-100 text-xs">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1">
                     Account Actions
@@ -316,7 +305,6 @@ export const AppLayout: React.FC = () => {
                     <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
                     <span>My Work &amp; Tasks</span>
                   </button>
-                  {/* Welcome Splash Screen */}
                   <button
                     type="button"
                     onClick={() => {
@@ -361,7 +349,6 @@ export const AppLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile Backdrop Overlay (< 768px) */}
       {mobileSidebarOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs md:hidden"
@@ -370,13 +357,11 @@ export const AppLayout: React.FC = () => {
         />
       )}
 
-      {/* Left Icon Sidebar */}
       <Sidebar
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
-      {/* Main Page Viewport */}
       <div className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
         <AnimatePresence mode="wait">
           <motion.div

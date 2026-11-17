@@ -4,68 +4,34 @@ import AppLayout from './layouts/AppLayout'
 import PortalLayout from './layouts/PortalLayout'
 import { useAuth } from './pages/Auth'
 
-// Auth
 import { AuthProvider } from './pages/Auth'
 const AuthPage = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.AuthPage })))
 const OrganisationUsersScreen = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.OrganisationUsersScreen })))
 const OrganisationsScreen = React.lazy(() => import('./pages/Auth').then((m) => ({ default: m.OrganisationsScreen })))
 
-// Dashboard
 const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'))
-
-// Incidents
 const Incidents = React.lazy(() => import('./pages/Incidents'))
-
-// Problems
 const ProblemsPage = React.lazy(() => import('./pages/Problems'))
-
-// Major Incidents (Unified Canonical Live Page)
 const MajorIncidentsPage = React.lazy(() => import('./pages/MajorIncidents'))
-
-// Projects & Calendar
 const ProjectsPage = React.lazy(() => import('./pages/Projects/ProjectsPage'))
 const CalendarPage = React.lazy(() => import('./pages/Calendar/CalendarPage'))
-
-// Requests & Services Catalogue
 const RequestsPage = React.lazy(() => import('./pages/Requests/RequestsPage'))
 const ServiceCatalogue = React.lazy(() => import('./pages/ServicesCatalogue/ServiceCatalogue'))
-
-// Approvals
 const ApprovalsPage = React.lazy(() => import('./pages/Approvals/ApprovalsPage'))
-
-// Contracts & Supplier Agreements
 const ContractsPage = React.lazy(() => import('./pages/Contracts/ContractsPage'))
-
-// Article Drafts
 const ArticleDraftsPage = React.lazy(() => import('./pages/ArticleDrafts/ArticleDraftsPage'))
-
-// My Work
 const MyWork = React.lazy(() => import('./pages/MyWork/MyWork'))
-
-// On Hold Tickets
 const OnHoldTicketScreen = React.lazy(() => import('./pages/OnHoldTicket/TicketScreen/OnHoldTicketScreen'))
-
-// Custom Lists
 const CustomLists = React.lazy(() => import('./pages/CustomLists/CustomLists'))
-
-// Team Incidents
 const FirstLineLive = React.lazy(() => import('./pages/TeamIncidents/FirstLineLive'))
 const FirstLineDesign = React.lazy(() => import('./pages/TeamIncidents/FirstLineDesign'))
 const SecondLineLive = React.lazy(() => import('./pages/TeamIncidents/SecondLineLive'))
 const SecondLineDesign = React.lazy(() => import('./pages/TeamIncidents/SecondLineDesign'))
-
-// Reporting
 const IncidentsByCategoryReport = React.lazy(() => import('./pages/Reporting/IncidentsByCategoryReport'))
-
-// End-User Self-Service Portal & Admin Configuration Screens (Halo Parity)
 const EndUserPortal = React.lazy(() => import('./pages/Portal/EndUserPortal'))
 const AdminSettingsPage = React.lazy(() => import('./pages/Admin/AdminSettingsPage'))
-
-// CMDB
 const CmdbPage = React.lazy(() => import('./pages/CMDB/CmdbPage').then((m) => ({ default: m.CmdbPage })))
 const ServiceCisPage = React.lazy(() => import('./pages/CMDB/ServiceCisPage').then((m) => ({ default: m.ServiceCisPage })))
-
-// Change Requests
 const ChangeRequestsPage = React.lazy(() => import('./pages/ChangeRequests/ChangeRequestsPage').then((m) => ({ default: m.ChangeRequestsPage })))
 const ChangeRequestDetailModal = React.lazy(() => import('./pages/ChangeRequests/ChangeRequestDetailModal').then((m) => ({ default: m.ChangeRequestDetailModal })))
 const CreateChangeModal = React.lazy(() => import('./pages/ChangeRequests/CreateChangeModal').then((m) => ({ default: m.CreateChangeModal })))
@@ -78,7 +44,6 @@ import {
   toggleSubtaskCompletion,
 } from './services/changeRequestsService'
 
-// Change Requests wrapper (manages live data synchronization with service layer)
 function ChangeRequestsWrapper() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([])
@@ -227,26 +192,21 @@ export default function App() {
           }
         >
           <Routes>
-            {/* Auth (Standalone screen - No sidebar) */}
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
 
-            {/* Root redirect */}
             <Route path="/" element={<RootRedirect />} />
 
-            {/* End-User Portal (Dedicated layout - No Agent Console sidebar) */}
             <Route element={<PortalLayout />}>
               <Route path="/portal" element={<EndUserPortal />} />
               <Route path="/self-service" element={<Navigate to="/portal" replace />} />
               <Route path="/services-catalogue" element={<ServiceCatalogue />} />
             </Route>
 
-            {/* Agent Console Screens (Inside AppLayout with Left Sidebar) */}
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/my-work" element={<MyWork />} />
-              {/* Major Incidents (All legacy mock routes redirect to canonical live page) */}
               <Route path="/major-incidents" element={<MajorIncidentsPage />} />
               <Route path="/major-incidents/live" element={<Navigate to="/major-incidents" replace />} />
               <Route path="/major-incidents/design" element={<Navigate to="/major-incidents" replace />} />

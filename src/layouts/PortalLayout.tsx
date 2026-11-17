@@ -7,7 +7,6 @@ export const PortalLayout: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
 
-  // Show loading spinner while authenticating
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#FFF9F5]">
@@ -19,7 +18,6 @@ export const PortalLayout: React.FC = () => {
     );
   }
 
-  // Redirect unauthenticated visitors to login
   if (!isAuthenticated) {
     const fromPath = `${location.pathname}${location.search}`;
     const toUrl = fromPath ? `/auth?redirect=${encodeURIComponent(fromPath)}` : '/auth';

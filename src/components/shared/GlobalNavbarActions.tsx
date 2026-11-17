@@ -87,8 +87,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         .slice(0, 2)
         .toUpperCase()
     : 'AA';
-
-  // Active flyout state (mutually exclusive)
   type FlyoutType = 'search' | 'notifications' | 'todo' | 'timesheet' | 'kpi' | 'feed' | 'profile' | null;
   const [activeFlyout, setActiveFlyout] = useState<FlyoutType>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -98,8 +96,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   const [quickPriority, setQuickPriority] = useState('Medium');
   const [quickDesc, setQuickDesc] = useState('');
   const [ticketSuccessNotice, setTicketSuccessNotice] = useState<string | null>(null);
-
-  // User presence status
   const [presence, setPresence] = useState<'available' | 'away' | 'busy'>(() => {
     try {
       const saved = localStorage.getItem('servigen_agent_presence');
@@ -128,8 +124,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     window.addEventListener('servigen-presence-change', handlePresenceEvent);
     return () => window.removeEventListener('servigen-presence-change', handlePresenceEvent);
   }, []);
-
-  // To-Do list state (matching Figma design)
   const [todoDate, setTodoDate] = useState(() => {
     const d = new Date();
     const day = String(d.getDate()).padStart(2, '0');
@@ -186,8 +180,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   const handleDeleteTodo = (id: string) => {
     setTodoItems((prev) => prev.filter((item) => item.id !== id));
   };
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchScope, setSearchScope] = useState<'all' | 'tickets' | 'problems' | 'cmdb' | 'articles' | 'users'>('all');
   const [ticketList, setTicketList] = useState<QuickSearchItem[]>([]);
@@ -202,8 +194,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     }
   });
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Global shortcut Ctrl+K / Cmd+K to toggle global search
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -216,8 +206,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [activeFlyout]);
-
-  // Notifications state
   const [readNotifIds, setReadNotifIds] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem('servigen_read_notif_ids') || '{}');
@@ -273,8 +261,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
       const rawTicketList = tickRes.status === 'fulfilled'
         ? (Array.isArray(tickRes.value?.data) ? tickRes.value.data : Array.isArray(tickRes.value) ? tickRes.value : [])
         : [];
-
-      // Populate quick search index directly from tickets response
       if (rawTicketList.length > 0) {
         setTicketList(
           rawTicketList.map((t: any) => ({
@@ -286,8 +272,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           }))
         );
       }
-
-      // Populate CMDB CIs from live backend
       if (ciRes.status === 'fulfilled') {
         const rawCis = Array.isArray(ciRes.value?.data) ? ciRes.value.data : Array.isArray(ciRes.value) ? ciRes.value : [];
         if (rawCis.length > 0) {
@@ -300,8 +284,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           })));
         }
       }
-
-      // Populate Knowledge Articles from live backend
       if (artRes.status === 'fulfilled') {
         const rawArts = Array.isArray(artRes.value?.data) ? artRes.value.data : Array.isArray(artRes.value) ? artRes.value : [];
         if (rawArts.length > 0) {
@@ -313,24 +295,18 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           })));
         }
       }
-
-      // Populate Users from live backend
       if (userRes.status === 'fulfilled') {
         const rawUsers = Array.isArray(userRes.value?.data) ? userRes.value.data : Array.isArray(userRes.value) ? userRes.value : [];
         if (rawUsers.length > 0) {
           setUserList(rawUsers);
         }
       }
-
-      // Populate Problems from live backend
       if (probRes.status === 'fulfilled') {
         const rawProbs = Array.isArray(probRes.value?.data) ? probRes.value.data : Array.isArray(probRes.value) ? probRes.value : [];
         if (rawProbs.length > 0) {
           setProblemList(rawProbs);
         }
       }
-
-      // 1. Live Major Incidents (active, unresolved incidents only)
       rawMiList
         .filter((mi: any) => !['resolved', 'closed'].includes(String(mi.status || '').toLowerCase()))
         .slice(0, 3)
@@ -348,8 +324,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             unread: !readNotifIds[notifId],
           });
         });
-
-      // 2. Tickets with actual SLA Breaches, SLA Warnings, or Critical Priority
       rawTicketList
         .filter((t: any) => !['resolved', 'closed'].includes(String(t.status || '').toLowerCase()))
         .forEach((t: any) => {
@@ -404,8 +378,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Close flyouts on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -426,8 +398,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  // Auto focus search input when search flyout opens
   useEffect(() => {
     if (activeFlyout === 'search') {
       setTimeout(() => {
@@ -474,8 +444,6 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
     );
     handleTicketClick(item.ticketId);
   };
-
-  // Filtered multi-entity search results using live backend states
   const query = searchQuery.trim().toLowerCase();
 
   const matchingTickets = useMemo(() => {
@@ -612,9 +580,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
   };
 
   return (
-    <div className={`global-nav-actions-wrap ${className}`} ref={containerRef}>
-      {/* ─── LEADING IMAGE COMPONENTS (FIGMA SPECIFICATION) ─── */}
-      {!hidePills && (
+    <div className={`global-nav-actions-wrap ${className}`} ref={containerRef}>{!hidePills && (
         <div className="global-nav-leading-actions">
           <button
             type="button"
@@ -647,12 +613,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <span>{newTicketLabel || "New Ticket"}</span>
           </button>
         </div>
-      )}
-
-      {/* ─── 8 UNIFIED CIRCULAR ACTION BUTTONS (FIGMA SPECIFICATION) ─── */}
-      <div className="global-nav-icons-group">
-        {/* 1. Search Icon */}
-        <button
+      )}<div className="global-nav-icons-group"><button
           type="button"
           className={`global-nav-icon-btn ${activeFlyout === 'search' ? 'is-active' : ''}`}
           title="Global Search (Ctrl + K)"
@@ -663,10 +624,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-        </button>
-
-      {/* 2. Notifications Bell */}
-      <button
+        </button><button
         type="button"
         className={`global-nav-icon-btn ${activeFlyout === 'notifications' ? 'is-active' : ''}`}
         title={`Notifications (${unreadCount} unread)`}
@@ -678,10 +636,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unreadCount > 0 && <span className="global-nav-badge" />}
-      </button>
-
-      {/* 3. Tasks / Clipboard -> To-Do Popover */}
-      <button
+      </button><button
         type="button"
         className={`global-nav-icon-btn ${activeFlyout === 'todo' ? 'is-active is-todo-active' : ''}`}
         title="To-Do List & Quick Tasks"
@@ -693,10 +648,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           <rect x="9" y="3" width="6" height="4" rx="1" />
           <path d="M9 12h6M9 16h4" />
         </svg>
-      </button>
-
-      {/* 4. Speedometer / Gauge -> Timesheet & Hours (Agent only) */}
-      {canAccessAgent && (
+      </button>{canAccessAgent && (
         <button
           type="button"
           className={`global-nav-icon-btn ${activeFlyout === 'timesheet' ? 'is-active' : ''}`}
@@ -710,10 +662,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <circle cx="12" cy="12" r="1.5" fill="currentColor" />
           </svg>
         </button>
-      )}
-
-      {/* 5. Broadcast Waves -> Agent KPI Dashboard (Agent only) */}
-      {canAccessAgent && (
+      )}{canAccessAgent && (
         <button
           type="button"
           className={`global-nav-icon-btn ${activeFlyout === 'kpi' ? 'is-active' : ''}`}
@@ -728,10 +677,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
           </svg>
         </button>
-      )}
-
-      {/* 6. Clock -> Live Activity Feed (Agent only) */}
-      {canAccessAgent && (
+      )}{canAccessAgent && (
         <button
           type="button"
           className={`global-nav-icon-btn ${activeFlyout === 'feed' ? 'is-active' : ''}`}
@@ -744,10 +690,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <path d="M12 6v6l4 2" strokeLinecap="round" />
           </svg>
         </button>
-      )}
-
-      {/* 7. Help / Guide */}
-      <button
+      )}<button
         type="button"
         className="global-nav-icon-btn"
         title="Help & System Guide"
@@ -762,10 +705,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
           <circle cx="12" cy="17" r="0.5" fill="currentColor" />
         </svg>
-      </button>
-
-      {/* 8. Avatar & User Presence Button */}
-      <button
+      </button><button
         type="button"
         className="global-nav-avatar-btn"
         title={`Signed in as ${user?.fullName || 'Agent'} (${presence})`}
@@ -775,19 +715,13 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
         <span className="global-nav-avatar-initials">{userInitials}</span>
         <span className={`global-nav-presence-dot ${presence}`} />
       </button>
-      </div>
-
-      {/* ─── Transparent Backdrop Shield to auto-close flyouts on click outside ─── */}
-      {activeFlyout && (
+      </div>{activeFlyout && (
         <div
           className="fixed inset-0 z-40 bg-transparent cursor-default pointer-events-auto"
           onClick={() => setActiveFlyout(null)}
           aria-hidden="true"
         />
-      )}
-
-      {/* ─── FLYOUT 1: GLOBAL MULTI-ENTITY SEARCH ─── */}
-      {activeFlyout === 'search' && (
+      )}{activeFlyout === 'search' && (
         <div className="global-flyout-dropdown global-search-flyout" role="dialog" aria-label="Global Search">
           <div className="global-flyout-header flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -802,10 +736,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             >
               ✕
             </button>
-          </div>
-
-          {/* Search Input Box */}
-          <div className="global-search-input-wrap">
+          </div><div className="global-search-input-wrap">
             <svg
               className="global-search-icon-inside"
               viewBox="0 0 24 24"
@@ -838,10 +769,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             ) : (
               <span className="global-search-hint-kbd">ESC</span>
             )}
-          </div>
-
-          {/* Scope Filters */}
-          <div className="global-search-scope-tabs">
+          </div><div className="global-search-scope-tabs">
             <button
               type="button"
               className={`global-search-scope-tab ${searchScope === 'all' ? 'is-active' : ''}`}
@@ -890,19 +818,14 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 Users ({matchingUsers.length})
               </button>
             )}
-          </div>
-
-          {/* Results List */}
-          <div className="global-search-results-list">
+          </div><div className="global-search-results-list">
             {totalResultsCount === 0 ? (
               <div className="global-search-empty">
                 <p className="font-semibold text-slate-600">No matching records found</p>
                 <p className="text-xs text-slate-400 mt-1">Try searching for ticket IDs, server tags (PAY-001), problem causes, or user names.</p>
               </div>
             ) : (
-              <>
-                {/* 1. TICKETS SECTION */}
-                {(searchScope === 'all' || searchScope === 'tickets') && matchingTickets.length > 0 && (
+              <>{(searchScope === 'all' || searchScope === 'tickets') && matchingTickets.length > 0 && (
                   <div className="global-search-section">
                     <div className="global-search-section-header">
                       <span>🎫 Tickets & Incidents</span>
@@ -930,10 +853,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* 2. PROBLEMS SECTION */}
-                {(searchScope === 'all' || searchScope === 'problems') && matchingProblems.length > 0 && (
+                )}{(searchScope === 'all' || searchScope === 'problems') && matchingProblems.length > 0 && (
                   <div className="global-search-section">
                     <div className="global-search-section-header">
                       <span>⚠️ Problems & Root Causes</span>
@@ -959,10 +879,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* 3. CMDB / ASSETS SECTION */}
-                {(searchScope === 'all' || searchScope === 'cmdb') && matchingCis.length > 0 && (
+                )}{(searchScope === 'all' || searchScope === 'cmdb') && matchingCis.length > 0 && (
                   <div className="global-search-section">
                     <div className="global-search-section-header">
                       <span>💻 CMDB Assets & CIs</span>
@@ -988,10 +905,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* 4. KNOWLEDGE ARTICLES SECTION */}
-                {(searchScope === 'all' || searchScope === 'articles') && matchingArticles.length > 0 && (
+                )}{(searchScope === 'all' || searchScope === 'articles') && matchingArticles.length > 0 && (
                   <div className="global-search-section">
                     <div className="global-search-section-header">
                       <span>📖 Knowledge Articles</span>
@@ -1017,10 +931,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                       </div>
                     ))}
                   </div>
-                )}
-
-                {/* 5. USERS SECTION */}
-                {(searchScope === 'all' || searchScope === 'users') && matchingUsers.length > 0 && (
+                )}{(searchScope === 'all' || searchScope === 'users') && matchingUsers.length > 0 && (
                   <div className="global-search-section">
                     <div className="global-search-section-header">
                       <span>👤 Staff & Contacts</span>
@@ -1048,10 +959,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 )}
               </>
             )}
-          </div>
-
-          {/* Footer Shortcuts */}
-          <div className="global-search-footer">
+          </div><div className="global-search-footer">
             <div className="global-search-shortcuts">
               <span><kbd className="global-kbd">ESC</kbd> to close</span>
               <span><kbd className="global-kbd">Ctrl+K</kbd> to toggle</span>
@@ -1059,10 +967,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             <span className="text-[11px] font-medium text-slate-400">Click any result to jump directly</span>
           </div>
         </div>
-      )}
-
-      {/* ─── FLYOUT 2: NOTIFICATIONS ─── */}
-      {activeFlyout === 'notifications' && (
+      )}{activeFlyout === 'notifications' && (
         <div className="global-flyout-dropdown global-notifications-flyout">
           <div className="global-flyout-header flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1129,10 +1034,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             )}
           </div>
         </div>
-      )}
-
-      {/* ─── FLYOUT: TO-DO POPOVER (MATCHING FIGMA SPECIFICATION) ─── */}
-      {activeFlyout === 'todo' && (
+      )}{activeFlyout === 'todo' && (
         <div className="global-flyout-dropdown global-todo-flyout" role="dialog" aria-label="To-Do List">
           <div className="global-todo-header">
             <h3 className="global-todo-title">To-Do</h3>
@@ -1264,37 +1166,23 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             </div>
           )}
         </div>
-      )}
-
-      {/* ─── FLYOUT 3: TIMESHEET POPOVER ─── */}
-      {activeFlyout === 'timesheet' && (
+      )}{activeFlyout === 'timesheet' && (
         <TimesheetPopover
           onClose={() => setActiveFlyout(null)}
           userName={user?.fullName || 'Agent'}
         />
-      )}
-
-      {/* ─── FLYOUT 4: AGENT KPI DRAWER ─── */}
-      {activeFlyout === 'kpi' && (
+      )}{activeFlyout === 'kpi' && (
         <AgentKpiDrawer
           onClose={() => setActiveFlyout(null)}
           onOpenTicket={handleTicketClick}
         />
-      )}
-
-      {/* ─── FLYOUT 5: LIVE FEED POPOVER ─── */}
-      {activeFlyout === 'feed' && (
+      )}{activeFlyout === 'feed' && (
         <FeedPopover
           onClose={() => setActiveFlyout(null)}
           onOpenTicket={handleTicketClick}
         />
-      )}
-
-      {/* ─── FLYOUT 6: USER PROFILE & PRESENCE MENU ─── */}
-      {activeFlyout === 'profile' && (
-        <div className="global-flyout-dropdown global-profile-flyout">
-          {/* Header Row with Close button matching reference design */}
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-1 px-1">
+      )}{activeFlyout === 'profile' && (
+        <div className="global-flyout-dropdown global-profile-flyout"><div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-1 px-1">
             <span className="text-xs font-bold text-slate-800">My account</span>
             <button
               type="button"
@@ -1358,14 +1246,8 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 {presence === 'busy' && <span className="font-bold text-xs text-rose-600">✓</span>}
               </button>
             </div>
-          </div>
-
-          {/* Workspaces Section */}
-          <div className="global-profile-menu-links">
-            <span className="global-profile-section-heading">Workspaces</span>
-
-            {/* 1. Agent Console */}
-            {canAccessAgent && (
+          </div><div className="global-profile-menu-links">
+            <span className="global-profile-section-heading">Workspaces</span>{canAccessAgent && (
               <button
                 type="button"
                 className={`global-profile-link-item ${isAgent ? 'is-active' : ''}`}
@@ -1378,10 +1260,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 <span className="flex-1">Agent Console</span>
                 {isAgent && <span className="global-profile-badge">Current</span>}
               </button>
-            )}
-
-            {/* 2. User Console (End-User Portal) */}
-            <button
+            )}<button
               type="button"
               className={`global-profile-link-item ${isPortal ? 'is-active' : ''}`}
               onClick={() => {
@@ -1392,10 +1271,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
               <ExternalLink className={`w-4 h-4 shrink-0 ${isPortal ? 'text-[#C96F55]' : 'text-slate-500'}`} />
               <span className="flex-1">User Console</span>
               {isPortal && <span className="global-profile-badge">Current</span>}
-            </button>
-
-            {/* 3. Administration */}
-            {canAccessAdmin && (
+            </button>{canAccessAdmin && (
               <button
                 type="button"
                 className={`global-profile-link-item ${isAdmin ? 'is-active' : ''}`}
@@ -1409,10 +1285,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 {isAdmin && <span className="global-profile-badge">Current</span>}
               </button>
             )}
-          </div>
-
-          {/* Account Actions Section */}
-          <div className="global-profile-menu-links border-t border-slate-100">
+          </div><div className="global-profile-menu-links border-t border-slate-100">
             <span className="global-profile-section-heading">Account Actions</span>
 
             {canAccessAgent && (
@@ -1427,10 +1300,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 <ClipboardList className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>My Work &amp; Tasks</span>
               </button>
-            )}
-
-            {/* Reporting & Analytics */}
-            {canAccessAgent && (
+            )}{canAccessAgent && (
               <button
                 type="button"
                 className="global-profile-link-item"
@@ -1442,10 +1312,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
                 <BarChart3 className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>Reporting &amp; Analytics</span>
               </button>
-            )}
-
-            {/* Welcome Splash Screen */}
-            <button
+            )}<button
               type="button"
               className="global-profile-link-item"
               onClick={() => {
@@ -1485,10 +1352,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             </button>
           </div>
         </div>
-      )}
-
-      {/* ─── MODAL: HELP & GUIDE ─── */}
-      {showHelpModal && (
+      )}{showHelpModal && (
         <div className="global-help-modal-overlay" onClick={() => setShowHelpModal(false)}>
           <div className="global-help-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="global-help-modal-header">
@@ -1555,10 +1419,7 @@ export const GlobalNavbarActions: React.FC<GlobalNavbarActionsProps> = React.mem
             </div>
           </div>
         </div>
-      )}
-
-      {/* ─── MODAL: QUICK TICKET CREATION ─── */}
-      {showQuickTicketModal && (
+      )}{showQuickTicketModal && (
         <div className="global-help-modal-overlay" onClick={() => setShowQuickTicketModal(false)}>
           <div className="global-help-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
             <div className="global-help-modal-header">

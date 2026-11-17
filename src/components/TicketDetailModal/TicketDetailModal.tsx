@@ -12,8 +12,6 @@ import { type FullTicket, type TicketPriority, type TicketNote } from './ticketD
 import { api } from '../../services/apiClient';
 import { ticketEvents } from '../../services/ticketEvents';
 import { getTicketSlaTarget } from '../shared/SlaBadge';
-
-// Types
 interface TicketDetailModalProps {
   ticket: {
     id: string;
@@ -72,8 +70,6 @@ interface TicketDetailModalProps {
   onClose: () => void;
   onUpdateTicket?: (updated: FullTicket) => void;
 }
-
-// Status badge colors
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   New:               { bg: '#14532d', color: '#fff' },
   Active:            { bg: '#14532d', color: '#fff' },
@@ -101,8 +97,6 @@ function getInitials(name?: string): string {
     ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
     : name.slice(0, 2).toUpperCase();
 }
-
-// Toast
 function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'error' | 'info' }) {
   const bg = type === 'success' ? '#15803d' : type === 'error' ? '#dc2626' : '#1e3a8a';
   const cleanMsg = msg.replace(/^[✓✗✔✕\s]+/, '').trim();
@@ -122,8 +116,6 @@ function Toast({ msg, type = 'success' }: { msg: string; type?: 'success' | 'err
     </div>
   );
 }
-
-// SLA Clock & Card
 
 function SlaClock({
   targetTime,
@@ -217,8 +209,6 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
   const isTicketResolved = (ticket.status || '').toLowerCase() === 'resolved' || (ticket.status || '').toLowerCase() === 'closed';
   const isPaused = Boolean((ticket as any).slaPaused || (ticket.status || '').toLowerCase() === 'on hold');
   const priority = ticket.priority || 'Medium';
-
-  // Helper to parse dates flexibly (supports DD/MM/YYYY, ISO, timestamps)
   const parseFlexibleDate = (dateVal?: any): Date => {
     if (!dateVal) return new Date();
     if (dateVal instanceof Date) return isNaN(dateVal.getTime()) ? new Date() : dateVal;
@@ -228,8 +218,6 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
     }
     const str = String(dateVal).trim();
     if (!str || str === 'Target not set' || str.includes('—')) return new Date();
-
-    // Check UK DD/MM/YYYY format
     const ukMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?$/i);
     if (ukMatch) {
       const day = parseInt(ukMatch[1], 10);
@@ -263,22 +251,16 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
   };
 
   const createdDate = parseFlexibleDate(ticket.createdAt || (ticket as any).dateLogged);
-
-  // Response Target: 1h after createdDate or explicit responseTarget
   const explicitResponse = ticket.responseTarget || (ticket as any).responseTargetAt;
   const responseDate = (explicitResponse && !explicitResponse.includes('—') && !explicitResponse.includes('Target not set'))
     ? formatDisplayDate(parseFlexibleDate(explicitResponse))
     : formatDisplayDate(new Date(createdDate.getTime() + 1 * 3600 * 1000));
-
-  // Resolution Target: direct targetTimestamp from getTicketSlaTarget, or explicit resolutionTarget, or createdDate + offset
   const explicitResolution = ticket.resolutionTarget || (ticket as any).resolutionTargetAt;
   const resolutionDate = (explicitResolution && !explicitResolution.includes('—') && !explicitResolution.includes('Target not set'))
     ? formatDisplayDate(parseFlexibleDate(explicitResolution))
     : (targetTimestamp && targetTimestamp > 0 && !isNaN(targetTimestamp))
     ? formatDisplayDate(new Date(targetTimestamp))
     : formatDisplayDate(new Date(createdDate.getTime() + 4 * 3600 * 1000));
-
-  // Status-aware Response & Resolution met state with backend alignment
   const [respMet, setRespMet] = useState<boolean>(() => {
     if ((ticket as any).responseMetAt != null) return true;
     if ((ticket as any).responseTargetMet !== undefined) return Boolean((ticket as any).responseTargetMet);
@@ -471,8 +453,6 @@ function SlaCard({ ticket, onNotify }: { ticket: NonNullable<TicketDetailModalPr
   );
 }
 
-// Lifecycle Chevron Row
-
 function PipelineChevrons({ stage, date, status }: { stage?: string; date?: string; status?: string }) {
   const activeLabel = stage || 'Request Fulfilment';
   const activeDate = date || '';
@@ -507,8 +487,6 @@ function PipelineChevrons({ stage, date, status }: { stage?: string; date?: stri
     </div>
   );
 }
-
-// Activity Feed Entry
 
 function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?: string }) {
   const badge = getStatusBadge(ticketStatus || 'New');
@@ -552,9 +530,7 @@ function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?
           }}>
             {note.text}
           </p>
-
-          {/* Attachments & Pasted Screenshots */}
-          {note.attachments && note.attachments.length > 0 && (
+{note.attachments && note.attachments.length > 0 && (
             <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {note.attachments.map((att) => (
                 <div
@@ -594,8 +570,6 @@ function ActivityEntry({ note, ticketStatus }: { note: TicketNote; ticketStatus?
     </div>
   );
 }
-
-// Re-Assign Modal
 
 function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   ticketId: string;
@@ -741,8 +715,6 @@ function ReAssignModal({ ticketId, currentAgent, onAssigned, onClose }: {
   );
 }
 
-// Create Appointment Modal
-
 function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }: {
   ticketId: string;
   ticketSummary?: string;
@@ -831,8 +803,6 @@ function CreateAppointmentModal({ ticketId, ticketSummary, onCreated, onClose }:
     </div>
   );
 }
-
-// In-App Email User Modal
 
 function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClose }: {
   ticketId: string;
@@ -979,8 +949,6 @@ function EmailUserModal({ ticketId, ticketSummary, recipientEmail, onSent, onClo
   );
 }
 
-// Log To Supplier Modal
-
 function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
   ticketId: string;
   ticketSummary?: string;
@@ -1116,8 +1084,6 @@ function LogToSupplierModal({ ticketId, ticketSummary, onLogged, onClose }: {
     </div>
   );
 }
-
-// Main Component
 
 type TabId = 'progress' | 'ai-insights' | 'additional-fields' | 'audit-log' | 'view-log' | 'notification-log';
 
@@ -1283,15 +1249,13 @@ function matchArticlesForTicket(ticket: any, pool: KBArticle[]): KBArticle[] {
     return {
       ...art,
       matchScore,
-      matchReason: bestReason || `AI Context Match for ${ticket.category || 'General Support'}`,
+      matchReason: bestReason || `Relevance Match for ${ticket.category || 'General Support'}`,
     };
   });
 
   scored.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
   return scored.slice(0, 3);
 }
-
-// Article Preview Modal
 
 function ArticlePreviewModal({
   article,
@@ -1345,8 +1309,7 @@ function ArticlePreviewModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div
+<div
           style={{
             padding: '16px 20px',
             borderBottom: '1px solid #e2e8f0',
@@ -1416,7 +1379,7 @@ function ArticlePreviewModal({
                     }}
                   >
                     <Sparkles style={{ width: 10, height: 10 }} />
-                    {article.matchScore}% AI Match
+                    {article.matchScore}% Match
                   </span>
                 )}
               </div>
@@ -1441,9 +1404,7 @@ function ArticlePreviewModal({
             <X style={{ width: 18, height: 18 }} />
           </button>
         </div>
-
-        {/* Metadata Banner */}
-        <div
+<div
           style={{
             padding: '8px 20px',
             background: '#f1f5f9',
@@ -1462,9 +1423,7 @@ function ArticlePreviewModal({
             </span>
           )}
         </div>
-
-        {/* Article Body */}
-        <div style={{ padding: '20px', overflowY: 'auto', flex: 1, maxHeight: '52vh' }}>
+<div style={{ padding: '20px', overflowY: 'auto', flex: 1, maxHeight: '52vh' }}>
           <div
             style={{
               fontSize: 13,
@@ -1477,9 +1436,7 @@ function ArticlePreviewModal({
             {article.content}
           </div>
         </div>
-
-        {/* Footer Actions */}
-        <div
+<div
           style={{
             padding: '12px 20px',
             borderTop: '1px solid #e2e8f0',
@@ -1608,10 +1565,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       return {
         level: (ticket as any).aiRisk as 'High Risk' | 'At Risk' | 'Normal',
         score: (ticket as any).aiRiskScore || ((ticket as any).aiRisk === 'High Risk' ? 89 : (ticket as any).aiRisk === 'At Risk' ? 68 : 22),
-        reason: (ticket as any).aiRiskReason || 'AI telemetry risk assessment',
+        reason: (ticket as any).aiRiskReason || 'Telemetry risk assessment',
       };
     }
-    // Fallback heuristic based on priority and SLA
     const pri = (ticket.priority || '').toLowerCase();
     const isCritical = pri === 'critical' || pri === 'p1';
     const isHigh = pri === 'high' || pri === 'p2';
@@ -1661,14 +1617,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       await api.post('/api/ai-core/escalation/handoff', {
         summary: `Tier 2 Handoff: ${ticket.summary || ticket.id}`,
         resolved: false,
-        reason: `AI Risk Score ${effectiveRiskScore}% (${effectiveRiskLevel}) on ticket #${ticket.id}: ${effectiveRiskReason}`,
+        reason: `Risk Score ${effectiveRiskScore}% (${effectiveRiskLevel}) on ticket #${ticket.id}: ${effectiveRiskReason}`,
         ticketId: ticket.id,
       });
     } catch {}
     try {
       await api.post(`/api/tickets/${ticket.id}/notes`, {
         noteType: 'Internal Note',
-        content: `⚡ Ticket escalated to 2nd Line Support (Tier 2). AI Risk Score: ${effectiveRiskScore}% (${effectiveRiskLevel}). Assigned team updated and AI escalation context dispatched.`,
+        content: `⚡ Ticket escalated to 2nd Line Support (Tier 2). Risk Score: ${effectiveRiskScore}% (${effectiveRiskLevel}). Assigned team updated and Escalation context dispatched.`,
       });
     } catch {}
 
@@ -1686,7 +1642,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       id: `esc-${Date.now()}`,
       author: currentUser || 'Alex Rivera',
       time: 'Just now',
-      text: '⚡ Ticket escalated to 2nd Line Support (Tier 2). Assigned team updated and AI escalation context dispatched.',
+      text: '⚡ Ticket escalated to 2nd Line Support (Tier 2). Assigned team updated and Escalation context dispatched.',
       badge: 'Escalation',
     };
     setLocalNotes(prev => [escNote, ...prev]);
@@ -1742,8 +1698,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     showToast('Ticket returned to 1st Line Support (Tier 1)');
   };
   const overlayRef = useRef<HTMLDivElement>(null);
-
-  // MOD-1: Additional Agents multi-selector state
   const [additionalAgents, setAdditionalAgents] = useState<string[]>(() => {
     if (!ticket?.id) return ['Sarah Jenkins', 'Marcus Vance'];
     try {
@@ -1771,8 +1725,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     'Ken Yang', 'Alex Rivera', 'Sarah Jenkins', 'Marcus Vance', 'Priya Nair', 'David Kim', 'Emma Watson'
   ]);
   const [showAgentPicker, setShowAgentPicker] = useState(false);
-
-  // MOD-2: Rich-Text & Clipboard Paste State
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pastedAttachments, setPastedAttachments] = useState<Array<{ id: string; name: string; url: string; size: string }>>([]);
@@ -1819,8 +1771,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       } else {
         setLocalNotes([]);
       }
-
-      // Fetch persistent notes from backend timeline
       if (ticket.id) {
         api.get(`/api/tickets/${ticket.id}/notes`)
           .then((res: any) => {
@@ -1833,7 +1783,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 text: n.content || n.text || '',
               }));
               setLocalNotes(prev => {
-                // Merge api notes with existing offline notes without duplicates
                 const existingIds = new Set(apiNotes.map(a => a.id));
                 const offlineOnly = prev.filter(p => !existingIds.has(p.id));
                 return [...apiNotes, ...offlineOnly];
@@ -1841,22 +1790,17 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             }
           })
           .catch(() => {
-            // Keep fallback notes
           });
       }
 
       setLocalStatus(ticket.status || 'New');
       setLocalAgent(ticket.agent || '');
       setIsResolved(ticket.status === 'Resolved' || ticket.status === 'Closed');
-
-      // Escalate state persistence
       try {
         const isEsc = localStorage.getItem(`servigen_ticket_escalated_${ticket.id}`) === 'true' ||
           (ticket as any).assignedTeam === '2nd Line Support' || (ticket as any).isEscalated === true;
         setInternalEscalated(isEsc);
       } catch {}
-
-      // Additional agents persistence & pre-population
       try {
         const savedAgents = localStorage.getItem(`servigen_ticket_add_agents_${ticket.id}`);
         if (savedAgents) {
@@ -1876,8 +1820,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       } catch {
         setAdditionalAgents(['Sarah Jenkins', 'Marcus Vance']);
       }
-
-      // Logged minutes persistence
       try {
         const savedTime = localStorage.getItem(`servigen_ticket_time_${ticket.id}`);
         if (savedTime) setLoggedMinutes(parseInt(savedTime, 10));
@@ -1887,8 +1829,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       }
     }
   }, [ticket?.id]);
-
-  // Load team users for additional agent picker
   useEffect(() => {
     api.get('/api/users')
       .then((r: any) => {
@@ -1918,13 +1858,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     try {
       await api.patch(`/api/tickets/${ticket.id}`, { additionalAgents: updated.join(', ') });
     } catch (err) {
-      // Keep optimistic update in demo
     }
     ticketEvents.emit({ type: 'TICKET_UPDATED', ticket: { id: ticket.id, additionalAgents: updated.join(', ') } });
     showToast(isRemoving ? `Removed ${agentName}` : `Tagged ${agentName}`);
   };
-
-  // MOD-2 helper: insert Markdown syntax
   const insertMarkdown = (syntaxBefore: string, syntaxAfter = '') => {
     const textarea = noteTextareaRef.current;
     if (!textarea) return;
@@ -1942,8 +1879,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       );
     }, 10);
   };
-
-  // MOD-2 helper: clipboard image paste (Ctrl+V)
   const handleNotePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -1990,8 +1925,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const removePastedAttachment = (attId: string) => {
     setPastedAttachments(prev => prev.filter(a => a.id !== attId));
   };
-
-  // Load related tickets from same requester
   useEffect(() => {
     if (!ticket?.id) return;
     setRelatedTickets([]);
@@ -1999,8 +1932,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       .then(r => setRelatedTickets(r.data?.data || []))
       .catch(() => setRelatedTickets([]));
   }, [ticket?.id]);
-
-  // Load KB articles dynamically relevant to this ticket
   useEffect(() => {
     if (!ticket) return;
     setKbArticles([]);
@@ -2019,8 +1950,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               updatedAt: a.updatedAt || a.createdAt,
             }))
           : [];
-
-        // Combine backend articles with curated fallback articles (deduping by id)
         const map = new Map<string, KBArticle>();
         CURATED_FALLBACK_ARTICLES.forEach(a => map.set(a.id, a));
         backendList.forEach(a => map.set(a.id, a));
@@ -2156,7 +2085,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           });
           updatedData = res?.data || res;
         } catch (resolveErr) {
-          // If specialized resolve endpoint fails (e.g. for service requests or custom types), fallback to status update
           console.warn('[TicketDetailModal] /resolve endpoint error, attempting /status fallback:', resolveErr);
           const res = await api.patch(`/api/tickets/${ticket.id}/status`, { status: 'Resolved' });
           updatedData = res?.data || res;
@@ -2220,7 +2148,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ...(isResolved ? [{ actor: currentUser, action: 'Status Transition', property: 'status', oldVal: 'Active', newVal: 'Resolved', time: 'Just now' }] : []),
     ...(effectiveEscalated ? [{ actor: currentUser, action: 'Team Escalation', property: 'assignedTeam', oldVal: '1st Line Support', newVal: '2nd Line Support', time: 'Recently' }] : []),
     ...(supplierInfo ? [{ actor: currentUser, action: 'Supplier Dispatch', property: 'supplierRef', oldVal: '—', newVal: `${supplierInfo.supplier} (${supplierInfo.externalRef})`, time: 'Recently' }] : []),
-    { actor: 'System AI', action: 'Risk Assessment', property: 'aiRisk', oldVal: 'Evaluating', newVal: 'High Risk (86%)', time: '15 mins ago' },
+    { actor: 'System', action: 'Risk Assessment', property: 'aiRisk', oldVal: 'Evaluating', newVal: 'High Risk (86%)', time: '15 mins ago' },
     { actor: 'Sarah Connor', action: 'Agent Assignment', property: 'assignedAgent', oldVal: 'Unassigned', newVal: localAgent || 'Alex Rivera', time: '45 mins ago' },
     { actor: 'SLA Engine', action: 'Target Clock Initiated', property: 'responseTargetAt', oldVal: '—', newVal: '15/11/2026 4:06 AM', time: '1 hour ago' },
     { actor: ticket.requester || 'General User', action: 'Ticket Ingestion', property: 'ticketId', oldVal: '—', newVal: ticket.id, time: ticket.createdAt || '2 hours ago' },
@@ -2229,7 +2157,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const viewLogEntries = [
     { time: 'Just now', user: currentUser || 'Alex Rivera', role: 'Support Agent', ip: '10.240.12.84', action: 'Ticket Modal Opened & Reviewed' },
     { time: '18 mins ago', user: 'Sarah Jenkins', role: 'Tier 1 Support Agent', ip: '10.240.14.19', action: 'Inspected Incident SLA & Notes' },
-    { time: '42 mins ago', user: 'Marcus Vance', role: 'Tier 2 Team Lead', ip: '10.240.08.102', action: 'Evaluated AI Triage & Risk' },
+    { time: '42 mins ago', user: 'Marcus Vance', role: 'Tier 2 Team Lead', ip: '10.240.08.102', action: 'Evaluated Triage & Risk' },
     { time: '1 hour ago', user: 'Priya Nair', role: 'Incident Manager', ip: '10.240.02.15', action: 'Verified Initial Routing & Team' },
   ];
 
@@ -2460,16 +2388,12 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           }}
         >
           <style>{css}</style>
-
-          {/* Toast */}
-          {toast && (
+{toast && (
             <div style={{ pointerEvents: 'auto' }}>
               <Toast msg={toast.msg} type={toast.type} />
             </div>
           )}
-
-          {/* Re-Assign Modal */}
-          {showReAssign && (
+{showReAssign && (
             <div style={{ pointerEvents: 'auto' }}>
               <ReAssignModal
                 ticketId={ticket.id}
@@ -2498,9 +2422,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               />
             </div>
           )}
-
-          {/* Create Appointment Modal */}
-          {showAppointment && (
+{showAppointment && (
             <div style={{ pointerEvents: 'auto' }}>
               <CreateAppointmentModal
                 ticketId={ticket.id}
@@ -2513,9 +2435,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               />
             </div>
           )}
-
-          {/* In-App Email User Modal */}
-          {showEmailModal && (
+{showEmailModal && (
             <div style={{ pointerEvents: 'auto' }}>
               <EmailUserModal
                 ticketId={ticket.id}
@@ -2542,9 +2462,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               />
             </div>
           )}
-
-          {/* Log to Supplier Modal */}
-          {showSupplierModal && (
+{showSupplierModal && (
             <div style={{ pointerEvents: 'auto' }}>
               <LogToSupplierModal
                 ticketId={ticket.id}
@@ -2575,9 +2493,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               />
             </div>
           )}
-
-          {/* Article Preview Modal */}
-          {selectedArticlePreview && (
+{selectedArticlePreview && (
             <div style={{ pointerEvents: 'auto' }}>
               <ArticlePreviewModal
                 article={selectedArticlePreview}
@@ -2591,9 +2507,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               />
             </div>
           )}
-
-          {/* ── Modal Shell (Dialog.Content) ── */}
-          <Dialog.Content
+<Dialog.Content
             asChild
             onPointerDownOutside={event => {
               if (showReAssign || showAppointment || showEmailModal || showSupplierModal || selectedArticlePreview) {
@@ -2624,11 +2538,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             }}>
               <Dialog.Title className="sr-only">Incident Details - {ticket.id}</Dialog.Title>
               <Dialog.Description className="sr-only">{ticket.summary || 'Ticket details, notes, and activity timeline'}</Dialog.Description>
-
-              {/* ════════════════════════════════════════
-                  STICKY TOP TITLE BAR (Always visible close button)
-                  ════════════════════════════════════════ */}
-              <div className="ticket-modal-sticky-header">
+<div className="ticket-modal-sticky-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden' }}>
                   <span style={{
                     background: '#C96F55', color: '#fff', padding: '2px 8px',
@@ -2669,13 +2579,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   </button>
                 </div>
               </div>
-
-              {/* ════════════════════════════════════════
-                  TOP ACTION BAR (Horizontally swipeable on mobile)
-                  ════════════════════════════════════════ */}
-              <div className="ticket-detail-action-bar">
-                {/* Email User — opens in-app composer modal */}
-                <button
+<div className="ticket-detail-action-bar">
+<button
                   className="halo-action-btn"
                   onClick={() => setShowEmailModal(true)}
                   title={ticket.email ? `Email ${ticket.email}` : 'Compose email to user'}
@@ -2683,27 +2588,19 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   <Mail style={{ width: 14, height: 14, color: '#3b82f6' }} />
                   Email User
                 </button>
-
-                {/* Add Note — opens inline composer */}
-                <button className="halo-action-btn" onClick={() => setShowAddNote(a => !a)}>
+<button className="halo-action-btn" onClick={() => setShowAddNote(a => !a)}>
                   <MessageSquarePlus style={{ width: 14, height: 14, color: '#f59e0b' }} />
                   Add Note
                 </button>
-
-                {/* Re-Assign — opens agent picker modal */}
-                <button className="halo-action-btn" onClick={() => setShowReAssign(true)}>
+<button className="halo-action-btn" onClick={() => setShowReAssign(true)}>
                   <UserCheck style={{ width: 14, height: 14, color: '#8b5cf6' }} />
                   Re-Assign
                 </button>
-
-                {/* Create Appointment — opens calendar event creator */}
-                <button className="halo-action-btn" onClick={() => setShowAppointment(true)}>
+<button className="halo-action-btn" onClick={() => setShowAppointment(true)}>
                   <CalendarPlus style={{ width: 14, height: 14, color: '#10b981' }} />
                   Appointment
                 </button>
-
-                {/* Log to Supplier — opens vendor tracking modal */}
-                <button
+<button
                   className="halo-action-btn"
                   onClick={() => setShowSupplierModal(true)}
                   title="Dispatch or log ticket to third-party vendor"
@@ -2736,9 +2633,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   {savingResolve ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" /> : <CheckCircle style={{ width: 14, height: 14 }} />}
                   {savingResolve ? (isResolved ? 'Reopening…' : 'Resolving…') : isResolved ? 'Reopen Ticket' : 'Resolve Ticket'}
                 </button>
-
-                {/* AI Risk & Handoff Action Segment */}
-                <div style={{
+<div style={{
                   display: 'flex',
                   alignItems: 'center',
                   marginLeft: 'auto',
@@ -2747,8 +2642,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   gap: 8,
                   flexShrink: 0,
                 }}>
-                  {/* AI Risk Score Pill */}
-                  <span
+<span
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -2762,7 +2656,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       border: `1px solid ${effectiveRiskLevel === 'High Risk' ? '#fca5a5' : effectiveRiskLevel === 'At Risk' ? '#fcd34d' : '#e2e8f0'}`,
                       whiteSpace: 'nowrap',
                     }}
-                    title={`AI Risk Assessment: ${effectiveRiskLevel} (${effectiveRiskScore}%) — ${effectiveRiskReason}`}
+                    title={`Risk Assessment: ${effectiveRiskLevel} (${effectiveRiskScore}%) — ${effectiveRiskReason}`}
                   >
                     <span style={{
                       width: 6,
@@ -2773,9 +2667,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     }} />
                     {effectiveRiskLevel} {effectiveRiskScore}%
                   </span>
-
-                  {/* Tier 2 Escalation / Handoff Action */}
-                  {!effectiveEscalated ? (
+{!effectiveEscalated ? (
                     <button
                       type="button"
                       className="halo-action-btn"
@@ -2796,7 +2688,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         cursor: effectiveEscalating ? 'wait' : 'pointer',
                         transition: 'all 0.15s ease',
                       }}
-                      title="Escalate ticket to 2nd Line Support via AI Handoff"
+                      title="Escalate ticket to 2nd Line Support via Tier 2 Handoff"
                     >
                       <Zap style={{ width: 13, height: 13, color: '#ea580c' }} />
                       {effectiveEscalating ? 'Escalating…' : '⚡ Escalate Tier 2'}
@@ -2844,20 +2736,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   )}
                 </div>
               </div>
-
-              {/* ════════════════════════════════════════
-                  MAIN BODY — Left content + Right sidebar
-                  ════════════════════════════════════════ */}
-              <div className="ticket-detail-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
-
-                {/* ─── LEFT / MAIN CONTENT ─────────────────────────────── */}
-                <div className="ticket-detail-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-
-                  {/* Ticket header row (ID + summary + SLA card) */}
-                  <div style={{ padding: '16px 20px 12px', flexShrink: 0 }}>
+<div className="ticket-detail-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+<div className="ticket-detail-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+<div style={{ padding: '16px 20px 12px', flexShrink: 0 }}>
                     <div className="ticket-detail-header-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-                      {/* Left: priority circle + ID + summary */}
-                      <div style={{ flex: 1, minWidth: 260 }}>
+<div style={{ flex: 1, minWidth: 260 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                           <div style={{
                             width: 30, height: 30, borderRadius: '50%',
@@ -2894,7 +2777,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               color: effectiveRiskLevel === 'High Risk' ? '#b91c1c' : effectiveRiskLevel === 'At Risk' ? '#b45309' : '#475569',
                               border: `1px solid ${effectiveRiskLevel === 'High Risk' ? '#fca5a5' : effectiveRiskLevel === 'At Risk' ? '#fcd34d' : '#e2e8f0'}`,
                             }}
-                            title={`AI Risk Assessment: ${effectiveRiskLevel} (${effectiveRiskScore}%) — ${effectiveRiskReason}`}
+                            title={`Risk Assessment: ${effectiveRiskLevel} (${effectiveRiskScore}%) — ${effectiveRiskReason}`}
                           >
                             <span style={{
                               width: 6,
@@ -2902,29 +2785,24 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               borderRadius: '50%',
                               background: effectiveRiskLevel === 'High Risk' ? '#dc2626' : effectiveRiskLevel === 'At Risk' ? '#d97706' : '#94a3b8',
                             }} />
-                            AI Risk: {effectiveRiskLevel} {effectiveRiskScore}%
+                            Risk: {effectiveRiskLevel} {effectiveRiskScore}%
                           </span>
                         </div>
                         <p style={{ margin: '0 0 0 40px', fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
                           {ticket.summary || `Ticket ${ticket.id}`}
                         </p>
                       </div>
-                      {/* Right: SLA Card */}
-                      <SlaCard ticket={ticket} onNotify={showToast} />
+<SlaCard ticket={ticket} onNotify={showToast} />
                     </div>
                   </div>
-
-                  {/* Pipeline Chevrons */}
-                  <div style={{ padding: '0 20px 12px', flexShrink: 0 }}>
+<div style={{ padding: '0 20px 12px', flexShrink: 0 }}>
                     <PipelineChevrons
                       stage={(ticket as any).pipelineStage || ticket.type || 'Request Fulfilment'}
                       date={(ticket as any).pipelineDate || ticket.createdAt || ''}
                       status={localStatus}
                     />
                   </div>
-
-                  {/* Add Note inline composer (MOD-2: Markdown toolbar + Screenshot Paste) */}
-                  {showAddNote && (
+{showAddNote && (
                     <div style={{ margin: '0 20px 10px', padding: '12px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, flexShrink: 0 }}>
                       <input
                         type="file"
@@ -2941,9 +2819,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             Markdown &amp; Clipboard Paste Enabled
                           </span>
                         </div>
-
-                        {/* Formatting Toolbar */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+<div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                           <button
                             type="button"
                             title="Bold (**text**)"
@@ -3006,9 +2882,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         style={{ minHeight: 85 }}
                         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddNote(); }}
                       />
-
-                      {/* Attached / Pasted Image Previews */}
-                      {pastedAttachments.length > 0 && (
+{pastedAttachments.length > 0 && (
                         <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                           {pastedAttachments.map(att => (
                             <div
@@ -3070,9 +2944,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </div>
                     </div>
                   )}
-
-                  {/* Navigation Tabs */}
-                  <div className="ticket-detail-tabs-bar">
+<div className="ticket-detail-tabs-bar">
                     {TABS.map(tab => (
                       <button
                         key={tab.id}
@@ -3083,11 +2955,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </button>
                     ))}
                   </div>
-
-                  {/* Tab Content Panel */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-                    {/* Tab: Progress (Activity Feed) */}
-                    {activeTab === 'progress' && (
+<div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+{activeTab === 'progress' && (
                       <div>
                         {localNotes.length === 0 ? (
                           <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 13 }}>
@@ -3100,19 +2969,16 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         )}
                       </div>
                     )}
-
-                    {/* Tab: AI Insights */}
-                    {activeTab === 'ai-insights' && (
+{activeTab === 'ai-insights' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        {/* Header Banner */}
-                        <div style={{
+<div style={{
                           padding: '12px 16px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
                           border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 18 }}>✨</span>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>Gemini ITIL Intelligence Engine</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>Diagnostic Intelligence Engine</div>
                               <div style={{ fontSize: 11, color: '#64748b' }}>Automated telemetry analysis and resolution recommendations</div>
                             </div>
                           </div>
@@ -3120,9 +2986,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             94% Confidence
                           </span>
                         </div>
-
-                        {/* Dedicated AI Risk & Handoff Card */}
-                        <div style={{
+<div style={{
                           background: effectiveRiskLevel === 'High Risk' ? '#fffaf8' : '#fff',
                           border: `1px solid ${effectiveRiskLevel === 'High Risk' ? '#fed7aa' : '#e5e7eb'}`,
                           borderRadius: 8,
@@ -3133,7 +2997,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               <span style={{ fontSize: 16 }}>⚡</span>
                               <div>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>
-                                  AI Risk &amp; Handoff Assessment
+                                  Risk &amp; Escalation Assessment
                                 </div>
                                 <div style={{ fontSize: 11, color: '#64748b' }}>
                                   Real-time predictive SLA breach calculation and Tier 2 routing recommendations
@@ -3227,15 +3091,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             )}
                           </div>
                         </div>
-
-                        {/* AI Summary Card */}
-                        <div className="halo-ai-row" style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 14px' }}>
-                          <div className="halo-ai-label" style={{ marginBottom: 4, fontWeight: 700, color: '#374151' }}>AI Generated Diagnostic Summary</div>
+<div className="halo-ai-row" style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 14px' }}>
+                          <div className="halo-ai-label" style={{ marginBottom: 4, fontWeight: 700, color: '#374151' }}>Diagnostic Summary</div>
                           <div className="halo-ai-value" style={{ lineHeight: 1.5, color: '#111827', fontSize: 13 }}>{aiSummary}</div>
                         </div>
-
-                        {/* Triage Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                           <div style={{ padding: '10px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6 }}>
                             <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Suggested Priority</div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginTop: 2 }}>
@@ -3258,11 +3118,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', marginTop: 2 }}>92 / 100 (Optimal Data)</div>
                           </div>
                         </div>
-
-                        {/* Step-by-Step Resolution */}
-                        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '14px 16px' }}>
+<div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '14px 16px' }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10 }}>
-                            🛠️ AI Suggested Resolution &amp; Recommended Actions
+                            🛠️ Suggested Resolution &amp; Recommended Actions
                           </div>
                           <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#334155', lineHeight: 1.7 }}>
                             <li>
@@ -3281,9 +3139,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       </div>
                     )}
-
-                    {/* Tab: Additional Fields */}
-                    {activeTab === 'additional-fields' && (
+{activeTab === 'additional-fields' && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px 20px' }}>
                         <div className="halo-sidebar-field">
                           <div className="halo-sidebar-field-label">Preferred Contact Number</div>
@@ -3329,9 +3185,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       </div>
                     )}
-
-                    {/* Tab: Audit Log */}
-                    {activeTab === 'audit-log' && (
+{activeTab === 'audit-log' && (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left' }}>
                           <thead>
@@ -3359,9 +3213,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </table>
                       </div>
                     )}
-
-                    {/* Tab: View Log */}
-                    {activeTab === 'view-log' && (
+{activeTab === 'view-log' && (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left' }}>
                           <thead>
@@ -3387,9 +3239,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </table>
                       </div>
                     )}
-
-                    {/* Tab: Notification Log */}
-                    {activeTab === 'notification-log' && (
+{activeTab === 'notification-log' && (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, textAlign: 'left' }}>
                           <thead>
@@ -3428,17 +3278,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     )}
                   </div>
                 </div>
-
-                {/* ─── RIGHT SIDEBAR ───────────────────────────────────── */}
-                <div className="ticket-detail-sidebar" style={{
+<div className="ticket-detail-sidebar" style={{
                   width: 320, flexShrink: 0,
                   borderLeft: '1px solid #dee5ef',
                   background: '#f8fafc',
                   display: 'flex', flexDirection: 'column',
                   overflowY: 'auto',
                 }}>
-                  {/* End-User Details Collapsible */}
-                  <div style={{ borderBottom: '1px solid #e5e7eb' }}>
+<div style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <button
                       onClick={() => setEndUserOpen(o => !o)}
                       style={{
@@ -3489,9 +3336,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             <div className="halo-sidebar-field-label">Email Address</div>
                             <div className="halo-sidebar-field-value" style={{ color: '#C96F55', wordBreak: 'break-all' }}>{emailVal}</div>
                           </div>
-
-                          {/* Microsoft Teams Communication Buttons */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '10px 0 12px' }}>
+<div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '10px 0 12px' }}>
                             <a
                               href={emailVal !== '—' ? `msteams:/l/call/0/0?users=${emailVal}` : '#'}
                               onClick={(e) => {
@@ -3552,9 +3397,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       );
                     })()}
                   </div>
-
-                  {/* Other Open Tickets */}
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
+<div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Other Open Tickets</div>
                     {relatedTickets.length === 0 ? (
                       <div style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic', padding: '6px 0' }}>
@@ -3587,9 +3430,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       })
                     )}
                   </div>
-
-                  {/* Ticket Information */}
-                  <div style={{ padding: '12px 16px', flex: 1 }}>
+<div style={{ padding: '12px 16px', flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Ticket information</div>
 
                     <div className="halo-sidebar-field">
@@ -3641,9 +3482,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       </div>
                     </div>
-
-                    {/* Supplier Handoff Card (if logged) */}
-                    {supplierInfo && (
+{supplierInfo && (
                       <div style={{ marginBottom: 14, padding: '9px 11px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6 }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
                           <Truck style={{ width: 13, height: 13 }} /> Supplier Handoff
@@ -3654,9 +3493,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       </div>
                     )}
-
-                    {/* MOD-1: Interactive Additional Agents Multi-Selector */}
-                    <div className="halo-sidebar-field" style={{ position: 'relative' }}>
+<div className="halo-sidebar-field" style={{ position: 'relative' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                         <div className="halo-sidebar-field-label" style={{ margin: 0 }}>
                           Additional Agents ({additionalAgents.length})
@@ -3675,9 +3512,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <Plus style={{ width: 12, height: 12 }} /> Add
                         </button>
                       </div>
-
-                      {/* Selected Agent Tags */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, minHeight: 28 }}>
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, minHeight: 28 }}>
                         {additionalAgents.length === 0 ? (
                           <button
                             type="button"
@@ -3729,9 +3564,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           ))
                         )}
                       </div>
-
-                      {/* Popover agent dropdown */}
-                      {showAgentPicker && (
+{showAgentPicker && (
                         <div
                           style={{
                             position: 'absolute', top: '100%', left: 0, right: 0,
@@ -3825,19 +3658,17 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </span>
                       </div>
                     </div>
-
-                    {/* AI Insights sub-section in sidebar */}
-                    <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #e5e7eb' }}>
+<div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #e5e7eb' }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Lightbulb style={{ width: 13, height: 13, color: '#f59e0b' }} /> AI Insights
                       </div>
                       <div className="halo-sidebar-field">
-                        <div className="halo-sidebar-field-label">AI Auto Resolution</div>
+                        <div className="halo-sidebar-field-label">Automated Resolution</div>
                         <div className="halo-sidebar-field-value">No</div>
                       </div>
                       {effectiveRiskLevel && (
                         <div className="halo-sidebar-field">
-                          <div className="halo-sidebar-field-label">AI Risk Assessment</div>
+                          <div className="halo-sidebar-field-label">Risk Assessment</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                             <span style={{
                               display: 'inline-flex',
@@ -3869,11 +3700,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           </div>
                         </div>
                       )}
-                      {/* AI Suggested Articles */}
-                      <div style={{ marginTop: 12 }}>
+<div style={{ marginTop: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                           <div className="halo-sidebar-field-label" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Sparkles style={{ width: 12, height: 12, color: '#f59e0b' }} /> AI Suggested Articles
+                            <Sparkles style={{ width: 12, height: 12, color: '#f59e0b' }} /> Suggested Articles
                           </div>
                           {kbArticles.length > 0 && (
                             <span style={{ fontSize: 10, color: '#C96F55', fontWeight: 600 }}>{kbArticles.length} found</span>

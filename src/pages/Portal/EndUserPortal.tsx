@@ -185,8 +185,6 @@ export const EndUserPortal: React.FC = () => {
       .catch(() => {});
     return () => { mounted = false; };
   }, []);
-
-  // New Ticket Quick Form State
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [ticketTitle, setTicketTitle] = useState('');
   const [ticketCategory, setTicketCategory] = useState('General Support');
@@ -194,8 +192,6 @@ export const EndUserPortal: React.FC = () => {
   const [ticketPriority, setTicketPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portalNotice, setPortalNotice] = useState<string | null>(null);
-
-  // Filtered knowledge articles based on search query
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return POPULAR_FAQS;
     const q = searchQuery.toLowerCase();
@@ -230,7 +226,6 @@ export const EndUserPortal: React.FC = () => {
         assignedId = res?.data?.id || res?.data?.data?.id;
       }
     } catch {
-      // Offline fallback
     }
 
     try {
@@ -258,16 +253,11 @@ export const EndUserPortal: React.FC = () => {
   };
 
   return (
-    <div className="portal-canvas">
-      {/* Top Banner Notice */}
-      {portalNotice && (
+    <div className="portal-canvas">{portalNotice && (
         <div className="portal-toast-banner" role="status">
           <span>✓ {portalNotice}</span>
         </div>
-      )}
-
-      {/* ── Standard Application Top Header (Shared Architecture) ── */}
-      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 min-h-[50px] sticky top-0 z-30">
+      )}<header className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 min-h-[50px] sticky top-0 z-30">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
           {user?.role !== 'End User' ? (
             <button
@@ -293,10 +283,7 @@ export const EndUserPortal: React.FC = () => {
             if (found) setSelectedTicket(found);
           }}
         />
-      </header>
-
-      {/* ── Secondary Navigation Row (Below Application Header) ── */}
-      <nav className="portal-subnav-bar" aria-label="Self-Service Portal Navigation">
+      </header><nav className="portal-subnav-bar" aria-label="Self-Service Portal Navigation">
         <div className="portal-subnav-container">
           <div className="portal-subnav-links">
             <button
@@ -335,21 +322,13 @@ export const EndUserPortal: React.FC = () => {
             </button>
           </div>
         </div>
-      </nav>
-
-      {/* ── Main Content Viewport (Desktop Max 1240px, Centered) ── */}
-      <main className="portal-main-container">
-        {/* Support Introduction Section (Warm light surface, no dark navy hero) */}
-        <section className="portal-intro-section" aria-label="Support Introduction">
+      </nav><main className="portal-main-container"><section className="portal-intro-section" aria-label="Support Introduction">
           <h1 className="portal-intro-title">
             How can we help you today?
           </h1>
           <p className="portal-intro-subtitle">
             Find answers, request equipment or software, or track your IT support tickets.
-          </p>
-
-          {/* Prominent Capsule Knowledge Search */}
-          <div className="portal-search-wrapper">
+          </p><div className="portal-search-wrapper">
             <Search className="portal-search-icon" />
             <input
               type="text"
@@ -370,10 +349,7 @@ export const EndUserPortal: React.FC = () => {
                 <X className="w-4 h-4" />
               </button>
             )}
-          </div>
-
-          {/* Common Topic Shortcuts */}
-          <div className="portal-quick-tags">
+          </div><div className="portal-quick-tags">
             <span className="portal-tags-label">Common Topics:</span>
             {['Password Reset', 'Global VPN', 'Developer Laptop', 'Adobe License', 'Teams Audio'].map((tag) => (
               <button
@@ -386,15 +362,8 @@ export const EndUserPortal: React.FC = () => {
               </button>
             ))}
           </div>
-        </section>
-
-        {/* TAB 1: Self-Service Hub */}
-        {activeTab === 'home' && (
-          <div className="portal-hub-flow">
-            {/* 3 Balanced Core Quick Action Cards */}
-            <section className="portal-actions-grid" aria-label="Core Support Actions">
-              {/* Card 1: Services Catalogue */}
-              <div
+        </section>{activeTab === 'home' && (
+          <div className="portal-hub-flow"><section className="portal-actions-grid" aria-label="Core Support Actions"><div
                 onClick={() => navigate('/services-catalogue')}
                 className="portal-action-card group cursor-pointer"
                 role="button"
@@ -418,10 +387,7 @@ export const EndUserPortal: React.FC = () => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
-              </div>
-
-              {/* Card 2: Report an Issue */}
-              <div
+              </div><div
                 onClick={() => setShowNewTicketModal(true)}
                 className="portal-action-card group cursor-pointer"
                 role="button"
@@ -445,10 +411,7 @@ export const EndUserPortal: React.FC = () => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
-              </div>
-
-              {/* Card 3: Track Open Requests */}
-              <div
+              </div><div
                 onClick={() => setActiveTab('tickets')}
                 className="portal-action-card group cursor-pointer"
                 role="button"
@@ -473,10 +436,7 @@ export const EndUserPortal: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </section>
-
-            {/* Popular Knowledge Base Guides */}
-            <section className="portal-section-box" aria-label="Knowledge Base Guides">
+            </section><section className="portal-section-box" aria-label="Knowledge Base Guides">
               <div className="portal-section-header">
                 <div>
                   <h2 className="portal-section-title">
@@ -526,10 +486,7 @@ export const EndUserPortal: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </section>
-
-            {/* Recent Ticket Snapshot */}
-            <section className="portal-section-box" aria-label="Recent Ticket Activity">
+            </section><section className="portal-section-box" aria-label="Recent Ticket Activity">
               <div className="portal-section-header">
                 <div>
                   <h2 className="portal-section-title">Your Recent Activity</h2>
@@ -582,10 +539,7 @@ export const EndUserPortal: React.FC = () => {
               </div>
             </section>
           </div>
-        )}
-
-        {/* TAB 2: My Support Tickets */}
-        {activeTab === 'tickets' && (
+        )}{activeTab === 'tickets' && (
           <div className="portal-section-box">
             <div className="portal-section-header">
               <div>
@@ -649,10 +603,7 @@ export const EndUserPortal: React.FC = () => {
               </table>
             </div>
           </div>
-        )}
-
-        {/* TAB 3: Knowledge Base & Guides */}
-        {activeTab === 'kb' && (
+        )}{activeTab === 'kb' && (
           <div className="portal-section-box">
             <div className="portal-section-header">
               <div>
@@ -704,10 +655,7 @@ export const EndUserPortal: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
-
-      {/* ── Article Viewer Modal ── */}
-      {selectedArticle && (
+      </main>{selectedArticle && (
         <div className="portal-modal-backdrop" onClick={() => setSelectedArticle(null)}>
           <div className="portal-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
@@ -728,10 +676,7 @@ export const EndUserPortal: React.FC = () => {
             <div className="portal-modal-body">
               <div className="portal-article-content">
                 {selectedArticle.content}
-              </div>
-
-              {/* Deflection / Helpfulness Feedback */}
-              <div className="portal-feedback-box">
+              </div><div className="portal-feedback-box">
                 <span className="portal-feedback-prompt">Did this article answer your question?</span>
                 <div className="portal-feedback-buttons">
                   <button
@@ -760,10 +705,7 @@ export const EndUserPortal: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── Ticket Detail Inspection Modal ── */}
-      {selectedTicket && (
+      )}{selectedTicket && (
         <div className="portal-modal-backdrop" onClick={() => setSelectedTicket(null)}>
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">
@@ -802,10 +744,7 @@ export const EndUserPortal: React.FC = () => {
                     {selectedTicket.targetResolution}
                   </span>
                 </div>
-              </div>
-
-              {/* Progress Timeline */}
-              <div className="portal-timeline-section">
+              </div><div className="portal-timeline-section">
                 <span className="portal-timeline-title">Ticket Activity &amp; Status Path:</span>
                 <div className="portal-timeline">
                   <div className="portal-timeline-item">
@@ -849,10 +788,7 @@ export const EndUserPortal: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── Raise New Ticket Modal ── */}
-      {showNewTicketModal && (
+      )}{showNewTicketModal && (
         <div className="portal-modal-backdrop" onClick={() => setShowNewTicketModal(false)}>
           <div className="portal-modal-card max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="portal-modal-header">

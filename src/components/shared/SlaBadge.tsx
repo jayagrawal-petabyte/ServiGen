@@ -196,7 +196,6 @@ export const SlaBadge: React.FC<SlaBadgeProps> = React.memo(({
     getTicketSlaTarget(ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority)
   );
 
-  // Sync state if props change
   useEffect(() => {
     setTargetTimestamp(
       getTicketSlaTarget(ticketId, slaTimeLeft, slaFormatted, resolutionTargetAt, createdAt, priority)

@@ -113,12 +113,6 @@ const validateResolutionInput = (input) => {
   };
 };
 
-/**
- * POST /api/tickets/:id/resolve
- *
- * Requires all resolution details and performs the resolution
- * and SLA transition in one database transaction.
- */
 const resolveIncident = async (ticketId, input, user) => {
   const where = buildTicketScope(ticketId, user);
   const resolution = validateResolutionInput(input);
@@ -169,8 +163,6 @@ const resolveIncident = async (ticketId, input, user) => {
       resolvedAt,
       resolvedById: validResolvedById,
     };
-
-    // Extend SLA deadlines by the time spent On Hold before resolving.
     try {
       Object.assign(
         data,
@@ -181,16 +173,10 @@ const resolveIncident = async (ticketId, input, user) => {
         )
       );
     } catch (slaErr) {
-      // SLA calculation failure should not block resolution of the ticket
     }
-
-    // Ensure hold tracking is cleared even for unsupported SLA priorities.
     if (existing.status === 'On Hold') {
       data.holdStartedAt = null;
-    }
-
-    // Conditional update prevents two concurrent requests from resolving
-    // the same ticket using stale status data.
+    }
     const updateResult = await transaction.ticket.updateMany({
       where: {
         id: existing.id,

@@ -49,9 +49,6 @@ const normalizeTicketStatus = (status) => {
   return TICKET_STATUS_ALIASES[status.trim().toLowerCase()] || null;
 };
 
-/**
- * GET /api/tickets
- */
 const listTickets = async (req, res, next) => {
   try {
     const {
@@ -148,9 +145,6 @@ const listTickets = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/tickets/:id
- */
 const getTicketById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -206,11 +200,6 @@ const getTicketById = async (req, res, next) => {
   }
 };
 
-/**
- * PATCH /api/tickets/:id/status
- *
- * Persists SLA deadlines and handles On Hold pause/resume transitions.
- */
 const updateTicketStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -262,8 +251,6 @@ const updateTicketStatus = async (req, res, next) => {
         message: 'Unsupported ticket status',
       });
     }
-
-    // Restrict non-admin status changes to the authenticated organisation.
     const organisationScope = buildOrganisationScope(req.user);
 
     const existing = await prisma.ticket.findFirst({
@@ -367,8 +354,6 @@ const updateTicketStatus = async (req, res, next) => {
         data,
         prepareSlaStatusUpdate(existing, nextStatus, transitionTime)
       );
-
-      // Preserve hold tracking even for priorities without an SLA policy.
       if (existing.status !== 'On Hold' && nextStatus === 'On Hold') {
         data.holdStartedAt = transitionTime;
       } else if (
@@ -427,10 +412,6 @@ const updateTicketStatus = async (req, res, next) => {
   }
 };
 
-/**
- * PATCH /api/tickets/:id/assign
- * Reassigns ticket to an agent or team.
- */
 const assignTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -523,10 +504,6 @@ const assignTicket = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/tickets/:id/email
- * Dispatches outbound email to user and logs activity.
- */
 const sendTicketEmail = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -599,10 +576,6 @@ const sendTicketEmail = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/tickets/:id/supplier
- * Dispatches ticket to third-party vendor/supplier and records note.
- */
 const logTicketSupplier = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -675,10 +648,6 @@ const logTicketSupplier = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/tickets
- * Creates a new ticket (e.g. Incident or Service Request) with SLA targets.
- */
 const createTicket = async (req, res, next) => {
   try {
     const {
@@ -729,7 +698,6 @@ const createTicket = async (req, res, next) => {
           finalAgentId = foundAgent.id;
         }
       } catch (_e) {
-        // Fallback for offline mode
       }
     }
 

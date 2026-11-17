@@ -1,17 +1,3 @@
-/**
- * Servigen Team Incidents Service Layer
- * Corresponds to Servigen API Specification (Team Incident Views: 1st Line & 2nd Line Support)
- *
- * Backend Routes (Mounted at /api/incidents):
- * - GET /api/incidents/support/first-line        : List 1st Line Support open incidents
- * - GET /api/incidents/support/first-line/agents : List 1st Line Support agents
- * - GET /api/incidents/support/first-line/:id   : Get 1st Line Support incident details
- * - GET /api/incidents/support/second-line       : List 2nd Line Support open incidents
- * - GET /api/incidents/support/second-line/agents: List 2nd Line Support agents
- * - GET /api/incidents/support/second-line/:id  : Get 2nd Line Support incident details
- * - PATCH /api/tickets/:id/status               : Update ticket status
- */
-
 import { api, getAuthToken, logServiceError } from './apiClient';
 import { MOCK_TICKETS } from './fallback/mockData';
 import type { TeamIncident } from '../pages/TeamIncidents/teamIncidents.types';
@@ -46,9 +32,6 @@ function formatSla(slaTimeLeft: any, slaFormatted?: string): string {
   return '--:--';
 }
 
-/**
- * Normalizes raw backend ticket data to frontend TeamIncident model
- */
 export function normalizeSupportIncident(
   raw: any,
   defaultTeam: '1st Line Support' | '2nd Line Support'
@@ -66,8 +49,6 @@ export function normalizeSupportIncident(
   } else if (raw.assignedAgentId) {
     agentName = raw.assignedAgentId;
   }
-
-  // Format date logged
   let dateFormatted = '';
   if (raw.createdAt) {
     try {
@@ -124,9 +105,6 @@ export function normalizeSupportIncident(
   };
 }
 
-/**
- * Fetch team incidents from backend support endpoints
- */
 export async function fetchSupportIncidents(
   teamName: '1st Line Support' | '2nd Line Support',
   params?: {
@@ -179,8 +157,6 @@ export async function fetchSupportIncidents(
       logServiceError(`teamIncidents.fetchSupportIncidents (${endpoint})`, err);
     }
   }
-
-  // Graceful fallback to mock tickets when live database is unreachable
   const fallbackList = (isSecondLine ? MOCK_TICKETS.slice(4, 8) : MOCK_TICKETS.slice(0, 4)).map((item: any) =>
     normalizeSupportIncident(item, teamName)
   );
@@ -192,9 +168,6 @@ export async function fetchSupportIncidents(
   };
 }
 
-/**
- * Fetch assigned support team agents from backend API
- */
 export async function fetchSupportAgents(
   teamName: '1st Line Support' | '2nd Line Support'
 ): Promise<SupportAgent[]> {
@@ -225,8 +198,6 @@ export async function fetchSupportAgents(
       logServiceError(`teamIncidents.fetchSupportAgents (${endpoint})`, err);
     }
   }
-
-  // Graceful fallback agents when backend is unreachable
   return [
     { id: 'USR-001', firstName: 'Alex', lastName: 'Rivera', email: 'agent001@servigen.local', availability: 'Available' },
     { id: 'USR-002', firstName: 'Sarah', lastName: 'Jenkins', email: 'support001@servigen.local', availability: 'Available' },
@@ -254,9 +225,6 @@ export function invalidateTeamIncidentsCache(): void {
   cachedTeamIncidents = null;
 }
 
-/**
- * Fetch all support incidents and agent rosters across all support teams
- */
 export async function fetchAllTeamIncidents(forceRefresh = false): Promise<AllTeamIncidentsResult> {
   if (!getAuthToken()) {
     return {
@@ -319,9 +287,6 @@ export async function fetchAllTeamIncidents(forceRefresh = false): Promise<AllTe
 
 import { ticketEvents } from './ticketEvents';
 
-/**
- * Update ticket status via PATCH /api/tickets/:id/status
- */
 export async function updateSupportIncidentStatus(
   ticketId: string,
   status: string,

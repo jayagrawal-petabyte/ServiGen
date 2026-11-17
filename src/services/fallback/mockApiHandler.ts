@@ -1,7 +1,4 @@
-/**
- * Mock API request handler.
- * Provides fallback in-memory state when network or backend services are unavailable.
- */
+
 
 import {
   MOCK_KPIS,
@@ -120,8 +117,6 @@ export function enrichTicketWithSla(ticket: any): any {
     slaFormatted,
   };
 }
-
-// In-memory state containers initialized with fixtures
 let mutableMajorIncidents: MajorIncident[] = JSON.parse(JSON.stringify(MOCK_MAJOR_INCIDENTS));
 let mutableTickets: any[] = JSON.parse(JSON.stringify(MOCK_TICKETS));
 let mutableMyWork: any[] = JSON.parse(JSON.stringify(MOCK_MY_WORK_TICKETS));
@@ -138,18 +133,11 @@ let mutableProblems: any[] = JSON.parse(JSON.stringify(MOCK_PROBLEMS));
 let currentAgentMood = 'Good';
 let currentAgentPresence = 'available';
 
-/**
- * Normalise any endpoint path by removing query strings and standardizing slashes
- */
 function cleanPath(endpoint: string): string {
   const noQuery = endpoint.split('?')[0].trim();
   return noQuery.startsWith('/') ? noQuery : `/${noQuery}`;
 }
 
-/**
- * Handle offline / mock API requests
- * Returns the mocked payload if the route is recognized, or undefined if unknown.
- */
 export function handleOfflineRequest(
   endpoint: string,
   method: string = 'GET',
@@ -158,8 +146,6 @@ export function handleOfflineRequest(
 ): any | undefined {
   const path = cleanPath(endpoint);
   const upperMethod = (method || 'GET').toUpperCase();
-
-  // Parse body if it's a string
   let parsedBody = body;
   if (typeof body === 'string') {
     try {
@@ -168,8 +154,6 @@ export function handleOfflineRequest(
       parsedBody = {};
     }
   }
-
-  // 1. Health & Status
   if (path === '/api/health' || path === '/health') {
     return { success: true, status: 'ok', mode: 'offline-demo', connected: false };
   }
@@ -184,8 +168,6 @@ export function handleOfflineRequest(
       counts: { tickets: mutableTickets.length, majorIncidents: mutableMajorIncidents.length },
     };
   }
-
-  // 2. Auth Session & Login
   if (path === '/api/auth/login' || path === '/auth/login') {
     const ident = parsedBody?.username || parsedBody?.email || 'agent001';
     const found =
@@ -220,8 +202,6 @@ export function handleOfflineRequest(
       },
     };
   }
-
-  // 3. Dashboard KPIs & Summary
   if (path === '/api/dashboard/kpis') {
     return {
       success: true,
@@ -257,8 +237,6 @@ export function handleOfflineRequest(
   if (path === '/api/dashboard/new-tickets') {
     return { success: true, data: mutableTickets };
   }
-
-  // 4. Tickets & Incidents
   if (path === '/api/tickets' || path === '/api/incidents') {
     if (upperMethod === 'POST') {
       const newId = `INC-2024-${String(mutableTickets.length + 1).padStart(3, '0')}`;
@@ -301,8 +279,6 @@ export function handleOfflineRequest(
       totalPages: 1,
     };
   }
-
-  // Single Ticket / Incident: /api/tickets/:id or /api/incidents/:id (GET)
   const singleTicketGetMatch = path.match(/^\/api\/(?:tickets|incidents)\/([^/]+)$/);
   if (singleTicketGetMatch && upperMethod === 'GET') {
     const rawId = decodeURIComponent(singleTicketGetMatch[1]);
@@ -319,8 +295,6 @@ export function handleOfflineRequest(
       return { success: true, data: enriched };
     }
   }
-
-  // Ticket status PATCH: /api/tickets/:id/status
   const ticketStatusMatch = path.match(/^\/api\/tickets\/([^/]+)\/status$/);
   if (ticketStatusMatch && upperMethod === 'PATCH') {
     const ticketId = ticketStatusMatch[1];
@@ -329,13 +303,10 @@ export function handleOfflineRequest(
     if (found) {
       const prevStatus = found.status;
       const isReopening = ['Resolved', 'Closed'].includes(prevStatus) && newStatus === 'Active';
-
-      // 1. Entering On Hold
       if (prevStatus !== 'On Hold' && newStatus === 'On Hold') {
         found.holdStartedAt = new Date().toISOString();
         found.slaPaused = true;
       }
-      // 2. Leaving On Hold
       else if (prevStatus === 'On Hold' && newStatus !== 'On Hold') {
         if (found.holdStartedAt && found.resolutionTargetAt) {
           const pausedMs = Math.max(0, Date.now() - new Date(found.holdStartedAt).getTime());
@@ -347,8 +318,6 @@ export function handleOfflineRequest(
         found.holdStartedAt = null;
         found.slaPaused = false;
       }
-
-      // 3. Reopening from Resolved/Closed to Active
       if (isReopening) {
         found.reopenCount = (found.reopenCount || 0) + 1;
         if (found.resolvedAt && found.resolutionTargetAt) {
@@ -380,8 +349,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: { id: ticketId, status: newStatus } };
   }
-
-  // Ticket resolve POST: /api/tickets/:id/resolve
   const ticketResolveMatch = path.match(/^\/api\/tickets\/([^/]+)\/resolve$/);
   if (ticketResolveMatch && upperMethod === 'POST') {
     const ticketId = decodeURIComponent(ticketResolveMatch[1]);
@@ -414,8 +381,6 @@ export function handleOfflineRequest(
       },
     };
   }
-
-  // Ticket mutations used by the Incidents page and detail modal.
   const ticketAssignMatch = path.match(/^\/api\/tickets\/([^/]+)\/assign$/);
   if (ticketAssignMatch && upperMethod === 'PATCH') {
     const ticketId = decodeURIComponent(ticketAssignMatch[1]);
@@ -473,10 +438,7 @@ export function handleOfflineRequest(
   if (path === '/api/ai-core/escalation/handoff' && upperMethod === 'POST') {
     return { success: true, data: { id: `HANDOFF-${Date.now()}`, ...parsedBody } };
   }
-
-  // Specific incident sub-routes
   if (path.startsWith('/api/incidents/')) {
-    // Check support agents endpoints FIRST
     if (path.includes('/agents')) {
       const agents = [
         { id: 'USR-001', firstName: 'Alex', lastName: 'Rivera', email: 'agent001@servigen.local', availability: 'Available' },
@@ -535,8 +497,6 @@ export function handleOfflineRequest(
       return { success: true, data: enriched, items: enriched };
     }
   }
-
-  // 5. Major Incidents with 6-stage lifecycle
   if (path === '/api/major-incidents') {
     if (upperMethod === 'POST') {
       const newId = `MI-${1000 + mutableMajorIncidents.length + 1}`;
@@ -572,8 +532,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: mutableMajorIncidents };
   }
-
-  // Single Major Incident: /api/major-incidents/:id
   const miMatch = path.match(/^\/api\/major-incidents\/([^/]+)$/);
   if (miMatch) {
     const miId = miMatch[1];
@@ -585,7 +543,6 @@ export function handleOfflineRequest(
 
     if (upperMethod === 'PATCH') {
       if (incident) {
-        // If status or stage was updated
         if (parsedBody?.status) {
           const nextStatus = parsedBody.status as StageLabel;
           const stageIdx = STAGE_LABELS.indexOf(nextStatus);
@@ -606,8 +563,6 @@ export function handleOfflineRequest(
       return { success: true, data: incident || { id: miId, ...parsedBody } };
     }
   }
-
-  // Major Incident Updates / Feed: /api/major-incidents/:id/updates
   const miUpdatesMatch = path.match(/^\/api\/major-incidents\/([^/]+)\/updates$/);
   if (miUpdatesMatch && upperMethod === 'POST') {
     const miId = miUpdatesMatch[1];
@@ -626,8 +581,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: newUpdate };
   }
-
-  // 6. My Work personal queue & On Hold views
   if (path === '/api/my-work') {
     return { success: true, data: mutableMyWork };
   }
@@ -692,13 +645,9 @@ export function handleOfflineRequest(
     const ticketId = myWorkTimeMatch[1];
     return { success: true, data: { id: ticketId, logged: true } };
   }
-
-  // 7. Approvals
   if (path === '/api/approvals') {
     return { success: true, data: mutableApprovals };
   }
-
-  // 8. Users & Presence & Organisation Users
   if (path.startsWith('/api/organisations/') && path.includes('/users')) {
     return {
       success: true,
@@ -728,8 +677,6 @@ export function handleOfflineRequest(
       items: MOCK_USERS,
     };
   }
-
-  // 9. Calendar
   if (path === '/api/calendar') {
     if (upperMethod === 'POST') {
       const event = { id: `CAL-${Date.now()}`, ...parsedBody };
@@ -738,8 +685,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: MOCK_CALENDAR_EVENTS };
   }
-
-  // 10. Projects
   if (path === '/api/projects' || path === '/api/projects/active') {
     if (upperMethod === 'POST') {
       const generatedId = `PRJ-${Math.floor(100 + Math.random() * 900)}`;
@@ -822,13 +767,9 @@ export function handleOfflineRequest(
     }
     return { success: true, data: pIdx !== -1 ? mutableProjects[pIdx] : mutableProjects[0] };
   }
-
-  // 11. Change Requests
   if (path === '/api/change-requests' || path === '/api/change-requests/active') {
     return { success: true, data: MOCK_CHANGE_REQUESTS };
   }
-
-  // 12. CMDB
   if (path.startsWith('/api/cmdb')) {
     if (path === '/api/cmdb/configuration-items' && upperMethod === 'POST') {
       const generatedId = parsedBody?.id || `CI-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -930,13 +871,9 @@ export function handleOfflineRequest(
 
     return { success: true, data: mutableConfigItems };
   }
-
-  // 13. Services Catalogue
   if (path === '/api/services' || path === '/api/services/categories') {
     return { success: true, data: MOCK_SERVICES };
   }
-
-  // 14. Articles & Knowledge Articles
   if (path === '/api/articles' || path === '/api/knowledge/articles' || path === '/api/knowledge') {
     if (upperMethod === 'POST') {
       const newId = `000${3650 + mutableArticles.length + 1}`;
@@ -982,8 +919,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: found || mutableArticles[0] };
   }
-
-  // 15. Custom Lists Builder
   if (path === '/api/list-builder/lists' || path === '/api/lists') {
     if (upperMethod === 'POST') {
       const newList = {
@@ -1011,8 +946,6 @@ export function handleOfflineRequest(
       items: mutableCustomLists,
     };
   }
-
-  // 16. Contracts
   if (path === '/api/contracts' || path === '/api/contracts/expiring-soon') {
     if (upperMethod === 'POST') {
       const newContract = {
@@ -1105,8 +1038,6 @@ export function handleOfflineRequest(
     }
     return { success: true, data: cIdx !== -1 ? mutableContracts[cIdx] : mutableContracts[0] };
   }
-
-  // 17. Problems
   if (path === '/api/problems') {
     if (upperMethod === 'POST') {
       const rawNum = Math.floor(1000 + Math.random() * 9000);

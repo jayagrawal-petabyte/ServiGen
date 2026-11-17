@@ -1,9 +1,5 @@
 ﻿'use strict';
 
-/**
- * SLA targets are expressed in seconds.
- * Critical/High/Medium/Low are mapped to P1/P2/P3/P4 respectively.
- */
 const SLA_POLICIES = Object.freeze({
   P1: Object.freeze({
     responseSeconds: 60 * 60,
@@ -52,9 +48,6 @@ const parseValidDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-/**
- * Creates response and resolution deadlines from the SLA start time.
- */
 const createSlaDeadlines = (priority, startedAt = new Date()) => {
   const policy = getSlaPolicy(priority);
   const start = parseValidDate(startedAt);
@@ -77,10 +70,6 @@ const createSlaDeadlines = (priority, startedAt = new Date()) => {
   };
 };
 
-/**
- * Uses persisted deadlines when available.
- * Older tickets without SLA deadlines get calculated from createdAt.
- */
 const getTicketDeadlines = (ticket) => {
   const calculated = createSlaDeadlines(
     ticket.priority,
@@ -177,12 +166,6 @@ const calculateAiRisk = (ticket, slaStatus) => {
   };
 };
 
-/**
- * Calculates live SLA values.
- *
- * During On Hold, the clock is frozen at holdStartedAt.
- * Resolved/Closed tickets use their resolution time when available.
- */
 const calculateSlaStatus = (ticket, now = new Date()) => {
   const policy = getSlaPolicy(ticket?.priority);
 
@@ -261,8 +244,6 @@ const calculateSlaStatus = (ticket, now = new Date()) => {
   return {
     responseTargetAt: deadlines.responseTargetAt,
     resolutionTargetAt: deadlines.resolutionTargetAt,
-
-    // The blueprint's slaTargetAt represents the resolution deadline.
     slaTargetAt: deadlines.resolutionTargetAt,
 
     responseTimeRemainingSeconds: responseSeconds,
@@ -292,12 +273,6 @@ const calculateSlaStatus = (ticket, now = new Date()) => {
   };
 };
 
-/**
- * Generates Prisma fields for a ticket status transition.
- *
- * Entering On Hold records the pause time.
- * Leaving On Hold extends both deadlines by the paused duration.
- */
 const prepareSlaStatusUpdate = (
   ticket,
   nextStatus,
@@ -358,9 +333,6 @@ const prepareSlaStatusUpdate = (
   return update;
 };
 
-/**
- * Existing SLA formatting helper.
- */
 const formatIncidentSla = (minutes) => {
   if (minutes === null || minutes === undefined) {
     return 'N/A';
